@@ -30,6 +30,10 @@ void Template::set_filter(Filter *filter) {
   stream_state_.filter = filter;
 }
 
+const Core::TimeSpan &Template::init_time() const {
+  return std::max(init_time_, waveform_end_ - waveform_start_);
+}
+
 bool Template::Feed(const Record *record) {
   if (record->sampleCount() == 0)
     return false;

@@ -12,6 +12,14 @@ namespace detect {
 
 StreamConfig::StreamConfig() {}
 
+StreamConfig::StreamConfig(const std::string &wf_stream_id,
+                           const std::string &filter, const double init_time,
+                           const bool sensitivity_correction,
+                           const TemplateStreamConfig &template_config)
+    : wf_stream_id(wf_stream_id), init_time(init_time), filter(filter),
+      sensitivity_correction(sensitivity_correction),
+      template_config(template_config) {}
+
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
                            const StreamConfig &defaults)
     : wf_stream_id(pt.get<std::string>("waveformId")),
@@ -42,9 +50,9 @@ bool DetectorConfig::IsValid() const {
   if (!utils::ValidateXCorrThreshold(trigger_on) ||
       !utils::ValidateXCorrThreshold(trigger_off) ||
       !utils::IsGeZero(trigger_dead_time) ||
-      (gap_interpolation && !utils::IsGeZero(gap_tolerance)) ||
-      !utils::IsGeZero(init_time))
+      (gap_interpolation && !utils::IsGeZero(gap_tolerance))) {
     return false;
+  }
   return true;
 }
 
@@ -68,8 +76,6 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<bool>("gapTolerance", detector_defaults.gap_tolerance);
   // TODO(damb): Should we specify the detector's init time based on the init
   // times of the underlying Template processors?
-  detector_config_.init_time =
-      pt.get<double>("initTime", detector_defaults.init_time);
   detector_config_.maximum_latency =
       pt.get<double>("maximumLatency", detector_defaults.maximum_latency);
 
@@ -86,8 +92,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       std::string wf_id;
       try {
         StreamConfig stream_config{stream_config_pair.second, stream_defaults};
-        stream_configs.insert(
-            std::make_pair(stream_config.wf_stream_id, stream_config));
+        stream_configs.emplace(stream_config.wf_stream_id, stream_config);
         wf_id = stream_config.wf_stream_id;
       } catch (boost::property_tree::ptree_error &e) {
         SEISCOMP_WARNING("Exception while parsing stream_config: %s", e.what());

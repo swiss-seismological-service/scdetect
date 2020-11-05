@@ -329,7 +329,6 @@ DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
   detector_->config_ = config;
 
   detector_->enabled_ = config.enabled;
-  detector_->init_time_ = Core::TimeSpan{config.init_time};
 
   detector_->gap_interpolation_ = config.gap_interpolation;
   detector_->gap_tolerance_ = config.gap_tolerance;
@@ -445,6 +444,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_stream_config(*stream)
           .set_filter(template_filter, stream_config.init_time)
           .set_waveform(waveform_handler, stream_id, wf_start, wf_end, config));
+
+  const auto &template_init_time{
+      detector_->stream_configs_[stream_id].processor->init_time()};
+  if (template_init_time > detector_->init_time()) {
+    detector_->init_time_ = template_init_time;
+  }
 
   // TODO(damb): Which is the correct buffer size to be chosen?
   // Is a configurable buffer size required? minBufferSize?

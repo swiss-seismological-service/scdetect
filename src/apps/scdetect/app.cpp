@@ -244,10 +244,10 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!utils::IsGeZero(config_.detector_config.init_time)) {
+  if (!utils::IsGeZero(config_.stream_config.init_time)) {
     SEISCOMP_ERROR("Invalid configuration: 'defaultInitTime': %f. Must be "
                    "greater equal 0.",
-                   config_.detector_config.init_time);
+                   config_.stream_config.init_time);
     return false;
   }
 
@@ -480,7 +480,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.stream_config.sensitivity_correction,
           "processing.defaultSensitivityCorrection");
 
-  NEW_OPT(config_.detector_config.init_time, "processing.defaultInitTime");
+  NEW_OPT(config_.stream_config.init_time, "processing.defaultInitTime");
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.defaultGapInterpolation");
   NEW_OPT(config_.detector_config.gap_tolerance,
@@ -489,8 +489,6 @@ void Application::SetupConfigurationOptions() {
   // TODO(damb): For multi station templates the buffer size needs to be
   // computed, automatically.
   /* NEW_OPT(config_.detector_config.buffer_size, "processing.bufferSize"); */
-  /* NEW_OPT(config_.detector_config.processing_interval, */
-  /*         "processing.defaultInterval"); */
   NEW_OPT(config_.detector_config.trigger_on,
           "detector.defaultTriggerOnThreshold");
   NEW_OPT(config_.detector_config.trigger_off,

@@ -16,7 +16,17 @@ namespace detect {
 
 struct StreamConfig {
 
+  // Stream related template configuration
+  struct TemplateStreamConfig {
+    std::string phase{""};
+
+    double wf_start{-2};
+    double wf_end{2};
+  };
   StreamConfig();
+  StreamConfig(const std::string &wf_stream_id, const std::string &filter,
+               const double init_time, const bool sensitivity_correction,
+               const TemplateStreamConfig &template_config);
   StreamConfig(const boost::property_tree::ptree &pt,
                const StreamConfig &defaults);
 
@@ -32,12 +42,7 @@ struct StreamConfig {
   bool sensitivity_correction{true};
 
   // Stream related template configuration
-  struct TemplateStreamConfig {
-    std::string phase{""};
-
-    double wf_start{-2};
-    double wf_end{2};
-  } template_config;
+  TemplateStreamConfig template_config;
 };
 
 struct DetectorConfig {
@@ -59,8 +64,6 @@ struct DetectorConfig {
   // (false).
   bool enabled{true};
 
-  // Processing
-  double init_time{60};
   // Flag indicating whether to interpolate gaps linearly. Valid for gaps <=
   // gap_tolerance.
   bool gap_interpolation{false};

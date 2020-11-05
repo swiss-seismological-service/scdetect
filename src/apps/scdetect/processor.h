@@ -107,6 +107,8 @@ public:
 
   // Sets the filter to apply
   virtual void set_filter(Filter *filter) = 0;
+  // Returns the processor's initialization time in seconds
+  virtual const Core::TimeSpan &init_time() const;
 
   // Sets the maximal gap length in seconds for that missing samples are
   // handled or tolerated. Default: no tolerance
@@ -197,7 +199,6 @@ protected:
   double saturation_threshold_;
 
   // Processor initialization time
-  // TODO(damb): To be initialized
   Core::TimeSpan init_time_;
 
   //! Threshold to recognize a gap
