@@ -116,8 +116,10 @@ void Template::InitFilter(StreamState &stream_state, double sampling_freq) {
 }
 
 /* ------------------------------------------------------------------------- */
+// XXX(damb): Using `new` to access a non-public ctor; see also
+// https://abseil.io/tips/134
 TemplateBuilder::TemplateBuilder()
-    : template_(std::unique_ptr<Template>{new Template{}}) {}
+    : template_(std::unique_ptr<Template>(new Template{})) {}
 
 TemplateBuilder &
 TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {

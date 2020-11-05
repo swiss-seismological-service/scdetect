@@ -452,7 +452,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   // we know the actual sampling frequency
   //
   detector_->stream_configs_[stream_id].stream_buffer =
-      std::unique_ptr<RingBuffer>{new RingBuffer{wf_end - wf_start}};
+      utils::make_unique<RingBuffer>(wf_end - wf_start);
 
   detector_->stream_configs_[stream_id].metadata.sensor_location =
       stream->sensorLocation();

@@ -13,7 +13,7 @@
 #include <seiscomp/math/filter.h>
 #include <seiscomp/utils/files.h>
 
-/* #include <seiscomp/logging/log.h> */
+#include "utils.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -290,7 +290,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   rs->addStream(net_code, sta_code, loc_code, cha_code);
 
   IO::RecordInput inp{rs.get(), Array::DOUBLE, Record::DATA_ONLY};
-  std::unique_ptr<RecordSequence> seq{new TimeWindowBuffer{tw}};
+  std::unique_ptr<RecordSequence> seq{utils::make_unique<TimeWindowBuffer>(tw)};
   RecordPtr rec;
   while (rec = inp.next()) {
     seq->feed(rec.get());

@@ -2,8 +2,10 @@
 #define SCDETECT_APPS_SCDETECT_UTILS_H_
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace Seiscomp {
@@ -37,6 +39,12 @@ template <typename TEnum>
 auto as_integer(const TEnum value) ->
     typename std::underlying_type<TEnum>::type {
   return static_cast<typename std::underlying_type<TEnum>::type>(value);
+}
+
+// Provide C++11 make_unique<T>()
+template <typename T, typename... Ts>
+std::unique_ptr<T> make_unique(Ts &&... params) {
+  return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
 
 } // namespace utils
