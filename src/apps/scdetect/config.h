@@ -51,8 +51,6 @@ struct DetectorConfig {
   // The default threshold to enabling triggering, again - xcorr trigger
   // thresholds [0,1]
   double trigger_off{0.5L};
-  // The dead-time in seconds after a pick has been detected
-  double trigger_dead_time{30};
   // The duration of a trigger, negative value = disabled
   double trigger_duration{-1};
 

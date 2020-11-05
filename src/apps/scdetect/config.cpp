@@ -49,7 +49,6 @@ bool StreamConfig::IsValid() const {
 bool DetectorConfig::IsValid() const {
   if (!utils::ValidateXCorrThreshold(trigger_on) ||
       !utils::ValidateXCorrThreshold(trigger_off) ||
-      !utils::IsGeZero(trigger_dead_time) ||
       (gap_interpolation && !utils::IsGeZero(gap_tolerance))) {
     return false;
   }
@@ -64,8 +63,6 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("triggerOnThreshold", detector_defaults.trigger_on);
   detector_config_.trigger_off =
       pt.get<double>("triggerOffThreshold", detector_defaults.trigger_off);
-  detector_config_.trigger_dead_time =
-      pt.get<double>("triggerDeadTime", detector_defaults.trigger_dead_time);
   detector_config_.trigger_duration =
       pt.get<double>("triggerDuration", detector_defaults.trigger_duration);
   detector_config_.time_correction =

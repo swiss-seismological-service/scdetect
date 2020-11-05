@@ -237,13 +237,6 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!utils::IsGeZero(config_.detector_config.trigger_dead_time)) {
-    SEISCOMP_ERROR(
-        "Invalid configuration: 'triggerDeadTime': %f. Must be greater than 0.",
-        config_.detector_config.trigger_dead_time);
-    return false;
-  }
-
   if (!utils::IsGeZero(config_.stream_config.init_time)) {
     SEISCOMP_ERROR("Invalid configuration: 'defaultInitTime': %f. Must be "
                    "greater equal 0.",
@@ -493,8 +486,6 @@ void Application::SetupConfigurationOptions() {
           "detector.defaultTriggerOnThreshold");
   NEW_OPT(config_.detector_config.trigger_off,
           "detector.defaultTriggerOffThreshold");
-  NEW_OPT(config_.detector_config.trigger_dead_time,
-          "detector.defaultTriggerDeadTime");
   NEW_OPT(config_.detector_config.time_correction,
           "detector.defaultTimeCorrection");
   NEW_OPT(config_.detector_config.trigger_duration,
