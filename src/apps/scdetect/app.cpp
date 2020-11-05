@@ -238,7 +238,7 @@ bool Application::validateParameters() {
   }
 
   if (!utils::IsGeZero(config_.stream_config.init_time)) {
-    SEISCOMP_ERROR("Invalid configuration: 'defaultInitTime': %f. Must be "
+    SEISCOMP_ERROR("Invalid configuration: 'initTime': %f. Must be "
                    "greater equal 0.",
                    config_.stream_config.init_time);
     return false;
@@ -465,31 +465,23 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
 void Application::SetupConfigurationOptions() {
   // define application specific configuration
   NEW_OPT(config_.stream_config.template_config.phase,
-          "template.defaultTemplatePhase");
+          "template.templatePhase");
   NEW_OPT(config_.stream_config.template_config.wf_start,
-          "template.defaultTemplateWaveformStart");
+          "template.templateWaveformStart");
   NEW_OPT(config_.stream_config.template_config.wf_end,
-          "template.defaultTemplateWaveformEnd");
+          "template.templateWaveformEnd");
   NEW_OPT(config_.stream_config.sensitivity_correction,
-          "processing.defaultSensitivityCorrection");
-
-  NEW_OPT(config_.stream_config.init_time, "processing.defaultInitTime");
+          "processing.sensitivityCorrection");
+  NEW_OPT(config_.stream_config.init_time, "processing.initTime");
   NEW_OPT(config_.detector_config.gap_interpolation,
-          "processing.defaultGapInterpolation");
-  NEW_OPT(config_.detector_config.gap_tolerance,
-          "processing.defaultGapTolerance");
-  NEW_OPT(config_.detector_config.enabled, "detector.defaultEnabled");
+          "processing.gapInterpolation");
+  NEW_OPT(config_.detector_config.gap_tolerance, "processing.gapTolerance");
   // TODO(damb): For multi station templates the buffer size needs to be
   // computed, automatically.
   /* NEW_OPT(config_.detector_config.buffer_size, "processing.bufferSize"); */
-  NEW_OPT(config_.detector_config.trigger_on,
-          "detector.defaultTriggerOnThreshold");
-  NEW_OPT(config_.detector_config.trigger_off,
-          "detector.defaultTriggerOffThreshold");
-  NEW_OPT(config_.detector_config.time_correction,
-          "detector.defaultTimeCorrection");
-  NEW_OPT(config_.detector_config.trigger_duration,
-          "detector.defaultTriggerDuration");
+  NEW_OPT(config_.detector_config.trigger_on, "detector.triggerOnThreshold");
+  NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
+  NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
 
   NEW_OPT_CLI(config_.load_templates_only, "Generic", "load-templates",
               "load templates and exit");
