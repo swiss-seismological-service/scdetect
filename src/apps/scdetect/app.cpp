@@ -243,6 +243,16 @@ bool Application::validateParameters() {
                    config_.stream_config.init_time);
     return false;
   }
+  if (!config_.stream_config.filter.empty()) {
+    std::string err;
+    auto filter{Processor::Filter::Create(config_.stream_config.filter, &err)};
+    if (!filter) {
+      SEISCOMP_WARNING("Invalid configuration: 'filter': %s",
+                       config_.stream_config.filter.c_str(), err.c_str());
+      return false;
+    }
+    delete filter;
+  }
 
   if (config_.stream_config.template_config.phase.empty() ||
       !utils::ValidatePhase(config_.stream_config.template_config.phase)) {
@@ -473,6 +483,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.stream_config.sensitivity_correction,
           "processing.sensitivityCorrection");
   NEW_OPT(config_.stream_config.init_time, "processing.initTime");
+  NEW_OPT(config_.stream_config.filter, "processing.filter");
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.gapInterpolation");
   NEW_OPT(config_.detector_config.gap_tolerance, "processing.gapTolerance");
