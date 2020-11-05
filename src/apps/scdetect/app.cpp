@@ -13,6 +13,7 @@
 #include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/magnitude.h>
+#include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/io/archive/xmlarchive.h>
@@ -22,7 +23,6 @@
 
 #include "config.h"
 #include "detector.h"
-#include "seiscomp/datamodel/notifier.h"
 #include "settings.h"
 #include "utils.h"
 
