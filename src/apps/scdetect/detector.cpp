@@ -304,6 +304,16 @@ void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   }
 }
 
+bool Detector::EnoughDataReceived(const StreamState &stream_state) const {
+  for (const auto &stream_config_pair : stream_configs_) {
+    const auto &state{stream_config_pair.second.stream_state};
+    if (state.received_samples <= state.needed_samples) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
                                    ResultCPtr result) {
   if (!record || !result)

@@ -88,7 +88,7 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
     return false;
 
   if (!stream_state.initialized) {
-    if (stream_state.received_samples > stream_state.needed_samples) {
+    if (EnoughDataReceived(stream_state)) {
       // stream_state.initialized = true;
       Process(stream_state, record, *data);
       // NOTE: To allow derived classes to notice modification of the variable
@@ -179,6 +179,10 @@ void Processor::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   }
   if (stream_state.filter)
     stream_state.filter->apply(n, samples);
+}
+
+bool Processor::EnoughDataReceived(const StreamState &stream_state) const {
+  return stream_state.received_samples > stream_state.needed_samples;
 }
 
 void Processor::EmitResult(RecordCPtr record, ResultCPtr result) {

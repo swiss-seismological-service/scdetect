@@ -167,15 +167,20 @@ protected:
   // Store the record
   virtual bool Store(StreamState &stream_state, RecordCPtr record);
 
+  // Handles gaps. Returns whether the gap has been handled or not.
   virtual bool HandleGap(StreamState &stream_state, RecordCPtr record,
                          DoubleArrayPtr data);
-  // Handles gaps. Returns whether the gap has been handled or not.
+  // Fill gaps
   virtual bool FillGap(StreamState &stream_state, RecordCPtr record,
                        const Core::TimeSpan &duration, double next_sample,
                        size_t missing_samples);
   // Fill data and perform filtering (if required)
   virtual void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples);
+
+  // Initially check if the Processor received enough data in order to execute
+  // the `Process` method.
+  virtual bool EnoughDataReceived(const StreamState &stream_state) const;
 
   virtual void EmitResult(RecordCPtr record, ResultCPtr result);
   // Initialize the filter for the given sampling frequency
