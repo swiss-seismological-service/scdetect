@@ -389,6 +389,9 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                             const StreamConfig &stream_config,
                             WaveformHandlerIfacePtr waveform_handler) {
 
+  // TODO(damb): Requires calling DetectorBuilder::set_eventparameters,
+  // firstly. It would be better to get rid of this prerequisite.
+  //
   // configure pick from arrival
   DataModel::PickPtr pick;
   double arrival_weight;
