@@ -245,13 +245,10 @@ bool Application::validateParameters() {
   }
   if (!config_.stream_config.filter.empty()) {
     std::string err;
-    auto filter{Processor::Filter::Create(config_.stream_config.filter, &err)};
-    if (!filter) {
-      SEISCOMP_WARNING("Invalid configuration: 'filter': %s",
-                       config_.stream_config.filter.c_str(), err.c_str());
+    if (!utils::IsValidFilter(config_.stream_config.filter, err)) {
+      SEISCOMP_WARNING("Invalid configuration: 'filter': %s", err.c_str());
       return false;
     }
-    delete filter;
   }
 
   if (config_.stream_config.template_config.phase.empty() ||
@@ -271,7 +268,7 @@ bool Application::validateParameters() {
   }
 
   return true;
-} // namespace detect
+}
 
 bool Application::initConfiguration() {
 

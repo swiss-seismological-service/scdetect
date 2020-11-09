@@ -220,6 +220,10 @@ private:
   double status_value_;
 };
 
+namespace utils {
+bool IsValidFilter(const std::string &filter_string, std::string &err);
+}
+
 } // namespace detect
 } // namespace Seiscomp
 
