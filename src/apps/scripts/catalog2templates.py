@@ -62,7 +62,8 @@ def parse_catalog(catalog, phases=("Pg", "Sg")):
                 [
                     {
                         "waveformId": p.waveform_id.get_seed_string(),
-                        "phase": _dict["phase"],
+                        "templateWaveformId": p.waveform_id.get_seed_string(),
+                        "templatePhase": _dict["phase"],
                     }
                     for p in picks
                 ]
@@ -145,18 +146,18 @@ def main(argv=None):
         help="Detector related initialization time.",
     )
     parser.add_argument(
-        "--stream-wf-start",
-        metavar="NUM",
+        "--template-wf-start",
+        metavar="SECS",
         type=int,
         default=-2,
-        help="Template related waveform start time.",
+        help="Template related waveform start time in seconds w.r.t. the pick time.",
     )
     parser.add_argument(
-        "--stream-wf-end",
-        metavar="NUM",
+        "--template-wf-end",
+        metavar="SECS",
         type=int,
         default=2,
-        help="Template related waveform end time.",
+        help="Template related waveform end time in seconds w.r.t. the pick time.",
     )
 
     # positional arguments
@@ -171,10 +172,10 @@ def main(argv=None):
     args = parser.parse_args(args=argv)
 
     # validate cli arguments
-    if args.stream_wf_start >= args.stream_wf_end:
+    if args.template_wf_start >= args.template_wf_end:
         parser.error(
             "Invalid parameter(s) for template waveform limits:"
-            f" {args.stream_wf_start} >= {args.stream_wf_end}"
+            f" {args.template_wf_start} >= {args.template_wf_end}"
         )
 
     cat = read_events(args.catalog, args.format)
@@ -187,8 +188,8 @@ def main(argv=None):
 
     detector_defaults = {"initTime": args.detector_init_time}
     stream_defaults = {
-        "waveformStart": args.stream_wf_start,
-        "waveformEnd": args.stream_wf_end,
+        "templateWaveformStart": args.template_wf_start,
+        "templateWaveformEnd": args.template_wf_end,
     }
 
     template_config = TemplateConfig(

@@ -12,6 +12,7 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/sensorlocation.h>
+#include <seiscomp/datamodel/waveformstreamid.h>
 
 #include "template.h"
 #include "utils.h"
@@ -392,34 +393,45 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   // TODO(damb): Requires calling DetectorBuilder::set_eventparameters,
   // firstly. It would be better to get rid of this prerequisite.
   //
+  const auto &template_stream_id{stream_config.template_config.wf_stream_id};
+
   // configure pick from arrival
   DataModel::PickPtr pick;
+  DataModel::WaveformStreamID pick_waveform_id;
   double arrival_weight;
   for (size_t i = 0; i < detector_->origin_->arrivalCount(); ++i) {
     DataModel::ArrivalPtr arrival{detector_->origin_->arrival(i)};
 
-    if (arrival->phase().code() != stream_config.template_config.phase)
+    if (arrival->phase().code() != stream_config.template_config.phase) {
       continue;
+    }
 
-    if (!IsValidArrival(arrival))
+    if (!IsValidArrival(arrival)) {
       continue;
+    }
 
     pick = cache_.get<DataModel::Pick>(arrival->pickID());
+    pick_waveform_id = pick->waveformID();
+    if (template_stream_id != static_cast<std::string>(pick_waveform_id)) {
+      continue;
+    }
+
     arrival_weight = arrival->weight();
     break;
   }
 
   if (!pick) {
-    SEISCOMP_WARNING("%s: Failed to load pick: origin=%s, phase=%s",
-                     stream_id.c_str(), detector_->origin_->publicID().c_str(),
+    SEISCOMP_WARNING("%s (%s): Failed to load pick: origin=%s, phase=%s",
+                     stream_id.c_str(), template_stream_id.c_str(),
+                     detector_->origin_->publicID().c_str(),
                      stream_config.template_config.phase.c_str());
     return *this;
   }
 
-  Core::Time wf_start{pick->time().value() + Core::TimeSpan(wf_start)};
-  Core::Time wf_end{pick->time().value() + Core::TimeSpan(wf_end)};
-
-  DataModel::WaveformStreamID pick_waveform_id{pick->waveformID()};
+  auto wf_start{pick->time().value() +
+                Core::TimeSpan(stream_config.template_config.wf_start)};
+  auto wf_end{pick->time().value() +
+              Core::TimeSpan(stream_config.template_config.wf_end)};
 
   // load stream metadata from inventory
   auto stream{Client::Inventory::Instance()->getStream(
@@ -429,8 +441,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   if (!stream) {
     SEISCOMP_WARNING(
-        "%s: Stream not found in inventory for epoch: start=%s, end=%s",
-        stream_id.c_str(), wf_start.iso().c_str(), wf_end.iso().c_str());
+        "%s (%s): Stream not found in inventory for epoch: start=%s, "
+        "end=%s",
+        stream_id.c_str(), template_stream_id.c_str(), wf_start.iso().c_str(),
+        wf_end.iso().c_str());
     return *this;
   }
 
@@ -444,19 +458,21 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   auto template_filter{Processor::Filter::Create(stream_config.filter, &err)};
 
   if (!template_filter) {
-    SEISCOMP_WARNING("%s: Compiling filter failed: %s: %s", stream_id.c_str(),
+    SEISCOMP_WARNING("%s (%s): Compiling filter failed: %s: %s",
+                     stream_id.c_str(), template_stream_id.c_str(),
                      stream_config.filter.c_str(), err.c_str());
     return *this;
   }
 
-  detector_->stream_configs_[stream_id].processor = std::move(
+  detector_->stream_configs_[stream_id].processor =
       Template::Create()
           .set_phase(stream_config.template_config.phase)
           .set_arrival_weight(arrival_weight)
           .set_pick(pick)
           .set_stream_config(*stream)
           .set_filter(template_filter, stream_config.init_time)
-          .set_waveform(waveform_handler, stream_id, wf_start, wf_end, config));
+          .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
+                        config);
 
   const auto &template_init_time{
       detector_->stream_configs_[stream_id].processor->init_time()};

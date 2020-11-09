@@ -28,17 +28,21 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       sensitivity_correction(pt.get<bool>("sensitivityCorrection",
                                           defaults.sensitivity_correction)) {
   template_config.phase =
-      pt.get<std::string>("phase", defaults.template_config.phase);
-  template_config.wf_start =
-      pt.get<double>("waveformStart", defaults.template_config.wf_start);
+      pt.get<std::string>("templatePhase", defaults.template_config.phase);
+  template_config.wf_start = pt.get<double>("templateWaveformStart",
+                                            defaults.template_config.wf_start);
   template_config.wf_end =
-      pt.get<double>("waveformEnd", defaults.template_config.wf_end);
+      pt.get<double>("templateWaveformEnd", defaults.template_config.wf_end);
+  template_config.wf_stream_id =
+      pt.get<std::string>("templateWaveformId", wf_stream_id);
+  template_config.filter = pt.get<std::string>("templateFilter", filter);
 }
 
 bool StreamConfig::IsValid() const {
   if (template_config.wf_start >= template_config.wf_end ||
       !utils::ValidatePhase(template_config.phase) ||
-      !utils::IsGeZero(init_time) || !utils::ValidateStreamID(wf_stream_id))
+      !utils::IsGeZero(init_time) || !utils::ValidateStreamID(wf_stream_id) ||
+      !utils::ValidateStreamID(template_config.wf_stream_id))
 
   {
     return false;

@@ -77,6 +77,8 @@ private:
   Core::Time waveform_start_;
   // Template waveform endtime
   Core::Time waveform_end_;
+  // Template waveform stream id
+  std::string waveform_stream_id_;
   // Template waveform
   GenericRecordCPtr waveform_;
   // Template waveform sampling frequency

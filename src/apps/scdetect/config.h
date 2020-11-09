@@ -22,6 +22,11 @@ struct StreamConfig {
 
     double wf_start{-2};
     double wf_end{2};
+
+    // Defines a template specific waveform stream id
+    std::string wf_stream_id{""};
+    // Defines a template specific filter
+    std::string filter{""};
   };
   StreamConfig();
   StreamConfig(const std::string &wf_stream_id, const std::string &filter,
