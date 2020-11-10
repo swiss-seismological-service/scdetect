@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <seiscomp/client/streamapplication.h>
-#include <seiscomp/datamodel/publicobjectcache.h>
 
 #include "config.h"
 #include "processor.h"
@@ -21,7 +20,6 @@ namespace detect {
 
 class Application : public Client::StreamApplication {
 
-  using Cache = DataModel::PublicObjectTimeSpanBuffer;
   using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
 
 public:
@@ -59,7 +57,6 @@ public:
     bool load_templates_only{false};
 
     // Input
-    std::string path_catalog_sc3ml{};
     std::string path_template_json{};
 
     // Messaging
@@ -146,12 +143,6 @@ private:
   Options options_;
   Config config_;
   ObjectLog *output_origins_;
-
-  // TODO(damb): Is a cache variable required?
-  Cache cache_;
-
-  // cache expiration time in hours
-  float cache_expiry_;
 
   StreamDetectorMap detectors_;
 };

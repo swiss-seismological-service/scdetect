@@ -11,6 +11,8 @@
 #include <seiscomp/client/inventory.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/databasequery.h>
+#include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
@@ -37,8 +39,9 @@ Detector::Detection::Detection(
       num_channels_used(num_channels_used),
       template_metadata(template_metadata) {}
 
-DetectorBuilder Detector::Create(DataModel::PublicObjectTimeSpanBuffer &cache) {
-  return DetectorBuilder(cache);
+DetectorBuilder Detector::Create(DataModel::DatabaseQueryPtr db,
+                                 const std::string &origin_id) {
+  return DetectorBuilder(db, origin_id);
 }
 
 void Detector::set_filter(Filter *filter) {
@@ -333,8 +336,13 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
 void Detector::ResetProcessing() { processing_state_ = ProcessingState{}; }
 
 /* -------------------------------------------------------------------------  */
-DetectorBuilder::DetectorBuilder(DataModel::PublicObjectTimeSpanBuffer &cache)
-    : cache_(cache), detector_(new Detector{}) {}
+DetectorBuilder::DetectorBuilder(DataModel::DatabaseQueryPtr db,
+                                 const std::string &origin_id)
+    : db_(db), origin_id_(origin_id), detector_(new Detector{}) {
+
+  // TODO(damb): Raise exception
+  set_origin(origin_id_);
+}
 
 DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
   detector_->config_ = config;
@@ -347,24 +355,17 @@ DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
   return *this;
 }
 
-DetectorBuilder &DetectorBuilder::set_eventparameters(
-    const std::string &origin_id,
-    DataModel::EventParametersPtr event_parameters) {
+DetectorBuilder &DetectorBuilder::set_eventparameters() {
 
-  DataModel::OriginPtr origin = cache_.get<DataModel::Origin>(origin_id);
-  if (!origin) {
-    SEISCOMP_WARNING("Origin %s not found.", origin_id.c_str());
-    return *this;
-  }
-  detector_->origin_ = origin;
-
+  DataModel::EventParametersPtr event_parameters{
+      detector_->origin_->eventParameters()};
   // find the origin's associated event
-  bool found = false;
+  bool found{false};
   for (size_t i = 0; i < event_parameters->eventCount(); ++i) {
     DataModel::EventPtr event = event_parameters->event(i);
     for (size_t j = 0; j < event->originReferenceCount(); j++) {
       DataModel::OriginReferencePtr origin_ref = event->originReference(j);
-      if (origin_ref->originID() == origin_id) {
+      if (origin_ref->originID() == origin_id_) {
         detector_->event_ = event;
         found = true;
         break;
@@ -375,12 +376,18 @@ DetectorBuilder &DetectorBuilder::set_eventparameters(
   }
 
   if (!found) {
-    SEISCOMP_WARNING("No event associated with origin %s.", origin_id.c_str());
+    SEISCOMP_WARNING("No event associated with origin %s.", origin_id_.c_str());
     return *this;
   }
+  detector_->magnitude_ = DataModel::Magnitude::Cast(
+      db_->getObject(DataModel::Magnitude::TypeInfo(),
+                     detector_->event_->preferredMagnitudeID()));
 
-  detector_->magnitude_ = cache_.get<DataModel::Magnitude>(
-      detector_->event_->preferredMagnitudeID());
+  if (!detector_->magnitude_) {
+    SEISCOMP_WARNING("No magnitude associated with event %s: origin=%s",
+                     detector_->event_->publicID().c_str(), origin_id_.c_str());
+    return *this;
+  }
 
   return *this;
 }
@@ -390,9 +397,6 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                             const StreamConfig &stream_config,
                             WaveformHandlerIfacePtr waveform_handler) {
 
-  // TODO(damb): Requires calling DetectorBuilder::set_eventparameters,
-  // firstly. It would be better to get rid of this prerequisite.
-  //
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
 
   // configure pick from arrival
@@ -406,11 +410,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       continue;
     }
 
-    if (!IsValidArrival(arrival)) {
+    pick = DataModel::Pick::Cast(
+        db_->getObject(DataModel::Pick::TypeInfo(), arrival->pickID()));
+    if (!IsValidArrival(arrival, pick)) {
       continue;
     }
 
-    pick = cache_.get<DataModel::Pick>(arrival->pickID());
     pick_waveform_id = pick->waveformID();
     if (template_stream_id != static_cast<std::string>(pick_waveform_id)) {
       continue;
@@ -502,8 +507,8 @@ DetectorBuilder &DetectorBuilder::set_publish_callback(
 
 DetectorBuilder::operator DetectorPtr() { return detector_; }
 
-bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival) {
-  DataModel::PickPtr pick = cache_.get<DataModel::Pick>(arrival->pickID());
+bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
+                                     const DataModel::PickCPtr pick) {
   if (!pick) {
     SEISCOMP_DEBUG("Failed load pick: %s", arrival->pickID().c_str());
     return false;
@@ -516,8 +521,22 @@ bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival) {
         (arrival->weight() == 0 || !arrival->timeUsed())) {
       return false;
     }
-  } catch (Core::ValueException &) {
+  } catch (Core::ValueException &e) {
     return false;
+  }
+  return true;
+}
+
+bool DetectorBuilder::set_origin(const std::string &origin_id) {
+  if (!detector_->origin_) {
+
+    DataModel::OriginPtr origin{DataModel::Origin::Cast(
+        db_->getObject(DataModel::Origin::TypeInfo(), origin_id))};
+    if (!origin) {
+      SEISCOMP_WARNING("Origin %s not found.", origin_id.c_str());
+      return false;
+    }
+    detector_->origin_ = origin;
   }
   return true;
 }

@@ -4,19 +4,18 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <seiscomp/core/recordsequence.h>
+#include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/event.h>
-#include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
-#include <seiscomp/datamodel/publicobjectcache.h>
-#include <vector>
+#include <seiscomp/datamodel/sensorlocation.h>
 
 #include "config.h"
 #include "processor.h"
-#include "seiscomp/core/timewindow.h"
-#include "seiscomp/datamodel/sensorlocation.h"
 #include "settings.h"
 #include "template.h"
 #include "waveform.h"
@@ -67,7 +66,8 @@ public:
   };
 
   friend class DetectorBuilder;
-  static DetectorBuilder Create(DataModel::PublicObjectTimeSpanBuffer &cache);
+  static DetectorBuilder Create(DataModel::DatabaseQueryPtr db,
+                                const std::string &origin_id);
 
   void set_filter(Filter *filter) override;
 
@@ -143,13 +143,11 @@ private:
 class DetectorBuilder {
 
 public:
-  DetectorBuilder(DataModel::PublicObjectTimeSpanBuffer &cache);
+  DetectorBuilder(DataModel::DatabaseQueryPtr db, const std::string &origin_id);
 
   DetectorBuilder &set_config(const DetectorConfig &config);
 
-  DetectorBuilder &
-  set_eventparameters(const std::string &origin_id,
-                      DataModel::EventParametersPtr event_parameters);
+  DetectorBuilder &set_eventparameters();
   // Set stream related template configuration
   DetectorBuilder &set_stream(const std::string &stream_id,
                               const StreamConfig &stream_config,
@@ -163,10 +161,14 @@ public:
   friend void swap(DetectorBuilder &lhs, DetectorBuilder &rhs);
 
 protected:
-  bool IsValidArrival(const DataModel::ArrivalCPtr arrival);
+  bool IsValidArrival(const DataModel::ArrivalCPtr arrival,
+                      const DataModel::PickCPtr pick);
+
+  bool set_origin(const std::string &origin_id);
 
 private:
-  DataModel::PublicObjectTimeSpanBuffer cache_;
+  DataModel::DatabaseQueryPtr db_;
+  std::string origin_id_;
 
   DetectorPtr detector_;
 };

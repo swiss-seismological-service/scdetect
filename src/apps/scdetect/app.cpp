@@ -16,7 +16,6 @@
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
-#include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
 #include <seiscomp/utils/files.h>
@@ -165,17 +164,12 @@ IMPL_READ_CONFIG(std::vector<std::string>, configGetStrings)
 } // namespace
 
 Application::Application(int argc, char **argv)
-    : StreamApplication(argc, argv), cache_expiry_(0) {
+    : StreamApplication(argc, argv) {
 
   setLoadStationsEnabled(true);
   setLoadInventoryEnabled(true);
   setLoadConfigModuleEnabled(true);
   setMessagingEnabled(true);
-
-  // TODO(damb): Is ist ok to expire the cache, at all?
-  if (cache_expiry_) {
-    cache_.setTimeSpan(Core::TimeSpan(cache_expiry_ * 3600.0f));
-  }
 
   SetupConfigurationOptions();
 }
@@ -211,7 +205,7 @@ bool Application::validateParameters() {
   }
 
   // disable the database if required
-  if (!isInventoryDatabaseEnabled() && !config_.path_catalog_sc3ml.empty()) {
+  if (!isInventoryDatabaseEnabled()) {
     SEISCOMP_INFO("Disable database connection");
     setDatabaseEnabled(false, false);
   }
@@ -498,79 +492,16 @@ void Application::SetupConfigurationOptions() {
               "--no-publish i.e. no objects are sent)");
   NEW_OPT_CLI(config_.no_publish, "Messaging", "no-publish",
               "do not send any objects");
-  NEW_OPT_CLI(config_.path_catalog_sc3ml, "Input", "ep",
-              "path to a event parameter SC3ML file for offline processing");
   NEW_OPT_CLI(config_.path_template_json, "Input", "template-json",
               "path to a template configuration file (json-formatted)");
 }
 
 bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
-  auto PopulateCache = [&](DataModel::EventParametersPtr ep) -> bool {
-    if (!ep)
-      return false;
-
-    cache_.feed(ep.get());
-    // load events
-    for (size_t i = 0; i < ep->eventCount(); ++i) {
-      DataModel::EventPtr event{ep->event(i)};
-
-      if (event->preferredMagnitudeID().empty()) {
-        SEISCOMP_ERROR("Missing preferred magnitude. Invalid event: %s",
-                       event->publicID().c_str());
-        continue;
-      }
-      if (!cache_.feed(event.get()))
-        return false;
-    }
-    // load origins
-    for (size_t i = 0; i < ep->originCount(); ++i) {
-      DataModel::OriginPtr origin = ep->origin(i);
-
-      if (!origin->arrivalCount()) {
-        SEISCOMP_ERROR("Missing arrivals. Invalid origin: %s",
-                       origin->publicID().c_str());
-        continue;
-      }
-      if (!origin->magnitudeCount()) {
-        SEISCOMP_ERROR(" Missing magnitudes. Invalid origin: %s",
-                       origin->publicID().c_str());
-        continue;
-      }
-      if (!cache_.feed(origin.get()))
-        return false;
-
-      for (size_t j = 0; j < origin->magnitudeCount(); ++j)
-        if (!cache_.feed(origin->magnitude(j)))
-          return false;
-    }
-    // load picks
-    for (size_t i = 0; i < ep->pickCount(); ++i) {
-      if (!cache_.feed(ep->pick(i)))
-        return false;
-    }
-
-    return true;
-  };
-
-  // load event related data
-  DataModel::EventParametersPtr event_parameters;
-  if (!config_.path_catalog_sc3ml.empty()) {
-    IO::XMLArchive ar;
-    if (!ar.open(config_.path_catalog_sc3ml.c_str())) {
-      SEISCOMP_ERROR("Unable to open %s", config_.path_catalog_sc3ml.c_str());
-      return false;
-    }
-    ar >> event_parameters;
-    ar.close();
-  }
+  // load event related data from DB
+  DataModel::EventParametersPtr event_parameters{
+      query()->loadEventParameters()};
   if (!event_parameters) {
-    SEISCOMP_ERROR("No event parameters found in %s",
-                   config_.path_catalog_sc3ml.c_str());
-    return false;
-  }
-
-  if (!PopulateCache(event_parameters)) {
-    SEISCOMP_ERROR("Error while populating cache with event parameters.");
+    SEISCOMP_ERROR("No event parameters found.");
     return false;
   }
 
@@ -603,9 +534,9 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
                         config_.stream_config};
 
       auto detector_builder =
-          Detector::Create(cache_)
+          Detector::Create(query(), tc.origin_id())
               .set_config(tc.detector_config())
-              .set_eventparameters(tc.origin_id(), event_parameters)
+              .set_eventparameters()
               .set_publish_callback(
                   boost::bind(&Application::EmitDetection, this, _1, _2, _3));
 
