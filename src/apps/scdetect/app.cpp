@@ -196,7 +196,8 @@ bool Application::validateParameters() {
     if (!(*it)->Get(&commandline()))
       return false;
 
-  // Disable messaging (offline mode) with certain command line options
+  // TODO(damb): Disable messaging (offline mode) with certain command line
+  // options
   if (config_.offline_mode) {
     SEISCOMP_INFO("Disable messaging");
     setMessagingEnabled(false);
@@ -465,33 +466,33 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
 
 void Application::SetupConfigurationOptions() {
   // define application specific configuration
-  NEW_OPT(config_.stream_config.template_config.phase,
-          "template.templatePhase");
+  NEW_OPT(config_.stream_config.template_config.phase, "template.phase");
   NEW_OPT(config_.stream_config.template_config.wf_start,
-          "template.templateWaveformStart");
-  NEW_OPT(config_.stream_config.template_config.wf_end,
-          "template.templateWaveformEnd");
+          "template.waveformStart");
+  NEW_OPT(config_.stream_config.template_config.wf_end, "template.waveformEnd");
   NEW_OPT(config_.stream_config.sensitivity_correction,
           "processing.sensitivityCorrection");
   NEW_OPT(config_.stream_config.init_time, "processing.initTime");
   NEW_OPT(config_.stream_config.filter, "processing.filter");
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.gapInterpolation");
-  NEW_OPT(config_.detector_config.gap_tolerance, "processing.gapTolerance");
+
+  NEW_OPT(config_.detector_config.gap_tolerance, "processing.maxGapLength");
   // TODO(damb): For multi station templates the buffer size needs to be
   // computed, automatically.
   /* NEW_OPT(config_.detector_config.buffer_size, "processing.bufferSize"); */
   NEW_OPT(config_.detector_config.trigger_on, "detector.triggerOnThreshold");
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
+  NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
 
-  NEW_OPT_CLI(config_.load_templates_only, "Generic", "load-templates",
-              "load templates and exit");
   NEW_OPT_CLI(config_.offline_mode, "Messaging", "offline",
               "offline mode, do not connect to the messaging system (implies "
               "--no-publish i.e. no objects are sent)");
   NEW_OPT_CLI(config_.no_publish, "Messaging", "no-publish",
               "do not send any objects");
+  NEW_OPT_CLI(config_.load_templates_only, "Mode", "load-templates",
+              "load templates and exit");
   NEW_OPT_CLI(config_.path_template_json, "Input", "template-json",
               "path to a template configuration file (json-formatted)");
 }

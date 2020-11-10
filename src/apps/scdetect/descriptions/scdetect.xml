@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp>
+	<module name="scdetect" category="Processing" inherit-global-bindings="true">
+		<description>Template matching based earthquake detection</description>
+		<configuration>
+      <group name="template">
+        <parameter name="phase" type="string" default="Pg">
+          <description>
+            Defines the default template phase. 
+          </description>
+        </parameter>
+        <parameter name="waveformStart" type="double" default="-2" unit="s">
+          <description>
+            Defines the default template waveform start time in seconds w.r.t.
+            the template pick.
+          </description>
+        </parameter>
+        <parameter name="waveformEnd" type="double" default="2" unit="s">
+          <description>
+            Defines the default template waveform end time in seconds w.r.t.
+            the template pick.
+          </description>
+        </parameter>
+      </group>
+      <group name="processing">
+        <parameter name="sensitivityCorrection" type="boolean" default="false">
+          <description>
+            Defines whether processors apply sensitivity correction (applying the
+            gain) or not in advance to filter the data.
+          </description>
+        </parameter>
+        <parameter name="filter" type="string">
+          <description>
+            Defines the default filter used for processing. 
+          </description>
+        </parameter>
+        <parameter name="initTime" type="int" default="60" unit="s">
+          <description>
+            The default initTime defines a time span in seconds a detector is
+            blind after initialization. This time is needed to initialize the
+            template processors and depends on it.
+          </description>
+        </parameter>
+        <parameter name="gapInterpolation" type="boolean" default="false">
+          <description>
+            Interpolate gaps linearly? This is valid for gaps shorter
+            than maxGapLength.
+          </description>
+        </parameter>
+				<parameter name="maxGapLength" type="double" default="4.5" unit="s">
+					<description>
+            The maximum gap length in seconds to handle. Gaps larger than the
+            value specified will cause the detector to be reset.
+          </description>
+				</parameter>
+      </group>
+      <group name="detector">
+        <parameter name="timeCorrection" type="double" default="0" unit="s">
+          <description>
+            Default time correction applied for an origin issued.
+          </description>
+        </parameter>
+        <parameter name="triggerOn" type="double" default="0.7">
+          <description>
+            Default threshold which defines when a detector is triggered.
+					</description>
+				</parameter>
+				<parameter name="triggerOff" type="double" default="0.55">
+          <description>
+            Default threshold which defines when the detector is enabled in
+            order to produce new origins, again. Note that this threshold
+            overrides the *triggerDuration* configuration parameter i.e. as
+            soon as the *triggerOff* threshold is met a detector result is
+            issued.
+          </description>
+				</parameter>
+				<parameter name="triggerDuration" type="double" default="2" unit="s">
+          <description>
+            Maximum default duration in seconds after reaching the *triggerOn*
+            threshold to search for the maximum correlation
+            between configured streams.
+          </description>
+				</parameter>
+      </group>
+    </configuration>
+
+		<command-line>
+			<group name="Generic">
+				<optionReference>generic#help</optionReference>
+				<optionReference>generic#version</optionReference>
+				<optionReference>generic#config-file</optionReference>
+				<optionReference>generic#plugins</optionReference>
+				<optionReference>generic#daemon</optionReference>
+				<optionReference>generic#auto-shutdown</optionReference>
+				<optionReference>generic#shutdown-master-module</optionReference>
+				<optionReference>generic#shutdown-master-username</optionReference>
+			</group>
+
+			<group name="Verbosity">
+				<optionReference>verbosity#verbosity</optionReference>
+				<optionReference>verbosity#v</optionReference>
+				<optionReference>verbosity#quiet</optionReference>
+				<optionReference>verbosity#component</optionReference>
+				<optionReference>verbosity#syslog</optionReference>
+				<optionReference>verbosity#lockfile</optionReference>
+				<optionReference>verbosity#console</optionReference>
+				<optionReference>verbosity#debug</optionReference>
+				<optionReference>verbosity#log-file</optionReference>
+			</group>
+
+			<group name="Messaging">
+				<optionReference>messaging#user</optionReference>
+				<optionReference>messaging#host</optionReference>
+				<optionReference>messaging#timeout</optionReference>
+				<optionReference>messaging#primary-group</optionReference>
+				<optionReference>messaging#subscribe-group</optionReference>
+				<optionReference>messaging#content-type</optionReference>
+				<optionReference>messaging#start-stop-msg</optionReference>
+				<option flag="" long-flag="offline">
+					<description>Neither connect messaging server nor database.</description>
+				</option>
+				<option flag="" long-flag="no-publish">
+					<description>
+            Runs the module as usual but does not send any messages. This can
+            be useful to test the module within a running system.
+					</description>
+				</option>
+			</group>
+
+			<group name="Database">
+				<optionReference>database#db-driver-list</optionReference>
+				<optionReference>database#database</optionReference>
+				<optionReference>database#config-module</optionReference>
+				<optionReference>database#inventory-db</optionReference>
+				<option flag="" long-flag="db-disable" argument="" publicID="database#db-disable">
+					<description>Do not use the database at all</description>
+				</option>
+			</group>
+
+			<group name="Records">
+				<optionReference>records#record-driver-list</optionReference>
+				<optionReference>records#record-url</optionReference>
+				<optionReference>records#record-file</optionReference>
+				<optionReference>records#record-type</optionReference>
+			</group>
+
+      <group name="Mode">
+        <option flag="" long-flag="load-templates">
+          <description>Load templates and exit.</description>
+        </option>
+			</group>
+
+      <group name="Input">
+				<option flag="" long-flag="template-json">
+          <description>
+            Path to a template configuration file (JSON formatted).
+					</description>
+				</option>
+			</group>
+
+		</command-line>
+	</module>
+</seiscomp>
