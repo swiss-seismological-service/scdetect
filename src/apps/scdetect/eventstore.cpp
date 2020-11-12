@@ -1,11 +1,14 @@
 #include "eventstore.h"
 
+#include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 
+#include "seiscomp/datamodel/amplitude.h"
+#include "seiscomp/datamodel/publicobject.h"
 #include "version.h"
 
 namespace Seiscomp {
@@ -102,6 +105,38 @@ bool EventStore::set_cache(DataModel::EventParametersPtr ep) {
   }
 
   return true;
+}
+
+DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
+                                         const std::string &public_id) {
+
+  auto retval = cache_.find(class_type, public_id);
+  if (retval) {
+    return retval;
+  }
+
+  if (event_parameters_) {
+    if (DataModel::Pick::TypeInfo() == class_type) {
+      return event_parameters_->findPick(public_id);
+    } else if (DataModel::Event::TypeInfo() == class_type) {
+      return event_parameters_->findEvent(public_id);
+    } else if (DataModel::Origin::TypeInfo() == class_type) {
+      return event_parameters_->findOrigin(public_id);
+    } else if (DataModel::Amplitude::TypeInfo() == class_type) {
+      return event_parameters_->findAmplitude(public_id);
+    } else if (DataModel::Magnitude::TypeInfo() == class_type) {
+      // linear search
+      for (size_t i = 0; i < event_parameters_->originCount(); ++i) {
+        auto origin = event_parameters_->origin(i);
+        for (size_t j = 0; j < origin->magnitudeCount(); ++j) {
+          if (origin->magnitude(j)->publicID() == public_id) {
+            return origin->magnitude(j);
+          }
+        }
+      }
+    }
+  }
+  return nullptr;
 }
 
 } // namespace detect

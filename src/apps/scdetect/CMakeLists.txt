@@ -5,6 +5,8 @@ SET(
     app.cpp
     config.cpp
     detector.cpp
+    eventstore.cpp
+    exception.cpp
     main.cpp
     processor.cpp
     template.cpp
@@ -18,8 +20,10 @@ SET(
     app.h
     config.h
     detector.h
+    eventstore.h
+    exception.h
+    processor.h
     settings.h
-    processor.cpp
     template.h
     utils.h
     version.h

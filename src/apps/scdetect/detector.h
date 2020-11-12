@@ -8,7 +8,6 @@
 
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
@@ -66,8 +65,7 @@ public:
   };
 
   friend class DetectorBuilder;
-  static DetectorBuilder Create(DataModel::DatabaseQueryPtr db,
-                                const std::string &origin_id);
+  static DetectorBuilder Create(const std::string &origin_id);
 
   void set_filter(Filter *filter) override;
 
@@ -143,7 +141,7 @@ private:
 class DetectorBuilder {
 
 public:
-  DetectorBuilder(DataModel::DatabaseQueryPtr db, const std::string &origin_id);
+  DetectorBuilder(const std::string &origin_id);
 
   DetectorBuilder &set_config(const DetectorConfig &config);
 
@@ -167,11 +165,11 @@ protected:
   bool set_origin(const std::string &origin_id);
 
 private:
-  DataModel::DatabaseQueryPtr db_;
   std::string origin_id_;
 
   DetectorPtr detector_;
 };
+
 } // namespace detect
 } // namespace Seiscomp
 

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <seiscomp/client/streamapplication.h>
+#include <seiscomp/datamodel/databasequery.h>
 
 #include "config.h"
 #include "processor.h"
@@ -53,6 +54,7 @@ public:
   struct Config {
 
     std::string path_filesystem_cache;
+    std::string url_event_db;
 
     bool load_templates_only{false};
 
@@ -135,6 +137,11 @@ protected:
 
   void EmitDetection(ProcessorCPtr processor, RecordCPtr record,
                      Processor::ResultCPtr result);
+
+protected:
+  // Load events either from `event_db` or `db`.
+  virtual bool LoadEvents(const std::string &event_db,
+                          DataModel::DatabaseQueryPtr db);
 
 private:
   void SetupConfigurationOptions();

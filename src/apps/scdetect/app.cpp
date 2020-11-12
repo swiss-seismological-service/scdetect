@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "detector.h"
+#include "eventstore.h"
 #include "settings.h"
 #include "utils.h"
 
@@ -305,7 +306,7 @@ bool Application::init() {
   if (!StreamApplication::init())
     return false;
 
-  // cache prepared waveform on filesystem
+  // cache template waveforms on filesystem
   WaveformHandlerIfacePtr waveform_handler{
       new WaveformHandler{recordStreamURL()}};
   waveform_handler = new detect::FileSystemCache{
@@ -464,6 +465,58 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
     }
 }
 
+bool Application::LoadEvents(const std::string &event_db,
+                             DataModel::DatabaseQueryPtr db) {
+  bool loaded{false};
+  if (!event_db.empty()) {
+    SEISCOMP_INFO("Loading events from %s", event_db.c_str());
+    if (event_db.find("://") == std::string::npos) {
+      try {
+        EventStore::Instance().Load(event_db);
+        loaded = true;
+      } catch (std::exception &e) {
+        SEISCOMP_ERROR("%s", e.what());
+      }
+    } else if (event_db.find("file://") == 0) {
+      try {
+        EventStore::Instance().Load(event_db.substr(7));
+        loaded = true;
+      } catch (std::exception &e) {
+        SEISCOMP_ERROR("%s", e.what());
+      }
+    } else {
+      SEISCOMP_INFO("Trying to connect to %s", event_db.c_str());
+      IO::DatabaseInterfacePtr db{
+          IO::DatabaseInterface::Open(event_db.c_str())};
+      if (db) {
+        SEISCOMP_INFO("Connected successfully");
+        DataModel::DatabaseQueryPtr query{
+            new DataModel::DatabaseQuery(db.get())};
+        EventStore::Instance().Load(query);
+        loaded = true;
+      } else {
+        SEISCOMP_WARNING("Database connection to %s failed", event_db.c_str());
+      }
+    }
+  }
+
+  if (!loaded && isDatabaseEnabled()) {
+    SEISCOMP_INFO("Loading events from %s", databaseURI().c_str());
+    try {
+      EventStore::Instance().Load(query());
+      loaded = true;
+    } catch (std::exception &e) {
+      SEISCOMP_ERROR("%s", e.what());
+    }
+  }
+
+  if (loaded) {
+    SEISCOMP_INFO("Finished loading events");
+  }
+
+  return loaded;
+}
+
 void Application::SetupConfigurationOptions() {
   // define application specific configuration
   NEW_OPT(config_.stream_config.template_config.phase, "template.phase");
@@ -486,6 +539,9 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
 
+  NEW_OPT_CLI(config_.url_event_db, "Database", "event-db",
+              "load events from the given database or file, format: "
+              "[service://]location");
   NEW_OPT_CLI(config_.offline_mode, "Messaging", "offline",
               "offline mode, do not connect to the messaging system (implies "
               "--no-publish i.e. no objects are sent)");
@@ -498,10 +554,14 @@ void Application::SetupConfigurationOptions() {
 }
 
 bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
-  // load event related data from DB
-  DataModel::EventParametersPtr event_parameters{
-      query()->loadEventParameters()};
-  if (!event_parameters) {
+
+  // load event related data
+  if (!LoadEvents(config_.url_event_db, query())) {
+    SEISCOMP_ERROR("Failed to load events.");
+    return false;
+  }
+
+  if (!EventStore::Instance().event_parameters()) {
     SEISCOMP_ERROR("No event parameters found.");
     return false;
   }
@@ -535,7 +595,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
                         config_.stream_config};
 
       auto detector_builder =
-          Detector::Create(query(), tc.origin_id())
+          Detector::Create(tc.origin_id())
               .set_config(tc.detector_config())
               .set_eventparameters()
               .set_publish_callback(

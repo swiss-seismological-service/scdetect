@@ -16,6 +16,7 @@
 #include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
+#include "eventstore.h"
 #include "template.h"
 #include "utils.h"
 
@@ -39,9 +40,8 @@ Detector::Detection::Detection(
       num_channels_used(num_channels_used),
       template_metadata(template_metadata) {}
 
-DetectorBuilder Detector::Create(DataModel::DatabaseQueryPtr db,
-                                 const std::string &origin_id) {
-  return DetectorBuilder(db, origin_id);
+DetectorBuilder Detector::Create(const std::string &origin_id) {
+  return DetectorBuilder(origin_id);
 }
 
 void Detector::set_filter(Filter *filter) {
@@ -336,9 +336,8 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
 void Detector::ResetProcessing() { processing_state_ = ProcessingState{}; }
 
 /* -------------------------------------------------------------------------  */
-DetectorBuilder::DetectorBuilder(DataModel::DatabaseQueryPtr db,
-                                 const std::string &origin_id)
-    : db_(db), origin_id_(origin_id), detector_(new Detector{}) {
+DetectorBuilder::DetectorBuilder(const std::string &origin_id)
+    : origin_id_(origin_id), detector_(new Detector{}) {
 
   // TODO(damb): Raise exception
   set_origin(origin_id_);
@@ -363,7 +362,7 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   bool found{false};
   for (size_t i = 0; i < event_parameters->eventCount(); ++i) {
     DataModel::EventPtr event = event_parameters->event(i);
-    for (size_t j = 0; j < event->originReferenceCount(); j++) {
+    for (size_t j = 0; j < event->originReferenceCount(); ++j) {
       DataModel::OriginReferencePtr origin_ref = event->originReference(j);
       if (origin_ref->originID() == origin_id_) {
         detector_->event_ = event;
@@ -379,9 +378,9 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
     SEISCOMP_WARNING("No event associated with origin %s.", origin_id_.c_str());
     return *this;
   }
-  detector_->magnitude_ = DataModel::Magnitude::Cast(
-      db_->getObject(DataModel::Magnitude::TypeInfo(),
-                     detector_->event_->preferredMagnitudeID()));
+
+  detector_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
+      detector_->event_->preferredMagnitudeID());
 
   if (!detector_->magnitude_) {
     SEISCOMP_WARNING("No magnitude associated with event %s: origin=%s",
@@ -410,8 +409,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       continue;
     }
 
-    pick = DataModel::Pick::Cast(
-        db_->getObject(DataModel::Pick::TypeInfo(), arrival->pickID()));
+    pick = EventStore::Instance().Get<DataModel::Pick>(arrival->pickID());
     if (!IsValidArrival(arrival, pick)) {
       continue;
     }
@@ -530,8 +528,8 @@ bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
 bool DetectorBuilder::set_origin(const std::string &origin_id) {
   if (!detector_->origin_) {
 
-    DataModel::OriginPtr origin{DataModel::Origin::Cast(
-        db_->getObject(DataModel::Origin::TypeInfo(), origin_id))};
+    DataModel::OriginPtr origin{
+        EventStore::Instance().Get<DataModel::Origin>(origin_id)};
     if (!origin) {
       SEISCOMP_WARNING("Origin %s not found.", origin_id.c_str());
       return false;
