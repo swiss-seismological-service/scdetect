@@ -18,6 +18,7 @@ SET(
 SET(
   DETECT_HEADERS
     app.h
+    builder.h
     config.h
     detector.h
     eventstore.h

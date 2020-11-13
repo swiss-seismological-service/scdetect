@@ -594,26 +594,32 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
       TemplateConfig tc{template_setting_pt.second, config_.detector_config,
                         config_.stream_config};
 
-      auto detector_builder =
-          Detector::Create(tc.origin_id())
-              .set_config(tc.detector_config())
-              .set_eventparameters()
-              .set_publish_callback(
-                  boost::bind(&Application::EmitDetection, this, _1, _2, _3));
+      try {
+        auto detector_builder =
+            Detector::Create(tc.origin_id())
+                .set_config(tc.detector_config())
+                .set_eventparameters()
+                .set_publish_callback(
+                    boost::bind(&Application::EmitDetection, this, _1, _2, _3));
 
-      std::vector<std::string> stream_ids;
-      for (const auto &stream_set : tc) {
-        for (const auto &stream_config_pair : stream_set) {
-          stream_ids.push_back(stream_config_pair.first);
-          detector_builder.set_stream(stream_config_pair.first,
-                                      stream_config_pair.second,
-                                      waveform_handler);
+        std::vector<std::string> stream_ids;
+        for (const auto &stream_set : tc) {
+          for (const auto &stream_config_pair : stream_set) {
+            stream_ids.push_back(stream_config_pair.first);
+            detector_builder.set_stream(stream_config_pair.first,
+                                        stream_config_pair.second,
+                                        waveform_handler);
+          }
         }
-      }
 
-      auto detector = static_cast<DetectorPtr>(detector_builder);
-      for (const auto &stream_id : stream_ids)
-        detectors_.emplace(stream_id, detector);
+        auto detector = static_cast<DetectorPtr>(detector_builder);
+        for (const auto &stream_id : stream_ids)
+          detectors_.emplace(stream_id, detector);
+
+      } catch (DetectorBuilder::BaseException &e) {
+        SEISCOMP_WARNING("Failed to create detector: %s", e.what());
+        continue;
+      }
     }
   } catch (std::ifstream::failure &e) {
     SEISCOMP_ERROR("Failed to parse JSON template configuration file: %s",

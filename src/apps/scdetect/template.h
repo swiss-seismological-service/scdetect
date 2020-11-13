@@ -9,6 +9,7 @@
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/stream.h>
 
+#include "builder.h"
 #include "processor.h"
 #include "waveform.h"
 
@@ -87,7 +88,7 @@ private:
   double waveform_squared_sum_;
 };
 
-class TemplateBuilder {
+class TemplateBuilder : public Builder<TemplateBuilder> {
 public:
   TemplateBuilder();
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);

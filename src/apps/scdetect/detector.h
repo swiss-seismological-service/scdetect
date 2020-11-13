@@ -13,6 +13,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/sensorlocation.h>
 
+#include "builder.h"
 #include "config.h"
 #include "processor.h"
 #include "settings.h"
@@ -138,7 +139,7 @@ private:
   Core::TimeWindow processed_{};
 };
 
-class DetectorBuilder {
+class DetectorBuilder : public Builder<DetectorBuilder> {
 
 public:
   DetectorBuilder(const std::string &origin_id);

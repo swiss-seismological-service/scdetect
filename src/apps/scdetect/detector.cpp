@@ -340,8 +340,10 @@ void Detector::ResetProcessing() { processing_state_ = ProcessingState{}; }
 DetectorBuilder::DetectorBuilder(const std::string &origin_id)
     : origin_id_(origin_id), detector_(new Detector{}) {
 
-  // TODO(damb): Raise exception
-  set_origin(origin_id_);
+  if (!set_origin(origin_id_)) {
+    throw BaseException(std::string("Error while assigning origin: ") +
+                        origin_id);
+  }
 }
 
 DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
@@ -377,7 +379,8 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
 
   if (!found) {
     SEISCOMP_WARNING("No event associated with origin %s.", origin_id_.c_str());
-    return *this;
+    throw BaseException(std::string("No event associated with origin: ") +
+                        origin_id_);
   }
 
   detector_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
@@ -386,7 +389,10 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   if (!detector_->magnitude_) {
     SEISCOMP_WARNING("No magnitude associated with event %s: origin=%s",
                      detector_->event_->publicID().c_str(), origin_id_.c_str());
-    return *this;
+    throw BaseException(std::string("No magnitude associated with event: ") +
+                        detector_->event_->publicID() +
+                        std::string(" (origin=") + origin_id_ +
+                        std::string(")"));
   }
 
   return *this;
@@ -429,7 +435,11 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                      stream_id.c_str(), template_stream_id.c_str(),
                      detector_->origin_->publicID().c_str(),
                      stream_config.template_config.phase.c_str());
-    return *this;
+
+    throw BaseException(stream_id + std::string(" (") + template_stream_id +
+                        std::string("): Failed to load pick: origin=") +
+                        origin_id_ + std::string(", phase=") +
+                        stream_config.template_config.phase);
   }
 
   auto wf_start{pick->time().value() +
@@ -449,7 +459,11 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         "end=%s",
         stream_id.c_str(), template_stream_id.c_str(), wf_start.iso().c_str(),
         wf_end.iso().c_str());
-    return *this;
+
+    throw BaseException(
+        stream_id + std::string(" (") + template_stream_id +
+        std::string("): Stream not found in inventory for epoch: start=") +
+        wf_start.iso() + std::string(", end=") + wf_end.iso());
   }
 
   SEISCOMP_DEBUG("%s (%s): Loaded stream from inventory for epoch: start=%s, "
@@ -473,7 +487,11 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       SEISCOMP_WARNING("%s (%s): Compiling filter (%s) failed: %s",
                        stream_id.c_str(), template_stream_id.c_str(),
                        stream_config.filter.c_str(), err.c_str());
-      return *this;
+
+      throw BaseException(stream_id + std::string(" (") + template_stream_id +
+                          std::string("): Compiling filter (") +
+                          stream_config.filter + std::string(") failed: ") +
+                          err);
     }
   }
 
@@ -518,7 +536,7 @@ DetectorBuilder::operator DetectorPtr() { return detector_; }
 bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
                                      const DataModel::PickCPtr pick) {
   if (!pick) {
-    SEISCOMP_DEBUG("Failed load pick: %s", arrival->pickID().c_str());
+    SEISCOMP_DEBUG("Failed loading pick: %s", arrival->pickID().c_str());
     return false;
   }
   if (!utils::ValidatePhase(arrival->phase().code()))
