@@ -341,8 +341,8 @@ DetectorBuilder::DetectorBuilder(const std::string &origin_id)
     : origin_id_(origin_id), detector_(new Detector{}) {
 
   if (!set_origin(origin_id_)) {
-    throw BaseException(std::string("Error while assigning origin: ") +
-                        origin_id);
+    throw BaseException{std::string{"Error while assigning origin: "} +
+                        origin_id};
   }
 }
 
@@ -379,8 +379,8 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
 
   if (!found) {
     SEISCOMP_WARNING("No event associated with origin %s.", origin_id_.c_str());
-    throw BaseException(std::string("No event associated with origin: ") +
-                        origin_id_);
+    throw BaseException{std::string{"No event associated with origin: "} +
+                        origin_id_};
   }
 
   detector_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
@@ -389,10 +389,10 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   if (!detector_->magnitude_) {
     SEISCOMP_WARNING("No magnitude associated with event %s: origin=%s",
                      detector_->event_->publicID().c_str(), origin_id_.c_str());
-    throw BaseException(std::string("No magnitude associated with event: ") +
+    throw BaseException{std::string{"No magnitude associated with event: "} +
                         detector_->event_->publicID() +
-                        std::string(" (origin=") + origin_id_ +
-                        std::string(")"));
+                        std::string{" (origin="} + origin_id_ +
+                        std::string{")"}};
   }
 
   return *this;
@@ -436,10 +436,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                      detector_->origin_->publicID().c_str(),
                      stream_config.template_config.phase.c_str());
 
-    throw BaseException(stream_id + std::string(" (") + template_stream_id +
-                        std::string("): Failed to load pick: origin=") +
-                        origin_id_ + std::string(", phase=") +
-                        stream_config.template_config.phase);
+    throw BaseException{stream_id + std::string{" ("} + template_stream_id +
+                        std::string{"): Failed to load pick: origin="} +
+                        origin_id_ + std::string{", phase="} +
+                        stream_config.template_config.phase};
   }
 
   auto wf_start{pick->time().value() +
@@ -460,10 +460,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         stream_id.c_str(), template_stream_id.c_str(), wf_start.iso().c_str(),
         wf_end.iso().c_str());
 
-    throw BaseException(
-        stream_id + std::string(" (") + template_stream_id +
-        std::string("): Stream not found in inventory for epoch: start=") +
-        wf_start.iso() + std::string(", end=") + wf_end.iso());
+    throw BaseException{
+        stream_id + std::string{" ("} + template_stream_id +
+        std::string{"): Stream not found in inventory for epoch: start="} +
+        wf_start.iso() + std::string{", end="} + wf_end.iso()};
   }
 
   SEISCOMP_DEBUG("%s (%s): Loaded stream from inventory for epoch: start=%s, "
@@ -488,10 +488,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                        stream_id.c_str(), template_stream_id.c_str(),
                        stream_config.filter.c_str(), err.c_str());
 
-      throw BaseException(stream_id + std::string(" (") + template_stream_id +
-                          std::string("): Compiling filter (") +
-                          stream_config.filter + std::string(") failed: ") +
-                          err);
+      throw BaseException{stream_id + std::string{" ("} + template_stream_id +
+                          std::string{"): Compiling filter ("} +
+                          stream_config.filter + std::string{") failed: "} +
+                          err};
     }
   }
 
