@@ -18,6 +18,17 @@
 namespace Seiscomp {
 namespace detect {
 
+namespace {
+
+bool IsValidWaveformStreamId(const std::string &net_code,
+                             const std::string &sta_code,
+                             const std::string &loc_code,
+                             const std::string &cha_code) {
+  return !(net_code.empty() || sta_code.empty() || cha_code.empty());
+}
+
+} // namespace
+
 namespace waveform {
 
 namespace {
@@ -247,6 +258,9 @@ bool Read(GenericRecord &trace, std::istream &in) {
 
 } // namespace waveform
 
+WaveformHandlerIface::BaseException::BaseException()
+    : Exception("base waveform handler exception") {}
+
 WaveformHandler::WaveformHandler(const std::string &record_stream_url)
     : record_stream_url_(record_stream_url) {}
 
@@ -281,10 +295,15 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
                                        const std::string &cha_code,
                                        const Core::TimeWindow &tw,
                                        const ProcessingConfig &config) {
+
+  if (!IsValidWaveformStreamId(net_code, sta_code, loc_code, cha_code)) {
+    throw BaseException("Invalid waveform stream identifier.");
+  }
+
   IO::RecordStreamPtr rs = IO::RecordStream::Open(record_stream_url_.c_str());
   if (!rs) {
-    std::string msg{"Failed to open RecordStream: " + record_stream_url_};
-    throw std::runtime_error(msg);
+    throw BaseException(
+        std::string{"Failed to open RecordStream: " + record_stream_url_});
   }
   rs->setTimeWindow(tw);
   rs->addStream(net_code, sta_code, loc_code, cha_code);
@@ -298,32 +317,29 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   rs->close();
 
   if (seq->empty()) {
-    std::string msg{Core::stringify(
-        "%s.%s.%s.%s: Failed to load data: start=%s, end=%s", net_code.c_str(),
+    throw BaseException(std::string{Core::stringify(
+        "%s.%s.%s.%s: No data: start=%s, end=%s", net_code.c_str(),
         sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
-    throw std::runtime_error(msg);
+        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())});
   }
 
   // merge RecordSequence into GenericRecord
   GenericRecordPtr trace{new GenericRecord()};
   if (!waveform::Merge(*trace, *seq)) {
-    std::string msg{Core::stringify(
+    throw BaseException(std::string{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "
         "end=%s",
         net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
-    throw std::runtime_error(msg);
+        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())});
   }
 
   trace->setChannelCode(cha_code);
   if (!waveform::Trim(*trace, tw)) {
-    std::string msg{Core::stringify(
+    throw BaseException(std::string{Core::stringify(
         "%s.%s.%s.%s: Incomplete trace; not enough data for requested time:"
         "start=%s, end=%s",
         net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
-    throw std::runtime_error(msg);
+        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())});
   }
 
   return trace;
@@ -372,6 +388,10 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
     return true;
   };
 
+  if (!IsValidWaveformStreamId(net_code, sta_code, loc_code, cha_code)) {
+    throw BaseException("Invalid waveform stream identifier.");
+  }
+
   std::string cache_key;
   MakeCacheKey(net_code, sta_code, loc_code, cha_code, tw, config, cache_key);
 
@@ -396,12 +416,11 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
 
   if (!config.filter_string.empty()) {
     if (!waveform::Filter(*trace_ptr, config.filter_string)) {
-      std::string msg{Core::stringify(
+      throw BaseException(std::string{Core::stringify(
           "%s.%s.%s.%s: Filtering failed with filter: filter=%s,"
           "start=%s, end=%s",
           net_code.c_str(), sta_code.c_str(), loc_code.c_str(),
-          cha_code.c_str(), config.filter_string.c_str())};
-      throw std::runtime_error(msg);
+          cha_code.c_str(), config.filter_string.c_str())});
     }
   }
 

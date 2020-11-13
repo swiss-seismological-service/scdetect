@@ -11,6 +11,7 @@
 #include <seiscomp/core/typedarray.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
+#include "exception.h"
 #include "version.h"
 
 namespace Seiscomp {
@@ -34,10 +35,16 @@ bool Read(GenericRecord &trace, std::istream &in);
 DEFINE_SMARTPOINTER(WaveformHandlerIface);
 class WaveformHandlerIface : public Core::BaseObject {
 public:
+  class BaseException : public Exception {
+  public:
+    using Exception::Exception;
+    BaseException();
+  };
+
   struct ProcessingConfig {
-    std::string filter_string = "";
-    double resample_frequency = 0;
-    bool demean = true;
+    std::string filter_string{""};
+    double resample_frequency{0};
+    bool demean{true};
   };
 
   virtual ~WaveformHandlerIface() {}
