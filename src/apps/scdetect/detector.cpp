@@ -451,6 +451,11 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     return *this;
   }
 
+  SEISCOMP_DEBUG("%s (%s): Loaded stream from inventory for epoch: start=%s, "
+                 "end=%s",
+                 stream_id.c_str(), template_stream_id.c_str(),
+                 wf_start.iso().c_str(), wf_end.iso().c_str());
+
   WaveformHandlerIface::ProcessingConfig config;
   config.filter_string = stream_config.filter;
 
