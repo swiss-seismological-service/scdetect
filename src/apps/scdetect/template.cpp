@@ -1,6 +1,7 @@
 #include "template.h"
 
 #include <algorithm>
+#include <exception>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -156,7 +157,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
   try {
     template_->waveform_ =
         waveform_handler->Get(stream_id, wf_start, wf_end, config);
-  } catch (std::runtime_error &e) {
+  } catch (std::exception &e) {
     throw BaseException(std::string("Failed to load template waveform: ") +
                         e.what());
   }
