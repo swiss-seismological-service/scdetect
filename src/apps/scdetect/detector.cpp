@@ -495,15 +495,19 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     }
   }
 
-  detector_->stream_configs_[stream_id].processor =
-      Template::Create()
-          .set_phase(stream_config.template_config.phase)
-          .set_arrival_weight(arrival_weight)
-          .set_pick(pick)
-          .set_stream_config(*stream)
-          .set_filter(rt_template_filter.release(), stream_config.init_time)
-          .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
-                        config);
+  try {
+    detector_->stream_configs_[stream_id].processor =
+        Template::Create()
+            .set_phase(stream_config.template_config.phase)
+            .set_arrival_weight(arrival_weight)
+            .set_pick(pick)
+            .set_stream_config(*stream)
+            .set_filter(rt_template_filter.release(), stream_config.init_time)
+            .set_waveform(waveform_handler, template_stream_id, wf_start,
+                          wf_end, config);
+  } catch (TemplateBuilder::BaseException &e) {
+    throw BaseException(e.what());
+  }
 
   const auto &template_init_time{
       detector_->stream_configs_[stream_id].processor->init_time()};

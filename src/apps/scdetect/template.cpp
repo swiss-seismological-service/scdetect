@@ -153,8 +153,13 @@ TemplateBuilder &TemplateBuilder::set_waveform(
   template_->waveform_start_ = wf_start;
   template_->waveform_end_ = wf_end;
   template_->waveform_stream_id_ = stream_id;
-  template_->waveform_ =
-      waveform_handler->Get(stream_id, wf_start, wf_end, config);
+  try {
+    template_->waveform_ =
+        waveform_handler->Get(stream_id, wf_start, wf_end, config);
+  } catch (std::runtime_error &e) {
+    throw BaseException(std::string("Failed to load template waveform: ") +
+                        e.what());
+  }
   template_->waveform_sampling_frequency_ =
       template_->waveform_->samplingFrequency();
 
