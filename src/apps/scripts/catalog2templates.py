@@ -147,7 +147,12 @@ def main(argv=None):
     parser.add_argument(
         "--filter-events",
         type=str,
-        help="Filter to be applied to events while parsing the catalog.",
+        help=(
+            "Filter to be applied to events while parsing the catalog. The "
+            " filter syntax follows"
+            " https://docs.obspy.org/packages/autogen/"
+            "obspy.core.event.Catalog.filter.html."
+        ),
     )
     parser.add_argument(
         "-e",
