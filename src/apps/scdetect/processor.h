@@ -157,7 +157,7 @@ protected:
     // The sampling frequency of the stream
     double sampling_frequency;
     // The filter (if used)
-    Filter *filter;
+    Filter *filter{nullptr};
   };
 
   // Virtual method that must be used in derived classes to analyse a
