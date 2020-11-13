@@ -315,16 +315,19 @@ bool Application::init() {
   if (!InitDetectors(waveform_handler))
     return false;
 
-  if (config_.load_templates_only)
-    exit(0);
-
   output_origins_ = addOutputObjectLog("origin", primaryMessagingGroup());
 
   return true;
 }
 
 bool Application::run() {
-  // TODO
+  SEISCOMP_DEBUG("Application initialized.");
+
+  if (config_.load_templates_only) {
+    SEISCOMP_DEBUG("Requested application exit after template initialization.");
+    return true;
+  }
+
   return StreamApplication::run();
 }
 
