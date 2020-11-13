@@ -1,6 +1,7 @@
 #include "detector.h"
 
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <stdexcept>
 #include <unordered_set>
@@ -461,15 +462,19 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   detector_->stream_configs_[stream_id] = Detector::StreamConfig{};
 
-  // create template related filter (used during processing)
-  std::string err;
-  auto template_filter{Processor::Filter::Create(stream_config.filter, &err)};
+  // create template related filter (used during real-time stream processing)
+  std::unique_ptr<Processor::Filter> rt_template_filter;
+  if (!stream_config.filter.empty()) {
+    std::string err;
+    rt_template_filter.reset(
+        Processor::Filter::Create(stream_config.filter, &err));
 
-  if (!template_filter) {
-    SEISCOMP_WARNING("%s (%s): Compiling filter failed: %s: %s",
-                     stream_id.c_str(), template_stream_id.c_str(),
-                     stream_config.filter.c_str(), err.c_str());
-    return *this;
+    if (!rt_template_filter) {
+      SEISCOMP_WARNING("%s (%s): Compiling filter (%s) failed: %s",
+                       stream_id.c_str(), template_stream_id.c_str(),
+                       stream_config.filter.c_str(), err.c_str());
+      return *this;
+    }
   }
 
   detector_->stream_configs_[stream_id].processor =
@@ -478,7 +483,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_arrival_weight(arrival_weight)
           .set_pick(pick)
           .set_stream_config(*stream)
-          .set_filter(template_filter, stream_config.init_time)
+          .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         config);
 
