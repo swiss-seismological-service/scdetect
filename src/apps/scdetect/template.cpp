@@ -151,12 +151,18 @@ TemplateBuilder &TemplateBuilder::set_waveform(
     WaveformHandlerIfacePtr waveform_handler, const std::string &stream_id,
     const Core::Time &wf_start, const Core::Time &wf_end,
     const WaveformHandlerIface::ProcessingConfig &config) {
+
   template_->waveform_start_ = wf_start;
   template_->waveform_end_ = wf_end;
   template_->waveform_stream_id_ = stream_id;
+
+  // prepare waveform stream id
+  std::vector<std::string> wf_tokens;
+  Core::split(wf_tokens, stream_id, ".", false);
   try {
     template_->waveform_ =
-        waveform_handler->Get(stream_id, wf_start, wf_end, config);
+        waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
+                              wf_tokens[3], wf_start, wf_end, config);
   } catch (std::exception &e) {
     throw BaseException(std::string("Failed to load template waveform: ") +
                         e.what());
