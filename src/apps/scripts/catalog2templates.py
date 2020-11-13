@@ -86,6 +86,9 @@ def parse_catalog(catalog, exclude_pattern=None, phases=("Pg", "Sg")):
                 ]
             ]
 
+            if not _dict["streams"][0]:
+                continue
+
             del _dict["pick_ids"]
             del _dict["phase"]
 
