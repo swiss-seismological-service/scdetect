@@ -35,7 +35,8 @@ def parse_catalog(catalog, phases=("Pg", "Sg")):
 
             for phase in phases:
                 arrivals = filter(
-                    functools.partial(filter_phase, phases=[phase]), origin.arrivals,
+                    functools.partial(filter_phase, phases=[phase]),
+                    origin.arrivals,
                 )
 
                 if not arrivals:
@@ -44,7 +45,9 @@ def parse_catalog(catalog, phases=("Pg", "Sg")):
                 config_dict = {}
                 config_dict["originId"] = str(origin.resource_id)
                 config_dict["phase"] = phase
-                config_dict["pick_ids"] = [arrival.pick_id for arrival in arrivals]
+                config_dict["pick_ids"] = [
+                    arrival.pick_id for arrival in arrivals
+                ]
                 _config_dicts.append(config_dict)
 
         for _dict in _config_dicts:
@@ -96,7 +99,9 @@ class TemplateConfig:
                 ]
 
                 if self._detector_defaults:
-                    config_dicts.append(dict(ChainMap(_dict, self._detector_defaults)))
+                    config_dicts.append(
+                        dict(ChainMap(_dict, self._detector_defaults))
+                    )
                 else:
                     config_dicts.append(_dict)
 
@@ -150,14 +155,20 @@ def main(argv=None):
         metavar="SECS",
         type=int,
         default=-2,
-        help="Template related waveform start time in seconds w.r.t. the pick time.",
+        help=(
+            "Template related waveform start time in seconds w.r.t. the pick"
+            " time."
+        ),
     )
     parser.add_argument(
         "--template-wf-end",
         metavar="SECS",
         type=int,
         default=2,
-        help="Template related waveform end time in seconds w.r.t. the pick time.",
+        help=(
+            "Template related waveform end time in seconds w.r.t. the pick"
+            " time."
+        ),
     )
 
     # positional arguments
