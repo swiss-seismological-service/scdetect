@@ -11,13 +11,21 @@ import sys
 import argparse
 import functools
 import json
+import re
 
 from collections import ChainMap
 
 from obspy import read_events
 
 
-def parse_catalog(catalog, phases=("Pg", "Sg")):
+def regex_str(pattern):
+    try:
+        return re.compile(pattern)
+    except re.error as e:
+        raise argparse.ArgumentError(e.msg)
+
+
+def parse_catalog(catalog, exclude_pattern=None, phases=("Pg", "Sg")):
     def filter_phase(arrival, phases):
         return arrival.phase in phases
 
@@ -69,6 +77,12 @@ def parse_catalog(catalog, phases=("Pg", "Sg")):
                         "templatePhase": _dict["phase"],
                     }
                     for p in picks
+                    if (
+                        exclude_pattern is None
+                        or not exclude_pattern.match(
+                            p.waveform_id.get_seed_string()
+                        )
+                    )
                 ]
             ]
 
@@ -134,6 +148,19 @@ def main(argv=None):
         "--filter-events",
         type=str,
         help="Filter to be applied to events while parsing the catalog.",
+    )
+    parser.add_argument(
+        "-e",
+        "--exclude",
+        type=regex_str,
+        metavar="REGEX",
+        default=None,
+        dest="exclude_pattern",
+        help=(
+            "Exclude streams when the waveform stream identifier matches"
+            " REGEX. For valid regular expressions visit"
+            " https://docs.python.org/3/library/re.html."
+        ),
     )
     parser.add_argument(
         "-o",
@@ -204,7 +231,7 @@ def main(argv=None):
     }
 
     template_config = TemplateConfig(
-        parse_catalog(cat),
+        parse_catalog(cat, exclude_pattern=args.exclude_pattern),
         detector_defaults=detector_defaults,
         stream_defaults=stream_defaults,
     )
