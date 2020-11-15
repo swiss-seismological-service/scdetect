@@ -101,9 +101,10 @@ bool Merge(GenericRecord &trace, const RecordSequence &seq) {
 }
 
 bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
-  int offset = static_cast<double>(tw.startTime() - trace.startTime()) *
-               trace.samplingFrequency();
-  int samples = tw.length() * trace.samplingFrequency();
+  auto offset{
+      static_cast<int>(static_cast<double>(tw.startTime() - trace.startTime()) *
+                       trace.samplingFrequency())};
+  auto samples{static_cast<int>(tw.length() * trace.samplingFrequency())};
 
   // Not enough data at start of time window
   if (offset < 0) {
@@ -116,7 +117,7 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
   if (offset + samples > trace.data()->size()) {
     SEISCOMP_WARNING("%s: Need %d more samples past the end.",
                      trace.streamID().c_str(),
-                     trace.data()->size() - samples - offset);
+                     -(trace.data()->size() - samples - offset));
     return false;
   }
 
