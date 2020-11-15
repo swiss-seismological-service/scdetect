@@ -159,7 +159,7 @@ def main(argv=None):
     )
     parser.add_argument(
         "-e",
-        "--exclude",
+        "--exclude-streams",
         type=regex_str,
         metavar="REGEX",
         default=None,
