@@ -13,11 +13,21 @@ public:
     using Exception::Exception;
     BaseException();
   };
+
+  class NoWaveformData : public BaseException {
+  public:
+    using BaseException::BaseException;
+    NoWaveformData();
+  };
 };
 
 template <typename T>
 Builder<T>::BaseException::BaseException()
     : Exception("error while object creation") {}
+
+template <typename T>
+Builder<T>::NoWaveformData::NoWaveformData()
+    : BaseException{"no data available"} {}
 
 } // namespace detect
 } // namespace Seiscomp

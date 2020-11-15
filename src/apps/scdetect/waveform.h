@@ -73,6 +73,12 @@ public:
 DEFINE_SMARTPOINTER(WaveformHandler);
 class WaveformHandler : public WaveformHandlerIface {
 public:
+  class NoData : public BaseException {
+  public:
+    using BaseException::BaseException;
+    NoData();
+  };
+
   WaveformHandler(const std::string &record_stream_url);
 
   GenericRecordCPtr

@@ -264,6 +264,8 @@ bool Read(GenericRecord &trace, std::istream &in) {
 WaveformHandlerIface::BaseException::BaseException()
     : Exception{"base waveform handler exception"} {}
 
+WaveformHandler::NoData::NoData() : BaseException{"no data avaiable"} {}
+
 WaveformHandler::WaveformHandler(const std::string &record_stream_url)
     : record_stream_url_(record_stream_url) {}
 
@@ -325,7 +327,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   rs->close();
 
   if (seq->empty()) {
-    throw BaseException{std::string{Core::stringify(
+    throw NoData{std::string{Core::stringify(
         "%s.%s.%s.%s: No data: start=%s, end=%s", net_code.c_str(),
         sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())}};

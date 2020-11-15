@@ -163,6 +163,9 @@ TemplateBuilder &TemplateBuilder::set_waveform(
     template_->waveform_ =
         waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
                               wf_tokens[3], wf_start, wf_end, config);
+  } catch (WaveformHandler::NoData &e) {
+    throw NoWaveformData{std::string{"Failed to load template waveform: "} +
+                         e.what()};
   } catch (std::exception &e) {
     throw BaseException{std::string{"Failed to load template waveform: "} +
                         e.what()};

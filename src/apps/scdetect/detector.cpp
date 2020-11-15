@@ -505,8 +505,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
             .set_filter(rt_template_filter.release(), stream_config.init_time)
             .set_waveform(waveform_handler, template_stream_id, wf_start,
                           wf_end, config);
+  } catch (TemplateBuilder::NoWaveformData &e) {
+    throw DetectorBuilder::NoWaveformData{e.what()};
   } catch (TemplateBuilder::BaseException &e) {
-    throw BaseException(e.what());
+    throw BaseException{e.what()};
   }
 
   const auto &template_init_time{

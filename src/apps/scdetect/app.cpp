@@ -618,10 +618,22 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         std::vector<std::string> stream_ids;
         for (const auto &stream_set : tc) {
           for (const auto &stream_config_pair : stream_set) {
+            try {
+              detector_builder.set_stream(stream_config_pair.first,
+                                          stream_config_pair.second,
+                                          waveform_handler);
+            } catch (DetectorBuilder::NoWaveformData &e) {
+              if (config_.skip_template_if_no_data) {
+                SEISCOMP_WARNING("%s (%s): No data for template waveform "
+                                 "available. Skipping.",
+                                 stream_config_pair.first.c_str(),
+                                 stream_config_pair.second.template_config
+                                     .wf_stream_id.c_str());
+                continue;
+              }
+              throw;
+            }
             stream_ids.push_back(stream_config_pair.first);
-            detector_builder.set_stream(stream_config_pair.first,
-                                        stream_config_pair.second,
-                                        waveform_handler);
           }
         }
 
