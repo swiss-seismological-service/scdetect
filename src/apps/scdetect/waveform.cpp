@@ -13,6 +13,8 @@
 #include <seiscomp/math/filter.h>
 #include <seiscomp/utils/files.h>
 
+#include "seiscomp/core/datetime.h"
+#include "seiscomp/core/timewindow.h"
 #include "utils.h"
 
 namespace Seiscomp {
@@ -306,7 +308,12 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
     throw BaseException{
         std::string{"Failed to open RecordStream: " + record_stream_url_}};
   }
-  rs->setTimeWindow(tw);
+
+  Core::TimeSpan download_margin{download_margin_};
+  Core::TimeWindow tw_with_margin{tw.startTime() - download_margin,
+                                  tw.endTime() + download_margin};
+
+  rs->setTimeWindow(tw_with_margin);
   rs->addStream(net_code, sta_code, loc_code, cha_code);
 
   IO::RecordInput inp{rs.get(), Array::DOUBLE, Record::DATA_ONLY};

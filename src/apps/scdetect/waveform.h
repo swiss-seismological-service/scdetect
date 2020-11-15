@@ -98,6 +98,8 @@ public:
 
 private:
   std::string record_stream_url_;
+
+  double download_margin_{2};
 };
 
 DEFINE_SMARTPOINTER(Cached);
