@@ -262,6 +262,14 @@ bool Application::validateParameters() {
         config_.stream_config.template_config.wf_end);
     return false;
   }
+  if (!config_.stream_config.template_config.filter.empty()) {
+    std::string err;
+    if (!utils::IsValidFilter(config_.stream_config.template_config.filter,
+                              err)) {
+      SEISCOMP_WARNING("Invalid configuration: 'filter': %s", err.c_str());
+      return false;
+    }
+  }
 
   return true;
 }
@@ -526,6 +534,8 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.stream_config.template_config.wf_start,
           "template.waveformStart");
   NEW_OPT(config_.stream_config.template_config.wf_end, "template.waveformEnd");
+  NEW_OPT(config_.stream_config.template_config.filter, "template.filter");
+
   NEW_OPT(config_.stream_config.sensitivity_correction,
           "processing.sensitivityCorrection");
   NEW_OPT(config_.stream_config.init_time, "processing.initTime");

@@ -35,7 +35,8 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("templateWaveformEnd", defaults.template_config.wf_end);
   template_config.wf_stream_id =
       pt.get<std::string>("templateWaveformId", wf_stream_id);
-  template_config.filter = pt.get<std::string>("templateFilter", filter);
+  template_config.filter =
+      pt.get<std::string>("templateFilter", defaults.template_config.filter);
 }
 
 bool StreamConfig::IsValid() const {

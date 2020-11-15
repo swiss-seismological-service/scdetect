@@ -21,6 +21,11 @@
             the template pick.
           </description>
         </parameter>
+        <parameter name="filter" type="string">
+          <description>
+            Defines the default filter in place during the template waveform creation.
+          </description>
+        </parameter>
       </group>
       <group name="processing">
         <parameter name="sensitivityCorrection" type="boolean" default="false">
