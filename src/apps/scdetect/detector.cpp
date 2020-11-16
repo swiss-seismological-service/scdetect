@@ -460,7 +460,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         stream_id.c_str(), template_stream_id.c_str(), wf_start.iso().c_str(),
         wf_end.iso().c_str());
 
-    throw BaseException{
+    throw NoStream{
         stream_id + std::string{" ("} + template_stream_id +
         std::string{"): Stream not found in inventory for epoch: start="} +
         wf_start.iso() + std::string{", end="} + wf_end.iso()};

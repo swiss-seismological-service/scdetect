@@ -19,6 +19,12 @@ public:
     using BaseException::BaseException;
     NoWaveformData();
   };
+
+  class NoStream : public BaseException {
+  public:
+    using BaseException::BaseException;
+    NoStream();
+  };
 };
 
 template <typename T>
@@ -27,7 +33,10 @@ Builder<T>::BaseException::BaseException()
 
 template <typename T>
 Builder<T>::NoWaveformData::NoWaveformData()
-    : BaseException{"no data available"} {}
+    : BaseException{"no waveform data available"} {}
+
+template <typename T>
+Builder<T>::NoStream::NoStream() : BaseException{"no stream data available"} {}
 
 } // namespace detect
 } // namespace Seiscomp

@@ -58,11 +58,17 @@ public:
 
     bool load_templates_only{false};
 
-    // Defines if a detector should be initialized even though template
+    // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skip_template_if_no_data{true};
+    bool skip_template_if_no_waveform_data{true};
+    // Defines if a detector should be initialized although template processors
+    // could not be initialized due to missing stream information in the
+    // inventory.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skip_template_if_no_stream_data{true};
 
     // Input
     std::string path_template_json{};
