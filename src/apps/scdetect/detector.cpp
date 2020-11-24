@@ -18,6 +18,7 @@
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include "eventstore.h"
+#include "settings.h"
 #include "template.h"
 #include "utils.h"
 
@@ -517,13 +518,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     detector_->init_time_ = template_init_time;
   }
 
-  // TODO(damb): Which is the correct buffer size to be chosen?
-  // Is a configurable buffer size required? minBufferSize?
-  // -> Set the buffer size when when the first record is received i.e. when
-  // we know the actual sampling frequency
-  //
   detector_->stream_configs_[stream_id].stream_buffer =
-      utils::make_unique<RingBuffer>(wf_end - wf_start);
+      utils::make_unique<RingBuffer>(
+          detector_->stream_configs_[stream_id].processor->init_time() *
+          settings::kBufferMultiplicator);
 
   detector_->stream_configs_[stream_id].metadata.sensor_location =
       stream->sensorLocation();

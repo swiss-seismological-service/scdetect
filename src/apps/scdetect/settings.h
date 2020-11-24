@@ -17,8 +17,8 @@ const std::string kMagnitudeType{"SCDETECT"};
 const std::string kOriginMethod{kMagnitudeType};
 const std::string kStationMagnitudeType{kMagnitudeType};
 
-// The stream buffer size in seconds
-/* constexpr int kDefaultBufferSize{600}; */
+constexpr double kBufferMultiplicator{2};
+
 // The processing interval in seconds
 /* constexpr double kDefaultProcessingInterval{0}; */
 
