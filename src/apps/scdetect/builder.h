@@ -5,38 +5,29 @@
 
 namespace Seiscomp {
 namespace detect {
+namespace builder {
 
-template <typename T> class Builder {
+class BaseException : public Exception {
 public:
-  class BaseException : public Exception {
-  public:
-    using Exception::Exception;
-    BaseException();
-  };
-
-  class NoWaveformData : public BaseException {
-  public:
-    using BaseException::BaseException;
-    NoWaveformData();
-  };
-
-  class NoStream : public BaseException {
-  public:
-    using BaseException::BaseException;
-    NoStream();
-  };
+  using Exception::Exception;
+  BaseException();
 };
 
-template <typename T>
-Builder<T>::BaseException::BaseException()
-    : Exception("error while object creation") {}
+class NoWaveformData : public BaseException {
+public:
+  using BaseException::BaseException;
+  NoWaveformData();
+};
 
-template <typename T>
-Builder<T>::NoWaveformData::NoWaveformData()
-    : BaseException{"no waveform data available"} {}
+class NoStream : public BaseException {
+public:
+  using BaseException::BaseException;
+  NoStream();
+};
 
-template <typename T>
-Builder<T>::NoStream::NoStream() : BaseException{"no stream data available"} {}
+} // namespace builder
+
+template <typename T> class Builder {};
 
 } // namespace detect
 } // namespace Seiscomp

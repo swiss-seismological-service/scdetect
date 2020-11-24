@@ -622,7 +622,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
               detector_builder.set_stream(stream_config_pair.first,
                                           stream_config_pair.second,
                                           waveform_handler);
-            } catch (DetectorBuilder::NoStream &e) {
+            } catch (builder::NoStream &e) {
               if (config_.skip_template_if_no_stream_data) {
                 SEISCOMP_WARNING(
                     "%s (%s): No stream data for template processor "
@@ -633,7 +633,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
                 continue;
               }
               throw;
-            } catch (DetectorBuilder::NoWaveformData &e) {
+            } catch (builder::NoWaveformData &e) {
               if (config_.skip_template_if_no_waveform_data) {
                 SEISCOMP_WARNING(
                     "%s (%s): No waveform data for template processor "
@@ -653,7 +653,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         for (const auto &stream_id : stream_ids)
           detectors_.emplace(stream_id, detector);
 
-      } catch (DetectorBuilder::BaseException &e) {
+      } catch (builder::BaseException &e) {
         SEISCOMP_WARNING("Failed to create detector: %s", e.what());
         continue;
       }
