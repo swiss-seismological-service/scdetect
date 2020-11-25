@@ -317,8 +317,9 @@ bool Application::init() {
   // cache template waveforms on filesystem
   WaveformHandlerIfacePtr waveform_handler{
       new WaveformHandler{recordStreamURL()}};
-  waveform_handler = new detect::FileSystemCache{
-      waveform_handler, config_.path_filesystem_cache, true};
+  waveform_handler = new detect::FileSystemCache{waveform_handler,
+                                                 config_.path_filesystem_cache,
+                                                 settings::kCacheRawWaveforms};
 
   if (!InitDetectors(waveform_handler))
     return false;

@@ -17,6 +17,7 @@ const std::string kMagnitudeType{"SCDETECT"};
 const std::string kOriginMethod{kMagnitudeType};
 const std::string kStationMagnitudeType{kMagnitudeType};
 
+constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};
 
 // The processing interval in seconds
