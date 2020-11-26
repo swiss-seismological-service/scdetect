@@ -1,9 +1,11 @@
 #include "config.h"
 
-#include <boost/property_tree/exceptions.hpp>
 #include <utility>
 #include <vector>
 
+#include <boost/property_tree/exceptions.hpp>
+
+#include "exception.h"
 #include "utils.h"
 #include "version.h"
 
@@ -40,15 +42,21 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
 }
 
 bool StreamConfig::IsValid() const {
-  if (template_config.wf_start >= template_config.wf_end ||
-      !utils::ValidatePhase(template_config.phase) ||
-      !utils::IsGeZero(init_time) || !utils::ValidateStreamID(wf_stream_id) ||
-      !utils::ValidateStreamID(template_config.wf_stream_id))
-
-  {
+  bool retval{true};
+  try {
+    retval = utils::WaveformStreamID{wf_stream_id}.IsValid();
+  } catch (ValueException &e) {
     return false;
   }
-  return true;
+  try {
+    retval = utils::WaveformStreamID{template_config.wf_stream_id}.IsValid();
+  } catch (ValueException &e) {
+    return false;
+  }
+
+  return (retval && template_config.wf_start < template_config.wf_end &&
+          utils::ValidatePhase(template_config.phase) &&
+          utils::IsGeZero(init_time));
 }
 
 bool DetectorConfig::IsValid() const {

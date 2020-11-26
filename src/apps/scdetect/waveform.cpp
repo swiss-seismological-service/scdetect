@@ -19,18 +19,6 @@
 
 namespace Seiscomp {
 namespace detect {
-
-namespace {
-
-bool IsValidWaveformStreamId(const std::string &net_code,
-                             const std::string &sta_code,
-                             const std::string &loc_code,
-                             const std::string &cha_code) {
-  return !(net_code.empty() || sta_code.empty() || cha_code.empty());
-}
-
-} // namespace
-
 namespace waveform {
 
 namespace {
@@ -301,7 +289,8 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
                                        const Core::TimeWindow &tw,
                                        const ProcessingConfig &config) {
 
-  if (!IsValidWaveformStreamId(net_code, sta_code, loc_code, cha_code)) {
+  utils::WaveformStreamID wf_stream_id{net_code, sta_code, loc_code, cha_code};
+  if (!wf_stream_id.IsValid()) {
     throw BaseException{"Invalid waveform stream identifier."};
   }
 
@@ -398,7 +387,8 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
     return true;
   };
 
-  if (!IsValidWaveformStreamId(net_code, sta_code, loc_code, cha_code)) {
+  utils::WaveformStreamID wf_stream_id{net_code, sta_code, loc_code, cha_code};
+  if (!wf_stream_id.IsValid()) {
     throw BaseException{"Invalid waveform stream identifier."};
   }
 

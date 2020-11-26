@@ -15,7 +15,6 @@ namespace utils {
 template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
 bool ValidatePhase(const std::string &phase);
 bool ValidateXCorrThreshold(const double &thres);
-bool ValidateStreamID(const std::string &id);
 
 template <typename TMap>
 auto map_keys(const TMap &map) -> std::vector<decltype(TMap::key_type)> {
@@ -46,6 +45,32 @@ template <typename T, typename... Ts>
 std::unique_ptr<T> make_unique(Ts &&... params) {
   return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
+
+/* ------------------------------------------------------------------------- */
+class WaveformStreamID {
+public:
+  explicit WaveformStreamID(const std::string &net_sta_loc_cha);
+  WaveformStreamID(const std::string &net_code, const std::string &sta_code,
+                   const std::string &loc_code, const std::string &cha_code);
+
+  const std::string &net_code() const;
+  const std::string &sta_code() const;
+  const std::string &loc_code() const;
+  const std::string &cha_code() const;
+
+  bool IsValid() const;
+
+  friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
+
+protected:
+  const std::string delimiter_{"."};
+
+private:
+  std::string net_code_;
+  std::string sta_code_;
+  std::string loc_code_;
+  std::string cha_code_;
+};
 
 } // namespace utils
 } // namespace detect
