@@ -443,6 +443,22 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         std::string{", phase="} + stream_config.template_config.phase};
   }
 
+  try {
+    pick->time().value();
+  } catch (...) {
+    SEISCOMP_WARNING(
+        "%s (%s): Failed to load pick (invalid time): origin=%s, phase=%s",
+        stream_id.c_str(), template_stream_id.c_str(),
+        detector_->origin_->publicID().c_str(),
+        stream_config.template_config.phase.c_str());
+
+    throw builder::BaseException{
+        stream_id + std::string{" ("} + template_stream_id +
+        std::string{"): Failed to load pick (invalid time): origin="} +
+        origin_id_ + std::string{", phase="} +
+        stream_config.template_config.phase};
+  }
+
   auto wf_start{pick->time().value() +
                 Core::TimeSpan(stream_config.template_config.wf_start)};
   auto wf_end{pick->time().value() +
