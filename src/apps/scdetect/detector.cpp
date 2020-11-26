@@ -379,21 +379,22 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   }
 
   if (!found) {
-    SEISCOMP_WARNING("No event associated with origin %s.", origin_id_.c_str());
-    throw builder::BaseException{
-        std::string{"No event associated with origin: "} + origin_id_};
+    auto msg{std::string{"No event associated with origin: "} + origin_id_};
+
+    SEISCOMP_WARNING("%s", msg.c_str());
+    throw builder::BaseException{msg};
   }
 
   detector_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
       detector_->event_->preferredMagnitudeID());
 
   if (!detector_->magnitude_) {
-    SEISCOMP_WARNING("No magnitude associated with event %s: origin=%s",
-                     detector_->event_->publicID().c_str(), origin_id_.c_str());
-    throw builder::BaseException{
-        std::string{"No magnitude associated with event: "} +
-        detector_->event_->publicID() + std::string{" (origin="} + origin_id_ +
-        std::string{")"}};
+    auto msg{std::string{"No magnitude associated with event: "} +
+             detector_->event_->publicID() + std::string{" (origin="} +
+             origin_id_ + std::string{")"}};
+
+    SEISCOMP_WARNING("%s", msg.c_str());
+    throw builder::BaseException{msg};
   }
 
   return *this;
@@ -432,31 +433,24 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   if (!pick) {
-    SEISCOMP_WARNING("%s (%s): Failed to load pick: origin=%s, phase=%s",
-                     stream_id.c_str(), template_stream_id.c_str(),
-                     detector_->origin_->publicID().c_str(),
-                     stream_config.template_config.phase.c_str());
+    auto msg{stream_id + std::string{" ("} + template_stream_id +
+             std::string{"): Failed to load pick: origin="} + origin_id_ +
+             std::string{", phase="} + stream_config.template_config.phase};
 
-    throw builder::BaseException{
-        stream_id + std::string{" ("} + template_stream_id +
-        std::string{"): Failed to load pick: origin="} + origin_id_ +
-        std::string{", phase="} + stream_config.template_config.phase};
+    SEISCOMP_WARNING("%s", msg.c_str());
+    throw builder::BaseException{msg};
   }
 
   try {
     pick->time().value();
   } catch (...) {
-    SEISCOMP_WARNING(
-        "%s (%s): Failed to load pick (invalid time): origin=%s, phase=%s",
-        stream_id.c_str(), template_stream_id.c_str(),
-        detector_->origin_->publicID().c_str(),
-        stream_config.template_config.phase.c_str());
+    auto msg{stream_id + std::string{" ("} + template_stream_id +
+             std::string{"): Failed to load pick (invalid time): origin="} +
+             origin_id_ + std::string{", phase="} +
+             stream_config.template_config.phase};
 
-    throw builder::BaseException{
-        stream_id + std::string{" ("} + template_stream_id +
-        std::string{"): Failed to load pick (invalid time): origin="} +
-        origin_id_ + std::string{", phase="} +
-        stream_config.template_config.phase};
+    SEISCOMP_WARNING("%s", msg.c_str());
+    throw builder::BaseException{msg};
   }
 
   auto wf_start{pick->time().value() +
@@ -471,16 +465,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       wf_start)};
 
   if (!stream) {
-    SEISCOMP_WARNING(
-        "%s (%s): Stream not found in inventory for epoch: start=%s, "
-        "end=%s",
-        stream_id.c_str(), template_stream_id.c_str(), wf_start.iso().c_str(),
-        wf_end.iso().c_str());
+    auto msg{stream_id + std::string{" ("} + template_stream_id +
+             std::string{"): Stream not found in inventory for epoch: start="} +
+             wf_start.iso() + std::string{", end="} + wf_end.iso()};
 
-    throw builder::NoStream{
-        stream_id + std::string{" ("} + template_stream_id +
-        std::string{"): Stream not found in inventory for epoch: start="} +
-        wf_start.iso() + std::string{", end="} + wf_end.iso()};
+    SEISCOMP_WARNING("%s", msg.c_str());
+    throw builder::NoStream{msg};
   }
 
   SEISCOMP_DEBUG("%s (%s): Loaded stream from inventory for epoch: start=%s, "
@@ -501,14 +491,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         Processor::Filter::Create(stream_config.filter, &err));
 
     if (!rt_template_filter) {
-      SEISCOMP_WARNING("%s (%s): Compiling filter (%s) failed: %s",
-                       stream_id.c_str(), template_stream_id.c_str(),
-                       stream_config.filter.c_str(), err.c_str());
+      auto msg{stream_id + std::string{" ("} + template_stream_id +
+               std::string{"): Compiling filter ("} + stream_config.filter +
+               std::string{") failed: "} + err};
 
-      throw builder::BaseException{
-          stream_id + std::string{" ("} + template_stream_id +
-          std::string{"): Compiling filter ("} + stream_config.filter +
-          std::string{") failed: "} + err};
+      SEISCOMP_WARNING("%s", msg.c_str());
+      throw builder::BaseException{msg};
     }
   }
 
