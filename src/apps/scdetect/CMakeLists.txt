@@ -12,7 +12,6 @@ SET(
     template.cpp
     utils.cpp
     waveform.cpp
-    xcorr.cpp
 )
 
 SET(
@@ -29,7 +28,6 @@ SET(
     utils.h
     version.h
     waveform.h
-    xcorr.h
 )
 
 SC_ADD_EXECUTABLE(DETECT ${DETECT_TARGET})

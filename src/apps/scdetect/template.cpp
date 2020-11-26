@@ -1,6 +1,9 @@
 #include "template.h"
 
+#include <boost/algorithm/string/join.hpp>
+
 #include <algorithm>
+#include <cfenv>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -11,16 +14,18 @@
 #include "utils.h"
 #include "version.h"
 #include "waveform.h"
-#include "xcorr.h"
 
 namespace Seiscomp {
 namespace detect {
 
-Template::MatchResult::MatchResult(const double squared_sum_template,
+Template::MatchResult::MatchResult(const double sum_template,
+                                   const double squared_sum_template,
+                                   const int num_samples_template,
                                    MatchResult::MetaData metadata)
-    : squared_sum_template(squared_sum_template), metadata(metadata) {}
+    : num_samples_template{num_samples_template}, sum_template{sum_template},
+      squared_sum_template{squared_sum_template}, metadata(metadata) {}
 
-Template::Template() : pick_(nullptr), phase_(""), waveform_(nullptr) {}
+Template::Template() : pick_(nullptr), phase_(""), waveform_{nullptr} {}
 
 TemplateBuilder Template::Create() { return TemplateBuilder(); }
 
@@ -58,14 +63,15 @@ void Template::Reset() {
 
 void Template::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
-  MatchResultPtr result{new MatchResult{waveform_squared_sum_,
-                                        MatchResult::MetaData{pick_, phase_}}};
-
   const double *samples_template{
       DoubleArray::ConstCast(waveform_->data())->typedData()};
   const double *samples_trace{filtered_data.typedData()};
   const int num_samples_template{waveform_->data()->size()};
   const int num_samples_trace{filtered_data.size()};
+
+  MatchResultPtr result{new MatchResult{waveform_sum_, waveform_squared_sum_,
+                                        num_samples_template,
+                                        MatchResult::MetaData{pick_, phase_}}};
 
   if (num_samples_template > num_samples_trace) {
     set_status(Status::kWaitingForData,
@@ -78,10 +84,7 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   const int max_lag_samples{num_samples_trace - num_samples_template -
                             (num_samples_trace - num_samples_template) / 2};
 
-  // TODO(damb): Make sure that the mean value is removed from both the
-  // template waveform and filtered_data. Most probably this is done easiest
-  // when validating the filter string.
-  if (xcorr(samples_template, num_samples_template, samples_trace,
+  if (XCorr(samples_template, num_samples_template, samples_trace,
             num_samples_trace, waveform_sampling_frequency_, max_lag_samples,
             result)) {
     EmitResult(record, result);
@@ -118,6 +121,143 @@ void Template::InitFilter(StreamState &stream_state, double sampling_freq) {
   stream_state.needed_samples =
       std::max(static_cast<size_t>(waveform_->sampleCount()),
                stream_state.needed_samples);
+}
+
+bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
+                     const int size_tr2, const double sampling_freq,
+                     const double max_lag_samples,
+                     Template::MatchResultPtr result) {
+
+  /*
+   * Pearson correlation coefficient for time series X and Y of length n
+   *
+   *              sum((Xi-meanX) * (Yi-meanY))
+   * cc = --------------------------------------------------
+   *      sqrt(sum((Xi-meanX)^2)) * sqrt(sum((Yi-meanY)^2))
+   *
+   * Where sum(X)  is the sum of Xi for i=1 until i=n
+   *
+   * This can be rearranged in a form suitable for a single-pass algorithm
+   * (where the mean of X and Y are not needed)
+   *
+   *                 n * sum(Xi*Yi) - sum(Xi) * sum(Yi)
+   * cc = -----------------------------------------------------------
+   *      sqrt(n*sum(Xi^2)-sum(Xi)^2) * sqrt(n*sum(Yi^2)-sum(Yi)^2))
+   *
+   * For cross-correlation, where we have a short trace `tr1` which is
+   * correlated against a longer trace `tr2` at subsequent offset, we can
+   * pre-compute the parts that involve `tr1` and re-use them at each step of
+   * the cross-correlation:
+   *
+   *   sum_short = sum(Xi)
+   *   squared_sum_short = sum(Xi^2)
+   *   denominator_short = sqrt(n*squared_sum_short-(sum_short)^2)
+   *
+   * For the parts that involves the longer trace L alone we can compute them
+   * in a rolling fashion (removing first sample of previous iteration and
+   * adding the last sample of the new iteration):
+   *
+   *   sum_long = sum(Yi)
+   *   squared_sum_long = sum(Yi^2)
+   *   denominator_long = sqrt(n*squared_sum_long-(sum_long)^2)
+   *
+   * Finally, this is the equation at each step (offset) of cross-correlation:
+   *
+   *       n * sum(Xi*Yi) - sumS * sumL
+   * cc = ------------------------------
+   *             denomS * denomL
+   *
+   * Unfortunately, we cannot optimize sum(Xi*Yi) and this will be a inner
+   * loop inside the main cross-correlation loop
+   */
+
+  auto SampleAtLong = [&size_tr1, &size_tr2, &tr2](int idx_short, int lag) {
+    const int idx_long{idx_short + (size_tr2 - size_tr1) / 2 + lag};
+    return (idx_long < 0 || idx_long >= size_tr2) ? 0 : tr2[idx_long];
+  };
+
+  if (size_tr1 < size_tr2) {
+    return false;
+  }
+
+  if (!result->squared_sum_template)
+    return false;
+
+  // do as much computation as possible outside the main cross-correlation loop
+  const size_t &n = size_tr1;
+  const double &sum_short = result->sum_template;
+  const double &squared_sum_short = result->squared_sum_template;
+  const double denominator_short{
+      std::sqrt(n * squared_sum_short - sum_short * sum_short)};
+
+  double sum_long{0};
+  double squared_sum_long{0};
+  for (int i = 0; i < n; ++i) {
+    double sample{SampleAtLong(i, -(max_lag_samples + 1))};
+    sum_long += sample;
+    squared_sum_long += sample * sample;
+  }
+
+  // cross-correlation loop
+  for (int lag = -max_lag_samples; lag <= max_lag_samples; ++lag) {
+    // sum_long/squared_sum_long: remove the sample that has exited the current
+    // xcorr win and add the sample that has just entered the current xcorr win
+    const double last_sample_long{SampleAtLong(-1, lag)};
+    const double new_sample_long{SampleAtLong(n - 1, lag)};
+    sum_long += new_sample_long - last_sample_long;
+    squared_sum_long +=
+        new_sample_long * new_sample_long - last_sample_long * last_sample_long;
+
+    const double denominator_long{
+        std::sqrt(n * squared_sum_long - sum_long * sum_long)};
+
+    double sum_short_long{0};
+    for (int i = 0; i < n; ++i) {
+      sum_short_long += tr1[i] * SampleAtLong(i, lag);
+    }
+
+    const double coeff{(n * sum_short_long - sum_short * sum_long) /
+                       (denominator_short * denominator_long)};
+
+    if (std::abs(coeff) > std::abs(result->coefficient) ||
+        !std::isfinite(result->coefficient)) {
+      result->sum_trace = sum_long;
+      result->squared_sum_trace = squared_sum_long;
+      result->sum_template_trace = sum_short_long;
+      result->coefficient = coeff;
+      result->lag = lag / sampling_freq; // samples to secs
+    }
+  }
+
+  int fe = fetestexcept(FE_ALL_EXCEPT);
+  if ((fe & ~FE_INEXACT) != 0) // we don't care about FE_INEXACT
+  {
+    std::vector<std::string> exceptions;
+    if (fe & FE_DIVBYZERO)
+      exceptions.push_back("FE_DIVBYZERO");
+    if (fe & FE_INVALID)
+      exceptions.push_back("FE_INVALID");
+    if (fe & FE_OVERFLOW)
+      exceptions.push_back("FE_OVERFLOW");
+    if (fe & FE_UNDERFLOW)
+      exceptions.push_back("FE_UNDERFLOW");
+
+    std::string msg{"Floating point exception during cross-correlation: "};
+    msg += boost::algorithm::join(exceptions, ", ");
+    SEISCOMP_WARNING(msg.c_str());
+  }
+
+  if (!std::isfinite(result->coefficient)) {
+    result->coefficient = 0;
+    result->lag = 0;
+    result->sum_template_trace = 0;
+    result->sum_template = 0;
+    result->squared_sum_template = 0;
+
+    return false;
+  }
+
+  return true;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -176,6 +316,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
   const double *samples_template{
       DoubleArray::ConstCast(template_->waveform_->data())->typedData()};
   for (int i = 0; i < template_->waveform_->data()->size(); ++i) {
+    template_->waveform_sum_ += samples_template[i];
     template_->waveform_squared_sum_ +=
         samples_template[i] * samples_template[i];
   }

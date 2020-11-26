@@ -31,12 +31,16 @@ public:
   struct MatchResult : public Result {
 
     struct MetaData;
-    MatchResult(const double squared_sum_template, MetaData metadata);
+    MatchResult(const double sum_template, const double squared_sum_template,
+                const int num_samples_template, MetaData metadata);
 
     double coefficient{std::nan("")};
-    double numerator{};
+    int num_samples_template;
+    double sum_template{};
     double squared_sum_template{};
+    double sum_trace{};
     double squared_sum_trace{};
+    double sum_template_trace{};
     double lag{}; // secs
 
     struct MetaData {
@@ -60,6 +64,12 @@ protected:
             double *samples) override;
 
   void InitFilter(StreamState &stream_state, double sampling_freq) override;
+
+  /* Calculate the maximum correlation coefficient and corresponding lag from a
+   * demeaned series `tr1` and a series `tr2`. */
+  bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
+             const int size_tr2, const double sampling_freq,
+             const double max_lag_samples, MatchResultPtr result);
 
   DoubleArray data_;
 
@@ -85,7 +95,9 @@ private:
   // Template waveform sampling frequency
   double waveform_sampling_frequency_;
   // Template waveform samples squared summed
-  double waveform_squared_sum_;
+  double waveform_squared_sum_{0};
+  // Template waveform samples summed
+  double waveform_sum_{0};
 };
 
 class TemplateBuilder : public Builder<TemplateBuilder> {
