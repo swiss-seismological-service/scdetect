@@ -337,11 +337,21 @@ bool Application::run() {
     return true;
   }
 
+  // subscribe to streams
+  for (const auto &detector_pair : detectors_) {
+    utils::WaveformStreamID wf_stream_id{detector_pair.first};
+
+    recordStream()->addStream(wf_stream_id.net_code(), wf_stream_id.sta_code(),
+                              wf_stream_id.loc_code(), wf_stream_id.cha_code());
+  }
+  /* readRecords(false); */
+
   return StreamApplication::run();
 }
 
 void Application::done() {
   // TODO
+  StreamApplication::done();
 }
 
 void Application::handleRecord(Record *rec) {
