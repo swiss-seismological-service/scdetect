@@ -36,7 +36,7 @@ public:
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
-    kWaitingForData,
+    kWaitingForData = 0,
     // Associated value is progress in [1,99]
     kInProgress,
     kFinished = 100,
