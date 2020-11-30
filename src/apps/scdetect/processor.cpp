@@ -1,5 +1,4 @@
 #include "processor.h"
-#include "seiscomp/core/datetime.h"
 #include "version.h"
 
 namespace Seiscomp {
