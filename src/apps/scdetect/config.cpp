@@ -94,6 +94,23 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
         "Invalid template specific detector configuration.");
   }
 
+  // patch stream defaults with detector config globals
+  auto patched_stream_defaults{stream_defaults};
+  patched_stream_defaults.init_time =
+      pt.get<double>("initTime", stream_defaults.init_time);
+  patched_stream_defaults.filter =
+      pt.get<std::string>("filter", stream_defaults.filter);
+  patched_stream_defaults.sensitivity_correction = pt.get<bool>(
+      "sensitivityCorrection", stream_defaults.sensitivity_correction);
+  patched_stream_defaults.template_config.phase = pt.get<std::string>(
+      "templatePhase", stream_defaults.template_config.phase);
+  patched_stream_defaults.template_config.wf_start = pt.get<double>(
+      "templateWaveformStart", stream_defaults.template_config.wf_start);
+  patched_stream_defaults.template_config.wf_end = pt.get<double>(
+      "templateWaveformEnd", stream_defaults.template_config.wf_end);
+  patched_stream_defaults.template_config.filter = pt.get<std::string>(
+      "templateFilter", stream_defaults.template_config.filter);
+
   // initialize stream configs
   for (const auto &stream_set_pair : pt.find("streams")->second) {
     StreamConfigs stream_configs;
@@ -101,7 +118,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
 
       std::string wf_id;
       try {
-        StreamConfig stream_config{stream_config_pair.second, stream_defaults};
+        StreamConfig stream_config{stream_config_pair.second,
+                                   patched_stream_defaults};
         stream_configs.emplace(stream_config.wf_stream_id, stream_config);
         wf_id = stream_config.wf_stream_id;
       } catch (boost::property_tree::ptree_error &e) {
