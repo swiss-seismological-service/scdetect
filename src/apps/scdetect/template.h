@@ -51,7 +51,7 @@ public:
   };
 
   void set_filter(Filter *filter) override;
-  const Core::TimeSpan &init_time() const override;
+  const Core::TimeSpan init_time() const override;
 
   bool Feed(const Record *record) override;
   void Reset() override;

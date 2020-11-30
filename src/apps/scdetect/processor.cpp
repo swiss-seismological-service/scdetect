@@ -30,7 +30,7 @@ void Processor::set_gap_tolerance(const Core::TimeSpan &duration) {
   gap_tolerance_ = duration;
 }
 
-const Core::TimeSpan &Processor::init_time() const { return init_time_; }
+const Core::TimeSpan Processor::init_time() const { return init_time_; }
 
 const Core::TimeSpan &Processor::gap_tolerance() const {
   return gap_tolerance_;
