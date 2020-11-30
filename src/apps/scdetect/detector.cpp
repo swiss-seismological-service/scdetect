@@ -485,7 +485,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   detector_->stream_configs_[stream_id] = Detector::StreamConfig{};
 
   // create template related filter (used during real-time stream processing)
-  std::unique_ptr<Processor::Filter> rt_template_filter;
+  std::unique_ptr<Processor::Filter> rt_template_filter{nullptr};
   if (!stream_config.filter.empty()) {
     std::string err;
     rt_template_filter.reset(

@@ -25,7 +25,9 @@ Template::MatchResult::MatchResult(const double sum_template,
     : num_samples_template{num_samples_template}, sum_template{sum_template},
       squared_sum_template{squared_sum_template}, metadata(metadata) {}
 
-Template::Template() : pick_(nullptr), phase_(""), waveform_{nullptr} {}
+Template::Template() : pick_{nullptr}, phase_{""}, waveform_{nullptr} {
+  Reset();
+}
 
 TemplateBuilder Template::Create() { return TemplateBuilder(); }
 
@@ -51,8 +53,7 @@ void Template::Reset() {
   Filter *tmp{stream_state_.filter};
 
   stream_state_ = StreamState{};
-
-  if (!tmp) {
+  if (tmp) {
     stream_state_.filter = tmp->clone();
     delete tmp;
   }
