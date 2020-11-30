@@ -478,8 +478,9 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                  stream_id.c_str(), template_stream_id.c_str(),
                  wf_start.iso().c_str(), wf_end.iso().c_str());
 
-  WaveformHandlerIface::ProcessingConfig config;
-  config.filter_string = stream_config.filter;
+  // set template related filter (used for template waveform processing)
+  WaveformHandlerIface::ProcessingConfig template_wf_config;
+  template_wf_config.filter_string = stream_config.template_config.filter;
 
   detector_->stream_configs_[stream_id] = Detector::StreamConfig{};
 
@@ -508,7 +509,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
-                        config);
+                        template_wf_config);
 
   const auto &template_init_time{
       detector_->stream_configs_[stream_id].processor->init_time()};
