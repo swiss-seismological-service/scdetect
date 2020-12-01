@@ -95,9 +95,10 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
       // process.
       stream_state.initialized = true;
     }
-  } else
+  } else {
     // Call process to cause a derived processor to work on the data.
     Process(stream_state, record, *data);
+  }
 
   stream_state.last_record = record;
   stream_state.last_sample = (*data)[data->size() - 1];

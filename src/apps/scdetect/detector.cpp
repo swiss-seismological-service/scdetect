@@ -454,9 +454,9 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   auto wf_start{pick->time().value() +
-                Core::TimeSpan(stream_config.template_config.wf_start)};
+                Core::TimeSpan{stream_config.template_config.wf_start}};
   auto wf_end{pick->time().value() +
-              Core::TimeSpan(stream_config.template_config.wf_end)};
+              Core::TimeSpan{stream_config.template_config.wf_end}};
 
   // load stream metadata from inventory
   auto stream{Client::Inventory::Instance()->getStream(
