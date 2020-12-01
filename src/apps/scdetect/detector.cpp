@@ -508,6 +508,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_pick(pick)
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
+          .set_sensitivity_correction(stream_config.sensitivity_correction)
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config);
 

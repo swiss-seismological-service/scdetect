@@ -337,6 +337,13 @@ TemplateBuilder &TemplateBuilder::set_filter(Processor::Filter *filter,
   return *this;
 }
 
+TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
+                                                             double thres) {
+  template_->set_saturation_check(enabled);
+  template_->set_saturation_threshold(thres);
+  return *this;
+}
+
 TemplateBuilder::operator std::unique_ptr<Processor>() {
   return std::move(template_);
 }

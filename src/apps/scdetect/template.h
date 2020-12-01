@@ -116,6 +116,7 @@ public:
   set_publish_callback(const Processor::PublishResultCallback &callback);
   TemplateBuilder &set_filter(Processor::Filter *filter,
                               const double init_time = 0);
+  TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
 
   operator std::unique_ptr<Processor>();
 

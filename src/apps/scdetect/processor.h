@@ -200,8 +200,8 @@ protected:
 
   bool enabled_;
 
-  bool saturation_check_;
-  double saturation_threshold_;
+  bool saturation_check_{false};
+  double saturation_threshold_{-1};
 
   // Processor initialization time
   Core::TimeSpan init_time_;
