@@ -198,7 +198,7 @@ protected:
   // Sets the saturation threshold. The default is -1
   void set_saturation_threshold(double t);
 
-  bool enabled_;
+  bool enabled_{true};
 
   bool saturation_check_{false};
   double saturation_threshold_{-1};
