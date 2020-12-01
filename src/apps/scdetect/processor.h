@@ -96,7 +96,7 @@ public:
 
   void enable();
   void disable();
-  bool enabled() const { return enabled_; }
+  bool enabled() const;
 
   virtual void set_result_callback(const PublishResultCallback &callback);
   // Returns the current status of the processor
