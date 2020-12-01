@@ -164,9 +164,9 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
    *
    * Finally, this is the equation at each step (offset) of cross-correlation:
    *
-   *       n * sum(Xi*Yi) - sumS * sumL
-   * cc = ------------------------------
-   *             denomS * denomL
+   *       n * sum(Xi*Yi) - sum_short  * sum_long
+   * cc = ---------------------------------------
+   *        denominator_short * denominator_long
    *
    * Unfortunately, we cannot optimize sum(Xi*Yi) and this will be a inner
    * loop inside the main cross-correlation loop
