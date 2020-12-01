@@ -107,7 +107,7 @@ private:
 
   struct ProcessingState {
 
-    struct StreamState {
+    struct ProcessorState {
 
       ProcessorCPtr processor;
       Template::MatchResultCPtr result{nullptr};
@@ -115,8 +115,8 @@ private:
       RecordCPtr trace;
     };
 
-    using StreamStates = std::unordered_map<std::string, StreamState>;
-    StreamStates stream_states;
+    using ProcessorStates = std::unordered_map<std::string, ProcessorState>;
+    ProcessorStates processor_states;
 
     struct Result {
       Core::Time origin_time;

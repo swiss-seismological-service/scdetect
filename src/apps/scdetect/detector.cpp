@@ -129,7 +129,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   if (WithTriggerDuration() && processing_state_.trigger_end) {
     // Once triggered, only take those streams into consideration which
     // are already part of the processing procedure.
-    boost::copy(processing_state_.stream_states | boost::adaptors::map_keys,
+    boost::copy(processing_state_.processor_states | boost::adaptors::map_keys,
                 std::back_inserter(stream_ids));
 
   } else {
@@ -150,30 +150,34 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   // process templates i.e. compute cross-correlations
-  for (const auto &pair : stream_configs_) {
+  for (const auto &stream_config_pair : stream_configs_) {
     // TODO(damb): Check if the stream was actually used. This info might be
     // saved while computing the time window to be processed.
-    auto const &buffered_tw{pair.second.stream_buffer->timeWindow()};
+    auto const &buffered_tw{
+        stream_config_pair.second.stream_buffer->timeWindow()};
     if (!buffered_tw.contains(tw)) {
-      pair.second.processor->enable();
+      stream_config_pair.second.processor->enable();
       continue;
     }
 
     // initialize processing related stream states
-    if (!processing_state_.trigger_end)
-      processing_state_.stream_states[pair.first] =
-          ProcessingState::StreamState{};
+    if (!processing_state_.trigger_end) {
+      processing_state_.processor_states[stream_config_pair.first] =
+          ProcessingState::ProcessorState{};
+    }
 
-    auto trace{pair.second.stream_buffer->contiguousRecord<double>(&tw)};
+    auto trace{
+        stream_config_pair.second.stream_buffer->contiguousRecord<double>(&tw)};
 
-    if (!pair.second.processor->Feed(trace)) {
-      const auto status{pair.second.processor->status()};
-      const auto status_value{pair.second.processor->status_value()};
+    if (!stream_config_pair.second.processor->Feed(trace)) {
+      const auto status{stream_config_pair.second.processor->status()};
+      const auto status_value{
+          stream_config_pair.second.processor->status_value()};
 
       SEISCOMP_ERROR("%s: Failed to feed data to processor. Reason: status=%d, "
                      "status_value=%f",
-                     pair.first.c_str(), utils::as_integer(status),
-                     status_value);
+                     stream_config_pair.first.c_str(),
+                     utils::as_integer(status), status_value);
 
       // TODO(damb): Storing the data failed. What to do next?
     }
@@ -184,20 +188,22 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   bool xcorr_failed{false};
   // compute the mean coefficient
   double mean_coefficient{0};
-  for (const auto &pair : processing_state_.stream_states) {
-    if (!pair.second.result) {
+  for (const auto &processor_state_pair : processing_state_.processor_states) {
+    if (!processor_state_pair.second.result) {
       xcorr_failed = true;
 
-      const auto status{pair.second.processor->status()};
-      const auto status_value{pair.second.processor->status_value()};
+      const auto status{processor_state_pair.second.processor->status()};
+      const auto status_value{
+          processor_state_pair.second.processor->status_value()};
       SEISCOMP_WARNING(
           "%s: Failed to match template. Skipping. Reason: status=%d, "
           "status_value=%f",
-          pair.first.c_str(), utils::as_integer(status), status_value);
+          processor_state_pair.first.c_str(), utils::as_integer(status),
+          status_value);
 
       continue;
     }
-    mean_coefficient += pair.second.result->coefficient;
+    mean_coefficient += processor_state_pair.second.result->coefficient;
   }
 
   if (xcorr_failed) {
@@ -205,7 +211,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     return;
   }
 
-  mean_coefficient /= processing_state_.stream_states.size();
+  mean_coefficient /= processing_state_.processor_states.size();
 
   if (mean_coefficient >= config_.trigger_on) {
     // initialize trigger
@@ -216,8 +222,9 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
     if (!WithTriggerDuration() || processing_state_.trigger_end) {
       // TODO(damb): Fit magnitude
-      const auto it{processing_state_.stream_states.find(record->streamID())};
-      if (it == processing_state_.stream_states.end())
+      const auto it{
+          processing_state_.processor_states.find(record->streamID())};
+      if (it == processing_state_.processor_states.end())
         return;
 
       auto origin_time{it->second.trace->startTime() +
@@ -251,8 +258,9 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
     auto LoadSensorLocations = [this]() {
       Detection::SensorLocations sensor_locations{};
-      for (const auto &state : processing_state_.stream_states) {
-        auto it{stream_configs_.find(state.first)};
+      for (const auto &processor_state_pair :
+           processing_state_.processor_states) {
+        auto it{stream_configs_.find(processor_state_pair.first)};
         if (it == stream_configs_.end())
           continue;
 
@@ -262,20 +270,22 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     };
 
     std::vector<std::string> stream_ids_used{};
-    boost::copy(processing_state_.stream_states | boost::adaptors::map_keys,
+    boost::copy(processing_state_.processor_states | boost::adaptors::map_keys,
                 std::back_inserter(stream_ids_used));
     auto num_stations_used{CountStations(stream_ids_used)};
     std::vector<std::string> stream_ids{};
     boost::copy(stream_configs_ | boost::adaptors::map_keys,
                 std::back_inserter(stream_ids));
     auto num_stations_associated{stream_ids.size()};
-    auto num_channels_used{processing_state_.stream_states.size()};
+    auto num_channels_used{processing_state_.processor_states.size()};
     auto num_channels_associated{stream_configs_.size()};
     auto sensor_locations{LoadSensorLocations()};
 
     Detection::TemplateResultMetaData metadata{};
-    for (const auto &pair : processing_state_.stream_states)
-      metadata.insert(std::make_pair(pair.first, pair.second.result->metadata));
+    for (const auto &processor_state_pair : processing_state_.processor_states)
+      metadata.insert(
+          std::make_pair(processor_state_pair.first,
+                         processor_state_pair.second.result->metadata));
 
     ResultPtr detection{new Detection{
         processing_state_.result.fit,
@@ -325,8 +335,8 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
   if (!record || !result)
     return;
 
-  auto it{processing_state_.stream_states.find(record->streamID())};
-  if (it == processing_state_.stream_states.end())
+  auto it{processing_state_.processor_states.find(record->streamID())};
+  if (it == processing_state_.processor_states.end())
     return;
 
   it->second.processor = processor;
