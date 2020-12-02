@@ -220,6 +220,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   if (xcorr_failed) {
+    SEISCOMP_WARNING("Failed to match templates. Reset processing.");
     ResetProcessing();
     return;
   }
@@ -358,7 +359,14 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
       boost::dynamic_pointer_cast<const Template::MatchResult>(result);
 }
 
-void Detector::ResetProcessing() { processing_state_ = ProcessingState{}; }
+void Detector::ResetProcessing() {
+  processing_state_ = ProcessingState{};
+
+  SEISCOMP_DEBUG("Resetting template (child) processors.");
+  for (auto &stream_config_pair : stream_configs_) {
+    stream_config_pair.second.processor->Reset();
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 DetectorBuilder::DetectorBuilder(const std::string &origin_id)
