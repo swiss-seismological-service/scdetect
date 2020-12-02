@@ -177,7 +177,7 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
     return (idx_long < 0 || idx_long >= size_tr2) ? 0 : tr2[idx_long];
   };
 
-  if (size_tr1 < size_tr2) {
+  if (size_tr2 < size_tr1) {
     return false;
   }
 
