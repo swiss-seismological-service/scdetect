@@ -347,7 +347,7 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
 
 void Detector::ResetProcessing() { processing_state_ = ProcessingState{}; }
 
-/* -------------------------------------------------------------------------  */
+/* -------------------------------------------------------------------------- */
 DetectorBuilder::DetectorBuilder(const std::string &origin_id)
     : origin_id_(origin_id), detector_(new Detector{}) {
 
@@ -519,6 +519,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_sensitivity_correction(stream_config.sensitivity_correction)
+          .set_publish_callback(boost::bind(&Detector::StoreTemplateResult,
+                                            detector_, _1, _2, _3))
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config);
 
