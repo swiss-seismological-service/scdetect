@@ -71,6 +71,7 @@ public:
   void set_filter(Filter *filter) override;
 
   bool Feed(const Record *rec) override;
+  void Reset() override;
 
 protected:
   void Process(StreamState &stream_state, RecordCPtr record,

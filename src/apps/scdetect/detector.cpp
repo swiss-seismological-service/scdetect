@@ -67,6 +67,19 @@ bool Detector::Feed(const Record *record) {
   return Store(it->second.stream_state, record);
 }
 
+void Detector::Reset() {
+  SEISCOMP_DEBUG("Resetting detector ...");
+
+  // reset template (child) related facilities
+  for (auto &stream_config_pair : stream_configs_) {
+    stream_config_pair.second.stream_state = Processor::StreamState{};
+    stream_config_pair.second.stream_buffer->clear();
+  }
+  ResetProcessing();
+
+  Processor::Reset();
+}
+
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
 
@@ -193,15 +206,16 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   processed_ | tw;
 
-  bool xcorr_failed{false};
+  size_t xcorr_failed{0};
+
   // compute the mean coefficient
   double mean_coefficient{0};
   for (const auto &processor_state_pair : processing_state_.processor_states) {
     if (!processor_state_pair.second.result) {
-      xcorr_failed = true;
+      xcorr_failed++;
 
       std::string msg{processor_state_pair.first +
-                      ": Failed to match template. Skipping. Reason: "};
+                      ": Failed to match template. Reason: "};
       const auto &processor{
           stream_configs_.at(processor_state_pair.first).processor};
       if (processor->enabled()) {
@@ -220,8 +234,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   if (xcorr_failed) {
-    SEISCOMP_WARNING("Failed to match templates. Reset processing.");
-    ResetProcessing();
+    set_status(Status::kError, xcorr_failed);
     return;
   }
 
@@ -315,7 +328,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
     // TODO(damb): Implement and set trigger_dead_time
   }
-} // namespace detect
+}
 
 void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples) {
@@ -362,7 +375,7 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
 void Detector::ResetProcessing() {
   processing_state_ = ProcessingState{};
 
-  SEISCOMP_DEBUG("Resetting template (child) processors.");
+  // reset template (child) processors
   for (auto &stream_config_pair : stream_configs_) {
     stream_config_pair.second.processor->Reset();
   }

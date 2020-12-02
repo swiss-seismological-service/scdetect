@@ -357,9 +357,33 @@ void Application::handleRecord(Record *rec) {
   if (!rec->data())
     return;
 
+  /* std::cerr << "Received record for " << rec->streamID() << ", " <<
+   * className() */
+  /*           << " [" << rec->startTime().iso() << " - " <<
+   * rec->endTime().iso() */
+  /*           << "]" << std::endl; */
+
   auto range = detectors_.equal_range(std::string{rec->streamID()});
   for (auto it = range.first; it != range.second; ++it) {
-    it->second->Feed(rec);
+    bool success{true};
+
+    success = it->second->Feed(rec);
+    if (!success) {
+      SEISCOMP_WARNING("%s: Failed to feed record into detector. Resetting.",
+                       it->first.c_str());
+      it->second->Reset();
+      continue;
+    }
+
+    success = !it->second->finished();
+    if (!success) {
+      SEISCOMP_WARNING(
+          "%s: Detector finished (status=%d, status_value=%f). Resetting.",
+          it->first.c_str(), utils::as_integer(it->second->status()),
+          it->second->status_value());
+      it->second->Reset();
+      continue;
+    }
   }
 }
 
