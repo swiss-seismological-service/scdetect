@@ -46,6 +46,18 @@ std::unique_ptr<T> make_unique(Ts &&... params) {
   return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
 
+template <typename TMap, typename Predicate>
+std::vector<typename TMap::key_type> filter_keys(const TMap &m, Predicate &p) {
+
+  std::vector<typename TMap::key_type> retval;
+  for (const auto &pair : m) {
+    if (p(pair)) {
+      retval.push_back(pair.first);
+    }
+  }
+  return retval;
+}
+
 /* ------------------------------------------------------------------------- */
 class WaveformStreamID {
 public:

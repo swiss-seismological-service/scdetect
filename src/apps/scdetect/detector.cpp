@@ -124,17 +124,25 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   };
 
   // prepare data to be processed
-  std::vector<std::string> stream_ids{};
+  std::vector<std::string> stream_ids;
   bool strict{true};
   if (WithTriggerDuration() && processing_state_.trigger_end) {
     // Once triggered, only take those streams into consideration which
     // are already part of the processing procedure.
-    boost::copy(processing_state_.processor_states | boost::adaptors::map_keys,
-                std::back_inserter(stream_ids));
+    auto if_enabled =
+        [](const decltype(
+            processing_state_.processor_states)::value_type &pair) {
+          return pair.second.processor->enabled();
+        };
 
+    stream_ids =
+        utils::filter_keys(processing_state_.processor_states, if_enabled);
   } else {
-    boost::copy(stream_configs_ | boost::adaptors::map_keys,
-                std::back_inserter(stream_ids));
+    auto if_enabled = [](const decltype(stream_configs_)::value_type &pair) {
+      return pair.second.processor->enabled();
+    };
+
+    stream_ids = utils::filter_keys(stream_configs_, if_enabled);
     strict = false;
   }
   auto tw{FindBufferedTimeWindow(stream_ids, strict)};
@@ -192,14 +200,19 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     if (!processor_state_pair.second.result) {
       xcorr_failed = true;
 
-      const auto status{processor_state_pair.second.processor->status()};
-      const auto status_value{
-          processor_state_pair.second.processor->status_value()};
-      SEISCOMP_WARNING(
-          "%s: Failed to match template. Skipping. Reason: status=%d, "
-          "status_value=%f",
-          processor_state_pair.first.c_str(), utils::as_integer(status),
-          status_value);
+      std::string msg{processor_state_pair.first +
+                      ": Failed to match template. Skipping. Reason: "};
+      const auto &processor{
+          stream_configs_.at(processor_state_pair.first).processor};
+      if (processor->enabled()) {
+        const auto status{processor->status()};
+        const auto status_value{processor->status_value()};
+        msg += "status=" + std::to_string(utils::as_integer(status)) +
+               ", status_value=" + std::to_string(status_value);
+      } else {
+        msg += "unknown (processor disabled)";
+      }
+      SEISCOMP_WARNING("%s", msg.c_str());
 
       continue;
     }
