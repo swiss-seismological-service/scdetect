@@ -344,7 +344,6 @@ bool Application::run() {
     recordStream()->addStream(wf_stream_id.net_code(), wf_stream_id.sta_code(),
                               wf_stream_id.loc_code(), wf_stream_id.cha_code());
   }
-  /* readRecords(false); */
 
   return StreamApplication::run();
 }
