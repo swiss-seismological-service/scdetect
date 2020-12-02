@@ -185,9 +185,9 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
     return false;
 
   // do as much computation as possible outside the main cross-correlation loop
-  const size_t &n = size_tr1;
-  const double &sum_short = result->sum_template;
-  const double &squared_sum_short = result->squared_sum_template;
+  const auto &n = size_tr1;
+  const auto &sum_short = result->sum_template;
+  const auto &squared_sum_short = result->squared_sum_template;
   const double denominator_short{
       std::sqrt(n * squared_sum_short - sum_short * sum_short)};
 
