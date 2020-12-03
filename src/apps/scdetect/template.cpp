@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cfenv>
+#include <cmath>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -199,12 +200,20 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
   if (!result->squared_sum_template)
     return false;
 
+  result->coefficient = std::nan("");
+  std::feclearexcept(FE_ALL_EXCEPT);
+
   // do as much computation as possible outside the main cross-correlation loop
   const auto &n = size_tr1;
   const auto &sum_short = result->sum_template;
   const auto &squared_sum_short = result->squared_sum_template;
   const double denominator_short{
       std::sqrt(n * squared_sum_short - sum_short * sum_short)};
+
+  if (!std::isfinite(denominator_short)) {
+    std::feclearexcept(FE_INVALID);
+    return false;
+  }
 
   double sum_long{0};
   double squared_sum_long{0};
@@ -227,6 +236,10 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
     const double denominator_long{
         std::sqrt(n * squared_sum_long - sum_long * sum_long)};
 
+    if (!std::isfinite(denominator_long)) {
+      continue;
+    }
+
     double sum_short_long{0};
     for (int i = 0; i < n; ++i) {
       sum_short_long += tr1[i] * SampleAtLong(i, lag);
@@ -235,8 +248,9 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
     const double coeff{(n * sum_short_long - sum_short * sum_long) /
                        (denominator_short * denominator_long)};
 
-    if (std::abs(coeff) > std::abs(result->coefficient) ||
-        !std::isfinite(result->coefficient)) {
+    if (!std::isfinite(result->coefficient) ||
+        (std::isfinite(coeff) &&
+         std::abs(coeff) > std::abs(result->coefficient))) {
       result->sum_trace = sum_long;
       result->squared_sum_trace = squared_sum_long;
       result->sum_template_trace = sum_short_long;
@@ -245,7 +259,7 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
     }
   }
 
-  int fe = fetestexcept(FE_ALL_EXCEPT);
+  int fe{fetestexcept(FE_ALL_EXCEPT)};
   if ((fe & ~FE_INEXACT) != 0) // we don't care about FE_INEXACT
   {
     std::vector<std::string> exceptions;
