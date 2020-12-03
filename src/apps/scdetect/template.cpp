@@ -119,11 +119,13 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
       waveform::Resample(tmp, stream_state.sampling_frequency,
                          waveform_sampling_frequency_, true);
 
-      data_.append(tmp->size(), tmp->typedData());
+      n = tmp->size();
+      samples = tmp->typedData();
     } else {
       GenericRecordPtr resampled{new GenericRecord{*waveform_}};
       waveform::Resample(*resampled, stream_state.sampling_frequency, true);
       waveform_ = resampled;
+      waveform_sampling_frequency_ = stream_state.sampling_frequency;
     }
   }
   data_.append(n, samples);
