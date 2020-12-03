@@ -75,8 +75,6 @@ struct DetectorConfig {
   // Maximum data latency a in seconds tolerated
   double maximum_latency{10};
 
-  // Buffer size (in seconds)
-  /* int buffer_size = settings::kDefaultBufferSize; */
   // Processing interval in seconds
   /* double processing_interval = settings::kDefaultProcessingInterval; */
 
