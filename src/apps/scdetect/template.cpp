@@ -66,9 +66,9 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
   const double *samples_template{
       DoubleArray::ConstCast(waveform_->data())->typedData()};
-  const double *samples_trace{filtered_data.typedData()};
+  const double *samples_trace{data_.typedData()};
   const int num_samples_template{waveform_->data()->size()};
-  const int num_samples_trace{filtered_data.size()};
+  const int num_samples_trace{data_.size()};
 
   MatchResultPtr result{new MatchResult{waveform_sum_, waveform_squared_sum_,
                                         num_samples_template,
