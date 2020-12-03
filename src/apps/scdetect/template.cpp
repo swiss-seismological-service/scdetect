@@ -101,6 +101,8 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
 
   // resample
   if (waveform_sampling_frequency_ != stream_state_.sampling_frequency) {
+    // XXX(damb): Always downsampling the real-time trace maight be very
+    // inefficient. Is upsampling the template an option?
     if (waveform_sampling_frequency_ < stream_state.sampling_frequency) {
       DoubleArrayPtr tmp{new DoubleArray{static_cast<int>(n), samples}};
       waveform::Resample(tmp, stream_state.sampling_frequency,
