@@ -268,6 +268,11 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       (processing_state_.trigger_end &&
        mean_coefficient < config_.trigger_off)) {
 
+    SEISCOMP_DEBUG("Detection (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+                   "trigger_duration=%f).",
+                   mean_coefficient, config_.trigger_on, config_.trigger_off,
+                   config_.trigger_duration);
+
     auto CountStations = [this](const std::vector<std::string> &stream_ids) {
       std::unordered_set<std::string> used_stations{};
 
