@@ -99,6 +99,17 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples) {
   Processor::Fill(stream_state, record, n, samples);
 
+  // demean
+  double mean{0};
+  for (size_t i = 0; i < n; ++i) {
+    mean += samples[i];
+  }
+  mean /= n;
+
+  for (size_t i = 0; i < n; ++i) {
+    samples[i] -= mean;
+  }
+
   // resample
   if (waveform_sampling_frequency_ != stream_state_.sampling_frequency) {
     // XXX(damb): Always downsampling the real-time trace maight be very
