@@ -87,6 +87,9 @@ protected:
 
   void ResetProcessing();
 
+  // Reset template (child) processors
+  void ResetProcessors();
+
 private:
   struct StreamConfig;
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
@@ -121,8 +124,8 @@ private:
 
     struct Result {
       Core::Time origin_time;
-      double fit;
-      double magnitude;
+      double fit{-1};
+      double magnitude{0};
     } result;
 
     Core::Time trigger_end;

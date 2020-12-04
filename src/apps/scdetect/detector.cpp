@@ -4,6 +4,7 @@
 #include <memory>
 #include <numeric>
 #include <stdexcept>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <boost/range/adaptor/map.hpp>
@@ -83,7 +84,15 @@ void Detector::Reset() {
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
 
-  auto WithTriggerDuration = [this]() { return config_.trigger_duration > 0; };
+  const auto &trigger_duration = config_.trigger_duration;
+  const auto &trigger_end = processing_state_.trigger_end;
+  auto WithTrigger = [&trigger_duration]() { return trigger_duration > 0; };
+  auto Triggered = [&trigger_duration, &trigger_end]() {
+    return trigger_duration > 0 && trigger_end;
+  };
+  auto NotTriggered = [&trigger_duration, &trigger_end]() {
+    return trigger_duration > 0 && !trigger_end;
+  };
 
   // Returns the maximum buffered time window of data for stream buffers
   // identified by `stream_ids`. If `strict` is `true`, and the buffered
@@ -139,7 +148,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   // prepare data to be processed
   std::vector<std::string> stream_ids;
   bool strict{true};
-  if (WithTriggerDuration() && processing_state_.trigger_end) {
+  if (WithTrigger() && processing_state_.trigger_end) {
     // Once triggered, only take those streams into consideration which
     // are already part of the processing procedure.
     auto if_enabled =
@@ -171,6 +180,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   // process templates i.e. compute cross-correlations
+  bool waiting_for_data{false}, feeding_data_failed{false};
   for (const auto &stream_config_pair : stream_configs_) {
     // TODO(damb): Check if the stream was actually used. This info might be
     // saved while computing the time window to be processed.
@@ -182,7 +192,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     }
 
     // initialize processing related stream states
-    if (!processing_state_.trigger_end) {
+    if (!WithTrigger() || !processing_state_.trigger_end) {
       processing_state_.processor_states[stream_config_pair.first] =
           ProcessingState::ProcessorState{};
     }
@@ -191,6 +201,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
         stream_config_pair.second.stream_buffer->contiguousRecord<double>(&tw)};
 
     if (!stream_config_pair.second.processor->Feed(trace)) {
+      feeding_data_failed = true;
+      // feeding/storing data failed (not processing related)
       const auto status{stream_config_pair.second.processor->status()};
       const auto status_value{
           stream_config_pair.second.processor->status_value()};
@@ -199,12 +211,30 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
                      "status_value=%f",
                      stream_config_pair.first.c_str(),
                      utils::as_integer(status), status_value);
+      break;
+    }
 
-      // TODO(damb): Storing the data failed. What to do next?
+    if (Status::kWaitingForData ==
+        stream_config_pair.second.processor->status()) {
+      waiting_for_data = true;
     }
   }
 
-  processed_ | tw;
+  // XXX(damb): Regarding *waiting_for_data*, this is a workaround. Actually, it
+  // would be better to make use of the Templates' internal buffers (similiar to
+  // Seiscomp::Processing::TimeWindowProcessor). On the other hand, this way it
+  // is easier to track that exactly the same, overlapping time window was
+  // processed.
+  if (feeding_data_failed || waiting_for_data) {
+    if (processing_state_.trigger_end) {
+      ResetProcessors();
+    } else {
+      ResetProcessing();
+    }
+    return;
+  }
+
+  processed_ = processed_ | tw;
 
   size_t xcorr_failed{0};
 
@@ -240,38 +270,75 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   mean_coefficient /= processing_state_.processor_states.size();
 
+  bool reset_processing{false};
   if (mean_coefficient >= config_.trigger_on) {
     // initialize trigger
-    if (WithTriggerDuration() && !processing_state_.trigger_end) {
+    if (NotTriggered()) {
+      SEISCOMP_DEBUG(
+          "Detector triggered (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+          "trigger_duration=%f).",
+          mean_coefficient, config_.trigger_on, config_.trigger_off,
+          config_.trigger_duration);
+
       processing_state_.trigger_end =
-          tw.endTime() + Core::TimeSpan(config_.trigger_duration);
+          tw.endTime() + Core::TimeSpan{config_.trigger_duration};
+    } else {
+      SEISCOMP_DEBUG(
+          "Detector result (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+          "trigger_duration=%f).",
+          mean_coefficient, config_.trigger_on, config_.trigger_off,
+          config_.trigger_duration);
     }
 
-    if (!WithTriggerDuration() || processing_state_.trigger_end) {
+    if ((!WithTrigger() || processing_state_.trigger_end) &&
+        mean_coefficient > processing_state_.result.fit) {
       // TODO(damb): Fit magnitude
-      const auto it{
+      const auto processor_state_pair{
           processing_state_.processor_states.find(record->streamID())};
-      if (it == processing_state_.processor_states.end())
+      if (processor_state_pair == processing_state_.processor_states.end())
         return;
 
-      auto origin_time{it->second.trace->startTime() +
-                       Core::TimeSpan(it->second.result->lag)};
+      auto origin_time{
+          processor_state_pair->second.trace->startTime() +
+          Core::TimeSpan{processor_state_pair->second.result->lag}};
 
-      processing_state_.result = {origin_time, mean_coefficient,
-                                  magnitude_->magnitude().value()};
+      processing_state_.result.origin_time = origin_time;
+      processing_state_.result.fit = mean_coefficient;
+      processing_state_.result.magnitude = magnitude_->magnitude().value();
+    }
+
+    ResetProcessors();
+
+  } else if (Triggered() && mean_coefficient < config_.trigger_on &&
+             mean_coefficient >= config_.trigger_off) {
+    SEISCOMP_DEBUG(
+        "Detector result (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+        "trigger_duration=%f).",
+        mean_coefficient, config_.trigger_on, config_.trigger_off,
+        config_.trigger_duration);
+
+    ResetProcessors();
+
+  } else {
+    SEISCOMP_DEBUG(
+        "Detector result (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+        "trigger_duration=%f).",
+        mean_coefficient, config_.trigger_on, config_.trigger_off,
+        config_.trigger_duration);
+
+    if (!WithTrigger() || !processing_state_.trigger_end) {
+      reset_processing = true;
     }
   }
 
-  if (!WithTriggerDuration() ||
-      (processing_state_.trigger_end &&
-       processed_.endTime() >= processing_state_.trigger_end) ||
-      (processing_state_.trigger_end &&
-       mean_coefficient < config_.trigger_off)) {
+  if ((!WithTrigger() && processing_state_.result.fit >= config_.trigger_on) ||
+      (Triggered() && processed_.endTime() >= processing_state_.trigger_end) ||
+      (Triggered() && mean_coefficient < config_.trigger_off)) {
 
     SEISCOMP_INFO("Detection (coefficient=%f, trigger_on=%f, trigger_off=%f, "
                   "trigger_duration=%f).",
-                  mean_coefficient, config_.trigger_on, config_.trigger_off,
-                  config_.trigger_duration);
+                  processing_state_.result.fit, config_.trigger_on,
+                  config_.trigger_off, config_.trigger_duration);
 
     auto CountStations = [this](const std::vector<std::string> &stream_ids) {
       std::unordered_set<std::string> used_stations{};
@@ -329,9 +396,13 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
         num_channels_associated, num_channels_used, metadata)};
 
     EmitResult(record, detection);
-    ResetProcessing();
+    reset_processing = true;
 
     // TODO(damb): Implement and set trigger_dead_time
+  }
+
+  if (reset_processing) {
+    ResetProcessing();
   }
 }
 
@@ -380,7 +451,10 @@ void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
 void Detector::ResetProcessing() {
   processing_state_ = ProcessingState{};
 
-  // reset template (child) processors
+  ResetProcessors();
+}
+
+void Detector::ResetProcessors() {
   for (auto &stream_config_pair : stream_configs_) {
     stream_config_pair.second.processor->Reset();
   }
