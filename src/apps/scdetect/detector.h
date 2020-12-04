@@ -158,8 +158,6 @@ public:
 
   operator DetectorPtr();
 
-  friend void swap(DetectorBuilder &lhs, DetectorBuilder &rhs);
-
 protected:
   bool IsValidArrival(const DataModel::ArrivalCPtr arrival,
                       const DataModel::PickCPtr pick);
