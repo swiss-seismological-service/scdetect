@@ -71,9 +71,9 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   const int num_samples_template{waveform_->data()->size()};
   const int num_samples_trace{data_.size()};
 
-  MatchResultPtr result{new MatchResult{waveform_sum_, waveform_squared_sum_,
-                                        num_samples_template,
-                                        MatchResult::MetaData{pick_, phase_}}};
+  MatchResultPtr result{utils::make_smart<MatchResult>(
+      waveform_sum_, waveform_squared_sum_, num_samples_template,
+      MatchResult::MetaData{pick_, phase_})};
 
   if (num_samples_template > num_samples_trace) {
     set_status(Status::kWaitingForData,
@@ -116,14 +116,14 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
     // XXX(damb): Always downsampling the real-time trace maight be very
     // inefficient. Is upsampling the template an option?
     if (waveform_sampling_frequency_ < stream_state.sampling_frequency) {
-      DoubleArrayPtr tmp{new DoubleArray{static_cast<int>(n), samples}};
+      auto tmp{utils::make_smart<DoubleArray>(static_cast<int>(n), samples)};
       waveform::Resample(tmp, stream_state.sampling_frequency,
                          waveform_sampling_frequency_, true);
 
       n = tmp->size();
       samples = tmp->typedData();
     } else {
-      GenericRecordPtr resampled{new GenericRecord{*waveform_}};
+      auto resampled{utils::make_smart<GenericRecord>(*waveform_)};
       waveform::Resample(*resampled, stream_state.sampling_frequency, true);
       waveform_ = resampled;
       waveform_sampling_frequency_ = stream_state.sampling_frequency;

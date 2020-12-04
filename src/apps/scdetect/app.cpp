@@ -140,8 +140,8 @@ Application::OptionPtr
 Bind(T *var, const char *cfg_name, const char *cli_group = nullptr,
      const char *cli_param = nullptr, const char *cli_desc = nullptr,
      bool cli_default = false, bool cli_switch = false) {
-  return new OptionImpl<T>(var, cfg_name, cli_group, cli_param, cli_desc,
-                           cli_default, cli_switch);
+  return utils::make_smart<OptionImpl<T>>(var, cfg_name, cli_group, cli_param,
+                                          cli_desc, cli_default, cli_switch);
 }
 
 template <typename T>
@@ -149,8 +149,8 @@ Application::OptionPtr
 Bind(std::vector<T> *var, const char *cfg_name, const char *cli_group = nullptr,
      const char *cli_param = nullptr, const char *cli_desc = nullptr,
      bool cli_default = false, bool cli_switch = false) {
-  return new OptionVecImpl<T>(var, cfg_name, cli_group, cli_param, cli_desc,
-                              cli_default, cli_switch);
+  return utils::make_smart<OptionVecImpl<T>>(
+      var, cfg_name, cli_group, cli_param, cli_desc, cli_default, cli_switch);
 }
 
 IMPL_READ_CONFIG(int, configGetInt)
@@ -314,12 +314,13 @@ bool Application::init() {
   if (!StreamApplication::init())
     return false;
 
-  // cache template waveforms on filesystem
+  // TODO(damb): Check if std::unique_ptr wouldn't be sufficient, here.
   WaveformHandlerIfacePtr waveform_handler{
-      new WaveformHandler{recordStreamURL()}};
-  waveform_handler = new detect::FileSystemCache{waveform_handler,
-                                                 config_.path_filesystem_cache,
-                                                 settings::kCacheRawWaveforms};
+      utils::make_smart<WaveformHandler>(recordStreamURL())};
+  // cache template waveforms on filesystem
+  waveform_handler = utils::make_smart<FileSystemCache>(
+      waveform_handler, config_.path_filesystem_cache,
+      settings::kCacheRawWaveforms);
 
   if (!InitDetectors(waveform_handler))
     return false;
@@ -486,7 +487,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
     ep.add(pick.get());
 
     // Create arrival
-    DataModel::ArrivalPtr arrival{new DataModel::Arrival{}};
+    auto arrival{utils::make_smart<DataModel::Arrival>()};
     arrival->setCreationInfo(ci);
     arrival->setPickID(pick->publicID());
     arrival->setPhase(pair.second.phase);
@@ -535,8 +536,7 @@ bool Application::LoadEvents(const std::string &event_db,
           IO::DatabaseInterface::Open(event_db.c_str())};
       if (db) {
         SEISCOMP_INFO("Connected successfully");
-        DataModel::DatabaseQueryPtr query{
-            new DataModel::DatabaseQuery(db.get())};
+        auto query{utils::make_smart<DataModel::DatabaseQuery>(db.get())};
         EventStore::Instance().Load(query);
         loaded = true;
       } else {

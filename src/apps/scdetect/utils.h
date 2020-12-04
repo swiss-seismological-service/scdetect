@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include <seiscomp/core/defs.h>
+
 namespace Seiscomp {
 namespace detect {
 namespace utils {
@@ -44,6 +46,12 @@ auto as_integer(const TEnum value) ->
 template <typename T, typename... Ts>
 std::unique_ptr<T> make_unique(Ts &&... params) {
   return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+}
+
+template <typename T, typename... Ts>
+typename Core::SmartPointer<T>::Impl make_smart(Ts &&... params) {
+  return
+      typename Core::SmartPointer<T>::Impl(new T(std::forward<Ts>(params)...));
 }
 
 template <typename TMap, typename Predicate>

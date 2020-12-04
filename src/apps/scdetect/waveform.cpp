@@ -323,7 +323,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   }
 
   // merge RecordSequence into GenericRecord
-  GenericRecordPtr trace{new GenericRecord()};
+  auto trace{utils::make_smart<GenericRecord>()};
   if (!waveform::Merge(*trace, *seq)) {
     throw BaseException{std::string{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "
@@ -472,7 +472,7 @@ GenericRecordCPtr FileSystemCache::Get(const std::string &key) {
     return nullptr;
 
   std::ifstream ifs{fpath};
-  GenericRecordPtr trace = new GenericRecord{};
+  auto trace{utils::make_smart<GenericRecord>()};
   if (!waveform::Read(*trace, ifs))
     return nullptr;
 

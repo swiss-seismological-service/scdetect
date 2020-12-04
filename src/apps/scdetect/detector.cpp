@@ -319,14 +319,14 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
           std::make_pair(processor_state_pair.first,
                          processor_state_pair.second.result->metadata));
 
-    ResultPtr detection{new Detection{
+    ResultPtr detection{utils::make_smart<Detection>(
         processing_state_.result.fit,
         processing_state_.result.origin_time +
             Core::TimeSpan(config_.time_correction),
         processing_state_.result.magnitude, origin_->latitude().value(),
         origin_->longitude().value(), origin_->depth().value(),
         sensor_locations, num_stations_associated, num_stations_used,
-        num_channels_associated, num_channels_used, metadata}};
+        num_channels_associated, num_channels_used, metadata)};
 
     EmitResult(record, detection);
     ResetProcessing();
@@ -341,9 +341,9 @@ void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   stream_state.received_samples += n;
 
   // buffer filled data
-  GenericRecordPtr filled{new GenericRecord{
+  auto filled{utils::make_smart<GenericRecord>(
       record->networkCode(), record->stationCode(), record->locationCode(),
-      record->channelCode(), record->startTime(), record->samplingFrequency()}};
+      record->channelCode(), record->startTime(), record->samplingFrequency())};
   filled->setData(n, samples, Array::DOUBLE);
 
   try {
