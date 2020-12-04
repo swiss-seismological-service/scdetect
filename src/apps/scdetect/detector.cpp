@@ -387,6 +387,8 @@ void Detector::ResetProcessing() {
 }
 
 /* -------------------------------------------------------------------------- */
+// XXX(damb): Using `new` to access a non-public ctor; see also
+// https://abseil.io/tips/134
 DetectorBuilder::DetectorBuilder(const std::string &origin_id)
     : origin_id_(origin_id), detector_(new Detector{}) {
 
@@ -561,7 +563,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_publish_callback(boost::bind(&Detector::StoreTemplateResult,
                                             detector_, _1, _2, _3))
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
-                        template_wf_config);
+                        template_wf_config)
+          .build();
 
   const auto &template_init_time{
       detector_->stream_configs_[stream_id].processor->init_time()};
@@ -586,7 +589,7 @@ DetectorBuilder &DetectorBuilder::set_publish_callback(
   return *this;
 }
 
-DetectorBuilder::operator DetectorPtr() { return detector_; }
+DetectorPtr DetectorBuilder::build() { return detector_; }
 
 bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
                                      const DataModel::PickCPtr pick) {

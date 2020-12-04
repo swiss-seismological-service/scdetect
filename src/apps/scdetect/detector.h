@@ -99,7 +99,7 @@ private:
     // Processing::Stream stream_config;
     std::unique_ptr<RecordSequence> stream_buffer;
     // Template matching processor
-    std::unique_ptr<Processor> processor;
+    ProcessorPtr processor;
 
     struct MetaData {
       DataModel::SensorLocationCPtr sensor_location;
@@ -156,7 +156,7 @@ public:
   // Set a callback function for publishing a detection
   set_publish_callback(const Processor::PublishResultCallback &callback);
 
-  operator DetectorPtr();
+  DetectorPtr build();
 
 protected:
   bool IsValidArrival(const DataModel::ArrivalCPtr arrival,

@@ -642,12 +642,12 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
                         config_.stream_config};
 
       try {
-        auto detector_builder =
+        auto detector_builder{
             Detector::Create(tc.origin_id())
                 .set_config(tc.detector_config())
                 .set_eventparameters()
-                .set_publish_callback(
-                    boost::bind(&Application::EmitDetection, this, _1, _2, _3));
+                .set_publish_callback(boost::bind(&Application::EmitDetection,
+                                                  this, _1, _2, _3))};
 
         std::vector<std::string> stream_ids;
         for (const auto &stream_set : tc) {
@@ -683,7 +683,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           }
         }
 
-        auto detector = static_cast<DetectorPtr>(detector_builder);
+        auto detector{detector_builder.build()};
         for (const auto &stream_id : stream_ids)
           detectors_.emplace(stream_id, detector);
 

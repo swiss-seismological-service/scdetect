@@ -293,8 +293,7 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
 /* ------------------------------------------------------------------------- */
 // XXX(damb): Using `new` to access a non-public ctor; see also
 // https://abseil.io/tips/134
-TemplateBuilder::TemplateBuilder()
-    : template_(std::unique_ptr<Template>(new Template{})) {}
+TemplateBuilder::TemplateBuilder() : template_(new Template{}) {}
 
 TemplateBuilder &
 TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
@@ -373,9 +372,7 @@ TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
   return *this;
 }
 
-TemplateBuilder::operator std::unique_ptr<Processor>() {
-  return std::move(template_);
-}
+ProcessorPtr TemplateBuilder::build() { return template_; }
 
 } // namespace detect
 } // namespace Seiscomp

@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEMPLATE_H_
 #define SCDETECT_APPS_SCDETECT_TEMPLATE_H_
 
-#include <memory>
 #include <string>
 
 #include <seiscomp/core/datetime.h>
@@ -120,10 +119,10 @@ public:
                               const double init_time = 0);
   TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
 
-  operator std::unique_ptr<Processor>();
+  ProcessorPtr build();
 
 private:
-  std::unique_ptr<Template> template_{nullptr};
+  TemplatePtr template_;
 };
 
 } // namespace detect
