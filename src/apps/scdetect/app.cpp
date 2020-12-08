@@ -239,6 +239,7 @@ bool Application::validateParameters() {
                    config_.stream_config.init_time);
     return false;
   }
+
   if (!config_.stream_config.filter.empty()) {
     std::string err;
     if (!utils::IsValidFilter(config_.stream_config.filter, err)) {
@@ -247,8 +248,9 @@ bool Application::validateParameters() {
     }
   }
 
-  if (config_.stream_config.template_config.phase.empty() ||
+  if (!config_.stream_config.template_config.phase.empty() &&
       !utils::ValidatePhase(config_.stream_config.template_config.phase)) {
+
     SEISCOMP_ERROR("Invalid configuration: 'phase': %s",
                    config_.stream_config.template_config.phase.c_str());
     return false;
@@ -638,10 +640,10 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
     boost::property_tree::read_json(ifs, pt);
 
     for (const auto &template_setting_pt : pt) {
-      TemplateConfig tc{template_setting_pt.second, config_.detector_config,
-                        config_.stream_config};
-
       try {
+        TemplateConfig tc{template_setting_pt.second, config_.detector_config,
+                          config_.stream_config};
+
         auto detector_builder{
             Detector::Create(tc.origin_id())
                 .set_config(tc.detector_config())
@@ -687,7 +689,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         for (const auto &stream_id : stream_ids)
           detectors_.emplace(stream_id, detector);
 
-      } catch (builder::BaseException &e) {
+      } catch (Exception &e) {
         SEISCOMP_WARNING("Failed to create detector: %s", e.what());
         continue;
       }

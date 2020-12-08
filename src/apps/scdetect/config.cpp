@@ -12,6 +12,15 @@
 namespace Seiscomp {
 namespace detect {
 
+namespace config {
+
+BaseException::BaseException() : Exception("base config exception") {}
+
+ParserException::ParserException()
+    : BaseException{"error while parsing configuration"} {}
+
+} // namespace config
+
 StreamConfig::StreamConfig() {}
 
 StreamConfig::StreamConfig(const std::string &wf_stream_id,
@@ -90,8 +99,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("maximumLatency", detector_defaults.maximum_latency);
 
   if (!detector_config_.IsValid()) {
-    throw std::invalid_argument(
-        "Invalid template specific detector configuration.");
+    throw config::ParserException{
+        "Invalid template specific detector configuration."};
   }
 
   // patch stream defaults with detector config globals
@@ -123,15 +132,15 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
         stream_configs.emplace(stream_config.wf_stream_id, stream_config);
         wf_id = stream_config.wf_stream_id;
       } catch (boost::property_tree::ptree_error &e) {
-        SEISCOMP_WARNING("Exception while parsing stream_config: %s", e.what());
-        continue;
+        throw config::ParserException{
+            std::string{"Exception while parsing stream config: "} + e.what()};
       }
 
       if (!stream_configs[wf_id].IsValid()) {
-        SEISCOMP_WARNING("Exception while parsing stream_config: Invalid "
-                         "stream configuration for stream: %s",
-                         wf_id.c_str());
-        continue;
+        throw config::ParserException{
+            std::string{"Exception while parsing stream_config: Invalid "
+                        "stream configuration for stream: "} +
+            wf_id};
       }
     }
     stream_sets_.push_back(stream_configs);

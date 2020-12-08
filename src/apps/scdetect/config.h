@@ -11,14 +11,32 @@
 
 #include <seiscomp/core/datetime.h>
 
+#include "exception.h"
+
 namespace Seiscomp {
 namespace detect {
+
+namespace config {
+
+class BaseException : public Exception {
+public:
+  using Exception::Exception;
+  BaseException();
+};
+
+class ParserException : public BaseException {
+public:
+  using BaseException::BaseException;
+  ParserException();
+};
+
+} // namespace config
 
 struct StreamConfig {
 
   // Stream related template configuration
   struct TemplateStreamConfig {
-    std::string phase{""};
+    std::string phase{"Pg"};
 
     double wf_start{-2};
     double wf_end{2};
