@@ -86,9 +86,10 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   const int max_lag_samples{num_samples_trace - num_samples_template -
                             (num_samples_trace - num_samples_template) / 2};
 
-  if (XCorr(samples_template, num_samples_template, samples_trace,
-            num_samples_trace, waveform_sampling_frequency_, max_lag_samples,
-            result)) {
+  if (template_detail::XCorr(samples_template, num_samples_template,
+                             samples_trace, num_samples_trace,
+                             waveform_sampling_frequency_, max_lag_samples,
+                             result)) {
     EmitResult(record, result);
     set_status(Processor::Status::kFinished, 100);
     return;
@@ -138,10 +139,96 @@ void Template::InitFilter(StreamState &stream_state, double sampling_freq) {
                stream_state.needed_samples);
 }
 
-bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
-                     const int size_tr2, const double sampling_freq,
-                     const double max_lag_samples,
-                     Template::MatchResultPtr result) {
+/* ------------------------------------------------------------------------- */
+// XXX(damb): Using `new` to access a non-public ctor; see also
+// https://abseil.io/tips/134
+TemplateBuilder::TemplateBuilder() : template_(new Template{}) {}
+
+TemplateBuilder &
+TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
+  template_->stream_config_.init(&stream_config);
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_phase(const std::string &phase) {
+  template_->phase_ = phase;
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_pick(DataModel::PickCPtr pick) {
+  template_->pick_ = pick;
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_arrival_weight(const double weight) {
+  template_->arrival_weight_ = weight;
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_waveform(
+    WaveformHandlerIfacePtr waveform_handler, const std::string &stream_id,
+    const Core::Time &wf_start, const Core::Time &wf_end,
+    const WaveformHandlerIface::ProcessingConfig &config) {
+
+  template_->waveform_start_ = wf_start;
+  template_->waveform_end_ = wf_end;
+  template_->waveform_stream_id_ = stream_id;
+
+  // prepare waveform stream id
+  std::vector<std::string> wf_tokens;
+  Core::split(wf_tokens, stream_id, ".", false);
+  try {
+    template_->waveform_ =
+        waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
+                              wf_tokens[3], wf_start, wf_end, config);
+  } catch (WaveformHandler::NoData &e) {
+    throw builder::NoWaveformData{
+        std::string{"Failed to load template waveform: "} + e.what()};
+  } catch (std::exception &e) {
+    throw builder::BaseException{
+        std::string{"Failed to load template waveform: "} + e.what()};
+  }
+  template_->waveform_sampling_frequency_ =
+      template_->waveform_->samplingFrequency();
+
+  const double *samples_template{
+      DoubleArray::ConstCast(template_->waveform_->data())->typedData()};
+  for (int i = 0; i < template_->waveform_->data()->size(); ++i) {
+    template_->waveform_sum_ += samples_template[i];
+    template_->waveform_squared_sum_ +=
+        samples_template[i] * samples_template[i];
+  }
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_publish_callback(
+    const Processor::PublishResultCallback &callback) {
+  template_->set_result_callback(callback);
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_filter(Processor::Filter *filter,
+                                             const double init_time) {
+  template_->set_filter(filter);
+  template_->init_time_ = Core::TimeSpan{init_time};
+  return *this;
+}
+
+TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
+                                                             double thres) {
+  template_->set_saturation_check(enabled);
+  template_->set_saturation_threshold(thres);
+  return *this;
+}
+
+ProcessorPtr TemplateBuilder::build() { return template_; }
+
+/* ------------------------------------------------------------------------- */
+namespace template_detail {
+
+bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
+           const int size_tr2, const double sampling_freq,
+           const double max_lag_samples, Template::MatchResultPtr result) {
 
   /*
    * Pearson correlation coefficient for time series X and Y of length n
@@ -288,89 +375,7 @@ bool Template::XCorr(const double *tr1, const int size_tr1, const double *tr2,
   return true;
 }
 
-/* ------------------------------------------------------------------------- */
-// XXX(damb): Using `new` to access a non-public ctor; see also
-// https://abseil.io/tips/134
-TemplateBuilder::TemplateBuilder() : template_(new Template{}) {}
-
-TemplateBuilder &
-TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
-  template_->stream_config_.init(&stream_config);
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_phase(const std::string &phase) {
-  template_->phase_ = phase;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_pick(DataModel::PickCPtr pick) {
-  template_->pick_ = pick;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_arrival_weight(const double weight) {
-  template_->arrival_weight_ = weight;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_waveform(
-    WaveformHandlerIfacePtr waveform_handler, const std::string &stream_id,
-    const Core::Time &wf_start, const Core::Time &wf_end,
-    const WaveformHandlerIface::ProcessingConfig &config) {
-
-  template_->waveform_start_ = wf_start;
-  template_->waveform_end_ = wf_end;
-  template_->waveform_stream_id_ = stream_id;
-
-  // prepare waveform stream id
-  std::vector<std::string> wf_tokens;
-  Core::split(wf_tokens, stream_id, ".", false);
-  try {
-    template_->waveform_ =
-        waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
-                              wf_tokens[3], wf_start, wf_end, config);
-  } catch (WaveformHandler::NoData &e) {
-    throw builder::NoWaveformData{
-        std::string{"Failed to load template waveform: "} + e.what()};
-  } catch (std::exception &e) {
-    throw builder::BaseException{
-        std::string{"Failed to load template waveform: "} + e.what()};
-  }
-  template_->waveform_sampling_frequency_ =
-      template_->waveform_->samplingFrequency();
-
-  const double *samples_template{
-      DoubleArray::ConstCast(template_->waveform_->data())->typedData()};
-  for (int i = 0; i < template_->waveform_->data()->size(); ++i) {
-    template_->waveform_sum_ += samples_template[i];
-    template_->waveform_squared_sum_ +=
-        samples_template[i] * samples_template[i];
-  }
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_publish_callback(
-    const Processor::PublishResultCallback &callback) {
-  template_->set_result_callback(callback);
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_filter(Processor::Filter *filter,
-                                             const double init_time) {
-  template_->set_filter(filter);
-  template_->init_time_ = Core::TimeSpan{init_time};
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
-                                                             double thres) {
-  template_->set_saturation_check(enabled);
-  template_->set_saturation_threshold(thres);
-  return *this;
-}
-
-ProcessorPtr TemplateBuilder::build() { return template_; }
+} // namespace template_detail
 
 } // namespace detect
 } // namespace Seiscomp

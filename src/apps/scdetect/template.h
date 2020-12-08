@@ -64,14 +64,6 @@ protected:
 
   void InitFilter(StreamState &stream_state, double sampling_freq) override;
 
-  /* Calculate the maximum correlation coefficient and corresponding lag from
-   * series `tr1` and a series `tr2` where `size_tr1` must be <= `size_tr2`
-   * (i.e. `tr1` is cross-correlated with `tr2`).
-   */
-  bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
-             const int size_tr2, const double sampling_freq,
-             const double max_lag_samples, MatchResultPtr result);
-
   DoubleArray data_;
 
 private:
@@ -124,6 +116,18 @@ public:
 private:
   TemplatePtr template_;
 };
+
+namespace template_detail {
+
+/* Calculate the maximum correlation coefficient and corresponding lag from
+ * series `tr1` and a series `tr2` where `size_tr1` must be <= `size_tr2`
+ * (i.e. `tr1` is cross-correlated with `tr2`).
+ */
+bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
+           const int size_tr2, const double sampling_freq,
+           const double max_lag_samples, Template::MatchResultPtr result);
+
+} // namespace template_detail
 
 } // namespace detect
 } // namespace Seiscomp
