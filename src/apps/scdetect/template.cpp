@@ -274,7 +274,9 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
    */
 
   auto SampleAtLong = [&size_tr1, &size_tr2, &tr2](int idx_short, int lag) {
-    const int idx_long{idx_short + (size_tr2 - size_tr1) / 2 + lag};
+    // TODO(damb): To be clarified with luca-s.
+    /* const int idx_long{idx_short + (size_tr2 - size_tr1) / 2 + lag}; */
+    const int idx_long{idx_short + lag};
     return (idx_long < 0 || idx_long >= size_tr2) ? 0 : tr2[idx_long];
   };
 
@@ -340,7 +342,7 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
       result->squared_sum_trace = squared_sum_long;
       result->sum_template_trace = sum_short_long;
       result->coefficient = coeff;
-      result->lag = lag / sampling_freq; // samples to secs
+      result->lag = lag / sampling_freq; // samples to seconds
     }
   }
 

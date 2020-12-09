@@ -40,7 +40,7 @@ public:
     double sum_trace{};
     double squared_sum_trace{};
     double sum_template_trace{};
-    double lag{}; // secs
+    double lag{}; // seconds
 
     struct MetaData {
       DataModel::PickCPtr pick;
