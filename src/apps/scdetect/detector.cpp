@@ -238,8 +238,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   size_t xcorr_failed{0};
 
-  // compute the mean coefficient
-  double mean_coefficient{0};
+  // compute the fit (i.e. currently mean coefficient)
+  double fit{0};
   for (const auto &processor_state_pair : processing_state_.processor_states) {
     if (!processor_state_pair.second.result) {
       xcorr_failed++;
@@ -260,7 +260,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
       continue;
     }
-    mean_coefficient += processor_state_pair.second.result->coefficient;
+    fit += processor_state_pair.second.result->coefficient;
   }
 
   if (xcorr_failed) {
@@ -268,30 +268,29 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     return;
   }
 
-  mean_coefficient /= processing_state_.processor_states.size();
+  fit /= processing_state_.processor_states.size();
 
   bool reset_processing{false};
-  if (mean_coefficient >= config_.trigger_on) {
+  if (fit >= config_.trigger_on) {
     // initialize trigger
     if (NotTriggered()) {
       SEISCOMP_DEBUG(
-          "Detector triggered (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+          "Detector triggered (fit=%f, trigger_on=%f, trigger_off=%f, "
           "trigger_duration=%f).",
-          mean_coefficient, config_.trigger_on, config_.trigger_off,
+          fit, config_.trigger_on, config_.trigger_off,
           config_.trigger_duration);
 
       processing_state_.trigger_end =
           tw.endTime() + Core::TimeSpan{config_.trigger_duration};
     } else {
-      SEISCOMP_DEBUG(
-          "Detector result (coefficient=%f, trigger_on=%f, trigger_off=%f, "
-          "trigger_duration=%f).",
-          mean_coefficient, config_.trigger_on, config_.trigger_off,
-          config_.trigger_duration);
+      SEISCOMP_DEBUG("Detector result (fit=%f, trigger_on=%f, trigger_off=%f, "
+                     "trigger_duration=%f).",
+                     fit, config_.trigger_on, config_.trigger_off,
+                     config_.trigger_duration);
     }
 
     if ((!WithTrigger() || processing_state_.trigger_end) &&
-        mean_coefficient > processing_state_.result.fit) {
+        fit > processing_state_.result.fit) {
       // TODO(damb): Fit magnitude
       const auto processor_state_pair{
           processing_state_.processor_states.find(record->streamID())};
@@ -303,28 +302,26 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
           Core::TimeSpan{processor_state_pair->second.result->lag}};
 
       processing_state_.result.origin_time = origin_time;
-      processing_state_.result.fit = mean_coefficient;
+      processing_state_.result.fit = fit;
       processing_state_.result.magnitude = magnitude_->magnitude().value();
     }
 
     ResetProcessors();
 
-  } else if (Triggered() && mean_coefficient < config_.trigger_on &&
-             mean_coefficient >= config_.trigger_off) {
-    SEISCOMP_DEBUG(
-        "Detector result (coefficient=%f, trigger_on=%f, trigger_off=%f, "
-        "trigger_duration=%f).",
-        mean_coefficient, config_.trigger_on, config_.trigger_off,
-        config_.trigger_duration);
+  } else if (Triggered() && fit < config_.trigger_on &&
+             fit >= config_.trigger_off) {
+    SEISCOMP_DEBUG("Detector result (fit=%f, trigger_on=%f, trigger_off=%f, "
+                   "trigger_duration=%f).",
+                   fit, config_.trigger_on, config_.trigger_off,
+                   config_.trigger_duration);
 
     ResetProcessors();
 
   } else {
-    SEISCOMP_DEBUG(
-        "Detector result (coefficient=%f, trigger_on=%f, trigger_off=%f, "
-        "trigger_duration=%f).",
-        mean_coefficient, config_.trigger_on, config_.trigger_off,
-        config_.trigger_duration);
+    SEISCOMP_DEBUG("Detector result (fit=%f, trigger_on=%f, trigger_off=%f, "
+                   "trigger_duration=%f).",
+                   fit, config_.trigger_on, config_.trigger_off,
+                   config_.trigger_duration);
 
     if (!WithTrigger() || !processing_state_.trigger_end) {
       reset_processing = true;
@@ -333,9 +330,9 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   if ((!WithTrigger() && processing_state_.result.fit >= config_.trigger_on) ||
       (Triggered() && processed_.endTime() >= processing_state_.trigger_end) ||
-      (Triggered() && mean_coefficient < config_.trigger_off)) {
+      (Triggered() && fit < config_.trigger_off)) {
 
-    SEISCOMP_INFO("Detection (coefficient=%f, trigger_on=%f, trigger_off=%f, "
+    SEISCOMP_INFO("Detection (fit=%f, trigger_on=%f, trigger_off=%f, "
                   "trigger_duration=%f).",
                   processing_state_.result.fit, config_.trigger_on,
                   config_.trigger_off, config_.trigger_duration);
