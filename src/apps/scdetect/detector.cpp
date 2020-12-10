@@ -4,6 +4,7 @@
 #include <memory>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -270,23 +271,26 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   fit /= processing_state_.processor_states.size();
 
+  const auto &config = config_;
+  auto CreateStatsMsg = [&config](const double &fit) {
+    return std::string{
+        "fit=" + std::to_string(fit) +
+        ", trigger_on=" + std::to_string(config.trigger_on) +
+        ", trigger_off=" + std::to_string(config.trigger_off) +
+        ", trigger_duration=" + std::to_string(config.trigger_duration)};
+  };
+
   bool reset_processing{false};
   if (fit >= config_.trigger_on) {
     // initialize trigger
     if (NotTriggered()) {
-      SEISCOMP_DEBUG(
-          "Detector triggered (fit=%f, trigger_on=%f, trigger_off=%f, "
-          "trigger_duration=%f).",
-          fit, config_.trigger_on, config_.trigger_off,
-          config_.trigger_duration);
+      SEISCOMP_DEBUG("Detector triggered: %s", CreateStatsMsg(fit).c_str());
 
       processing_state_.trigger_end =
           tw.endTime() + Core::TimeSpan{config_.trigger_duration};
     } else {
-      SEISCOMP_DEBUG("Detector result (fit=%f, trigger_on=%f, trigger_off=%f, "
-                     "trigger_duration=%f).",
-                     fit, config_.trigger_on, config_.trigger_off,
-                     config_.trigger_duration);
+      SEISCOMP_DEBUG("Detector result (triggered): %s",
+                     CreateStatsMsg(fit).c_str());
     }
 
     if ((!WithTrigger() || processing_state_.trigger_end) &&
@@ -310,18 +314,12 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   } else if (Triggered() && fit < config_.trigger_on &&
              fit >= config_.trigger_off) {
-    SEISCOMP_DEBUG("Detector result (fit=%f, trigger_on=%f, trigger_off=%f, "
-                   "trigger_duration=%f).",
-                   fit, config_.trigger_on, config_.trigger_off,
-                   config_.trigger_duration);
 
+    SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
     ResetProcessors();
 
   } else {
-    SEISCOMP_DEBUG("Detector result (fit=%f, trigger_on=%f, trigger_off=%f, "
-                   "trigger_duration=%f).",
-                   fit, config_.trigger_on, config_.trigger_off,
-                   config_.trigger_duration);
+    SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
 
     if (!WithTrigger() || !processing_state_.trigger_end) {
       reset_processing = true;
@@ -332,10 +330,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       (Triggered() && processed_.endTime() >= processing_state_.trigger_end) ||
       (Triggered() && fit < config_.trigger_off)) {
 
-    SEISCOMP_INFO("Detection (fit=%f, trigger_on=%f, trigger_off=%f, "
-                  "trigger_duration=%f).",
-                  processing_state_.result.fit, config_.trigger_on,
-                  config_.trigger_off, config_.trigger_duration);
+    SEISCOMP_INFO("Detection: %s",
+                  CreateStatsMsg(processing_state_.result.fit).c_str());
 
     auto CountStations = [this](const std::vector<std::string> &stream_ids) {
       std::unordered_set<std::string> used_stations{};
