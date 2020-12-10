@@ -36,7 +36,7 @@ in the build directory, or use the
 [cmake](https://cmake.org/) (also within the build directory). E.g. in order to
 run only `scdetect` related tests, invoke
 
-```
+```bash
 ctest -R "^test_scdetect.*"
 ```
 
