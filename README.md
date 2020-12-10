@@ -22,6 +22,27 @@ git clone https://github.com/damb/scdetect.git
 For compiling SeisComP (including `scdetect`), please refer to
 https://github.com/SeisComP/seiscomp#build.
 
+## Tests
+
+In order to run all SeisComP tests (including those of `scdetect` and possibly
+additionally installed third party modules), either execute
+
+```bash
+make test
+```
+
+in the build directory, or use the
+[ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) executable from
+[cmake](https://cmake.org/) (also within the build directory). E.g. in order to
+run only `scdetect` related tests, invoke
+
+```
+ctest -R "^test_scdetect.*"
+```
+
+For additional information, please also refer to SeisComP's [unit testing
+guide](https://docs.gempa.de/seiscomp/4/current/base/tests.html).
+
 ## Issues
 
 Please report bugs, issues, feature requests, etc on
