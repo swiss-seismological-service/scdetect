@@ -10,6 +10,7 @@
 
 #include <seiscomp/client/streamapplication.h>
 #include <seiscomp/datamodel/databasequery.h>
+#include <seiscomp/datamodel/eventparameters.h>
 
 #include "config.h"
 #include "processor.h"
@@ -76,6 +77,7 @@ public:
     // Messaging
     bool offline_mode{false};
     bool no_publish{false};
+    std::string path_ep{"-"};
 
     DetectorConfig detector_config;
 
@@ -162,6 +164,8 @@ private:
   Options options_;
   Config config_;
   ObjectLog *output_origins_;
+
+  DataModel::EventParametersPtr ep_;
 
   StreamDetectorMap detectors_;
 };

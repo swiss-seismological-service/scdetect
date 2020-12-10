@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <ios>
 #include <unordered_set>
+#include <vector>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -11,11 +12,11 @@
 
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
-#include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
 #include <seiscomp/utils/files.h>
@@ -206,6 +207,10 @@ bool Application::validateParameters() {
     config_.no_publish = true;
   }
 
+  if (!config_.no_publish && commandline().hasOption("ep")) {
+    config_.no_publish = true;
+  }
+
   // disable the database if required
   if (!isInventoryDatabaseEnabled()) {
     SEISCOMP_INFO("Disable database connection");
@@ -340,6 +345,10 @@ bool Application::run() {
     return true;
   }
 
+  if (commandline().hasOption("ep")) {
+    ep_ = utils::make_smart<DataModel::EventParameters>();
+  }
+
   // subscribe to streams
   for (const auto &detector_pair : detectors_) {
     utils::WaveformStreamID wf_stream_id{detector_pair.first};
@@ -352,7 +361,16 @@ bool Application::run() {
 }
 
 void Application::done() {
-  // TODO
+  if (ep_) {
+    IO::XMLArchive ar;
+    ar.create(config_.path_ep.empty() ? "-" : config_.path_ep.c_str());
+    ar.setFormattedOutput(true);
+    ar << ep_;
+    ar.close();
+    SEISCOMP_DEBUG("Found %lu origins.", ep_->originCount());
+    /* ep_ = nullptr; */
+  }
+
   StreamApplication::done();
 }
 
@@ -465,14 +483,11 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   origin->setQuality(origin_quality);
   origin->setMethodID(settings::kOriginMethod);
 
-  bool notifier_enabled{DataModel::Notifier::IsEnabled()};
-  DataModel::Notifier::Enable();
-  DataModel::EventParameters ep{};
-
   // Create the objects top-down
-  ep.add(origin.get());
   origin->add(magnitude.get());
+  magnitude.reset();
 
+  std::vector<DataModel::PickPtr> picks;
   for (const auto &pair : detection->template_metadata) {
     DataModel::PickPtr pick{DataModel::Pick::Create()};
 
@@ -486,7 +501,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
     } catch (...) {
     }
 
-    ep.add(pick.get());
+    picks.push_back(pick);
 
     // Create arrival
     auto arrival{utils::make_smart<DataModel::Arrival>()};
@@ -502,15 +517,36 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
 
-  DataModel::NotifierMessagePtr msg{DataModel::Notifier::GetMessage()};
-  DataModel::Notifier::SetEnabled(notifier_enabled);
-
   logObject(output_origins_, Core::Time::GMT());
 
-  if (!config_.no_publish && connection() && msg)
-    if (!connection()->send(msg.get())) {
+  if (connection() && !config_.no_publish) {
+
+    auto notifier_msg{utils::make_smart<DataModel::NotifierMessage>()};
+
+    // origin
+    auto notifier{utils::make_smart<DataModel::Notifier>(
+        "EventParameters", DataModel::OP_ADD, origin.get())};
+
+    // picks
+    for (auto pick : picks) {
+      auto notifier{utils::make_smart<DataModel::Notifier>(
+          "EventParameters", DataModel::OP_ADD, pick.get())};
+
+      notifier_msg->attach(notifier.get());
+    }
+
+    if (!connection()->send(notifier_msg.get())) {
       SEISCOMP_ERROR("Sending of event parameters failed.");
     }
+  }
+
+  if (ep_) {
+    ep_->add(origin.get());
+
+    for (auto pick : picks) {
+      ep_->add(pick.get());
+    }
+  }
 }
 
 bool Application::LoadEvents(const std::string &event_db,
@@ -593,6 +629,11 @@ void Application::SetupConfigurationOptions() {
               "--no-publish i.e. no objects are sent)");
   NEW_OPT_CLI(config_.no_publish, "Messaging", "no-publish",
               "do not send any objects");
+  NEW_OPT_CLI(
+      config_.path_ep, "Messaging", "ep",
+      "same as --no-publish, but outputs all event parameters scml "
+      "formatted; specifying the output path as '-' (a single dash) will "
+      "force the output to be redirected to stdout");
   NEW_OPT_CLI(config_.load_templates_only, "Mode", "load-templates",
               "load templates and exit");
   NEW_OPT_CLI(config_.path_template_json, "Input", "template-json",
