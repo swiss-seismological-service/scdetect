@@ -580,9 +580,6 @@ void Application::SetupConfigurationOptions() {
           "processing.gapInterpolation");
 
   NEW_OPT(config_.detector_config.gap_tolerance, "processing.maxGapLength");
-  // TODO(damb): For multi station templates the buffer size needs to be
-  // computed, automatically.
-  /* NEW_OPT(config_.detector_config.buffer_size, "processing.bufferSize"); */
   NEW_OPT(config_.detector_config.trigger_on, "detector.triggerOnThreshold");
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
