@@ -10,7 +10,7 @@ Get a copy of
 [SeisComP/seiscomp](https://github.com/SeisComP/seiscomp):
 
 ```bash
-$ git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/extras/
+git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/extras/
 ```
 
 Next, clone `scdetect`:
