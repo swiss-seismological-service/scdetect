@@ -287,6 +287,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
       processing_state_.trigger_end =
           tw.endTime() + Core::TimeSpan{config_.trigger_duration};
+    } else if (!WithTrigger()) {
+      SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
     } else {
       SEISCOMP_DEBUG("Detector result (triggered): %s",
                      CreateStatsMsg(fit).c_str());
