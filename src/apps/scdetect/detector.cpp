@@ -85,14 +85,14 @@ void Detector::Reset() {
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
 
-  const auto &trigger_duration = config_.trigger_duration;
-  const auto &trigger_end = processing_state_.trigger_end;
-  auto WithTrigger = [&trigger_duration]() { return trigger_duration > 0; };
-  auto Triggered = [&trigger_duration, &trigger_end]() {
-    return trigger_duration > 0 && trigger_end;
+  const auto &config{config_};
+  const auto &trigger_end{processing_state_.trigger_end};
+  auto WithTrigger = [config]() { return config.trigger_duration > 0; };
+  auto Triggered = [config, trigger_end]() {
+    return config.trigger_duration > 0 && trigger_end;
   };
-  auto NotTriggered = [&trigger_duration, &trigger_end]() {
-    return trigger_duration > 0 && !trigger_end;
+  auto NotTriggered = [config, trigger_end]() {
+    return config.trigger_duration > 0 && !trigger_end;
   };
 
   // Returns the maximum buffered time window of data for stream buffers
@@ -102,8 +102,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   // returned. Else the corresponding buffer is skipped when determining the
   // time window.
   auto FindBufferedTimeWindow =
-      [this](const std::vector<std::string> &stream_ids,
-             bool strict) -> Core::TimeWindow {
+      [this, config](const std::vector<std::string> &stream_ids,
+                     bool strict) -> Core::TimeWindow {
     // find max buffered endtime
     Core::Time max_endtime{};
     for (const auto &stream_id : stream_ids) {
@@ -125,9 +125,9 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       const auto &buffered_tw{it->second.stream_buffer->timeWindow()};
 
       // Ignore data with too high latency
-      if (config_.maximum_latency > 0 &&
+      if (config.maximum_latency > 0 &&
           static_cast<double>(max_endtime - buffered_tw.endTime()) >
-              config_.maximum_latency) {
+              config.maximum_latency) {
 
         if (strict) {
           tw.setLength(0);
@@ -271,8 +271,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   fit /= processing_state_.processor_states.size();
 
-  const auto &config = config_;
-  auto CreateStatsMsg = [&config](const double &fit) {
+  auto CreateStatsMsg = [config](const double &fit) {
     return std::string{
         "fit=" + std::to_string(fit) +
         ", trigger_on=" + std::to_string(config.trigger_on) +
@@ -348,10 +347,10 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       return used_stations.size();
     };
 
-    auto LoadSensorLocations = [this]() {
+    const auto &processor_states = processing_state_.processor_states;
+    auto LoadSensorLocations = [this, processor_states]() {
       Detection::SensorLocations sensor_locations{};
-      for (const auto &processor_state_pair :
-           processing_state_.processor_states) {
+      for (const auto &processor_state_pair : processor_states) {
         auto it{stream_configs_.find(processor_state_pair.first)};
         if (it == stream_configs_.end())
           continue;
