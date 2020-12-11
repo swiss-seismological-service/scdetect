@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
                                   sampling_freq, max_lag_samples, xcorr_result);
 
   BOOST_TEST_CHECK(retval == true);
-  BOOST_TEST_CHECK(xcorr_result->coefficient == -1.0);
-  BOOST_TEST_CHECK(xcorr_result->lag == 1.0);
+  BOOST_TEST_CHECK(xcorr_result->coefficient == 0.5);
+  BOOST_TEST_CHECK(xcorr_result->lag == 0.0);
 
   tr1 = {2, 4, 2};
   tr2 = {0, 1, 2, 1, 0};
@@ -120,6 +120,52 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   BOOST_TEST_CHECK(xcorr_result->coefficient == 1.0);
   BOOST_TEST_CHECK(xcorr_result->lag == -2.0);
 
+  // test max_lag_samples (single correlation)
+  tr1 = {0, 1, 0};
+  tr2 = {0, 1, 0, 0, 0};
+  sum_tr1 = SumTr1(tr1);
+  squared_sum_tr1 = SquaredSumTr1(tr1);
+  xcorr_result = utils::make_smart<Template::MatchResult>(
+      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+
+  retval = template_detail::XCorr(tr1.data(), size_tr1, tr2.data(), size_tr2,
+                                  sampling_freq, 0, xcorr_result);
+
+  BOOST_TEST_CHECK(retval == true);
+  BOOST_TEST_CHECK(xcorr_result->coefficient == 1.0);
+  BOOST_TEST_CHECK(xcorr_result->lag == 0.0);
+
+  // test max_lag_samples (lower limit)
+  tr1 = {1, 0, 1};
+  tr2 = {0, 0, 2, 0, 2};
+  sum_tr1 = SumTr1(tr1);
+  squared_sum_tr1 = SquaredSumTr1(tr1);
+  xcorr_result = utils::make_smart<Template::MatchResult>(
+      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+
+  retval = template_detail::XCorr(tr1.data(), size_tr1, tr2.data(), size_tr2,
+                                  sampling_freq, 1, xcorr_result);
+
+  BOOST_TEST_CHECK(retval == true);
+  BOOST_TEST_CHECK(xcorr_result->coefficient == 0.5);
+  BOOST_TEST_CHECK(xcorr_result->lag == 0.0);
+
+  tr1 = {1, 0, 1};
+  tr2 = {0, 0, 2, 0, 2};
+  sum_tr1 = SumTr1(tr1);
+  squared_sum_tr1 = SquaredSumTr1(tr1);
+  xcorr_result = utils::make_smart<Template::MatchResult>(
+      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+
+  // TODO(damb): To be clarified with luca-s.
+  retval = template_detail::XCorr(tr1.data(), size_tr1, tr2.data(), size_tr2,
+                                  sampling_freq, 2, xcorr_result);
+
+  BOOST_TEST_CHECK(retval == true);
+  BOOST_TEST_CHECK(xcorr_result->coefficient == 1.0);
+  BOOST_TEST_CHECK(xcorr_result->lag == 2.0);
+
+  // test max_lag_samples (upper limit)
   tr1 = {0, 1, 0};
   tr2 = {0, 0, 0, 0, 1};
   sum_tr1 = SumTr1(tr1);
@@ -128,7 +174,7 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
       sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
 
   retval = template_detail::XCorr(tr1.data(), size_tr1, tr2.data(), size_tr2,
-                                  sampling_freq, max_lag_samples, xcorr_result);
+                                  sampling_freq, 2, xcorr_result);
 
   BOOST_TEST_CHECK(retval == true);
   BOOST_TEST_CHECK(xcorr_result->coefficient == -0.5);
@@ -139,7 +185,7 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
 
   // TODO(damb): To be clarified with luca-s.
   retval = template_detail::XCorr(tr1.data(), size_tr1, tr2.data(), size_tr2,
-                                  sampling_freq, 4, xcorr_result);
+                                  sampling_freq, 3, xcorr_result);
 
   BOOST_TEST_CHECK(retval == true);
   BOOST_TEST_CHECK(xcorr_result->coefficient == 1.0);
