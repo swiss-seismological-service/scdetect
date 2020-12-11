@@ -340,8 +340,7 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
                        (denominator_short * denominator_long)};
 
     if (!std::isfinite(result->coefficient) ||
-        (std::isfinite(coeff) &&
-         std::abs(coeff) > std::abs(result->coefficient))) {
+        (std::isfinite(coeff) && coeff > result->coefficient)) {
       result->sum_trace = sum_long;
       result->squared_sum_trace = squared_sum_long;
       result->sum_template_trace = sum_short_long;
