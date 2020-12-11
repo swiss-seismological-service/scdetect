@@ -311,7 +311,11 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
   }
 
   // cross-correlation loop
-  for (int lag = -max_lag_samples; lag <= max_lag_samples; ++lag) {
+  const auto cc_start{(max_lag_samples >= size_tr1 - 1) ? -size_tr1 + 1
+                                                        : -max_lag_samples};
+  const auto cc_end{(max_lag_samples > size_tr2 - 1) ? size_tr2 - 1
+                                                     : max_lag_samples};
+  for (int lag = cc_start; lag <= cc_end; ++lag) {
     // sum_long/squared_sum_long: remove the sample that has exited the current
     // xcorr win and add the sample that has just entered the current xcorr win
     const double last_sample_long{SampleAtLong(-1, lag)};
