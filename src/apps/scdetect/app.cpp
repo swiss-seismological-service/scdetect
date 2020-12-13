@@ -173,6 +173,8 @@ Application::Application(int argc, char **argv)
   setLoadConfigModuleEnabled(true);
   setMessagingEnabled(true);
 
+  setPrimaryMessagingGroup("LOCATION");
+
   SetupConfigurationOptions();
 }
 
