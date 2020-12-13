@@ -12,6 +12,7 @@
 
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
+#include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
@@ -29,7 +30,13 @@
 
 namespace Seiscomp {
 namespace detect {
+
 namespace {
+
+struct ArrivalPick {
+  DataModel::ArrivalPtr arrival;
+  DataModel::PickPtr pick;
+};
 
 #define NEW_OPT(var, ...) AddOption(&var, __VA_ARGS__)
 #define NEW_OPT_CLI(var, ...) AddOption(&var, nullptr, __VA_ARGS__)
@@ -416,7 +423,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};
 
-  SEISCOMP_DEBUG("Creating and sending origin ...");
+  SEISCOMP_DEBUG("Creating origin ...");
   Core::Time now{Core::Time::GMT()};
 
   DataModel::CreationInfo ci;
@@ -485,36 +492,29 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   origin->setQuality(origin_quality);
   origin->setMethodID(settings::kOriginMethod);
 
-  // Create the objects top-down
-  origin->add(magnitude.get());
-  magnitude.reset();
-
-  std::vector<DataModel::PickPtr> picks;
-  for (const auto &pair : detection->template_metadata) {
+  std::vector<ArrivalPick> arrival_picks;
+  for (const auto &metadata_pair : detection->template_metadata) {
     DataModel::PickPtr pick{DataModel::Pick::Create()};
 
-    // TODO(damb): Set pick time
+    // TODO(damb): set pick time
     /* pick->setTime(); */
-    pick->setWaveformID(pair.first);
+    pick->setWaveformID(metadata_pair.first);
     pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
     try {
-      pick->setPhaseHint(pair.second.pick->phaseHint());
+      pick->setPhaseHint(metadata_pair.second.pick->phaseHint());
     } catch (...) {
     }
-
-    picks.push_back(pick);
 
     // Create arrival
     auto arrival{utils::make_smart<DataModel::Arrival>()};
     arrival->setCreationInfo(ci);
     arrival->setPickID(pick->publicID());
-    arrival->setPhase(pair.second.phase);
-    if (pair.second.arrival_weight)
-      arrival->setWeight(pair.second.arrival_weight);
+    arrival->setPhase(metadata_pair.second.phase);
+    if (metadata_pair.second.arrival_weight)
+      arrival->setWeight(metadata_pair.second.arrival_weight);
 
-    // Attach arrival to origin
-    origin->add(arrival.get());
+    arrival_picks.push_back({arrival, pick});
   }
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
@@ -522,19 +522,37 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   logObject(output_origins_, Core::Time::GMT());
 
   if (connection() && !config_.no_publish) {
+    SEISCOMP_DEBUG("Sending event parameters ...");
 
     auto notifier_msg{utils::make_smart<DataModel::NotifierMessage>()};
 
     // origin
     auto notifier{utils::make_smart<DataModel::Notifier>(
         "EventParameters", DataModel::OP_ADD, origin.get())};
+    notifier_msg->attach(notifier.get());
 
-    // picks
-    for (auto pick : picks) {
+    // magnitude
+    {
       auto notifier{utils::make_smart<DataModel::Notifier>(
-          "EventParameters", DataModel::OP_ADD, pick.get())};
-
+          origin->publicID(), DataModel::OP_ADD, magnitude.get())};
       notifier_msg->attach(notifier.get());
+    }
+
+    for (auto &arrival_pick : arrival_picks) {
+      // pick
+      {
+        auto notifier{utils::make_smart<DataModel::Notifier>(
+            "EventParameters", DataModel::OP_ADD, arrival_pick.pick.get())};
+
+        notifier_msg->attach(notifier.get());
+      }
+      // arrival
+      {
+        auto notifier{utils::make_smart<DataModel::Notifier>(
+            origin->publicID(), DataModel::OP_ADD, arrival_pick.arrival.get())};
+
+        notifier_msg->attach(notifier.get());
+      }
     }
 
     if (!connection()->send(notifier_msg.get())) {
@@ -545,8 +563,12 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   if (ep_) {
     ep_->add(origin.get());
 
-    for (auto pick : picks) {
-      ep_->add(pick.get());
+    origin->add(magnitude.get());
+
+    for (auto &arrival_pick : arrival_picks) {
+      origin->add(arrival_pick.arrival.get());
+
+      ep_->add(arrival_pick.pick.get());
     }
   }
 }
