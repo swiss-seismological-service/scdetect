@@ -271,9 +271,10 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
   fit /= processing_state_.processor_states.size();
 
-  auto CreateStatsMsg = [config](const double &fit) {
+  auto CreateStatsMsg = [config, &tw](const double &fit) {
     return std::string{
-        "fit=" + std::to_string(fit) +
+        "[" + tw.startTime().iso() + " - " + tw.endTime().iso() +
+        "] fit=" + std::to_string(fit) +
         ", trigger_on=" + std::to_string(config.trigger_on) +
         ", trigger_off=" + std::to_string(config.trigger_off) +
         ", trigger_duration=" + std::to_string(config.trigger_duration)};
