@@ -234,6 +234,26 @@ bool Application::validateParameters() {
     return false;
   }
 
+  // validate reprocessing config
+  auto ValidateAndStoreTime = [](const std::string &time_str,
+                                 Core::Time &result) {
+    if (!time_str.empty() && !result.fromString(time_str.c_str(), "%FT%T")) {
+
+      SEISCOMP_ERROR("Invalid time: %s", time_str.c_str());
+      return false;
+    }
+    return true;
+  };
+
+  if (!ValidateAndStoreTime(config_.playback_config.start_time_str,
+                            config_.playback_config.start_time)) {
+    return false;
+  }
+  if (!ValidateAndStoreTime(config_.playback_config.end_time_str,
+                            config_.playback_config.end_time)) {
+    return false;
+  }
+
   if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_on)) {
     SEISCOMP_ERROR("Invalid configuration: 'triggerOnThreshold': %f. Not in "
                    "interval [0,1].",
@@ -264,7 +284,6 @@ bool Application::validateParameters() {
 
   if (!config_.stream_config.template_config.phase.empty() &&
       !utils::ValidatePhase(config_.stream_config.template_config.phase)) {
-
     SEISCOMP_ERROR("Invalid configuration: 'phase': %s",
                    config_.stream_config.template_config.phase.c_str());
     return false;
@@ -364,6 +383,13 @@ bool Application::run() {
 
     recordStream()->addStream(wf_stream_id.net_code(), wf_stream_id.sta_code(),
                               wf_stream_id.loc_code(), wf_stream_id.cha_code());
+  }
+
+  if (!config_.playback_config.start_time_str.empty()) {
+    recordStream()->setStartTime(config_.playback_config.start_time);
+  }
+  if (!config_.playback_config.end_time_str.empty()) {
+    recordStream()->setEndTime(config_.playback_config.end_time);
   }
 
   return StreamApplication::run();
@@ -648,6 +674,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT_CLI(config_.url_event_db, "Database", "event-db",
               "load events from the given database or file, format: "
               "[service://]location");
+
   NEW_OPT_CLI(config_.offline_mode, "Messaging", "offline",
               "offline mode, do not connect to the messaging system (implies "
               "--no-publish i.e. no objects are sent)");
@@ -658,8 +685,20 @@ void Application::SetupConfigurationOptions() {
       "same as --no-publish, but outputs all event parameters scml "
       "formatted; specifying the output path as '-' (a single dash) will "
       "force the output to be redirected to stdout");
+
+  NEW_OPT_CLI(config_.playback_config.start_time_str, "Records",
+              "record-starttime",
+              "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
+              "requesting records from the configured recordstream; useful for "
+              "reprocessing");
+  NEW_OPT_CLI(config_.playback_config.end_time_str, "Records", "record-endtime",
+              "defines a end time (YYYY-MM-DDTHH:MM:SS formatted) for "
+              "requesting records from the configured recordstream; useful for "
+              "reprocessing");
+
   NEW_OPT_CLI(config_.load_templates_only, "Mode", "load-templates",
               "load templates and exit");
+
   NEW_OPT_CLI(config_.path_template_json, "Input", "template-json",
               "path to a template configuration file (json-formatted)");
 }

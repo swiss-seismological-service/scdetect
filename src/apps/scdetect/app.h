@@ -74,6 +74,15 @@ public:
     // Input
     std::string path_template_json{};
 
+    // Reprocessing / playback
+    struct {
+      std::string start_time_str;
+      std::string end_time_str;
+
+      Core::Time start_time;
+      Core::Time end_time;
+    } playback_config;
+
     // Messaging
     bool offline_mode{false};
     bool no_publish{false};
