@@ -1,14 +1,19 @@
 #include "template.h"
 
-#include <boost/algorithm/string/join.hpp>
-
 #include <algorithm>
 #include <cfenv>
 #include <cmath>
 #include <exception>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
+
+#include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
+
+#include <seiscomp/system/environment.h>
+#include <seiscomp/utils/files.h>
 
 #include "processor.h"
 #include "settings.h"
@@ -85,6 +90,33 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   // compute as much correlations as possible
   const int max_lag_samples{num_samples_trace - num_samples_template -
                             (num_samples_trace - num_samples_template) / 2};
+
+#ifdef SCDETECT_DEBUG
+  Environment *env{Environment::Instance()};
+
+  boost::filesystem::path sc_install_dir{env->installDir()};
+  boost::filesystem::path path_tmp{sc_install_dir / settings::kPathTemp};
+
+  if (!Util::pathExists(path_tmp.string())) {
+    if (!Util::createPath(path_tmp.string())) {
+      SEISCOMP_ERROR("Failed to create directory: %s", path_tmp.c_str());
+      set_status(Status::kError, 0);
+      return;
+    }
+  }
+
+  std::string fname{record->streamID() + "_" + record->startTime().iso() + "_" +
+                    record->endTime().iso() + ".mseed"};
+  boost::filesystem::path fpath{path_tmp / fname};
+
+  auto dump_me{utils::make_smart<GenericRecord>(*record.get())};
+  dump_me->setData(&data_);
+  dump_me->setSamplingFrequency(waveform_sampling_frequency_);
+  dump_me->dataUpdated();
+
+  std::ofstream ofs{fpath.string()};
+  waveform::Write(*dump_me.detach(), ofs);
+#endif
 
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,

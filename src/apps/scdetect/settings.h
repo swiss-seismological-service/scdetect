@@ -10,6 +10,8 @@ namespace settings {
 
 // Relative path from the SeisComP installation directory
 const std::string kPathFilesystemCache{"var/cache/scdetect"};
+// Relative path from the SeisComP installation directory
+const std::string kPathTemp{"var/tmp/scdetect"};
 
 // Template specific default configuration
 const std::vector<std::string> kValidPhases{"Pg", "P", "Px", "Sg", "S", "Sx"};

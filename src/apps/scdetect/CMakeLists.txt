@@ -30,6 +30,10 @@ SET(
     waveform.h
 )
 
+# ADD_DEFINITIONS(
+#   -DSCDETECT_DEBUG
+# )
+
 SC_ADD_EXECUTABLE(DETECT ${DETECT_TARGET})
 SC_LINK_LIBRARIES_INTERNAL(${DETECT_TARGET} client)
 SC_INSTALL_INIT(${DETECT_TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py)
