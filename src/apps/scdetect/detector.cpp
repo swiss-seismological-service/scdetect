@@ -527,6 +527,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
 
+  // TODO(damb): Rather go for a logging adapter approach.
+  std::string log_prefix{stream_id + std::string{" ("} + template_stream_id +
+                         std::string{"): "}};
+
   // configure pick from arrival
   DataModel::PickPtr pick;
   DataModel::WaveformStreamID pick_waveform_id;
@@ -553,9 +557,9 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   if (!pick) {
-    auto msg{stream_id + std::string{" ("} + template_stream_id +
-             std::string{"): Failed to load pick: origin="} + origin_id_ +
-             std::string{", phase="} + stream_config.template_config.phase};
+    auto msg{log_prefix + std::string{"Failed to load pick: origin="} +
+             origin_id_ + std::string{", phase="} +
+             stream_config.template_config.phase};
 
     SEISCOMP_WARNING("%s", msg.c_str());
     throw builder::BaseException{msg};
@@ -564,8 +568,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   try {
     pick->time().value();
   } catch (...) {
-    auto msg{stream_id + std::string{" ("} + template_stream_id +
-             std::string{"): Failed to load pick (invalid time): origin="} +
+    auto msg{log_prefix +
+             std::string{"Failed to load pick (invalid time): origin="} +
              origin_id_ + std::string{", phase="} +
              stream_config.template_config.phase};
 
@@ -585,18 +589,18 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       wf_start)};
 
   if (!stream) {
-    auto msg{stream_id + std::string{" ("} + template_stream_id +
-             std::string{"): Stream not found in inventory for epoch: start="} +
+    auto msg{log_prefix +
+             std::string{"Stream not found in inventory for epoch: start="} +
              wf_start.iso() + std::string{", end="} + wf_end.iso()};
 
     SEISCOMP_WARNING("%s", msg.c_str());
     throw builder::NoStream{msg};
   }
 
-  SEISCOMP_DEBUG("%s (%s): Loaded stream from inventory for epoch: start=%s, "
+  SEISCOMP_DEBUG("%sLoaded stream from inventory for epoch: start=%s, "
                  "end=%s",
-                 stream_id.c_str(), template_stream_id.c_str(),
-                 wf_start.iso().c_str(), wf_end.iso().c_str());
+                 log_prefix.c_str(), wf_start.iso().c_str(),
+                 wf_end.iso().c_str());
 
   // set template related filter (used for template waveform processing)
   WaveformHandlerIface::ProcessingConfig template_wf_config;
@@ -612,9 +616,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         Processor::Filter::Create(stream_config.filter, &err));
 
     if (!rt_template_filter) {
-      auto msg{stream_id + std::string{" ("} + template_stream_id +
-               std::string{"): Compiling filter ("} + stream_config.filter +
-               std::string{") failed: "} + err};
+      auto msg{log_prefix + std::string{"Compiling filter ("} +
+               stream_config.filter + std::string{") failed: "} + err};
 
       SEISCOMP_WARNING("%s", msg.c_str());
       throw builder::BaseException{msg};
