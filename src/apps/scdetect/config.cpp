@@ -64,8 +64,7 @@ bool StreamConfig::IsValid() const {
   }
 
   return (retval && template_config.wf_start < template_config.wf_end &&
-          utils::ValidatePhase(template_config.phase) &&
-          utils::IsGeZero(init_time));
+          !template_config.phase.empty() && utils::IsGeZero(init_time));
 }
 
 bool DetectorConfig::IsValid() const {

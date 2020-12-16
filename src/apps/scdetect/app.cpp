@@ -282,13 +282,6 @@ bool Application::validateParameters() {
     }
   }
 
-  if (!config_.stream_config.template_config.phase.empty() &&
-      !utils::ValidatePhase(config_.stream_config.template_config.phase)) {
-    SEISCOMP_ERROR("Invalid configuration: 'phase': %s",
-                   config_.stream_config.template_config.phase.c_str());
-    return false;
-  }
-
   if (config_.stream_config.template_config.wf_start >=
       config_.stream_config.template_config.wf_end) {
     SEISCOMP_ERROR(

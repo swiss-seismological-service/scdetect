@@ -666,8 +666,6 @@ bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
     SEISCOMP_DEBUG("Failed loading pick: %s", arrival->pickID().c_str());
     return false;
   }
-  if (!utils::ValidatePhase(arrival->phase().code()))
-    return false;
   // check if both pick and arrival are properly configured
   try {
     if (pick->evaluationMode() != DataModel::MANUAL &&

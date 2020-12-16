@@ -15,7 +15,6 @@ namespace detect {
 namespace utils {
 
 template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
-bool ValidatePhase(const std::string &phase);
 bool ValidateXCorrThreshold(const double &thres);
 
 template <typename TMap>
