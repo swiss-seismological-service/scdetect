@@ -70,6 +70,12 @@ public:
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
     bool skip_template_if_no_stream_data{true};
+    // Defines if a detector should be initialized although template processors
+    // could not be initialized due to missing sensor location information in
+    // the inventory.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skip_template_if_no_sensor_location_data{true};
 
     // Input
     std::string path_template_json{};

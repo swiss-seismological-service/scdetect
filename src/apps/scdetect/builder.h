@@ -25,6 +25,12 @@ public:
   NoStream();
 };
 
+class NoSensorLocation : public BaseException {
+public:
+  using BaseException::BaseException;
+  NoSensorLocation();
+};
+
 } // namespace builder
 
 template <typename T> class Builder {};

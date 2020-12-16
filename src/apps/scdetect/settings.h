@@ -14,7 +14,6 @@ const std::string kPathFilesystemCache{"var/cache/scdetect"};
 const std::string kPathTemp{"var/tmp/scdetect"};
 
 // Template specific default configuration
-const std::vector<std::string> kValidPhases{"Pg", "P", "Px", "Sg", "S", "Sx"};
 const std::string kMagnitudeType{"SCDETECT"};
 const std::string kOriginMethod{kMagnitudeType};
 const std::string kStationMagnitudeType{kMagnitudeType};
