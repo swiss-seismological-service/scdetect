@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <sstream>
 #include <vector>
 
 #include <seiscomp/core/strings.h>
@@ -28,6 +29,17 @@ WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
   sta_code_ = tokens[1];
   loc_code_ = tokens[2];
   cha_code_ = tokens[3];
+}
+
+WaveformStreamID::WaveformStreamID(const DataModel::WaveformStreamID &id)
+    : net_code_{id.networkCode()}, sta_code_{id.stationCode()},
+      loc_code_{id.locationCode()}, cha_code_{id.channelCode()} {
+  if (net_code_.empty() || sta_code_.empty() || cha_code_.empty()) {
+    std::ostringstream oss;
+    oss << *this;
+    throw ValueException{std::string{"Invalid DataModel::WaveformStreamID: "} +
+                         oss.str()};
+  }
 }
 
 WaveformStreamID::WaveformStreamID(const std::string &net_code,

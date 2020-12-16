@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <seiscomp/core/defs.h>
+#include <seiscomp/datamodel/waveformstreamid.h>
 
 namespace Seiscomp {
 namespace detect {
@@ -69,6 +70,7 @@ std::vector<typename TMap::key_type> filter_keys(const TMap &m, Predicate &p) {
 class WaveformStreamID {
 public:
   explicit WaveformStreamID(const std::string &net_sta_loc_cha);
+  explicit WaveformStreamID(const DataModel::WaveformStreamID &id);
   WaveformStreamID(const std::string &net_code, const std::string &sta_code,
                    const std::string &loc_code, const std::string &cha_code);
 
