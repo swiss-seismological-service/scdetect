@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -526,6 +527,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                             WaveformHandlerIfacePtr waveform_handler) {
 
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
+  utils::WaveformStreamID template_wf_stream_id{template_stream_id};
 
   // TODO(damb): Rather go for a logging adapter approach.
   std::string log_prefix{stream_id + std::string{" ("} + template_stream_id +
@@ -547,8 +549,32 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       continue;
     }
 
+    // compare sensor locations
+    try {
+      pick->time().value();
+    } catch (...) {
+      continue;
+    }
+    auto template_wf_sensor_location{
+        Client::Inventory::Instance()->getSensorLocation(
+            template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
+            template_wf_stream_id.loc_code(), pick->time().value())};
+    if (!template_wf_sensor_location) {
+      auto msg{log_prefix +
+               std::string{
+                   "Sensor location not found in inventory for time: time="} +
+               pick->time().value().iso()};
+
+      SEISCOMP_WARNING("%s", msg.c_str());
+      throw builder::NoSensorLocation{msg};
+    }
     pick_waveform_id = pick->waveformID();
-    if (template_stream_id != static_cast<std::string>(pick_waveform_id)) {
+    auto pick_wf_sensor_location{
+        Client::Inventory::Instance()->getSensorLocation(
+            pick_waveform_id.networkCode(), pick_waveform_id.stationCode(),
+            pick_waveform_id.locationCode(), pick->time().value())};
+    if (!pick_wf_sensor_location ||
+        *template_wf_sensor_location != *pick_wf_sensor_location) {
       continue;
     }
 
@@ -565,17 +591,13 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     throw builder::BaseException{msg};
   }
 
-  try {
-    pick->time().value();
-  } catch (...) {
-    auto msg{log_prefix +
-             std::string{"Failed to load pick (invalid time): origin="} +
-             origin_id_ + std::string{", phase="} +
-             stream_config.template_config.phase};
-
-    SEISCOMP_WARNING("%s", msg.c_str());
-    throw builder::BaseException{msg};
-  }
+  std::ostringstream oss;
+  oss << utils::WaveformStreamID{pick_waveform_id};
+  SEISCOMP_DEBUG(
+      "%sUsing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
+      log_prefix.c_str(), origin_id_.c_str(),
+      pick->time().value().iso().c_str(),
+      stream_config.template_config.phase.c_str(), oss.str().c_str());
 
   auto wf_start{pick->time().value() +
                 Core::TimeSpan{stream_config.template_config.wf_start}};
@@ -584,8 +606,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // load stream metadata from inventory
   auto stream{Client::Inventory::Instance()->getStream(
-      pick_waveform_id.networkCode(), pick_waveform_id.stationCode(),
-      pick_waveform_id.locationCode(), pick_waveform_id.channelCode(),
+      template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
+      template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
       wf_start)};
 
   if (!stream) {

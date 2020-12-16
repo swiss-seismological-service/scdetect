@@ -22,6 +22,7 @@
 #include <seiscomp/math/geo.h>
 #include <seiscomp/utils/files.h>
 
+#include "builder.h"
 #include "config.h"
 #include "detector.h"
 #include "eventstore.h"
@@ -752,6 +753,17 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
               detector_builder.set_stream(stream_config_pair.first,
                                           stream_config_pair.second,
                                           waveform_handler);
+            } catch (builder::NoSensorLocation &e) {
+              if (config_.skip_template_if_no_sensor_location_data) {
+                SEISCOMP_WARNING(
+                    "%s (%s): No sensor location data for template processor "
+                    "available. Skipping.",
+                    stream_config_pair.first.c_str(),
+                    stream_config_pair.second.template_config.wf_stream_id
+                        .c_str());
+                continue;
+              }
+              throw;
             } catch (builder::NoStream &e) {
               if (config_.skip_template_if_no_stream_data) {
                 SEISCOMP_WARNING(
