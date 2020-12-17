@@ -15,6 +15,8 @@ namespace Seiscomp {
 namespace detect {
 namespace utils {
 
+const std::string CreateUUID();
+
 template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
 bool ValidateXCorrThreshold(const double &thres);
 

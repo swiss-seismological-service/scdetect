@@ -3,6 +3,10 @@
 #include <sstream>
 #include <vector>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <seiscomp/core/strings.h>
 
 #include "exception.h"
@@ -11,6 +15,11 @@
 namespace Seiscomp {
 namespace detect {
 namespace utils {
+
+const std::string CreateUUID() {
+  auto uuid{boost::uuids::random_generator{}()};
+  return boost::uuids::to_string(uuid);
+}
 
 bool ValidateXCorrThreshold(const double &thres) {
   return 0 <= thres && 1 >= thres;
