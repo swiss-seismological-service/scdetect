@@ -68,12 +68,10 @@ bool StreamConfig::IsValid() const {
 }
 
 bool DetectorConfig::IsValid() const {
-  if (!utils::ValidateXCorrThreshold(trigger_on) ||
-      !utils::ValidateXCorrThreshold(trigger_off) ||
-      (gap_interpolation && !utils::IsGeZero(gap_tolerance))) {
-    return false;
-  }
-  return true;
+  return (utils::ValidateXCorrThreshold(trigger_on) &&
+          utils::ValidateXCorrThreshold(trigger_off) &&
+          (!gap_interpolation ||
+           (gap_interpolation && utils::IsGeZero(gap_tolerance))));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
