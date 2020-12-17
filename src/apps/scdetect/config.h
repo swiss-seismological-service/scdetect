@@ -71,7 +71,6 @@ struct StreamConfig {
   // to filter the data.
   bool sensitivity_correction{true};
 
-  // Stream related template configuration
   TemplateStreamConfig template_config;
 };
 
