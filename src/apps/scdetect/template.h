@@ -71,9 +71,9 @@ private:
   Processing::Stream stream_config_;
 
   // Template related pick
-  DataModel::PickCPtr pick_;
+  DataModel::PickCPtr pick_{nullptr};
   // Template related phase code
-  std::string phase_;
+  std::string phase_{""};
   // Template related arrival weight
   double arrival_weight_;
 
@@ -84,7 +84,7 @@ private:
   // Template waveform stream id
   std::string waveform_stream_id_;
   // Template waveform
-  GenericRecordCPtr waveform_;
+  GenericRecordCPtr waveform_{nullptr};
   // Template waveform sampling frequency
   double waveform_sampling_frequency_;
   // Template waveform samples squared summed

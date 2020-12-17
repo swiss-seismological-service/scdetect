@@ -31,8 +31,7 @@ Template::MatchResult::MatchResult(const double sum_template,
     : num_samples_template{num_samples_template}, sum_template{sum_template},
       squared_sum_template{squared_sum_template}, metadata(metadata) {}
 
-Template::Template(const std::string &template_id)
-    : Processor{template_id}, pick_{nullptr}, phase_{""}, waveform_{nullptr} {
+Template::Template(const std::string &template_id) : Processor{template_id} {
   Reset();
 }
 
