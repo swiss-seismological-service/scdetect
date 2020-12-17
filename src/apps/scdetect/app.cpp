@@ -727,6 +727,17 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
   }
 
   // initialize detectors
+  std::unordered_set<std::string> processor_ids;
+  auto ValidateProcessorId = [&processor_ids](const std::string &id) {
+    bool id_exists{processor_ids.find(id) != processor_ids.end()};
+    if (id_exists) {
+      SEISCOMP_WARNING("Processor id will be used by multiple processors: %s",
+                       id.c_str());
+    }
+    processor_ids.emplace(id);
+    return !id_exists;
+  };
+
   // TODO(damb): Stream sets not taken into consideration. Detectors
   // aren't able to cope with this concept, anyway, yet.
   try {
@@ -739,8 +750,13 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         TemplateConfig tc{template_setting_pt.second, config_.detector_config,
                           config_.stream_config};
 
+        SEISCOMP_DEBUG("Creating detector processor (id=%s) ... ",
+                       tc.detector_id().c_str());
+
+        ValidateProcessorId(tc.detector_id());
+
         auto detector_builder{
-            Detector::Create(tc.origin_id())
+            Detector::Create(tc.detector_id(), tc.origin_id())
                 .set_config(tc.detector_config())
                 .set_eventparameters()
                 .set_publish_callback(boost::bind(&Application::EmitDetection,
@@ -749,6 +765,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         std::vector<std::string> stream_ids;
         for (const auto &stream_set : tc) {
           for (const auto &stream_config_pair : stream_set) {
+            ValidateProcessorId(stream_config_pair.second.template_id);
             try {
               detector_builder.set_stream(stream_config_pair.first,
                                           stream_config_pair.second,

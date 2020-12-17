@@ -6,6 +6,7 @@
 #include <boost/property_tree/exceptions.hpp>
 
 #include "exception.h"
+#include "settings.h"
 #include "utils.h"
 #include "version.h"
 
@@ -26,14 +27,33 @@ StreamConfig::StreamConfig() {}
 StreamConfig::StreamConfig(const std::string &wf_stream_id,
                            const std::string &filter, const double init_time,
                            const bool sensitivity_correction,
-                           const TemplateStreamConfig &template_config)
+                           const TemplateStreamConfig &template_config,
+                           const std::string &detector_id,
+                           const std::string &template_id)
     : wf_stream_id(wf_stream_id), init_time(init_time), filter(filter),
       sensitivity_correction(sensitivity_correction),
-      template_config(template_config) {}
+      template_config(template_config) {
+
+  // concat ids
+  auto EmergeTemplateId = [&template_id]() {
+    return template_id.empty() ? utils::CreateUUID() : template_id;
+  };
+  this->template_id =
+      detector_id.empty()
+          ? EmergeTemplateId()
+          : detector_id + settings::kProcessorIdSep + EmergeTemplateId();
+}
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
-                           const StreamConfig &defaults)
-    : wf_stream_id(pt.get<std::string>("waveformId")),
+                           const StreamConfig &defaults,
+                           const std::string &detector_id)
+    // concat ids
+    : template_id{detector_id.empty()
+                      ? pt.get<std::string>("templateId", utils::CreateUUID())
+                      : detector_id + settings::kProcessorIdSep +
+                            pt.get<std::string>("templateId",
+                                                utils::CreateUUID())},
+      wf_stream_id(pt.get<std::string>("waveformId")),
       init_time(pt.get<double>("initTime", defaults.init_time)),
       filter(pt.get<std::string>("filter", defaults.filter)),
       sensitivity_correction(pt.get<bool>("sensitivityCorrection",
@@ -68,18 +88,17 @@ bool StreamConfig::IsValid() const {
 }
 
 bool DetectorConfig::IsValid() const {
-  if (!utils::ValidateXCorrThreshold(trigger_on) ||
-      !utils::ValidateXCorrThreshold(trigger_off) ||
-      (gap_interpolation && !utils::IsGeZero(gap_tolerance))) {
-    return false;
-  }
-  return true;
+  return (utils::ValidateXCorrThreshold(trigger_on) &&
+          utils::ValidateXCorrThreshold(trigger_off) &&
+          (!gap_interpolation ||
+           (gap_interpolation && utils::IsGeZero(gap_tolerance))));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
                                const DetectorConfig &detector_defaults,
                                const StreamConfig &stream_defaults)
-    : origin_id_(pt.get<std::string>("originId")) {
+    : detector_id_{pt.get<std::string>("detectorId", utils::CreateUUID())},
+      origin_id_(pt.get<std::string>("originId")) {
   detector_config_.trigger_on =
       pt.get<double>("triggerOnThreshold", detector_defaults.trigger_on);
   detector_config_.trigger_off =
@@ -127,7 +146,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       std::string wf_id;
       try {
         StreamConfig stream_config{stream_config_pair.second,
-                                   patched_stream_defaults};
+                                   patched_stream_defaults, detector_id_};
         stream_configs.emplace(stream_config.wf_stream_id, stream_config);
         wf_id = stream_config.wf_stream_id;
       } catch (boost::property_tree::ptree_error &e) {
@@ -145,6 +164,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
     stream_sets_.push_back(stream_configs);
   }
 }
+
+const std::string TemplateConfig::detector_id() const { return detector_id_; }
 
 const std::string TemplateConfig::origin_id() const { return origin_id_; }
 

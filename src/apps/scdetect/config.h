@@ -12,6 +12,7 @@
 #include <seiscomp/core/datetime.h>
 
 #include "exception.h"
+#include "utils.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -49,11 +50,17 @@ struct StreamConfig {
   StreamConfig();
   StreamConfig(const std::string &wf_stream_id, const std::string &filter,
                const double init_time, const bool sensitivity_correction,
-               const TemplateStreamConfig &template_config);
+               const TemplateStreamConfig &template_config,
+               const std::string &detector_id = "",
+               const std::string &template_id = "");
   StreamConfig(const boost::property_tree::ptree &pt,
-               const StreamConfig &defaults);
+               const StreamConfig &defaults,
+               const std::string &detector_id = "");
 
   bool IsValid() const;
+
+  // Template processor identifier
+  std::string template_id{utils::CreateUUID()};
 
   std::string wf_stream_id{""};
 
@@ -64,7 +71,6 @@ struct StreamConfig {
   // to filter the data.
   bool sensitivity_correction{true};
 
-  // Stream related template configuration
   TemplateStreamConfig template_config;
 };
 
@@ -116,6 +122,7 @@ public:
                  const DetectorConfig &detector_defaults,
                  const StreamConfig &stream_defaults);
 
+  const std::string detector_id() const;
   const std::string origin_id() const;
   const std::string phase(const size_t priority = 0) const;
   const DetectorConfig detector_config() const;
@@ -131,6 +138,8 @@ public:
   const_iterator cend() const { return stream_sets_.cend(); }
 
 private:
+  std::string detector_id_{utils::CreateUUID()};
+
   std::string origin_id_;
   DetectorConfig detector_config_;
 

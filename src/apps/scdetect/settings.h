@@ -13,6 +13,8 @@ const std::string kPathFilesystemCache{"var/cache/scdetect"};
 // Relative path from the SeisComP installation directory
 const std::string kPathTemp{"var/tmp/scdetect"};
 
+// Processor identifier separator
+const std::string kProcessorIdSep{"::"};
 // Template specific default configuration
 const std::string kMagnitudeType{"SCDETECT"};
 const std::string kOriginMethod{kMagnitudeType};

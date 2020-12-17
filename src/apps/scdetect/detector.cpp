@@ -28,7 +28,7 @@
 namespace Seiscomp {
 namespace detect {
 
-Detector::Detector() { Reset(); }
+Detector::Detector(const std::string &id) : Processor{id} { Reset(); }
 
 Detector::Detection::Detection(
     const double fit, const Core::Time &time, const double magnitude,
@@ -45,8 +45,9 @@ Detector::Detection::Detection(
       num_channels_used(num_channels_used),
       template_metadata(template_metadata) {}
 
-DetectorBuilder Detector::Create(const std::string &origin_id) {
-  return DetectorBuilder(origin_id);
+DetectorBuilder Detector::Create(const std::string &detector_id,
+                                 const std::string &origin_id) {
+  return DetectorBuilder(detector_id, origin_id);
 }
 
 void Detector::set_filter(Filter *filter) {
@@ -459,8 +460,9 @@ void Detector::ResetProcessors() {
 /* -------------------------------------------------------------------------- */
 // XXX(damb): Using `new` to access a non-public ctor; see also
 // https://abseil.io/tips/134
-DetectorBuilder::DetectorBuilder(const std::string &origin_id)
-    : origin_id_(origin_id), detector_(new Detector{}) {
+DetectorBuilder::DetectorBuilder(const std::string &detector_id,
+                                 const std::string &origin_id)
+    : origin_id_{origin_id}, detector_{new Detector{detector_id}} {
 
   if (!set_origin(origin_id_)) {
     throw builder::BaseException{std::string{"Error while assigning origin: "} +
@@ -630,7 +632,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   detector_->stream_configs_[stream_id] = Detector::StreamConfig{};
 
-  // create template related filter (used during real-time stream processing)
+  // create template related filter (used during real-time stream
+  // processing)
   std::unique_ptr<Processor::Filter> rt_template_filter{nullptr};
   if (!stream_config.filter.empty()) {
     std::string err;
@@ -646,8 +649,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     }
   }
 
+  SEISCOMP_DEBUG("Creating template processor (id=%s) ... ",
+                 stream_config.template_id.c_str());
   detector_->stream_configs_[stream_id].processor =
-      Template::Create()
+      Template::Create(stream_config.template_id)
           .set_phase(stream_config.template_config.phase)
           .set_arrival_weight(arrival_weight)
           .set_pick(pick)
