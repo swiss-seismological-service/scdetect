@@ -20,11 +20,11 @@ class TemplateBuilder;
 DEFINE_SMARTPOINTER(Template);
 class Template : public Processor {
 
-  Template();
+  Template(const std::string &template_id);
 
 public:
   friend class TemplateBuilder;
-  static TemplateBuilder Create();
+  static TemplateBuilder Create(const std::string &template_id);
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
@@ -95,7 +95,7 @@ private:
 
 class TemplateBuilder : public Builder<TemplateBuilder> {
 public:
-  TemplateBuilder();
+  TemplateBuilder(const std::string &template_id);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
   TemplateBuilder &set_phase(const std::string &phase);
   TemplateBuilder &set_pick(DataModel::PickCPtr pick);

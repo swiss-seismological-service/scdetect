@@ -31,11 +31,14 @@ Template::MatchResult::MatchResult(const double sum_template,
     : num_samples_template{num_samples_template}, sum_template{sum_template},
       squared_sum_template{squared_sum_template}, metadata(metadata) {}
 
-Template::Template() : pick_{nullptr}, phase_{""}, waveform_{nullptr} {
+Template::Template(const std::string &template_id)
+    : Processor{template_id}, pick_{nullptr}, phase_{""}, waveform_{nullptr} {
   Reset();
 }
 
-TemplateBuilder Template::Create() { return TemplateBuilder(); }
+TemplateBuilder Template::Create(const std::string &template_id) {
+  return TemplateBuilder(template_id);
+}
 
 void Template::set_filter(Filter *filter) {
   if (stream_state_.filter)
@@ -174,7 +177,8 @@ void Template::InitFilter(StreamState &stream_state, double sampling_freq) {
 /* ------------------------------------------------------------------------- */
 // XXX(damb): Using `new` to access a non-public ctor; see also
 // https://abseil.io/tips/134
-TemplateBuilder::TemplateBuilder() : template_(new Template{}) {}
+TemplateBuilder::TemplateBuilder(const std::string &template_id)
+    : template_(new Template{template_id}) {}
 
 TemplateBuilder &
 TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {

@@ -22,6 +22,8 @@ class Processor : public Core::BaseObject {
 public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
+  Processor(const std::string &id);
+
   virtual ~Processor() {}
 
   DEFINE_SMARTPOINTER(Result);
@@ -98,7 +100,11 @@ public:
   void disable();
   bool enabled() const;
 
+  // Returns the processor's identifier
+  const std::string &id() const;
+
   virtual void set_result_callback(const PublishResultCallback &callback);
+
   // Returns the current status of the processor
   Status status() const;
 
@@ -216,6 +222,8 @@ protected:
   PublishResultCallback result_callback_;
 
 private:
+  std::string id_;
+
   Status status_;
   double status_value_;
 };

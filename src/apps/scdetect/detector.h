@@ -28,7 +28,7 @@ class DetectorBuilder;
 DEFINE_SMARTPOINTER(Detector);
 class Detector : public Processor {
 
-  Detector();
+  Detector(const std::string &id);
 
 public:
   DEFINE_SMARTPOINTER(Detection);
@@ -66,7 +66,8 @@ public:
   };
 
   friend class DetectorBuilder;
-  static DetectorBuilder Create(const std::string &origin_id);
+  static DetectorBuilder Create(const std::string &detector_id,
+                                const std::string &origin_id);
 
   void set_filter(Filter *filter) override;
 
@@ -146,7 +147,7 @@ private:
 class DetectorBuilder : public Builder<DetectorBuilder> {
 
 public:
-  DetectorBuilder(const std::string &origin_id);
+  DetectorBuilder(const std::string &detector_id, const std::string &origin_id);
 
   DetectorBuilder &set_config(const DetectorConfig &config);
 

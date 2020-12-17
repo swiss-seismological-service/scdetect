@@ -4,6 +4,8 @@
 namespace Seiscomp {
 namespace detect {
 
+Processor::Processor(const std::string &id) : id_{id} {}
+
 Processor::Result::~Result() {}
 
 void Processor::enable() {
@@ -19,6 +21,8 @@ void Processor::disable() {
 }
 
 bool Processor::enabled() const { return enabled_; }
+
+const std::string &Processor::id() const { return id_; }
 
 void Processor::set_result_callback(const PublishResultCallback &callback) {
   result_callback_ = callback;

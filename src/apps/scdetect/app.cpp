@@ -739,8 +739,10 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         TemplateConfig tc{template_setting_pt.second, config_.detector_config,
                           config_.stream_config};
 
+        SEISCOMP_DEBUG("Creating detector processor (id=%s) ... ",
+                       tc.detector_id().c_str());
         auto detector_builder{
-            Detector::Create(tc.origin_id())
+            Detector::Create(tc.detector_id(), tc.origin_id())
                 .set_config(tc.detector_config())
                 .set_eventparameters()
                 .set_publish_callback(boost::bind(&Application::EmitDetection,
