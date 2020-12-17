@@ -87,9 +87,6 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   set_status(Status::kInProgress, 1);
-  // compute as much correlations as possible
-  const int max_lag_samples{num_samples_trace - num_samples_template -
-                            (num_samples_trace - num_samples_template) / 2};
 
 #ifdef SCDETECT_DEBUG
   Environment *env{Environment::Instance()};
@@ -120,8 +117,8 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,
-                             waveform_sampling_frequency_, max_lag_samples,
-                             result)) {
+                             waveform_sampling_frequency_, result)) {
+
     EmitResult(record, result);
     set_status(Processor::Status::kFinished, 100);
     return;
@@ -261,7 +258,7 @@ namespace template_detail {
 
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           const int max_lag_samples, Template::MatchResultPtr result) {
+           Template::MatchResultPtr result) {
 
   /*
    * Pearson correlation coefficient for time series X and Y of length n
@@ -338,17 +335,13 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
   double sum_long{0};
   double squared_sum_long{0};
   for (int i = 0; i < n; ++i) {
-    double sample{SampleAtLong(i, -(max_lag_samples + 1))};
+    double sample{SampleAtLong(i, -1)};
     sum_long += sample;
     squared_sum_long += sample * sample;
   }
 
   // cross-correlation loop
-  const auto cc_start{(max_lag_samples >= size_tr1 - 1) ? -size_tr1 + 1
-                                                        : -max_lag_samples};
-  const auto cc_end{(max_lag_samples > size_tr2 - 1) ? size_tr2 - 1
-                                                     : max_lag_samples};
-  for (int lag = cc_start; lag <= cc_end; ++lag) {
+  for (int lag = 0; lag <= size_tr2 - size_tr1; ++lag) {
     // sum_long/squared_sum_long: remove the sample that has exited the current
     // xcorr win and add the sample that has just entered the current xcorr win
     const double last_sample_long{SampleAtLong(-1, lag)};

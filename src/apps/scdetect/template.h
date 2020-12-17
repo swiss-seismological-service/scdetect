@@ -125,7 +125,7 @@ namespace template_detail {
  */
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           const int max_lag_samples, Template::MatchResultPtr result);
+           Template::MatchResultPtr result);
 
 } // namespace template_detail
 
