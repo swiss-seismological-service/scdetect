@@ -223,7 +223,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     }
   }
 
-  // XXX(damb): Regarding *waiting_for_data*, this is a workaround. Actually, it
+  // XXX(damb): Regarding `waiting_for_data`, this is a workaround. Actually, it
   // would be better to make use of the Templates' internal buffers (similiar to
   // Seiscomp::Processing::TimeWindowProcessor). On the other hand, this way it
   // is easier to track that exactly the same, overlapping time window was
