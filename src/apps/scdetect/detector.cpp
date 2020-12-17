@@ -28,7 +28,7 @@
 namespace Seiscomp {
 namespace detect {
 
-Detector::Detector(const std::string &id) : Processor{id} { Reset(); }
+Detector::Detector(const std::string &id) : Processor{id} {}
 
 Detector::Detection::Detection(
     const double fit, const Core::Time &time, const double magnitude,

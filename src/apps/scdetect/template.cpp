@@ -31,9 +31,7 @@ Template::MatchResult::MatchResult(const double sum_template,
     : num_samples_template{num_samples_template}, sum_template{sum_template},
       squared_sum_template{squared_sum_template}, metadata(metadata) {}
 
-Template::Template(const std::string &template_id) : Processor{template_id} {
-  Reset();
-}
+Template::Template(const std::string &template_id) : Processor{template_id} {}
 
 TemplateBuilder Template::Create(const std::string &template_id) {
   return TemplateBuilder(template_id);

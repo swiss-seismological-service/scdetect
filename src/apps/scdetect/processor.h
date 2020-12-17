@@ -224,8 +224,8 @@ protected:
 private:
   std::string id_;
 
-  Status status_;
-  double status_value_;
+  Status status_{Status::kWaitingForData};
+  double status_value_{0};
 };
 
 namespace utils {
