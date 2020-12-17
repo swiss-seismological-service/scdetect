@@ -75,7 +75,7 @@ private:
   // Template related phase code
   std::string phase_{""};
   // Template related arrival weight
-  double arrival_weight_;
+  double arrival_weight_{0};
 
   // Template waveform starttime
   Core::Time waveform_start_;
@@ -86,7 +86,7 @@ private:
   // Template waveform
   GenericRecordCPtr waveform_{nullptr};
   // Template waveform sampling frequency
-  double waveform_sampling_frequency_;
+  double waveform_sampling_frequency_{0};
   // Template waveform samples squared summed
   double waveform_squared_sum_{0};
   // Template waveform samples summed
