@@ -65,6 +65,7 @@ void Template::Reset() {
   }
 
   Processor::Reset();
+
   data_ = DoubleArray();
 }
 
@@ -120,6 +121,13 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                              waveform_sampling_frequency_, result)) {
 
     EmitResult(record, result);
+    merge_processed(Core::TimeWindow{
+        record->startTime(),
+        Core::Time{
+            record->startTime() +
+            Core::TimeSpan{
+                (num_samples_trace - num_samples_template) /
+                waveform_sampling_frequency_ /* samples to seconds */}}});
     set_status(Processor::Status::kFinished, 100);
     return;
   }

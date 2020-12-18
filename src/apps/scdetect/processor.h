@@ -10,6 +10,7 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/recordsequence.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/math/filter.h>
 #include <seiscomp/processing/stream.h>
 
@@ -129,6 +130,9 @@ public:
   // Status::kInProgress.
   virtual bool finished() const;
 
+  // Returns the time window processed and correlated
+  const Core::TimeWindow &processed() const;
+
   // Feed data to the processor (implies a call to the Process() method).
   virtual bool Feed(const Record *record) = 0;
 
@@ -157,7 +161,7 @@ protected:
 
     // The last received record of the stream
     RecordCPtr last_record;
-    // The complete processed data time window so far
+    // The complete pre-processed data time window so far
     Core::TimeWindow data_time_window;
 
     // The sampling frequency of the stream
@@ -194,6 +198,10 @@ protected:
 
   void set_status(Status status, double value);
 
+  void set_processed(const Core::TimeWindow &tw);
+  // Merges `tw` with the time window already processed
+  void merge_processed(const Core::TimeWindow &tw);
+
   // Enables saturation check of absolute values of incoming samples and sets
   // the status to DataClipped if checked positive. The data is checked in
   // the Fill method. If derived classes reimplement this method without
@@ -226,6 +234,8 @@ private:
 
   Status status_{Status::kWaitingForData};
   double status_value_{0};
+
+  Core::TimeWindow processed_{};
 };
 
 namespace utils {

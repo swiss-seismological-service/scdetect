@@ -175,11 +175,11 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   if (!tw)
     return;
 
-  if (processed_) {
-    if (tw.endTime() <= processed_.endTime())
+  if (processed()) {
+    if (tw.endTime() <= processed().endTime())
       return;
     // TODO(damb): Define margin?
-    tw.setStartTime(processed_.endTime());
+    tw.setStartTime(processed().endTime());
   }
 
   // process templates i.e. compute cross-correlations
@@ -237,20 +237,20 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     return;
   }
 
-  processed_ = processed_ | tw;
-
-  size_t xcorr_failed{0};
-
   // compute the fit (i.e. currently mean coefficient)
   double fit{0};
+  size_t xcorr_failed{0};
+  Core::TimeWindow min_correlated;
   for (const auto &processor_state_pair : processing_state_.processor_states) {
+
+    const auto &processor{
+        stream_configs_.at(processor_state_pair.first).processor};
+
     if (!processor_state_pair.second.result) {
-      xcorr_failed++;
+      ++xcorr_failed;
 
       std::string msg{processor_state_pair.first +
                       ": Failed to match template. Reason: "};
-      const auto &processor{
-          stream_configs_.at(processor_state_pair.first).processor};
       if (processor->enabled()) {
         const auto status{processor->status()};
         const auto status_value{processor->status_value()};
@@ -263,7 +263,14 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
       continue;
     }
+
     fit += processor_state_pair.second.result->coefficient;
+
+    if (!min_correlated) {
+      min_correlated = processor->processed();
+    } else if (min_correlated.endTime() > processor->processed().endTime()) {
+      min_correlated.setEndTime(processor->processed().endTime());
+    }
   }
 
   if (xcorr_failed) {
@@ -272,6 +279,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   fit /= processing_state_.processor_states.size();
+
+  merge_processed(min_correlated);
 
   auto CreateStatsMsg = [config, &tw](const double &fit) {
     return std::string{
@@ -331,7 +340,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 
   if ((!WithTrigger() && processing_state_.result.fit >= config_.trigger_on) ||
-      (Triggered() && processed_.endTime() >= processing_state_.trigger_end) ||
+      (Triggered() && processed().endTime() >= processing_state_.trigger_end) ||
       (Triggered() && fit < config_.trigger_off)) {
 
     SEISCOMP_INFO("Detection: %s",

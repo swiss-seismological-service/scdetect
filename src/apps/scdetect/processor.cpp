@@ -48,9 +48,13 @@ bool Processor::gap_interpolation() const { return gap_interpolation_; }
 
 bool Processor::finished() const { return Status::kInProgress < status_; }
 
+const Core::TimeWindow &Processor::processed() const { return processed_; }
+
 void Processor::Reset() {
   status_ = Status::kWaitingForData;
   status_value_ = 0;
+
+  processed_ = Core::TimeWindow{};
 }
 
 void Processor::Terminate() {
@@ -207,6 +211,11 @@ void Processor::InitFilter(StreamState &stream_state, double sampling_freq) {
 void Processor::set_status(Status status, double value) {
   status_ = status;
   status_value_ = value;
+}
+
+void Processor::set_processed(const Core::TimeWindow &tw) { processed_ = tw; }
+void Processor::merge_processed(const Core::TimeWindow &tw) {
+  processed_ = processed_ | tw;
 }
 
 void Processor::set_saturation_check(bool e) { saturation_check_ = e; }

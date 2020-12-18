@@ -140,8 +140,6 @@ private:
   DataModel::OriginPtr origin_;
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
-
-  Core::TimeWindow processed_{};
 };
 
 class DetectorBuilder : public Builder<DetectorBuilder> {
