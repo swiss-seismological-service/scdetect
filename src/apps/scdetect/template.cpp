@@ -402,12 +402,6 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
   }
 
   if (!std::isfinite(result->coefficient)) {
-    result->coefficient = 0;
-    result->lag = 0;
-    result->sum_template_trace = 0;
-    result->sum_template = 0;
-    result->squared_sum_template = 0;
-
     return false;
   }
 
