@@ -1,9 +1,12 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEMPLATE_H_
 #define SCDETECT_APPS_SCDETECT_TEMPLATE_H_
 
+#include <cstdlib>
+#include <ostream>
 #include <string>
 
 #include <seiscomp/core/datetime.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/stream.h>
@@ -31,7 +34,8 @@ public:
 
     struct MetaData;
     MatchResult(const double sum_template, const double squared_sum_template,
-                const int num_samples_template, MetaData metadata);
+                const int num_samples_template, const Core::TimeWindow &tw,
+                MetaData metadata);
 
     double coefficient{std::nan("")};
     int num_samples_template;
@@ -42,11 +46,22 @@ public:
     double sum_template_trace{};
     double lag{}; // seconds
 
+    // Time window for w.r.t. the match result
+    Core::TimeWindow time_window;
+
     struct MetaData {
       DataModel::PickCPtr pick;
       std::string phase;
       double arrival_weight;
     } metadata;
+
+    struct DebugInfo {
+      std::string path_template;
+      std::string path_trace;
+    } debug_info;
+
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const MatchResult &result);
   };
 
   void set_filter(Filter *filter) override;
@@ -110,6 +125,9 @@ public:
   TemplateBuilder &set_filter(Processor::Filter *filter,
                               const double init_time = 0);
   TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
+
+  // Set the path to the debug info directory
+  TemplateBuilder &set_debug_info_dir(const boost::filesystem::path &path);
 
   ProcessorPtr build();
 

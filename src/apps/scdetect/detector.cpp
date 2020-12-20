@@ -84,6 +84,25 @@ void Detector::Reset() {
   Processor::Reset();
 }
 
+std::string Detector::DebugString() const {
+
+  bool first_result{true};
+  std::ostringstream oss;
+  oss << "{\"detectorId\": \"" << id() << "\", \"ccDebugInfo\": [" << std::endl;
+  for (const auto &debug_result_pair : debug_cc_results_) {
+    if (first_result) {
+      first_result = false;
+    } else {
+      oss << ",";
+    }
+
+    oss << "{\"streamId\": \"" << debug_result_pair.first << "\", "
+        << *debug_result_pair.second << "}" << std::endl;
+  }
+  oss << "]}";
+  return oss.str();
+}
+
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
 
@@ -270,6 +289,11 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       min_correlated = processor->processed();
     } else if (min_correlated.endTime() > processor->processed().endTime()) {
       min_correlated.setEndTime(processor->processed().endTime());
+    }
+
+    if (debug_mode() && record->streamID() == processor_state_pair.first) {
+      debug_cc_results_.emplace(record->streamID(),
+                                processor_state_pair.second.result);
     }
   }
 
@@ -535,8 +559,10 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
 DetectorBuilder &
 DetectorBuilder::set_stream(const std::string &stream_id,
                             const StreamConfig &stream_config,
-                            WaveformHandlerIfacePtr waveform_handler) {
+                            WaveformHandlerIfacePtr waveform_handler,
+                            const boost::filesystem::path &path_debug_info)
 
+{
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
   utils::WaveformStreamID template_wf_stream_id{template_stream_id};
 
@@ -672,6 +698,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                                             detector_, _1, _2, _3))
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config)
+          .set_debug_info_dir(path_debug_info)
           .build();
 
   const auto &template_init_time{
@@ -694,6 +721,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 DetectorBuilder &DetectorBuilder::set_publish_callback(
     const Processor::PublishResultCallback &callback) {
   detector_->set_result_callback(callback);
+  return *this;
+}
+
+DetectorBuilder &
+DetectorBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
+  detector_->set_debug_info_dir(path);
   return *this;
 }
 

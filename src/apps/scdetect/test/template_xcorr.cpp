@@ -3,6 +3,7 @@
 #include <array>
 #include <numeric>
 
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/unittest/unittests.h>
 
 #include "../template.h"
@@ -37,7 +38,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   const std::array<double, 5> tr2_01210{0, 1, 2, 1, 0};
 
   auto xcorr_result{utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{})};
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{})};
 
   BOOST_TEST_CHECK(true == template_detail::XCorr(
                                tr1.data(), size_tr1, tr2_01210.data(),
@@ -51,7 +53,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   const std::array<double, 5> tr2_12100{1, 2, 1, 0, 0};
 
   xcorr_result = utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{});
 
   BOOST_TEST_CHECK(true == template_detail::XCorr(
                                tr1.data(), size_tr1, tr2_12100.data(),
@@ -65,7 +68,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   const std::array<double, 5> tr2_00121{0, 0, 1, 2, 1};
 
   xcorr_result = utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{});
 
   BOOST_TEST_CHECK(true == template_detail::XCorr(
                                tr1.data(), size_tr1, tr2_00121.data(),
@@ -81,7 +85,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   sum_tr1 = SumTr1(tr1);
   squared_sum_tr1 = SquaredSumTr1(tr1);
   xcorr_result = utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{});
 
   BOOST_TEST_CHECK(false == template_detail::XCorr(
                                 tr1.data(), size_tr1, tr2_00000.data(),
@@ -93,7 +98,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   sum_tr1 = SumTr1(tr1);
   squared_sum_tr1 = SquaredSumTr1(tr1);
   xcorr_result = utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{});
 
   BOOST_TEST_CHECK(true == template_detail::XCorr(
                                tr1.data(), size_tr1, tr2_00100.data(),
@@ -105,7 +111,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   sum_tr1 = SumTr1(tr1);
   squared_sum_tr1 = SquaredSumTr1(tr1);
   xcorr_result = utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{});
 
   BOOST_TEST_CHECK(true == template_detail::XCorr(
                                tr1.data(), size_tr1, tr2_01210.data(),
@@ -119,7 +126,8 @@ BOOST_AUTO_TEST_CASE(xcorr, *utf::tolerance(test_unit_tolerance)) {
   sum_tr1 = SumTr1(tr1);
   squared_sum_tr1 = SquaredSumTr1(tr1);
   xcorr_result = utils::make_smart<Template::MatchResult>(
-      sum_tr1, squared_sum_tr1, size_tr1, Template::MatchResult::MetaData{});
+      sum_tr1, squared_sum_tr1, size_tr1, Core::TimeWindow{},
+      Template::MatchResult::MetaData{});
 
   BOOST_TEST_CHECK(true == template_detail::XCorr(
                                tr1.data(), size_tr1, tr2_10000.data(),

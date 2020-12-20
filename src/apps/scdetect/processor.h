@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include <boost/filesystem.hpp>
 #include <boost/function.hpp>
 
 #include <seiscomp/core/baseobject.h>
@@ -23,7 +24,8 @@ class Processor : public Core::BaseObject {
 public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
-  Processor(const std::string &id);
+  Processor(const std::string &id,
+            const boost::filesystem::path &debug_info_dir = "");
 
   virtual ~Processor() {}
 
@@ -133,6 +135,12 @@ public:
   // Returns the time window processed and correlated
   const Core::TimeWindow &processed() const;
 
+  // Returns the file system path to the processor's debug info directory
+  const boost::filesystem::path &debug_info_dir() const;
+
+  // Returns if the processor is operated in debug mode
+  bool debug_mode() const;
+
   // Feed data to the processor (implies a call to the Process() method).
   virtual bool Feed(const Record *record) = 0;
 
@@ -146,6 +154,9 @@ public:
   // Closes the processor meaning that no more records are going to be fed in.
   // The processing has been finished.
   virtual void Close() const;
+
+  // Returns a debug string for the corresponding processor
+  virtual std::string DebugString() const;
 
 protected:
   struct StreamState {
@@ -198,6 +209,8 @@ protected:
 
   void set_status(Status status, double value);
 
+  void set_debug_info_dir(const boost::filesystem::path &path);
+
   void set_processed(const Core::TimeWindow &tw);
   // Merges `tw` with the time window already processed
   void merge_processed(const Core::TimeWindow &tw);
@@ -236,6 +249,8 @@ private:
   double status_value_{0};
 
   Core::TimeWindow processed_{};
+
+  boost::filesystem::path debug_info_dir_;
 };
 
 namespace utils {

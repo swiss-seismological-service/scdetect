@@ -5,6 +5,7 @@
 #include <cmath>
 #include <exception>
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -12,6 +13,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/system/environment.h>
 #include <seiscomp/utils/files.h>
 
@@ -27,9 +29,28 @@ namespace detect {
 Template::MatchResult::MatchResult(const double sum_template,
                                    const double squared_sum_template,
                                    const int num_samples_template,
+                                   const Core::TimeWindow &tw,
                                    MatchResult::MetaData metadata)
     : num_samples_template{num_samples_template}, sum_template{sum_template},
-      squared_sum_template{squared_sum_template}, metadata(metadata) {}
+      squared_sum_template{squared_sum_template}, time_window{tw},
+      metadata(metadata) {}
+
+std::ostream &operator<<(std::ostream &os,
+                         const Template::MatchResult &result) {
+  os << "\"startTime\": \"" << result.time_window.startTime().iso()
+     << "\", \"endTime\": \"" << result.time_window.endTime().iso()
+     << "\", \"fit\": " << std::fixed << std::setprecision(6)
+     << result.coefficient << ", \"lag\": " << result.lag;
+
+  if (!result.debug_info.path_template.empty()) {
+    os << ", \"pathTemplate\": \"" << result.debug_info.path_template << "\"";
+  }
+  if (!result.debug_info.path_trace.empty()) {
+    os << ", \"pathTrace\": \"" << result.debug_info.path_trace << "\"";
+  }
+
+  return os;
+}
 
 Template::Template(const std::string &template_id) : Processor{template_id} {}
 
@@ -79,7 +100,7 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
   MatchResultPtr result{utils::make_smart<MatchResult>(
       waveform_sum_, waveform_squared_sum_, num_samples_template,
-      MatchResult::MetaData{pick_, phase_})};
+      record->timeWindow(), MatchResult::MetaData{pick_, phase_})};
 
   if (num_samples_template > num_samples_trace) {
     set_status(Status::kWaitingForData,
@@ -89,36 +110,57 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
   set_status(Status::kInProgress, 1);
 
-#ifdef SCDETECT_DEBUG
-  Environment *env{Environment::Instance()};
+  if (debug_mode()) {
+    if (!Util::pathExists(debug_info_dir().string())) {
+      if (!Util::createPath(debug_info_dir().string())) {
+        SEISCOMP_ERROR("Failed to create directory: %s",
+                       debug_info_dir().c_str());
+        set_status(Status::kError, 0);
+        return;
+      }
+    }
 
-  boost::filesystem::path sc_install_dir{env->installDir()};
-  boost::filesystem::path path_tmp{sc_install_dir / settings::kPathTemp};
+    std::string fname_sep{"_"};
+    // dump template waveform
+    {
+      std::string fname{waveform_->streamID() + fname_sep +
+                        waveform_->startTime().iso() + fname_sep +
+                        waveform_->endTime().iso() + ".mseed"};
+      auto fpath{debug_info_dir() / fname};
+      if (!Util::fileExists(fpath.string())) {
+        std::ofstream ofs{fpath.string()};
+        waveform::Write(*waveform_.get(), ofs);
+      }
 
-  if (!Util::pathExists(path_tmp.string())) {
-    if (!Util::createPath(path_tmp.string())) {
-      SEISCOMP_ERROR("Failed to create directory: %s", path_tmp.c_str());
-      set_status(Status::kError, 0);
-      return;
+      result->debug_info.path_template = fpath.string();
+    }
+
+    // dump real-time trace (filtered)
+    {
+      auto dump_me{utils::make_smart<GenericRecord>(*record.get())};
+      dump_me->setData(&data_);
+      dump_me->setSamplingFrequency(waveform_sampling_frequency_);
+      dump_me->dataUpdated();
+
+      std::string fname{record->streamID() + fname_sep +
+                        record->startTime().iso() + fname_sep +
+                        record->endTime().iso() + ".mseed"};
+      auto fpath{debug_info_dir() / fname};
+      std::ofstream ofs{fpath.string()};
+      waveform::Write(*dump_me.detach(), ofs);
+
+      result->debug_info.path_trace = fpath.string();
     }
   }
-
-  std::string fname{record->streamID() + "_" + record->startTime().iso() + "_" +
-                    record->endTime().iso() + ".mseed"};
-  boost::filesystem::path fpath{path_tmp / fname};
-
-  auto dump_me{utils::make_smart<GenericRecord>(*record.get())};
-  dump_me->setData(&data_);
-  dump_me->setSamplingFrequency(waveform_sampling_frequency_);
-  dump_me->dataUpdated();
-
-  std::ofstream ofs{fpath.string()};
-  waveform::Write(*dump_me.detach(), ofs);
-#endif
 
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,
                              waveform_sampling_frequency_, result)) {
+#ifdef SCDETECT_DEBUG
+    SEISCOMP_DEBUG(
+        "[%s - %s]: fit=%f, lag=%f", record->startTime().iso().c_str(),
+        record->endTime().iso().c_str(), result->coefficient, result->lag);
+#endif
 
     EmitResult(record, result);
     merge_processed(Core::TimeWindow{
@@ -256,6 +298,12 @@ TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
                                                              double thres) {
   template_->set_saturation_check(enabled);
   template_->set_saturation_threshold(thres);
+  return *this;
+}
+
+TemplateBuilder &
+TemplateBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
+  template_->set_debug_info_dir(path);
   return *this;
 }
 

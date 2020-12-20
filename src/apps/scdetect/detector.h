@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -74,6 +75,8 @@ public:
   bool Feed(const Record *rec) override;
   void Reset() override;
 
+  std::string DebugString() const override;
+
 protected:
   void Process(StreamState &stream_state, RecordCPtr record,
                const DoubleArray &filtered_data) override;
@@ -140,6 +143,8 @@ private:
   DataModel::OriginPtr origin_;
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
+
+  std::multimap<std::string, Template::MatchResultCPtr> debug_cc_results_;
 };
 
 class DetectorBuilder : public Builder<DetectorBuilder> {
@@ -151,12 +156,15 @@ public:
 
   DetectorBuilder &set_eventparameters();
   // Set stream related template configuration
-  DetectorBuilder &set_stream(const std::string &stream_id,
-                              const StreamConfig &stream_config,
-                              WaveformHandlerIfacePtr wf_handler);
+  DetectorBuilder &
+  set_stream(const std::string &stream_id, const StreamConfig &stream_config,
+             WaveformHandlerIfacePtr wf_handler,
+             const boost::filesystem::path &path_debug_info = "");
   DetectorBuilder &
   // Set a callback function for publishing a detection
   set_publish_callback(const Processor::PublishResultCallback &callback);
+  // Set the path to the debug info directory
+  DetectorBuilder &set_debug_info_dir(const boost::filesystem::path &path);
 
   DetectorPtr build();
 

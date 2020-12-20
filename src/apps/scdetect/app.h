@@ -13,6 +13,7 @@
 #include <seiscomp/datamodel/eventparameters.h>
 
 #include "config.h"
+#include "exception.h"
 #include "processor.h"
 #include "version.h"
 #include "waveform.h"
@@ -27,6 +28,18 @@ class Application : public Client::StreamApplication {
 public:
   Application(int argc, char **argv);
   ~Application(){};
+
+  class BaseException : public Exception {
+  public:
+    using Exception::Exception;
+    BaseException();
+  };
+
+  class ConfigError : public BaseException {
+  public:
+    using BaseException::BaseException;
+    ConfigError();
+  };
 
   DEFINE_SMARTPOINTER(Option);
   struct Option : public Core::BaseObject {
@@ -93,6 +106,10 @@ public:
     bool offline_mode{false};
     bool no_publish{false};
     std::string path_ep{"-"};
+
+    // Debugging
+    // Defines if debug information (e.g. waveforms, stats etc.) is dumped
+    bool dump_debug_info{false};
 
     DetectorConfig detector_config;
 
