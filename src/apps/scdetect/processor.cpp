@@ -91,10 +91,6 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
     // update the received data timewindow
     stream_state.data_time_window = record->timeWindow();
 
-    std::cerr << "Received first record for " << record->streamID() << ", "
-              << className() << " [" << record->startTime().iso() << " - "
-              << record->endTime().iso() << std::endl;
-
     if (stream_state.filter) {
       stream_state.filter->setStartTime(record->startTime());
       stream_state.filter->setStreamID(
