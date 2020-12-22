@@ -335,8 +335,10 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       // TODO(damb): Fit magnitude
       const auto processor_state_pair{
           processing_state_.processor_states.find(record->streamID())};
-      if (processor_state_pair == processing_state_.processor_states.end())
+      if (processor_state_pair == processing_state_.processor_states.end()) {
+        set_status(Status::kInvalidStream, 0);
         return;
+      }
 
       auto origin_time{
           processor_state_pair->second.trace->startTime() +
@@ -348,13 +350,11 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     }
 
     ResetProcessors();
-
   } else if (Triggered() && fit < config_.trigger_on &&
              fit >= config_.trigger_off) {
 
     SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
     ResetProcessors();
-
   } else {
     SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
 

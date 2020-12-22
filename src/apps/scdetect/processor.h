@@ -96,7 +96,10 @@ public:
     // The entire raypath does not lie entirely in the supported regions
     kRayPathOutOfRegions,
     // Travel time table lookup failed
-    kTravelTimeEstimateFailed
+    kTravelTimeEstimateFailed,
+    // ----
+    // Processor cannot handle/process record with streamID
+    kInvalidStream
   };
 
   void enable();
