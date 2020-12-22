@@ -721,15 +721,15 @@ void Application::SetupConfigurationOptions() {
       "formatted; specifying the output path as '-' (a single dash) will "
       "force the output to be redirected to stdout");
 
-  NEW_OPT_CLI(config_.playback_config.start_time_str, "Records",
-              "record-starttime",
-              "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
-              "requesting records from the configured recordstream; useful for "
-              "reprocessing");
+  NEW_OPT_CLI(
+      config_.playback_config.start_time_str, "Records", "record-starttime",
+      "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
+      "requesting records from the configured archive recordstream; useful for "
+      "reprocessing");
   NEW_OPT_CLI(config_.playback_config.end_time_str, "Records", "record-endtime",
-              "defines a end time (YYYY-MM-DDTHH:MM:SS formatted) for "
-              "requesting records from the configured recordstream; useful for "
-              "reprocessing");
+              "defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for "
+              "requesting records from the configured archive recordstream; "
+              "useful for reprocessing");
 
   NEW_OPT_CLI(config_.dump_debug_info, "Mode", "debug-info",
               "dump additional debug information (e.g. waveforms, stats etc.)");
