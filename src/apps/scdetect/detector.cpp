@@ -1,6 +1,7 @@
 #include "detector.h"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <numeric>
 #include <sstream>
@@ -36,14 +37,14 @@ Detector::Detection::Detection(
     const Detector::Detection::SensorLocations &sensor_locations,
     const size_t num_stations_associated, const size_t num_stations_used,
     const size_t num_channels_associated, const size_t num_channels_used,
-    const Detector::Detection::TemplateResultMetaData &template_metadata)
+    const Detector::Detection::TemplateResults &template_results)
     : fit(fit), time(time), magnitude(magnitude), latitude(lat), longitude(lon),
       depth(depth), sensor_locations(sensor_locations),
       num_stations_associated(num_stations_associated),
       num_stations_used(num_stations_used),
       num_channels_associated(num_channels_associated),
-      num_channels_used(num_channels_used),
-      template_metadata(template_metadata) {}
+      num_channels_used(num_channels_used), template_results(template_results) {
+}
 
 DetectorBuilder Detector::Create(const std::string &detector_id,
                                  const std::string &origin_id) {
@@ -102,6 +103,8 @@ std::string Detector::DebugString() const {
   oss << "]}";
   return oss.str();
 }
+
+bool Detector::WithPicks() const { return config_.create_picks; }
 
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
@@ -331,7 +334,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     }
 
     if ((!WithTrigger() || processing_state_.trigger_end) &&
-        fit > processing_state_.result.fit) {
+        (!std::isfinite(processing_state_.result.fit) ||
+         fit > processing_state_.result.fit)) {
       // TODO(damb): Fit magnitude
       const auto processor_state_pair{
           processing_state_.processor_states.find(record->streamID())};
@@ -341,12 +345,22 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       }
 
       auto origin_time{
-          processor_state_pair->second.trace->startTime() +
+          tw.startTime() +
           Core::TimeSpan{processor_state_pair->second.result->lag}};
 
       processing_state_.result.origin_time = origin_time;
       processing_state_.result.fit = fit;
       processing_state_.result.magnitude = magnitude_->magnitude().value();
+
+      if (WithPicks()) {
+        processing_state_.result.time_window = tw;
+        for (const auto &processor_state_pair :
+             processing_state_.processor_states) {
+          processing_state_.result.lags.emplace(
+              processor_state_pair.first,
+              processor_state_pair.second.result->lag);
+        }
+      }
     }
 
     ResetProcessors();
@@ -411,11 +425,26 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     auto num_channels_associated{stream_configs_.size()};
     auto sensor_locations{LoadSensorLocations()};
 
-    Detection::TemplateResultMetaData metadata{};
-    for (const auto &processor_state_pair : processing_state_.processor_states)
-      metadata.insert(
-          std::make_pair(processor_state_pair.first,
-                         processor_state_pair.second.result->metadata));
+    Detection::TemplateResults template_results;
+    for (const auto &processor_state_pair :
+         processing_state_.processor_states) {
+
+      Core::Time time_lag{};
+      if (WithPicks()) {
+        // compute pick times
+        auto lag_pair{
+            processing_state_.result.lags.find(processor_state_pair.first)};
+        if (lag_pair == processing_state_.result.lags.end()) {
+          continue;
+        }
+        time_lag = processing_state_.result.time_window.startTime() +
+                   Core::TimeSpan{lag_pair->second};
+      }
+      Detection::TemplateResult tr{
+          time_lag, processor_state_pair.second.result->metadata};
+
+      template_results.emplace(processor_state_pair.first, tr);
+    }
 
     ResultPtr detection{utils::make_smart<Detection>(
         processing_state_.result.fit,
@@ -424,7 +453,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
         processing_state_.result.magnitude, origin_->latitude().value(),
         origin_->longitude().value(), origin_->depth().value(),
         sensor_locations, num_stations_associated, num_stations_used,
-        num_channels_associated, num_channels_used, metadata)};
+        num_channels_associated, num_channels_used, template_results)};
 
     EmitResult(record, detection);
     reset_processing = true;

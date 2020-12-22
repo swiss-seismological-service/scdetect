@@ -554,28 +554,31 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   origin->setMethodID(settings::kOriginMethod);
 
   std::vector<ArrivalPick> arrival_picks;
-  for (const auto &metadata_pair : detection->template_metadata) {
-    DataModel::PickPtr pick{DataModel::Pick::Create()};
+  auto with_picks{processor->WithPicks()};
+  if (with_picks) {
+    for (const auto &template_result_pair : detection->template_results) {
+      DataModel::PickPtr pick{DataModel::Pick::Create()};
 
-    // TODO(damb): set pick time
-    /* pick->setTime(); */
-    pick->setWaveformID(metadata_pair.first);
-    pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
+      pick->setTime(template_result_pair.second.lag);
+      pick->setWaveformID(template_result_pair.first);
+      pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
-    try {
-      pick->setPhaseHint(metadata_pair.second.pick->phaseHint());
-    } catch (...) {
+      try {
+        pick->setPhaseHint(
+            template_result_pair.second.metadata.pick->phaseHint());
+      } catch (...) {
+      }
+
+      // create arrival
+      auto arrival{utils::make_smart<DataModel::Arrival>()};
+      arrival->setCreationInfo(ci);
+      arrival->setPickID(pick->publicID());
+      arrival->setPhase(template_result_pair.second.metadata.phase);
+      if (template_result_pair.second.metadata.arrival_weight)
+        arrival->setWeight(template_result_pair.second.metadata.arrival_weight);
+
+      arrival_picks.push_back({arrival, pick});
     }
-
-    // Create arrival
-    auto arrival{utils::make_smart<DataModel::Arrival>()};
-    arrival->setCreationInfo(ci);
-    arrival->setPickID(pick->publicID());
-    arrival->setPhase(metadata_pair.second.phase);
-    if (metadata_pair.second.arrival_weight)
-      arrival->setWeight(metadata_pair.second.arrival_weight);
-
-    arrival_picks.push_back({arrival, pick});
   }
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
@@ -599,20 +602,23 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
       notifier_msg->attach(notifier.get());
     }
 
-    for (auto &arrival_pick : arrival_picks) {
-      // pick
-      {
-        auto notifier{utils::make_smart<DataModel::Notifier>(
-            "EventParameters", DataModel::OP_ADD, arrival_pick.pick.get())};
+    if (with_picks) {
+      for (auto &arrival_pick : arrival_picks) {
+        // pick
+        {
+          auto notifier{utils::make_smart<DataModel::Notifier>(
+              "EventParameters", DataModel::OP_ADD, arrival_pick.pick.get())};
 
-        notifier_msg->attach(notifier.get());
-      }
-      // arrival
-      {
-        auto notifier{utils::make_smart<DataModel::Notifier>(
-            origin->publicID(), DataModel::OP_ADD, arrival_pick.arrival.get())};
+          notifier_msg->attach(notifier.get());
+        }
+        // arrival
+        {
+          auto notifier{utils::make_smart<DataModel::Notifier>(
+              origin->publicID(), DataModel::OP_ADD,
+              arrival_pick.arrival.get())};
 
-        notifier_msg->attach(notifier.get());
+          notifier_msg->attach(notifier.get());
+        }
       }
     }
 
@@ -626,10 +632,12 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
 
     origin->add(magnitude.get());
 
-    for (auto &arrival_pick : arrival_picks) {
-      origin->add(arrival_pick.arrival.get());
+    if (with_picks) {
+      for (auto &arrival_pick : arrival_picks) {
+        origin->add(arrival_pick.arrival.get());
 
-      ep_->add(arrival_pick.pick.get());
+        ep_->add(arrival_pick.pick.get());
+      }
     }
   }
 }
@@ -705,6 +713,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
+  NEW_OPT(config_.detector_config.create_picks, "detector.createPicks");
 
   NEW_OPT_CLI(config_.url_event_db, "Database", "event-db",
               "load events from the given database or file, format: "

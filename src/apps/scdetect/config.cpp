@@ -115,6 +115,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   // times of the underlying Template processors?
   detector_config_.maximum_latency =
       pt.get<double>("maximumLatency", detector_defaults.maximum_latency);
+  detector_config_.create_picks =
+      pt.get<bool>("createPicks", detector_defaults.create_picks);
 
   if (!detector_config_.IsValid()) {
     throw config::ParserException{
