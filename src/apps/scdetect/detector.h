@@ -143,7 +143,7 @@ private:
       using Lags = std::unordered_map<WaveformStreamID, double>;
 
       Core::Time origin_time;
-      double fit{-1};
+      double fit{std::nan("")};
       double magnitude{0};
 
       // Lag related data

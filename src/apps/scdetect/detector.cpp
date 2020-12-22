@@ -1,6 +1,7 @@
 #include "detector.h"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <numeric>
 #include <sstream>
@@ -333,7 +334,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     }
 
     if ((!WithTrigger() || processing_state_.trigger_end) &&
-        fit > processing_state_.result.fit) {
+        (!std::isfinite(processing_state_.result.fit) ||
+         fit > processing_state_.result.fit)) {
       // TODO(damb): Fit magnitude
       const auto processor_state_pair{
           processing_state_.processor_states.find(record->streamID())};
