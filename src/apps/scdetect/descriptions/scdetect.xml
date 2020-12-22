@@ -85,6 +85,12 @@
             threshold to search for the maximum correlation
             between configured streams.
           </description>
+        </parameter>
+        <parameter name="createPicks" type="boolean" default="false">
+          <description>
+            Defines the default value for computing and associating
+            *theoretical picks* with created origins i.e. detections.
+          </description>
 				</parameter>
       </group>
     </configuration>
