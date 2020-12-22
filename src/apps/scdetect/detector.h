@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <seiscomp/core/datetime.h>
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/event.h>
@@ -36,8 +37,14 @@ public:
   struct Detection : public Result {
 
     using SensorLocations = std::vector<DataModel::SensorLocationCPtr>;
-    using TemplateResultMetaData =
-        std::unordered_map<std::string, Template::MatchResult::MetaData>;
+    struct TemplateResult {
+      // Template specific lag required for setting the pick time
+      Core::Time lag;
+      // Template related metadata
+      Template::MatchResult::MetaData metadata;
+    };
+
+    using TemplateResults = std::unordered_map<std::string, TemplateResult>;
 
     Detection(const double fit, const Core::Time &time, const double magnitude,
               const double lat, const double lon, const double depth,
@@ -46,7 +53,7 @@ public:
               const size_t num_stations_used,
               const size_t num_channels_associated,
               const size_t num_channels_used,
-              const TemplateResultMetaData &template_metadata);
+              const TemplateResults &template_results);
 
     double fit{};
 
@@ -63,7 +70,8 @@ public:
     size_t num_channels_associated{};
     size_t num_channels_used{};
 
-    TemplateResultMetaData template_metadata;
+    // Template specific results
+    TemplateResults template_results;
   };
 
   friend class DetectorBuilder;
@@ -132,9 +140,16 @@ private:
     ProcessorStates processor_states;
 
     struct Result {
+      using Lags = std::unordered_map<WaveformStreamID, double>;
+
       Core::Time origin_time;
       double fit{-1};
       double magnitude{0};
+
+      // Lag related data
+      Core::TimeWindow time_window;
+      Lags lags;
+
     } result;
 
     Core::Time trigger_end;

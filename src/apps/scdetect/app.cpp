@@ -556,16 +556,16 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   std::vector<ArrivalPick> arrival_picks;
   auto with_picks{processor->WithPicks()};
   if (with_picks) {
-    for (const auto &metadata_pair : detection->template_metadata) {
+    for (const auto &template_result_pair : detection->template_results) {
       DataModel::PickPtr pick{DataModel::Pick::Create()};
 
-      // TODO(damb): set pick time
-      /* pick->setTime(); */
-      pick->setWaveformID(metadata_pair.first);
+      pick->setTime(template_result_pair.second.lag);
+      pick->setWaveformID(template_result_pair.first);
       pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
       try {
-        pick->setPhaseHint(metadata_pair.second.pick->phaseHint());
+        pick->setPhaseHint(
+            template_result_pair.second.metadata.pick->phaseHint());
       } catch (...) {
       }
 
@@ -573,9 +573,9 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
       auto arrival{utils::make_smart<DataModel::Arrival>()};
       arrival->setCreationInfo(ci);
       arrival->setPickID(pick->publicID());
-      arrival->setPhase(metadata_pair.second.phase);
-      if (metadata_pair.second.arrival_weight)
-        arrival->setWeight(metadata_pair.second.arrival_weight);
+      arrival->setPhase(template_result_pair.second.metadata.phase);
+      if (template_result_pair.second.metadata.arrival_weight)
+        arrival->setWeight(template_result_pair.second.metadata.arrival_weight);
 
       arrival_picks.push_back({arrival, pick});
     }
