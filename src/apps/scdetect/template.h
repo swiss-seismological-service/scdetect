@@ -102,6 +102,8 @@ private:
   GenericRecordCPtr waveform_{nullptr};
   // Template waveform sampling frequency
   double waveform_sampling_frequency_{0};
+  // Template waveform filter string
+  std::string waveform_filter_;
   // Template waveform samples squared summed
   double waveform_squared_sum_{0};
   // Template waveform samples summed

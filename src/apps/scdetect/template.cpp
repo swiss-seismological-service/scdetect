@@ -5,6 +5,7 @@
 #include <cmath>
 #include <exception>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <memory>
 #include <stdexcept>
@@ -125,7 +126,11 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
     {
       std::string fname{waveform_->streamID() + fname_sep +
                         waveform_->startTime().iso() + fname_sep +
-                        waveform_->endTime().iso() + ".mseed"};
+                        waveform_->endTime().iso() + fname_sep +
+                        std::to_string(std::hash<std::string>{}(
+                            std::to_string(waveform_sampling_frequency_) +
+                            waveform_filter_)) +
+                        ".mseed"};
       auto fpath{debug_info_dir() / fname};
       if (!Util::fileExists(fpath.string())) {
         std::ofstream ofs{fpath.string()};
@@ -270,6 +275,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
   }
   template_->waveform_sampling_frequency_ =
       template_->waveform_->samplingFrequency();
+  template_->waveform_filter_ = config.filter_string;
 
   const double *samples_template{
       DoubleArray::ConstCast(template_->waveform_->data())->typedData()};

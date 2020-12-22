@@ -139,8 +139,6 @@ def main(argv=None):
             ):
                 continue
 
-            # FIXME(damb): might crash if the template waveform is reprocessed
-            # while processing
             path_template = obj["pathTemplate"]
             print(f"Loading template waveform from file: {path_template}")
             # there is only a single trace per stream available
