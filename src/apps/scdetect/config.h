@@ -99,6 +99,9 @@ struct DetectorConfig {
   // Maximum data latency a in seconds tolerated
   double maximum_latency{10};
 
+  // Flag indicating whether to compute and associate picks
+  bool create_picks{false};
+
   // Processing interval in seconds
   /* double processing_interval = settings::kDefaultProcessingInterval; */
 

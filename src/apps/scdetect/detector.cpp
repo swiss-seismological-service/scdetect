@@ -103,6 +103,8 @@ std::string Detector::DebugString() const {
   return oss.str();
 }
 
+bool Detector::WithPicks() const { return config_.create_picks; }
+
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
 

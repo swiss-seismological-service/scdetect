@@ -73,6 +73,8 @@ void Processor::Close() const {}
 
 std::string Processor::DebugString() const { return ""; }
 
+bool Processor::WithPicks() const { return false; }
+
 bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   if (Processor::Status::kInProgress < status() || !record->data())
     return false;

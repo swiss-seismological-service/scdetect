@@ -77,6 +77,8 @@ public:
 
   std::string DebugString() const override;
 
+  bool WithPicks() const override;
+
 protected:
   void Process(StreamState &stream_state, RecordCPtr record,
                const DoubleArray &filtered_data) override;
