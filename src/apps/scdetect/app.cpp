@@ -186,6 +186,12 @@ Application::Application(int argc, char **argv)
   SetupConfigurationOptions();
 }
 
+Application::BaseException::BaseException()
+    : Exception{"base application exception"} {}
+
+Application::ConfigError::ConfigError()
+    : BaseException{"application configuration error"} {}
+
 void Application::createCommandLineDescription() {
   StreamApplication::createCommandLineDescription();
 
@@ -367,6 +373,10 @@ bool Application::run() {
     return true;
   }
 
+  if (config_.dump_debug_info) {
+    SEISCOMP_DEBUG("Dumping debug info enabled.");
+  }
+
   if (commandline().hasOption("ep")) {
     ep_ = utils::make_smart<DataModel::EventParameters>();
   }
@@ -398,6 +408,37 @@ void Application::done() {
     ar.close();
     SEISCOMP_DEBUG("Found %lu origins.", ep_->originCount());
     /* ep_ = nullptr; */
+  }
+
+  // optionally, create debug info files
+  if (config_.dump_debug_info) {
+    std::unordered_set<std::string> detector_ids;
+    for (const auto &stream_detector_pair : detectors_) {
+      const auto &detector_id{stream_detector_pair.second->id()};
+      if (detector_ids.find(detector_id) == detector_ids.end()) {
+        const auto &path_debug_info{
+            stream_detector_pair.second->debug_info_dir()};
+        const auto fpath{path_debug_info / settings::kFnameDebugInfo};
+
+        if (!Util::pathExists(path_debug_info.string())) {
+          if (!Util::createPath(path_debug_info.string())) {
+            SEISCOMP_WARNING("Failed to create directory: %s",
+                             path_debug_info.c_str());
+            continue;
+          }
+        }
+
+        std::ofstream ofs{fpath.string()};
+        if (ofs.is_open()) {
+          ofs << stream_detector_pair.second->DebugString();
+          ofs.close();
+        } else {
+          SEISCOMP_WARNING("Failed to create file: %s", fpath.c_str());
+        }
+
+        detector_ids.emplace(stream_detector_pair.second->id());
+      }
+    }
   }
 
   StreamApplication::done();
@@ -690,6 +731,8 @@ void Application::SetupConfigurationOptions() {
               "requesting records from the configured recordstream; useful for "
               "reprocessing");
 
+  NEW_OPT_CLI(config_.dump_debug_info, "Mode", "debug-info",
+              "dump additional debug information (e.g. waveforms, stats etc.)");
   NEW_OPT_CLI(config_.load_templates_only, "Mode", "load-templates",
               "load templates and exit");
 
@@ -728,10 +771,10 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 
   // initialize detectors
   std::unordered_set<std::string> processor_ids;
-  auto ValidateProcessorId = [&processor_ids](const std::string &id) {
+  auto IsUniqueProcessorId = [&processor_ids](const std::string &id) {
     bool id_exists{processor_ids.find(id) != processor_ids.end()};
     if (id_exists) {
-      SEISCOMP_WARNING("Processor id will be used by multiple processors: %s",
+      SEISCOMP_WARNING("Processor id is be used by multiple processors: %s",
                        id.c_str());
     }
     processor_ids.emplace(id);
@@ -753,7 +796,10 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         SEISCOMP_DEBUG("Creating detector processor (id=%s) ... ",
                        tc.detector_id().c_str());
 
-        ValidateProcessorId(tc.detector_id());
+        if (!IsUniqueProcessorId(tc.detector_id()) && config_.dump_debug_info) {
+          throw ConfigError{"Non unique detector processor identifier: " +
+                            tc.detector_id()};
+        }
 
         auto detector_builder{
             Detector::Create(tc.detector_id(), tc.origin_id())
@@ -762,14 +808,25 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
                 .set_publish_callback(boost::bind(&Application::EmitDetection,
                                                   this, _1, _2, _3))};
 
+        boost::filesystem::path path_debug_info;
+        if (config_.dump_debug_info) {
+          Environment *env{Environment::Instance()};
+          boost::filesystem::path sc_install_dir{env->installDir()};
+          path_debug_info =
+              sc_install_dir / settings::kPathTemp / tc.detector_id();
+
+          detector_builder.set_debug_info_dir(path_debug_info);
+        }
+
         std::vector<std::string> stream_ids;
         for (const auto &stream_set : tc) {
           for (const auto &stream_config_pair : stream_set) {
-            ValidateProcessorId(stream_config_pair.second.template_id);
+
+            IsUniqueProcessorId(stream_config_pair.second.template_id);
             try {
               detector_builder.set_stream(stream_config_pair.first,
                                           stream_config_pair.second,
-                                          waveform_handler);
+                                          waveform_handler, path_debug_info);
             } catch (builder::NoSensorLocation &e) {
               if (config_.skip_template_if_no_sensor_location_data) {
                 SEISCOMP_WARNING(
@@ -813,7 +870,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           detectors_.emplace(stream_id, detector);
 
       } catch (Exception &e) {
-        SEISCOMP_WARNING("Failed to create detector: %s", e.what());
+        SEISCOMP_WARNING("Failed to create detector: %s. Skipping.", e.what());
         continue;
       }
     }

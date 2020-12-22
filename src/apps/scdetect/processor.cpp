@@ -4,7 +4,9 @@
 namespace Seiscomp {
 namespace detect {
 
-Processor::Processor(const std::string &id) : id_{id} {}
+Processor::Processor(const std::string &id,
+                     const boost::filesystem::path &debug_info_dir)
+    : id_{id}, debug_info_dir_{debug_info_dir} {}
 
 Processor::Result::~Result() {}
 
@@ -48,9 +50,19 @@ bool Processor::gap_interpolation() const { return gap_interpolation_; }
 
 bool Processor::finished() const { return Status::kInProgress < status_; }
 
+const Core::TimeWindow &Processor::processed() const { return processed_; }
+
+const boost::filesystem::path &Processor::debug_info_dir() const {
+  return debug_info_dir_;
+}
+
+bool Processor::debug_mode() const { return !debug_info_dir_.empty(); }
+
 void Processor::Reset() {
   status_ = Status::kWaitingForData;
   status_value_ = 0;
+
+  processed_ = Core::TimeWindow{};
 }
 
 void Processor::Terminate() {
@@ -58,6 +70,8 @@ void Processor::Terminate() {
 }
 
 void Processor::Close() const {}
+
+std::string Processor::DebugString() const { return ""; }
 
 bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   if (Processor::Status::kInProgress < status() || !record->data())
@@ -207,6 +221,15 @@ void Processor::InitFilter(StreamState &stream_state, double sampling_freq) {
 void Processor::set_status(Status status, double value) {
   status_ = status;
   status_value_ = value;
+}
+
+void Processor::set_debug_info_dir(const boost::filesystem::path &path) {
+  debug_info_dir_ = path;
+}
+
+void Processor::set_processed(const Core::TimeWindow &tw) { processed_ = tw; }
+void Processor::merge_processed(const Core::TimeWindow &tw) {
+  processed_ = processed_ | tw;
 }
 
 void Processor::set_saturation_check(bool e) { saturation_check_ = e; }

@@ -15,6 +15,9 @@ const std::string kPathTemp{"var/tmp/scdetect"};
 
 // Processor identifier separator
 const std::string kProcessorIdSep{"::"};
+// Filename for processor debug information
+const std::string kFnameDebugInfo{"debug_info.json"};
+
 // Template specific default configuration
 const std::string kMagnitudeType{"SCDETECT"};
 const std::string kOriginMethod{kMagnitudeType};
