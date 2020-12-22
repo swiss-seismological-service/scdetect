@@ -122,12 +122,21 @@
 				<optionReference>messaging#content-type</optionReference>
 				<optionReference>messaging#start-stop-msg</optionReference>
 				<option flag="" long-flag="offline">
-					<description>Neither connect messaging server nor database.</description>
-				</option>
+          <description>
+            Do not connect to the messaging system.
+          </description>
+        </option>
 				<option flag="" long-flag="no-publish">
 					<description>
             Runs the module as usual but does not send any messages. This can
             be useful to test the module within a running system.
+					</description>
+				</option>
+				<option flag="" long-flag="ep">
+          <description>
+            Same as --no-publish, but outputs all event parameters scml
+            formatted; specifying the output path as '-' (a single dash) will
+            force the output to be redirected to stdout.
 					</description>
 				</option>
 			</group>
@@ -138,7 +147,13 @@
 				<optionReference>database#config-module</optionReference>
 				<optionReference>database#inventory-db</optionReference>
 				<option flag="" long-flag="db-disable" argument="" publicID="database#db-disable">
-					<description>Do not use the database at all</description>
+          <description>Do not use the database at all</description>
+				</option>
+				<option flag="" long-flag="event-db" argument="">
+          <description>
+            Load events from the given database or file, format:
+            [service://]location
+          </description>
 				</option>
 			</group>
 
@@ -147,9 +162,29 @@
 				<optionReference>records#record-url</optionReference>
 				<optionReference>records#record-file</optionReference>
 				<optionReference>records#record-type</optionReference>
+				<option flag="" long-flag="record-starttime" argument="">
+          <description>
+            Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
+            records from the configured archive recordstream. Useful for
+            reprocessing.
+          </description>
+				</option>
+				<option flag="" long-flag="record-endtime" argument="">
+          <description>
+            Defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
+            records from the configured archive recordstream. Useful for
+            reprocessing.
+          </description>
+				</option>
 			</group>
 
       <group name="Mode">
+        <option flag="" long-flag="debug-info">
+          <description>
+            Dump additional debug information (e.g. waveforms, stats etc.)
+            while processing.
+          </description>
+        </option>
         <option flag="" long-flag="load-templates">
           <description>Load templates and exit.</description>
         </option>
