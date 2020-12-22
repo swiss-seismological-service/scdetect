@@ -50,8 +50,11 @@ public:
     Core::TimeWindow time_window;
 
     struct MetaData {
+      // Original template pick
       DataModel::PickCPtr pick;
+      // Template phase
       std::string phase;
+      // Template arrival weight
       double arrival_weight;
     } metadata;
 
