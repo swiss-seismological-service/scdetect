@@ -95,8 +95,10 @@ protected:
   void ResetProcessors();
 
 private:
+  using WaveformStreamID = std::string;
+
   struct StreamConfig;
-  using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
+  using StreamConfigs = std::unordered_map<WaveformStreamID, StreamConfig>;
 
   struct StreamConfig {
     Processor::StreamState stream_state;
@@ -123,7 +125,8 @@ private:
       RecordCPtr trace;
     };
 
-    using ProcessorStates = std::unordered_map<std::string, ProcessorState>;
+    using ProcessorStates =
+        std::unordered_map<WaveformStreamID, ProcessorState>;
     ProcessorStates processor_states;
 
     struct Result {
@@ -144,7 +147,7 @@ private:
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
 
-  std::multimap<std::string, Template::MatchResultCPtr> debug_cc_results_;
+  std::multimap<WaveformStreamID, Template::MatchResultCPtr> debug_cc_results_;
 };
 
 class DetectorBuilder : public Builder<DetectorBuilder> {

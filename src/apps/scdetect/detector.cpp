@@ -123,7 +123,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   // returned. Else the corresponding buffer is skipped when determining the
   // time window.
   auto FindBufferedTimeWindow =
-      [this, config](const std::vector<std::string> &stream_ids,
+      [this, config](const std::vector<WaveformStreamID> &stream_ids,
                      bool strict) -> Core::TimeWindow {
     // find max buffered endtime
     Core::Time max_endtime{};
@@ -168,7 +168,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   };
 
   // prepare data to be processed
-  std::vector<std::string> stream_ids;
+  std::vector<WaveformStreamID> stream_ids;
   bool strict{true};
   if (WithTrigger() && processing_state_.trigger_end) {
     // Once triggered, only take those streams into consideration which
@@ -370,20 +370,21 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     SEISCOMP_INFO("Detection: %s",
                   CreateStatsMsg(processing_state_.result.fit).c_str());
 
-    auto CountStations = [this](const std::vector<std::string> &stream_ids) {
-      std::unordered_set<std::string> used_stations{};
+    auto CountStations =
+        [this](const std::vector<WaveformStreamID> &stream_ids) {
+          std::unordered_set<WaveformStreamID> used_stations{};
 
-      for (const auto &stream_id : stream_ids) {
-        auto it{stream_configs_.find(stream_id)};
-        if (it == stream_configs_.end())
-          continue;
+          for (const auto &stream_id : stream_ids) {
+            auto it{stream_configs_.find(stream_id)};
+            if (it == stream_configs_.end())
+              continue;
 
-        auto station{it->second.metadata.sensor_location->station()};
-        used_stations.insert(station->publicID());
-      }
+            auto station{it->second.metadata.sensor_location->station()};
+            used_stations.insert(station->publicID());
+          }
 
-      return used_stations.size();
-    };
+          return used_stations.size();
+        };
 
     const auto &processor_states = processing_state_.processor_states;
     auto LoadSensorLocations = [this, processor_states]() {
@@ -398,11 +399,11 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       return sensor_locations;
     };
 
-    std::vector<std::string> stream_ids_used{};
+    std::vector<WaveformStreamID> stream_ids_used{};
     boost::copy(processing_state_.processor_states | boost::adaptors::map_keys,
                 std::back_inserter(stream_ids_used));
     auto num_stations_used{CountStations(stream_ids_used)};
-    std::vector<std::string> stream_ids{};
+    std::vector<WaveformStreamID> stream_ids{};
     boost::copy(stream_configs_ | boost::adaptors::map_keys,
                 std::back_inserter(stream_ids));
     auto num_stations_associated{stream_ids.size()};
