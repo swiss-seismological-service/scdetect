@@ -190,8 +190,8 @@ def main(argv=None):
 
     console.rule("[bold white]Result")
     console.print(
-        f"Total: [bold white]{num_tests_ok + num_tests_failed}[/]; [bold green]Ok:"
-        f" {num_tests_ok}[/]; [bold red]Failed: {num_tests_failed}"
+        f"Total: [bold white]{num_tests_ok + num_tests_failed}[/]; [bold"
+        f" green]Ok: {num_tests_ok}[/]; [bold red]Failed: {num_tests_failed}"
     )
 
 
