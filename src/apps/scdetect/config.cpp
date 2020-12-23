@@ -6,9 +6,9 @@
 #include <boost/property_tree/exceptions.hpp>
 
 #include "exception.h"
+#include "log.h"
 #include "settings.h"
 #include "utils.h"
-#include "version.h"
 
 namespace Seiscomp {
 namespace detect {

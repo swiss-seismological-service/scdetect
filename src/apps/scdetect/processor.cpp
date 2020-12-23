@@ -1,5 +1,5 @@
 #include "processor.h"
-#include "version.h"
+#include "log.h"
 
 namespace Seiscomp {
 namespace detect {

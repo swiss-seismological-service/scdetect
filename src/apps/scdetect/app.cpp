@@ -26,6 +26,7 @@
 #include "config.h"
 #include "detector.h"
 #include "eventstore.h"
+#include "log.h"
 #include "settings.h"
 #include "utils.h"
 #include "version.h"

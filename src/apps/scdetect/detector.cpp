@@ -22,6 +22,7 @@
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include "eventstore.h"
+#include "log.h"
 #include "settings.h"
 #include "template.h"
 #include "utils.h"

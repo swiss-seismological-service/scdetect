@@ -7,9 +7,9 @@
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 
+#include "log.h"
 #include "seiscomp/datamodel/amplitude.h"
 #include "seiscomp/datamodel/publicobject.h"
-#include "version.h"
 
 namespace Seiscomp {
 namespace detect {

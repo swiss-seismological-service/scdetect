@@ -22,6 +22,7 @@ SET(
     detector.h
     eventstore.h
     exception.h
+    log.h
     processor.h
     settings.h
     template.h

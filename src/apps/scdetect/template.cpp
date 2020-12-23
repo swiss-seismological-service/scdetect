@@ -18,10 +18,10 @@
 #include <seiscomp/system/environment.h>
 #include <seiscomp/utils/files.h>
 
+#include "log.h"
 #include "processor.h"
 #include "settings.h"
 #include "utils.h"
-#include "version.h"
 #include "waveform.h"
 
 namespace Seiscomp {
