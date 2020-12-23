@@ -1,0 +1,7 @@
+#ifndef SCDETECT_APPS_SCDETECT_LOG_H_
+#define SCDETECT_APPS_SCDETECT_LOG_H_
+
+#define SEISCOMP_COMPONENT DETECT
+#include <seiscomp/logging/log.h>
+
+#endif // SCDETECT_APPS_SCDETECT_LOG_H_
