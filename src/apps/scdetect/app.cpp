@@ -488,7 +488,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};
 
-  SEISCOMP_DEBUG("Creating origin ...");
+  SCDETECT_DEBUG_TAGGED(processor->id(), "Creating origin ...");
   Core::Time now{Core::Time::GMT()};
 
   DataModel::CreationInfo ci;
@@ -590,7 +590,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   logObject(output_origins_, Core::Time::GMT());
 
   if (connection() && !config_.no_publish) {
-    SEISCOMP_DEBUG("Sending event parameters ...");
+    SCDETECT_DEBUG_TAGGED(processor->id(), "Sending event parameters ...");
 
     auto notifier_msg{utils::make_smart<DataModel::NotifierMessage>()};
 
@@ -627,7 +627,8 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
     }
 
     if (!connection()->send(notifier_msg.get())) {
-      SEISCOMP_ERROR("Sending of event parameters failed.");
+      SCDETECT_ERROR_TAGGED(processor->id(),
+                            "Sending of event parameters failed.");
     }
   }
 

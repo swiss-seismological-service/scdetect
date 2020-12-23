@@ -148,7 +148,7 @@ namespace template_detail {
  */
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           Template::MatchResultPtr result);
+           Template::MatchResultPtr result, ProcessorCPtr processor = nullptr);
 
 } // namespace template_detail
 

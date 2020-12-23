@@ -114,8 +114,8 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   if (debug_mode()) {
     if (!Util::pathExists(debug_info_dir().string())) {
       if (!Util::createPath(debug_info_dir().string())) {
-        SEISCOMP_ERROR("Failed to create directory: %s",
-                       debug_info_dir().c_str());
+        SCDETECT_ERROR_PROCESSOR(this, "Failed to create directory: %s",
+                                 debug_info_dir().c_str());
         set_status(Status::kError, 0);
         return;
       }
@@ -160,10 +160,10 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,
-                             waveform_sampling_frequency_, result)) {
+                             waveform_sampling_frequency_, result, this)) {
 #ifdef SCDETECT_DEBUG
-    SEISCOMP_DEBUG(
-        "[%s - %s]: fit=%f, lag=%f", record->startTime().iso().c_str(),
+    SCDETECT_DEBUG_PROCESSOR(
+        this, "[%s - %s]: fit=%f, lag=%f", record->startTime().iso().c_str(),
         record->endTime().iso().c_str(), result->coefficient, result->lag);
 #endif
 
@@ -315,7 +315,7 @@ namespace template_detail {
 
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           Template::MatchResultPtr result) {
+           Template::MatchResultPtr result, ProcessorCPtr processor) {
 
   /*
    * Pearson correlation coefficient for time series X and Y of length n
@@ -447,7 +447,11 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
 
     std::string msg{"Floating point exception during cross-correlation: "};
     msg += boost::algorithm::join(exceptions, ", ");
-    SEISCOMP_WARNING(msg.c_str());
+    if (processor) {
+      SCDETECT_WARNING_TAGGED(processor->id(), "%s", msg.c_str());
+    } else {
+      SEISCOMP_WARNING(msg.c_str());
+    }
   }
 
   if (!std::isfinite(result->coefficient)) {

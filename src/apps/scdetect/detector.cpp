@@ -74,7 +74,7 @@ bool Detector::Feed(const Record *record) {
 }
 
 void Detector::Reset() {
-  SEISCOMP_DEBUG("Resetting detector ...");
+  SCDETECT_DEBUG_PROCESSOR(this, "Resetting detector ...");
 
   // reset template (child) related facilities
   for (auto &stream_config_pair : stream_configs_) {
@@ -233,10 +233,12 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       const auto status_value{
           stream_config_pair.second.processor->status_value()};
 
-      SEISCOMP_ERROR("%s: Failed to feed data to processor. Reason: status=%d, "
-                     "status_value=%f",
-                     stream_config_pair.first.c_str(),
-                     utils::as_integer(status), status_value);
+      SCDETECT_ERROR_PROCESSOR(
+          this,
+          "%s: Failed to feed data to processor. Reason: status=%d, "
+          "status_value=%f",
+          stream_config_pair.first.c_str(), utils::as_integer(status),
+          status_value);
       break;
     }
 
@@ -282,7 +284,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       } else {
         msg += "unknown (processor disabled)";
       }
-      SEISCOMP_WARNING("%s", msg.c_str());
+      SCDETECT_WARNING_PROCESSOR(this, "%s", msg.c_str());
 
       continue;
     }
@@ -323,15 +325,17 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   if (fit >= config_.trigger_on) {
     // initialize trigger
     if (NotTriggered()) {
-      SEISCOMP_DEBUG("Detector triggered: %s", CreateStatsMsg(fit).c_str());
+      SCDETECT_DEBUG_PROCESSOR(this, "Detector triggered: %s",
+                               CreateStatsMsg(fit).c_str());
 
       processing_state_.trigger_end =
           tw.endTime() + Core::TimeSpan{config_.trigger_duration};
     } else if (!WithTrigger()) {
-      SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
+      SCDETECT_DEBUG_PROCESSOR(this, "Detector result: %s",
+                               CreateStatsMsg(fit).c_str());
     } else {
-      SEISCOMP_DEBUG("Detector result (triggered): %s",
-                     CreateStatsMsg(fit).c_str());
+      SCDETECT_DEBUG_PROCESSOR(this, "Detector result (triggered): %s",
+                               CreateStatsMsg(fit).c_str());
     }
 
     if ((!WithTrigger() || processing_state_.trigger_end) &&
@@ -368,10 +372,12 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   } else if (Triggered() && fit < config_.trigger_on &&
              fit >= config_.trigger_off) {
 
-    SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
+    SCDETECT_DEBUG_PROCESSOR(this, "Detector result: %s",
+                             CreateStatsMsg(fit).c_str());
     ResetProcessors();
   } else {
-    SEISCOMP_DEBUG("Detector result: %s", CreateStatsMsg(fit).c_str());
+    SCDETECT_DEBUG_PROCESSOR(this, "Detector result: %s",
+                             CreateStatsMsg(fit).c_str());
 
     if (!WithTrigger() || !processing_state_.trigger_end) {
       reset_processing = true;
@@ -382,8 +388,9 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       (Triggered() && processed().endTime() >= processing_state_.trigger_end) ||
       (Triggered() && fit < config_.trigger_off)) {
 
-    SEISCOMP_INFO("Detection: %s",
-                  CreateStatsMsg(processing_state_.result.fit).c_str());
+    SCDETECT_INFO_PROCESSOR(
+        this, "Detection: %s",
+        CreateStatsMsg(processing_state_.result.fit).c_str());
 
     auto CountStations =
         [this](const std::vector<WaveformStreamID> &stream_ids) {
