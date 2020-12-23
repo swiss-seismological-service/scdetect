@@ -28,6 +28,7 @@
 #include "eventstore.h"
 #include "settings.h"
 #include "utils.h"
+#include "version.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -191,6 +192,8 @@ Application::BaseException::BaseException()
 
 Application::ConfigError::ConfigError()
     : BaseException{"application configuration error"} {}
+
+const char *Application::version() { return kVersion; }
 
 void Application::createCommandLineDescription() {
   StreamApplication::createCommandLineDescription();

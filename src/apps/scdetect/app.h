@@ -15,7 +15,6 @@
 #include "config.h"
 #include "exception.h"
 #include "processor.h"
-#include "version.h"
 #include "waveform.h"
 
 namespace Seiscomp {
@@ -116,7 +115,7 @@ public:
     StreamConfig stream_config;
   };
 
-  virtual const char *version() override { return detect::kVersion; }
+  const char *version() override;
 
 protected:
   void createCommandLineDescription() override;
