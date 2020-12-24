@@ -101,7 +101,8 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
   MatchResultPtr result{utils::make_smart<MatchResult>(
       waveform_sum_, waveform_squared_sum_, num_samples_template,
-      record->timeWindow(), MatchResult::MetaData{pick_, phase_})};
+      record->timeWindow(),
+      MatchResult::MetaData{pick_, pick_offset_, phase_})};
 
   if (num_samples_template > num_samples_trace) {
     set_status(Status::kWaitingForData,
@@ -240,8 +241,10 @@ TemplateBuilder &TemplateBuilder::set_phase(const std::string &phase) {
   return *this;
 }
 
-TemplateBuilder &TemplateBuilder::set_pick(DataModel::PickCPtr pick) {
+TemplateBuilder &TemplateBuilder::set_pick(DataModel::PickCPtr pick,
+                                           const double pick_offset) {
   template_->pick_ = pick;
+  template_->pick_offset_ = pick_offset;
   return *this;
 }
 

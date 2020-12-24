@@ -506,7 +506,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   origin->setLatitude(DataModel::RealQuantity(detection->latitude));
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
   origin->setDepth(DataModel::RealQuantity(detection->depth));
-  origin->setTime(DataModel::TimeQuantity(detection->time));
+  origin->setTime(DataModel::TimeQuantity(detection->origin_time));
   origin->setEpicenterFixed(true);
   origin->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
@@ -562,7 +562,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
     for (const auto &template_result_pair : detection->template_results) {
       DataModel::PickPtr pick{DataModel::Pick::Create()};
 
-      pick->setTime(template_result_pair.second.lag);
+      pick->setTime(template_result_pair.second.pick_time);
       pick->setWaveformID(template_result_pair.first);
       pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 

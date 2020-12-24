@@ -32,14 +32,14 @@ namespace detect {
 Detector::Detector(const std::string &id) : Processor{id} {}
 
 Detector::Detection::Detection(
-    const double fit, const Core::Time &time, const double magnitude,
+    const double fit, const Core::Time &origin_time, const double magnitude,
     const double lat, const double lon, const double depth,
     const Detector::Detection::SensorLocations &sensor_locations,
     const size_t num_stations_associated, const size_t num_stations_used,
     const size_t num_channels_associated, const size_t num_channels_used,
     const Detector::Detection::TemplateResults &template_results)
-    : fit(fit), time(time), magnitude(magnitude), latitude(lat), longitude(lon),
-      depth(depth), sensor_locations(sensor_locations),
+    : fit(fit), origin_time(origin_time), magnitude(magnitude), latitude(lat),
+      longitude(lon), depth(depth), sensor_locations(sensor_locations),
       num_stations_associated(num_stations_associated),
       num_stations_used(num_stations_used),
       num_channels_associated(num_channels_associated),
@@ -344,11 +344,6 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
         return;
       }
 
-      auto origin_time{
-          tw.startTime() +
-          Core::TimeSpan{processor_state_pair->second.result->lag}};
-
-      processing_state_.result.origin_time = origin_time;
       processing_state_.result.fit = fit;
       processing_state_.result.magnitude = magnitude_->magnitude().value();
 
@@ -425,31 +420,43 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     auto num_channels_associated{stream_configs_.size()};
     auto sensor_locations{LoadSensorLocations()};
 
+    double origin_time{0};
     Detection::TemplateResults template_results;
+    size_t num_picks_used{1};
     for (const auto &processor_state_pair :
          processing_state_.processor_states) {
 
-      Core::Time time_lag{};
-      if (WithPicks()) {
-        // compute pick times
-        auto lag_pair{
-            processing_state_.result.lags.find(processor_state_pair.first)};
-        if (lag_pair == processing_state_.result.lags.end()) {
-          continue;
-        }
-        time_lag = processing_state_.result.time_window.startTime() +
-                   Core::TimeSpan{lag_pair->second};
+      // compute theoretical pick times
+      auto lag_pair{
+          processing_state_.result.lags.find(processor_state_pair.first)};
+      if (lag_pair == processing_state_.result.lags.end()) {
+        continue;
       }
+      auto time_pick_theoretical{
+          processing_state_.result.time_window.startTime() +
+          Core::TimeSpan{lag_pair->second} +
+          Core::TimeSpan{
+              processor_state_pair.second.result->metadata.pick_offset}};
       Detection::TemplateResult tr{
-          time_lag, processor_state_pair.second.result->metadata};
+          time_pick_theoretical, processor_state_pair.second.result->metadata};
 
       template_results.emplace(processor_state_pair.first, tr);
+
+      // compute origin time - use running average
+      const auto &time_pick_template{
+          processor_state_pair.second.result->metadata.pick->time().value()};
+      origin_time =
+          origin_time +
+          (static_cast<double>(time_pick_theoretical -
+                               (time_pick_template - origin_->time().value())) -
+           origin_time) /
+              num_picks_used;
+      ++num_picks_used;
     }
 
     ResultPtr detection{utils::make_smart<Detection>(
         processing_state_.result.fit,
-        processing_state_.result.origin_time +
-            Core::TimeSpan(config_.time_correction),
+        Core::Time{origin_time} + Core::TimeSpan(config_.time_correction),
         processing_state_.result.magnitude, origin_->latitude().value(),
         origin_->longitude().value(), origin_->depth().value(),
         sensor_locations, num_stations_associated, num_stations_used,
@@ -720,7 +727,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       Template::Create(stream_config.template_id)
           .set_phase(stream_config.template_config.phase)
           .set_arrival_weight(arrival_weight)
-          .set_pick(pick)
+          .set_pick(pick,
+                    /*pick_offset=*/-stream_config.template_config.wf_start)
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_sensitivity_correction(stream_config.sensitivity_correction)

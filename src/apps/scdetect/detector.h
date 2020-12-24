@@ -38,17 +38,17 @@ public:
 
     using SensorLocations = std::vector<DataModel::SensorLocationCPtr>;
     struct TemplateResult {
-      // Template specific lag required for setting the pick time
-      Core::Time lag;
+      // Template specific theoretical pick time
+      Core::Time pick_time;
       // Template related metadata
       Template::MatchResult::MetaData metadata;
     };
 
     using TemplateResults = std::unordered_map<std::string, TemplateResult>;
 
-    Detection(const double fit, const Core::Time &time, const double magnitude,
-              const double lat, const double lon, const double depth,
-              const SensorLocations &sensor_locations,
+    Detection(const double fit, const Core::Time &origin_time,
+              const double magnitude, const double lat, const double lon,
+              const double depth, const SensorLocations &sensor_locations,
               const size_t num_stations_associated,
               const size_t num_stations_used,
               const size_t num_channels_associated,
@@ -57,7 +57,7 @@ public:
 
     double fit{};
 
-    Core::Time time{};
+    Core::Time origin_time;
     double magnitude{};
     double latitude{};
     double longitude{};
@@ -142,11 +142,10 @@ private:
     struct Result {
       using Lags = std::unordered_map<WaveformStreamID, double>;
 
-      Core::Time origin_time;
       double fit{std::nan("")};
       double magnitude{0};
 
-      // Lag related data
+      // Lag related data; required for setting theoretical picks
       Core::TimeWindow time_window;
       Lags lags;
 

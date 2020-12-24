@@ -52,6 +52,8 @@ public:
     struct MetaData {
       // Original template pick
       DataModel::PickCPtr pick;
+      // Template pick offset of the original pick in seconds
+      double pick_offset;
       // Template phase
       std::string phase;
       // Template arrival weight
@@ -90,6 +92,8 @@ private:
 
   // Template related pick
   DataModel::PickCPtr pick_{nullptr};
+  // Template related pick offset in seconds
+  double pick_offset_{std::nan("")};
   // Template related phase code
   std::string phase_{""};
   // Template related arrival weight
@@ -118,7 +122,10 @@ public:
   TemplateBuilder(const std::string &template_id);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
   TemplateBuilder &set_phase(const std::string &phase);
-  TemplateBuilder &set_pick(DataModel::PickCPtr pick);
+  // Sets both the pick and the pick_offset w.r.t. the template waveform start
+  // time
+  TemplateBuilder &set_pick(DataModel::PickCPtr pick,
+                            const double pick_offset /* seconds */);
   TemplateBuilder &set_arrival_weight(const double weight);
   TemplateBuilder &
   set_waveform(WaveformHandlerIfacePtr waveform_handler,
