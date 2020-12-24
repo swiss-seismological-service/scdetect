@@ -11,15 +11,15 @@
 #define SCDETECT_LOG_NOTICE SEISCOMP_ERROR
 #define SCDETECT_LOG SEISCOMP_LOG
 
-#define SCDETECT_DEBUG_TAGGED(tag_str, format, ...)                            \
+#define SCDETECT_LOG_DEBUG_TAGGED(tag_str, format, ...)                        \
   SCDETECT_LOG_DEBUG("[%s] " format, tag_str.c_str(), ##__VA_ARGS__)
-#define SCDETECT_INFO_TAGGED(tag_str, format, ...)                             \
+#define SCDETECT_LOG_INFO_TAGGED(tag_str, format, ...)                         \
   SCDETECT_LOG_INFO("[%s] " format, tag_str.c_str(), ##__VA_ARGS__)
-#define SCDETECT_WARNING_TAGGED(tag_str, format, ...)                          \
+#define SCDETECT_LOG_WARNING_TAGGED(tag_str, format, ...)                      \
   SCDETECT_LOG_WARNING("[%s] " format, tag_str.c_str(), ##__VA_ARGS__)
-#define SCDETECT_ERROR_TAGGED(tag_str, format, ...)                            \
+#define SCDETECT_LOG_ERROR_TAGGED(tag_str, format, ...)                        \
   SCDETECT_LOG_ERROR("[%s] " format, tag_str.c_str(), ##__VA_ARGS__)
-#define SCDETECT_NOTICE_TAGGED(tag_str, format, ...)                           \
+#define SCDETECT_LOG_NOTICE_TAGGED(tag_str, format, ...)                       \
   SCDETECT_LOG_NOTICE("[%s] " format, tag_str.c_str(), ##__VA_ARGS__)
 #define SCDETECT_LOG_TAGGED(channel, tag_str, format, ...)                     \
   SCDETECT_LOG(channel, "[%s] " format, tag_str.c_str(), ##__VA_ARGS__)

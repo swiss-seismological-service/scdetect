@@ -13,8 +13,8 @@ int main(int argc, char **argv) {
     retCode = app.exec();
   }
 
-  SEISCOMP_DEBUG("EXIT(%d), remaining objects: %d", retCode,
-                 Seiscomp::Core::BaseObject::ObjectCount());
+  SCDETECT_LOG_DEBUG("EXIT(%d), remaining objects: %d", retCode,
+                     Seiscomp::Core::BaseObject::ObjectCount());
 
   return retCode;
 }

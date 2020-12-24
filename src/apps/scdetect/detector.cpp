@@ -74,7 +74,7 @@ bool Detector::Feed(const Record *record) {
 }
 
 void Detector::Reset() {
-  SCDETECT_DEBUG_PROCESSOR(this, "Resetting detector ...");
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
 
   // reset template (child) related facilities
   for (auto &stream_config_pair : stream_configs_) {
@@ -233,7 +233,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       const auto status_value{
           stream_config_pair.second.processor->status_value()};
 
-      SCDETECT_ERROR_PROCESSOR(
+      SCDETECT_LOG_ERROR_PROCESSOR(
           this,
           "%s: Failed to feed data to processor. Reason: status=%d, "
           "status_value=%f",
@@ -284,7 +284,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       } else {
         msg += "unknown (processor disabled)";
       }
-      SCDETECT_WARNING_PROCESSOR(this, "%s", msg.c_str());
+      SCDETECT_LOG_WARNING_PROCESSOR(this, "%s", msg.c_str());
 
       continue;
     }
@@ -325,17 +325,17 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   if (fit >= config_.trigger_on) {
     // initialize trigger
     if (NotTriggered()) {
-      SCDETECT_DEBUG_PROCESSOR(this, "Detector triggered: %s",
-                               CreateStatsMsg(fit).c_str());
+      SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector triggered: %s",
+                                   CreateStatsMsg(fit).c_str());
 
       processing_state_.trigger_end =
           tw.endTime() + Core::TimeSpan{config_.trigger_duration};
     } else if (!WithTrigger()) {
-      SCDETECT_DEBUG_PROCESSOR(this, "Detector result: %s",
-                               CreateStatsMsg(fit).c_str());
+      SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result: %s",
+                                   CreateStatsMsg(fit).c_str());
     } else {
-      SCDETECT_DEBUG_PROCESSOR(this, "Detector result (triggered): %s",
-                               CreateStatsMsg(fit).c_str());
+      SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggered): %s",
+                                   CreateStatsMsg(fit).c_str());
     }
 
     if ((!WithTrigger() || processing_state_.trigger_end) &&
@@ -372,12 +372,12 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   } else if (Triggered() && fit < config_.trigger_on &&
              fit >= config_.trigger_off) {
 
-    SCDETECT_DEBUG_PROCESSOR(this, "Detector result: %s",
-                             CreateStatsMsg(fit).c_str());
+    SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result: %s",
+                                 CreateStatsMsg(fit).c_str());
     ResetProcessors();
   } else {
-    SCDETECT_DEBUG_PROCESSOR(this, "Detector result: %s",
-                             CreateStatsMsg(fit).c_str());
+    SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result: %s",
+                                 CreateStatsMsg(fit).c_str());
 
     if (!WithTrigger() || !processing_state_.trigger_end) {
       reset_processing = true;
@@ -388,7 +388,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       (Triggered() && processed().endTime() >= processing_state_.trigger_end) ||
       (Triggered() && fit < config_.trigger_off)) {
 
-    SCDETECT_INFO_PROCESSOR(
+    SCDETECT_LOG_INFO_PROCESSOR(
         this, "Detection: %s",
         CreateStatsMsg(processing_state_.result.fit).c_str());
 
@@ -575,7 +575,7 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   if (!found) {
     auto msg{std::string{"No event associated with origin: "} + origin_id_};
 
-    SEISCOMP_WARNING("%s", msg.c_str());
+    SCDETECT_LOG_WARNING("%s", msg.c_str());
     throw builder::BaseException{msg};
   }
 
@@ -587,7 +587,7 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
              detector_->event_->publicID() + std::string{" (origin="} +
              origin_id_ + std::string{")"}};
 
-    SEISCOMP_WARNING("%s", msg.c_str());
+    SCDETECT_LOG_WARNING("%s", msg.c_str());
     throw builder::BaseException{msg};
   }
 
@@ -640,7 +640,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
                    "Sensor location not found in inventory for time: time="} +
                pick->time().value().iso()};
 
-      SEISCOMP_WARNING("%s", msg.c_str());
+      SCDETECT_LOG_WARNING("%s", msg.c_str());
       throw builder::NoSensorLocation{msg};
     }
     pick_waveform_id = pick->waveformID();
@@ -662,13 +662,13 @@ DetectorBuilder::set_stream(const std::string &stream_id,
              origin_id_ + std::string{", phase="} +
              stream_config.template_config.phase};
 
-    SEISCOMP_WARNING("%s", msg.c_str());
+    SCDETECT_LOG_WARNING("%s", msg.c_str());
     throw builder::BaseException{msg};
   }
 
   std::ostringstream oss;
   oss << utils::WaveformStreamID{pick_waveform_id};
-  SEISCOMP_DEBUG(
+  SCDETECT_LOG_DEBUG(
       "%sUsing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
       log_prefix.c_str(), origin_id_.c_str(),
       pick->time().value().iso().c_str(),
@@ -690,14 +690,14 @@ DetectorBuilder::set_stream(const std::string &stream_id,
              std::string{"Stream not found in inventory for epoch: start="} +
              wf_start.iso() + std::string{", end="} + wf_end.iso()};
 
-    SEISCOMP_WARNING("%s", msg.c_str());
+    SCDETECT_LOG_WARNING("%s", msg.c_str());
     throw builder::NoStream{msg};
   }
 
-  SEISCOMP_DEBUG("%sLoaded stream from inventory for epoch: start=%s, "
-                 "end=%s",
-                 log_prefix.c_str(), wf_start.iso().c_str(),
-                 wf_end.iso().c_str());
+  SCDETECT_LOG_DEBUG("%sLoaded stream from inventory for epoch: start=%s, "
+                     "end=%s",
+                     log_prefix.c_str(), wf_start.iso().c_str(),
+                     wf_end.iso().c_str());
 
   // set template related filter (used for template waveform processing)
   WaveformHandlerIface::ProcessingConfig template_wf_config;
@@ -717,13 +717,13 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       auto msg{log_prefix + std::string{"Compiling filter ("} +
                stream_config.filter + std::string{") failed: "} + err};
 
-      SEISCOMP_WARNING("%s", msg.c_str());
+      SCDETECT_LOG_WARNING("%s", msg.c_str());
       throw builder::BaseException{msg};
     }
   }
 
-  SEISCOMP_DEBUG("Creating template processor (id=%s) ... ",
-                 stream_config.template_id.c_str());
+  SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
+                     stream_config.template_id.c_str());
   detector_->stream_configs_[stream_id].processor =
       Template::Create(stream_config.template_id)
           .set_phase(stream_config.template_config.phase)
@@ -773,7 +773,7 @@ DetectorPtr DetectorBuilder::build() { return detector_; }
 bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
                                      const DataModel::PickCPtr pick) {
   if (!pick) {
-    SEISCOMP_DEBUG("Failed loading pick: %s", arrival->pickID().c_str());
+    SCDETECT_LOG_DEBUG("Failed loading pick: %s", arrival->pickID().c_str());
     return false;
   }
   // check if both pick and arrival are properly configured
@@ -794,7 +794,7 @@ bool DetectorBuilder::set_origin(const std::string &origin_id) {
     DataModel::OriginPtr origin{
         EventStore::Instance().Get<DataModel::Origin>(origin_id)};
     if (!origin) {
-      SEISCOMP_WARNING("Origin %s not found.", origin_id.c_str());
+      SCDETECT_LOG_WARNING("Origin %s not found.", origin_id.c_str());
       return false;
     }
     detector_->origin_ = origin;

@@ -221,7 +221,7 @@ bool Application::validateParameters() {
   // TODO(damb): Disable messaging (offline mode) with certain command line
   // options
   if (config_.offline_mode) {
-    SEISCOMP_INFO("Disable messaging");
+    SCDETECT_LOG_INFO("Disable messaging");
     setMessagingEnabled(false);
 
     config_.no_publish = true;
@@ -233,15 +233,15 @@ bool Application::validateParameters() {
 
   // disable the database if required
   if (!isInventoryDatabaseEnabled()) {
-    SEISCOMP_INFO("Disable database connection");
+    SCDETECT_LOG_INFO("Disable database connection");
     setDatabaseEnabled(false, false);
   }
 
   // validate paths
   if (!config_.path_template_json.empty() &&
       !Util::fileExists(config_.path_template_json)) {
-    SEISCOMP_ERROR("Invalid path to template configuration file: %s",
-                   config_.path_template_json.c_str());
+    SCDETECT_LOG_ERROR("Invalid path to template configuration file: %s",
+                       config_.path_template_json.c_str());
     return false;
   }
 
@@ -250,7 +250,7 @@ bool Application::validateParameters() {
                                  Core::Time &result) {
     if (!time_str.empty() && !result.fromString(time_str.c_str(), "%FT%T")) {
 
-      SEISCOMP_ERROR("Invalid time: %s", time_str.c_str());
+      SCDETECT_LOG_ERROR("Invalid time: %s", time_str.c_str());
       return false;
     }
     return true;
@@ -266,36 +266,38 @@ bool Application::validateParameters() {
   }
 
   if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_on)) {
-    SEISCOMP_ERROR("Invalid configuration: 'triggerOnThreshold': %f. Not in "
-                   "interval [0,1].",
-                   config_.detector_config.trigger_on);
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'triggerOnThreshold': %f. Not in "
+        "interval [0,1].",
+        config_.detector_config.trigger_on);
     return false;
   }
   if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_off)) {
-    SEISCOMP_ERROR("Invalid configuration: 'triggerOffThreshold': %f. Not in "
-                   "interval [0,1].",
-                   config_.detector_config.trigger_off);
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'triggerOffThreshold': %f. Not in "
+        "interval [0,1].",
+        config_.detector_config.trigger_off);
     return false;
   }
 
   if (!utils::IsGeZero(config_.stream_config.init_time)) {
-    SEISCOMP_ERROR("Invalid configuration: 'initTime': %f. Must be "
-                   "greater equal 0.",
-                   config_.stream_config.init_time);
+    SCDETECT_LOG_ERROR("Invalid configuration: 'initTime': %f. Must be "
+                       "greater equal 0.",
+                       config_.stream_config.init_time);
     return false;
   }
 
   if (!config_.stream_config.filter.empty()) {
     std::string err;
     if (!utils::IsValidFilter(config_.stream_config.filter, err)) {
-      SEISCOMP_WARNING("Invalid configuration: 'filter': %s", err.c_str());
+      SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
       return false;
     }
   }
 
   if (config_.stream_config.template_config.wf_start >=
       config_.stream_config.template_config.wf_end) {
-    SEISCOMP_ERROR(
+    SCDETECT_LOG_ERROR(
         "Invalid configuration: 'waveformStart' >= 'waveformEnd' : %f >= %f",
         config_.stream_config.template_config.wf_start,
         config_.stream_config.template_config.wf_end);
@@ -305,7 +307,7 @@ bool Application::validateParameters() {
     std::string err;
     if (!utils::IsValidFilter(config_.stream_config.template_config.filter,
                               err)) {
-      SEISCOMP_WARNING("Invalid configuration: 'filter': %s", err.c_str());
+      SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
       return false;
     }
   }
@@ -370,15 +372,16 @@ bool Application::init() {
 }
 
 bool Application::run() {
-  SEISCOMP_DEBUG("Application initialized.");
+  SCDETECT_LOG_DEBUG("Application initialized.");
 
   if (config_.load_templates_only) {
-    SEISCOMP_DEBUG("Requested application exit after template initialization.");
+    SCDETECT_LOG_DEBUG(
+        "Requested application exit after template initialization.");
     return true;
   }
 
   if (config_.dump_debug_info) {
-    SEISCOMP_DEBUG("Dumping debug info enabled.");
+    SCDETECT_LOG_DEBUG("Dumping debug info enabled.");
   }
 
   if (commandline().hasOption("ep")) {
@@ -410,7 +413,7 @@ void Application::done() {
     ar.setFormattedOutput(true);
     ar << ep_;
     ar.close();
-    SEISCOMP_DEBUG("Found %lu origins.", ep_->originCount());
+    SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
     /* ep_ = nullptr; */
   }
 
@@ -426,8 +429,8 @@ void Application::done() {
 
         if (!Util::pathExists(path_debug_info.string())) {
           if (!Util::createPath(path_debug_info.string())) {
-            SEISCOMP_WARNING("Failed to create directory: %s",
-                             path_debug_info.c_str());
+            SCDETECT_LOG_WARNING("Failed to create directory: %s",
+                                 path_debug_info.c_str());
             continue;
           }
         }
@@ -437,7 +440,7 @@ void Application::done() {
           ofs << stream_detector_pair.second->DebugString();
           ofs.close();
         } else {
-          SEISCOMP_WARNING("Failed to create file: %s", fpath.c_str());
+          SCDETECT_LOG_WARNING("Failed to create file: %s", fpath.c_str());
         }
 
         detector_ids.emplace(stream_detector_pair.second->id());
@@ -464,15 +467,16 @@ void Application::handleRecord(Record *rec) {
 
     success = it->second->Feed(rec);
     if (!success) {
-      SEISCOMP_WARNING("%s: Failed to feed record into detector. Resetting.",
-                       it->first.c_str());
+      SCDETECT_LOG_WARNING(
+          "%s: Failed to feed record into detector. Resetting.",
+          it->first.c_str());
       it->second->Reset();
       continue;
     }
 
     success = !it->second->finished();
     if (!success) {
-      SEISCOMP_WARNING(
+      SCDETECT_LOG_WARNING(
           "%s: Detector finished (status=%d, status_value=%f). Resetting.",
           it->first.c_str(), utils::as_integer(it->second->status()),
           it->second->status_value());
@@ -488,7 +492,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};
 
-  SCDETECT_DEBUG_TAGGED(processor->id(), "Creating origin ...");
+  SCDETECT_LOG_DEBUG_TAGGED(processor->id(), "Creating origin ...");
   Core::Time now{Core::Time::GMT()};
 
   DataModel::CreationInfo ci;
@@ -590,7 +594,7 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   logObject(output_origins_, Core::Time::GMT());
 
   if (connection() && !config_.no_publish) {
-    SCDETECT_DEBUG_TAGGED(processor->id(), "Sending event parameters ...");
+    SCDETECT_LOG_DEBUG_TAGGED(processor->id(), "Sending event parameters ...");
 
     auto notifier_msg{utils::make_smart<DataModel::NotifierMessage>()};
 
@@ -627,8 +631,8 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
     }
 
     if (!connection()->send(notifier_msg.get())) {
-      SCDETECT_ERROR_TAGGED(processor->id(),
-                            "Sending of event parameters failed.");
+      SCDETECT_LOG_ERROR_TAGGED(processor->id(),
+                                "Sending of event parameters failed.");
     }
   }
 
@@ -651,48 +655,49 @@ bool Application::LoadEvents(const std::string &event_db,
                              DataModel::DatabaseQueryPtr db) {
   bool loaded{false};
   if (!event_db.empty()) {
-    SEISCOMP_INFO("Loading events from %s", event_db.c_str());
+    SCDETECT_LOG_INFO("Loading events from %s", event_db.c_str());
     if (event_db.find("://") == std::string::npos) {
       try {
         EventStore::Instance().Load(event_db);
         loaded = true;
       } catch (std::exception &e) {
-        SEISCOMP_ERROR("%s", e.what());
+        SCDETECT_LOG_ERROR("%s", e.what());
       }
     } else if (event_db.find("file://") == 0) {
       try {
         EventStore::Instance().Load(event_db.substr(7));
         loaded = true;
       } catch (std::exception &e) {
-        SEISCOMP_ERROR("%s", e.what());
+        SCDETECT_LOG_ERROR("%s", e.what());
       }
     } else {
-      SEISCOMP_INFO("Trying to connect to %s", event_db.c_str());
+      SCDETECT_LOG_INFO("Trying to connect to %s", event_db.c_str());
       IO::DatabaseInterfacePtr db{
           IO::DatabaseInterface::Open(event_db.c_str())};
       if (db) {
-        SEISCOMP_INFO("Connected successfully");
+        SCDETECT_LOG_INFO("Connected successfully");
         auto query{utils::make_smart<DataModel::DatabaseQuery>(db.get())};
         EventStore::Instance().Load(query);
         loaded = true;
       } else {
-        SEISCOMP_WARNING("Database connection to %s failed", event_db.c_str());
+        SCDETECT_LOG_WARNING("Database connection to %s failed",
+                             event_db.c_str());
       }
     }
   }
 
   if (!loaded && isDatabaseEnabled()) {
-    SEISCOMP_INFO("Loading events from %s", databaseURI().c_str());
+    SCDETECT_LOG_INFO("Loading events from %s", databaseURI().c_str());
     try {
       EventStore::Instance().Load(query());
       loaded = true;
     } catch (std::exception &e) {
-      SEISCOMP_ERROR("%s", e.what());
+      SCDETECT_LOG_ERROR("%s", e.what());
     }
   }
 
   if (loaded) {
-    SEISCOMP_INFO("Finished loading events");
+    SCDETECT_LOG_INFO("Finished loading events");
   }
 
   return loaded;
@@ -758,12 +763,12 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 
   // load event related data
   if (!LoadEvents(config_.url_event_db, query())) {
-    SEISCOMP_ERROR("Failed to load events.");
+    SCDETECT_LOG_ERROR("Failed to load events.");
     return false;
   }
 
   if (!EventStore::Instance().event_parameters()) {
-    SEISCOMP_ERROR("No event parameters found.");
+    SCDETECT_LOG_ERROR("No event parameters found.");
     return false;
   }
 
@@ -771,15 +776,15 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
       boost::filesystem::path(config_.path_filesystem_cache).string();
   if (!Util::pathExists(config_.path_filesystem_cache) &&
       !Util::createPath(config_.path_filesystem_cache)) {
-    SEISCOMP_ERROR("Failed to create path: %s",
-                   config_.path_filesystem_cache.c_str());
+    SCDETECT_LOG_ERROR("Failed to create path: %s",
+                       config_.path_filesystem_cache.c_str());
     return false;
   }
 
   // load template related data
   // TODO(damb): Allow parsing template configuration from profiles
   if (config_.path_template_json.empty()) {
-    SEISCOMP_ERROR("Missing template configuration file.");
+    SCDETECT_LOG_ERROR("Missing template configuration file.");
     return false;
   }
 
@@ -788,8 +793,8 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
   auto IsUniqueProcessorId = [&processor_ids](const std::string &id) {
     bool id_exists{processor_ids.find(id) != processor_ids.end()};
     if (id_exists) {
-      SEISCOMP_WARNING("Processor id is be used by multiple processors: %s",
-                       id.c_str());
+      SCDETECT_LOG_WARNING("Processor id is be used by multiple processors: %s",
+                           id.c_str());
     }
     processor_ids.emplace(id);
     return !id_exists;
@@ -807,8 +812,8 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         TemplateConfig tc{template_setting_pt.second, config_.detector_config,
                           config_.stream_config};
 
-        SEISCOMP_DEBUG("Creating detector processor (id=%s) ... ",
-                       tc.detector_id().c_str());
+        SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
+                           tc.detector_id().c_str());
 
         if (!IsUniqueProcessorId(tc.detector_id()) && config_.dump_debug_info) {
           throw ConfigError{"Non unique detector processor identifier: " +
@@ -843,7 +848,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
                                           waveform_handler, path_debug_info);
             } catch (builder::NoSensorLocation &e) {
               if (config_.skip_template_if_no_sensor_location_data) {
-                SEISCOMP_WARNING(
+                SCDETECT_LOG_WARNING(
                     "%s (%s): No sensor location data for template processor "
                     "available. Skipping.",
                     stream_config_pair.first.c_str(),
@@ -854,7 +859,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
               throw;
             } catch (builder::NoStream &e) {
               if (config_.skip_template_if_no_stream_data) {
-                SEISCOMP_WARNING(
+                SCDETECT_LOG_WARNING(
                     "%s (%s): No stream data for template processor "
                     "available. Skipping.",
                     stream_config_pair.first.c_str(),
@@ -865,7 +870,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
               throw;
             } catch (builder::NoWaveformData &e) {
               if (config_.skip_template_if_no_waveform_data) {
-                SEISCOMP_WARNING(
+                SCDETECT_LOG_WARNING(
                     "%s (%s): No waveform data for template processor "
                     "available. Skipping.",
                     stream_config_pair.first.c_str(),
@@ -884,13 +889,14 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           detectors_.emplace(stream_id, detector);
 
       } catch (Exception &e) {
-        SEISCOMP_WARNING("Failed to create detector: %s. Skipping.", e.what());
+        SCDETECT_LOG_WARNING("Failed to create detector: %s. Skipping.",
+                             e.what());
         continue;
       }
     }
   } catch (std::ifstream::failure &e) {
-    SEISCOMP_ERROR("Failed to parse JSON template configuration file: %s",
-                   config_.path_template_json.c_str());
+    SCDETECT_LOG_ERROR("Failed to parse JSON template configuration file: %s",
+                       config_.path_template_json.c_str());
     return false;
   }
   return true;

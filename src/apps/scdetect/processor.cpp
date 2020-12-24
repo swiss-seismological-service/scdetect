@@ -139,15 +139,16 @@ bool Processor::HandleGap(StreamState &stream_state, RecordCPtr record,
       size_t gap_samples = static_cast<size_t>(
           ceil(stream_state.sampling_frequency * gap_seconds));
       if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
-        SEISCOMP_DEBUG("%s: detected gap (%.6f secs, %lu samples) (handled)",
-                       record->streamID().c_str(), gap_seconds, gap_samples);
+        SCDETECT_LOG_DEBUG(
+            "%s: detected gap (%.6f secs, %lu samples) (handled)",
+            record->streamID().c_str(), gap_seconds, gap_samples);
       } else {
-        SEISCOMP_DEBUG("%s: detected gap (%.6f secs, %lu samples) (NOT "
-                       "handled): status=%d",
-                       record->streamID().c_str(), gap_seconds, gap_samples,
-                       // TODO(damb): Verify if this is the correct status to
-                       // be displayed
-                       static_cast<int>(status()));
+        SCDETECT_LOG_DEBUG("%s: detected gap (%.6f secs, %lu samples) (NOT "
+                           "handled): status=%d",
+                           record->streamID().c_str(), gap_seconds, gap_samples,
+                           // TODO(damb): Verify if this is the correct status
+                           // to be displayed
+                           static_cast<int>(status()));
         if (status() > Processor::Status::kInProgress)
           return false;
       }

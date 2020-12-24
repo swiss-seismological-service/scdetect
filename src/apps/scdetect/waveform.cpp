@@ -58,9 +58,10 @@ bool Merge(GenericRecord &trace, const RecordSequence &seq) {
 
   for (const RecordCPtr &rec : seq) {
     if (rec->samplingFrequency() != sampling_freq) {
-      SEISCOMP_WARNING("%s: Inconsistent record sampling frequencies: %f != %f",
-                       std::string{stream_id}.c_str(), sampling_freq,
-                       rec->samplingFrequency());
+      SCDETECT_LOG_WARNING(
+          "%s: Inconsistent record sampling frequencies: %f != %f",
+          std::string{stream_id}.c_str(), sampling_freq,
+          rec->samplingFrequency());
       return false;
     }
 
@@ -68,17 +69,17 @@ bool Merge(GenericRecord &trace, const RecordSequence &seq) {
     if (last) {
       Core::TimeSpan diff{rec->startTime() - last->endTime()};
       if (diff > max_allowed_gap) {
-        SEISCOMP_WARNING("%s: Gap detected: %d.%06ds",
-                         std::string{stream_id}.c_str(),
-                         static_cast<int>(diff.seconds()),
-                         static_cast<int>(diff.microseconds()));
+        SCDETECT_LOG_WARNING("%s: Gap detected: %d.%06ds",
+                             std::string{stream_id}.c_str(),
+                             static_cast<int>(diff.seconds()),
+                             static_cast<int>(diff.microseconds()));
         return false;
       }
 
       if (diff < max_allowed_overlap) {
-        SEISCOMP_WARNING("%s: Overlap detected: %fs",
-                         std::string{stream_id}.c_str(),
-                         static_cast<double>(diff));
+        SCDETECT_LOG_WARNING("%s: Overlap detected: %fs",
+                             std::string{stream_id}.c_str(),
+                             static_cast<double>(diff));
         return false;
       }
     }
@@ -99,16 +100,16 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
 
   // Not enough data at start of time window
   if (offset < 0) {
-    SEISCOMP_WARNING("%s: Need %d more samples in past.",
-                     trace.streamID().c_str(), -offset);
+    SCDETECT_LOG_WARNING("%s: Need %d more samples in past.",
+                         trace.streamID().c_str(), -offset);
     return false;
   }
 
   // Not enough data at end of time window
   if (offset + samples > trace.data()->size()) {
-    SEISCOMP_WARNING("%s: Need %d more samples past the end.",
-                     trace.streamID().c_str(),
-                     -(trace.data()->size() - samples - offset));
+    SCDETECT_LOG_WARNING("%s: Need %d more samples past the end.",
+                         trace.streamID().c_str(),
+                         -(trace.data()->size() - samples - offset));
     return false;
   }
 
@@ -130,8 +131,8 @@ bool Filter(GenericRecord &trace, const std::string &filter_string) {
   auto filter = Math::Filtering::InPlaceFilter<double>::Create(filter_string,
                                                                &filter_error);
   if (!filter) {
-    SEISCOMP_WARNING("Filter creation failed for '%s': %s",
-                     filter_string.c_str(), filter_error.c_str());
+    SCDETECT_LOG_WARNING("Filter creation failed for '%s': %s",
+                         filter_string.c_str(), filter_error.c_str());
     return false;
   }
   filter->setSamplingFrequency(trace.samplingFrequency());
@@ -228,7 +229,7 @@ bool Write(const GenericRecord &trace, std::ostream &out) {
     rec.setOutputRecordLength(rec_length);
     rec.write(out);
   } catch (std::exception &e) {
-    SEISCOMP_WARNING("Failed writing waveform: %s", e.what());
+    SCDETECT_LOG_WARNING("Failed writing waveform: %s", e.what());
     return false;
   }
   return true;
@@ -242,7 +243,7 @@ bool Read(GenericRecord &trace, std::istream &in) {
     trace = GenericRecord(rec);
     trace.setData(rec.data()->clone());
   } catch (std::exception &e) {
-    SEISCOMP_WARNING("Failed reading waveform: %s", e.what());
+    SCDETECT_LOG_WARNING("Failed reading waveform: %s", e.what());
     return false;
   }
   return true;
@@ -382,7 +383,8 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
   auto SetCache = [&](const std::string &cache_key,
                       GenericRecordCPtr trace) -> bool {
     if (!Set(cache_key, trace)) {
-      SEISCOMP_DEBUG("Failed to cache trace for key: %s", cache_key.c_str());
+      SCDETECT_LOG_DEBUG("Failed to cache trace for key: %s",
+                         cache_key.c_str());
       return false;
     }
     return true;
@@ -489,7 +491,7 @@ bool FileSystemCache::Set(const std::string &key, GenericRecordCPtr value) {
   std::string fpath{(boost::filesystem::path(path_cache_) / key).string()};
   std::ofstream ofs(fpath);
   if (!waveform::Write(*value, ofs)) {
-    SEISCOMP_DEBUG("Failed to set cache for file: %s", fpath.c_str());
+    SCDETECT_LOG_DEBUG("Failed to set cache for file: %s", fpath.c_str());
     return false;
   }
   return true;

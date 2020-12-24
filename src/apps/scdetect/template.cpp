@@ -114,8 +114,8 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   if (debug_mode()) {
     if (!Util::pathExists(debug_info_dir().string())) {
       if (!Util::createPath(debug_info_dir().string())) {
-        SCDETECT_ERROR_PROCESSOR(this, "Failed to create directory: %s",
-                                 debug_info_dir().c_str());
+        SCDETECT_LOG_ERROR_PROCESSOR(this, "Failed to create directory: %s",
+                                     debug_info_dir().c_str());
         set_status(Status::kError, 0);
         return;
       }
@@ -162,7 +162,7 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                              samples_trace, num_samples_trace,
                              waveform_sampling_frequency_, result, this)) {
 #ifdef SCDETECT_DEBUG
-    SCDETECT_DEBUG_PROCESSOR(
+    SCDETECT_LOG_DEBUG_PROCESSOR(
         this, "[%s - %s]: fit=%f, lag=%f", record->startTime().iso().c_str(),
         record->endTime().iso().c_str(), result->coefficient, result->lag);
 #endif
@@ -448,9 +448,9 @@ bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
     std::string msg{"Floating point exception during cross-correlation: "};
     msg += boost::algorithm::join(exceptions, ", ");
     if (processor) {
-      SCDETECT_WARNING_TAGGED(processor->id(), "%s", msg.c_str());
+      SCDETECT_LOG_WARNING_TAGGED(processor->id(), "%s", msg.c_str());
     } else {
-      SEISCOMP_WARNING(msg.c_str());
+      SCDETECT_LOG_WARNING(msg.c_str());
     }
   }
 

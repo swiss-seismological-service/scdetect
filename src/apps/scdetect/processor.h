@@ -17,16 +17,16 @@
 
 #include "log.h"
 
-#define SCDETECT_DEBUG_PROCESSOR(processor_ptr, format, ...)                   \
-  SCDETECT_DEBUG_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
-#define SCDETECT_INFO_PROCESSOR(processor_ptr, format, ...)                    \
-  SCDETECT_INFO_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
-#define SCDETECT_WARNING_PROCESSOR(processor_ptr, format, ...)                 \
-  SCDETECT_WARNING_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
-#define SCDETECT_ERROR_PROCESSOR(processor_ptr, format, ...)                   \
-  SCDETECT_ERROR_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
-#define SCDETECT_NOTICE_PROCESSOR(processor_ptr, format, ...)                  \
-  SCDETECT_NOTICE_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
+#define SCDETECT_LOG_DEBUG_PROCESSOR(processor_ptr, format, ...)               \
+  SCDETECT_LOG_DEBUG_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
+#define SCDETECT_LOG_INFO_PROCESSOR(processor_ptr, format, ...)                \
+  SCDETECT_LOG_INFO_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
+#define SCDETECT_LOG_WARNING_PROCESSOR(processor_ptr, format, ...)             \
+  SCDETECT_LOG_WARNING_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
+#define SCDETECT_LOG_ERROR_PROCESSOR(processor_ptr, format, ...)               \
+  SCDETECT_LOG_ERROR_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
+#define SCDETECT_LOG_NOTICE_PROCESSOR(processor_ptr, format, ...)              \
+  SCDETECT_LOG_NOTICE_TAGGED(processor_ptr->id(), format, ##__VA_ARGS__)
 #define SCDETECT_LOG_PROCESSOR(channel, processor_ptr, format, ...)            \
   SCDETECT_LOG_TAGGED(channel, processor_ptr->id(), format, ##__VA_ARGS__)
 
