@@ -48,6 +48,10 @@ guide](https://docs.gempa.de/seiscomp/4/current/base/tests.html).
 Please report bugs, issues, feature requests, etc on
 [GitHub](https://github.com/damb/scdetect/issues).
 
+## Contributions
+
+Contributions are very welcome. Made with :two_hearts:.
+
 ## License
 
 Licensed under the the [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html).
