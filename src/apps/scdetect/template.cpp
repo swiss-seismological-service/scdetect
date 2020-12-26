@@ -186,12 +186,7 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   Processor::Fill(stream_state, record, n, samples);
 
   // demean
-  double mean{0};
-  for (size_t i = 0; i < n; ++i) {
-    mean += samples[i];
-  }
-  mean /= n;
-
+  const auto mean{utils::CMA(samples, n)};
   for (size_t i = 0; i < n; ++i) {
     samples[i] -= mean;
   }

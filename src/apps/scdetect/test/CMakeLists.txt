@@ -2,6 +2,7 @@ ADD_DEFINITIONS("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
 
 SET(TESTS
   template_xcorr.cpp
+  utils_cma.cpp
 )
 
 SET(SOURCES_template_xcorr
@@ -10,6 +11,11 @@ SET(SOURCES_template_xcorr
   utils.cpp
   template.cpp
   waveform.cpp
+)
+
+SET(SOURCES_utils_cma
+  exception.cpp
+  utils.cpp
 )
 
 FOREACH(test_src ${TESTS})

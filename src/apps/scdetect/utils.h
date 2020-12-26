@@ -68,6 +68,20 @@ std::vector<typename TMap::key_type> filter_keys(const TMap &m, Predicate &p) {
   return retval;
 }
 
+// Compute the mean value of `samples` using a cumulative moving average
+// algorithm.
+template <typename T> double CMA(T *samples, size_t n) {
+  double cma{0};
+  // cummulative moving average for samples a_0, ..., a_n:
+  //
+  // mean_n = mean_{n-1} + (a_n - mean_{n-1}) / n
+  //
+  for (size_t i = 0; i < n; ++i) {
+    cma += (samples[i] - cma) / (i + 1);
+  }
+  return cma;
+}
+
 /* ------------------------------------------------------------------------- */
 class WaveformStreamID {
 public:
