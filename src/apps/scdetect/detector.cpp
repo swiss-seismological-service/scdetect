@@ -74,7 +74,7 @@ bool Detector::Feed(const Record *record) {
 }
 
 void Detector::Reset() {
-  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "%s", "Resetting detector ...");
 
   // reset template (child) related facilities
   for (auto &stream_config_pair : stream_configs_) {
