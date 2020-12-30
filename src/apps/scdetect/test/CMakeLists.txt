@@ -6,22 +6,21 @@ SET(TESTS
 )
 
 SET(SOURCES_template_xcorr
-  exception.cpp
-  processor.cpp
-  utils.cpp
-  template.cpp
-  waveform.cpp
+  ../exception.cpp
+  ../processor.cpp
+  ../utils.cpp
+  ../template.cpp
+  ../waveform.cpp
 )
 
 SET(SOURCES_utils_cma
-  exception.cpp
-  utils.cpp
+  ../exception.cpp
+  ../utils.cpp
 )
 
 FOREACH(test_src ${TESTS})
 	GET_FILENAME_COMPONENT(test_fname ${test_src} NAME_WE)
 	SET(test_name test_scdetect_${test_fname})
-  LIST(TRANSFORM SOURCES_${test_fname} PREPEND "../")
   ADD_EXECUTABLE(${test_name} ${test_src} ${SOURCES_${test_fname}})
 	SC_LINK_LIBRARIES_INTERNAL(${test_name} unittest core client)
 	SC_LINK_LIBRARIES(${test_name} ${Boost_unit_test_framework_LIBRARY})
