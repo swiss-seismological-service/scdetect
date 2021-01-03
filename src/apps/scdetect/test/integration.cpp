@@ -13,10 +13,10 @@ namespace test {
 
 namespace cli {
 
-const std::string Flag::operator()() { return flag(); }
+const std::string Flag::operator()() const { return flag(); }
 
 ArgFlag::ArgFlag(const std::string &arg) : arg_{arg} {}
-const std::string ArgFlag::operator()() {
+const std::string ArgFlag::operator()() const {
   return std::string{flag() + "=" + arg_};
 }
 

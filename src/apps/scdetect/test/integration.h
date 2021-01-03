@@ -17,13 +17,13 @@ namespace cli {
 class Flag {
 public:
   virtual const std::string flag() const = 0;
-  virtual const std::string operator()();
+  virtual const std::string operator()() const;
 };
 
 class ArgFlag : public Flag {
 public:
   ArgFlag(const std::string &arg);
-  const std::string operator()() override;
+  const std::string operator()() const override;
 
 private:
   std::string arg_;
