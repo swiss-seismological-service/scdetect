@@ -70,6 +70,7 @@ public:
     std::string url_event_db;
 
     bool load_templates_only{false};
+    bool templates_no_cache{false};
 
     // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
