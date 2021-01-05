@@ -752,10 +752,10 @@ void Application::SetupConfigurationOptions() {
 
   NEW_OPT_CLI(config_.dump_debug_info, "Mode", "debug-info",
               "dump additional debug information (e.g. waveforms, stats etc.)");
-  NEW_OPT_CLI(config_.load_templates_only, "Mode", "load-templates",
+  NEW_OPT_CLI(config_.load_templates_only, "Mode", "templates-load-only",
               "load templates and exit");
 
-  NEW_OPT_CLI(config_.path_template_json, "Input", "template-json",
+  NEW_OPT_CLI(config_.path_template_json, "Input", "templates-json",
               "path to a template configuration file (json-formatted)");
 }
 
