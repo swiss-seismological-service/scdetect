@@ -182,15 +182,16 @@ public:
 
 protected:
   struct StreamState {
+    ~StreamState();
     // Value of the last sample
-    double last_sample;
+    double last_sample{0};
 
     // Number of samples required to finish initialization
-    size_t needed_samples;
+    size_t needed_samples{0};
     // Number of samples already received
-    size_t received_samples;
+    size_t received_samples{0};
     // Initialization state
-    bool initialized;
+    bool initialized{false};
 
     // The last received record of the stream
     RecordCPtr last_record;
@@ -198,7 +199,7 @@ protected:
     Core::TimeWindow data_time_window;
 
     // The sampling frequency of the stream
-    double sampling_frequency;
+    double sampling_frequency{0};
     // The filter (if used)
     Filter *filter{nullptr};
   };
