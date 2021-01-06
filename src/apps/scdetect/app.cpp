@@ -450,7 +450,11 @@ void Application::done() {
     }
   }
 
+  EventStore::Instance().Reset();
+
   StreamApplication::done();
+
+  Client::Inventory::Instance()->setInventory(nullptr);
 }
 
 void Application::handleRecord(Record *rec) {
