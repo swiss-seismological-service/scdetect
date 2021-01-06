@@ -416,7 +416,7 @@ void Application::done() {
     ar << ep_;
     ar.close();
     SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
-    /* ep_ = nullptr; */
+    ep_.reset();
   }
 
   // optionally, create debug info files
