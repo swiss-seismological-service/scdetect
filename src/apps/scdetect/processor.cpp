@@ -75,6 +75,12 @@ std::string Processor::DebugString() const { return ""; }
 
 bool Processor::WithPicks() const { return false; }
 
+Processor::StreamState::~StreamState() {
+  if (filter) {
+    delete filter;
+  }
+}
+
 bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   if (Processor::Status::kInProgress < status() || !record->data())
     return false;

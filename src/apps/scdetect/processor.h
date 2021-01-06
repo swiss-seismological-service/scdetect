@@ -182,6 +182,7 @@ public:
 
 protected:
   struct StreamState {
+    ~StreamState();
     // Value of the last sample
     double last_sample{0};
 
