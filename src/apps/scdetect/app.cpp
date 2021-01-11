@@ -188,6 +188,8 @@ Application::Application(int argc, char **argv)
   SetupConfigurationOptions();
 }
 
+Application::~Application() {}
+
 Application::BaseException::BaseException()
     : Exception{"base application exception"} {}
 

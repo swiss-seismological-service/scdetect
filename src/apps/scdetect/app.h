@@ -26,7 +26,7 @@ class Application : public Client::StreamApplication {
 
 public:
   Application(int argc, char **argv);
-  ~Application(){};
+  ~Application() override;
 
   class BaseException : public Exception {
   public:
