@@ -55,7 +55,7 @@ protected:
 private:
   EventStore() {}
 
-  DataModel::EventParametersPtr event_parameters_{nullptr};
+  DataModel::EventParametersPtr event_parameters_;
   DataModel::PublicObjectTimeSpanBuffer cache_;
 };
 
