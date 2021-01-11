@@ -316,29 +316,29 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   rs->close();
 
   if (seq->empty()) {
-    throw NoData{std::string{Core::stringify(
+    throw NoData{Core::stringify(
         "%s.%s.%s.%s: No data: start=%s, end=%s", net_code.c_str(),
         sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())}};
+        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
   // merge RecordSequence into GenericRecord
   auto trace{utils::make_smart<GenericRecord>()};
   if (!waveform::Merge(*trace, *seq)) {
-    throw BaseException{std::string{Core::stringify(
+    throw BaseException{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "
         "end=%s",
         net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())}};
+        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
   trace->setChannelCode(cha_code);
   if (!waveform::Trim(*trace, tw)) {
-    throw BaseException{std::string{Core::stringify(
+    throw BaseException{Core::stringify(
         "%s.%s.%s.%s: Incomplete trace; not enough data for requested time:"
         "start=%s, end=%s",
         net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())}};
+        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
   return trace;
@@ -417,11 +417,11 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
 
   if (!config.filter_string.empty()) {
     if (!waveform::Filter(*trace_ptr, config.filter_string)) {
-      throw BaseException{std::string{Core::stringify(
+      throw BaseException{Core::stringify(
           "%s.%s.%s.%s: Filtering failed with filter: filter=%s,"
           "start=%s, end=%s",
           net_code.c_str(), sta_code.c_str(), loc_code.c_str(),
-          cha_code.c_str(), config.filter_string.c_str())}};
+          cha_code.c_str(), config.filter_string.c_str())};
     }
   }
 
