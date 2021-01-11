@@ -824,8 +824,9 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
             Detector::Create(tc.detector_id(), tc.origin_id())
                 .set_config(tc.detector_config())
                 .set_eventparameters()
-                .set_publish_callback(boost::bind(&Application::EmitDetection,
-                                                  this, _1, _2, _3))};
+                .set_publish_callback(std::bind(
+                    &Application::EmitDetection, this, std::placeholders::_1,
+                    std::placeholders::_2, std::placeholders::_3))};
 
         boost::filesystem::path path_debug_info;
         if (config_.dump_debug_info) {

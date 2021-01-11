@@ -1,11 +1,11 @@
 #ifndef SCDETECT_APPS_SCDETECT_PROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_PROCESSOR_H_
 
+#include <functional>
 #include <memory>
 #include <unordered_map>
 
 #include <boost/filesystem.hpp>
-#include <boost/function.hpp>
 
 #include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
@@ -51,7 +51,7 @@ public:
     /* virtual void Publish() = 0; */
   };
 
-  using PublishResultCallback = boost::function<void(
+  using PublishResultCallback = std::function<void(
       ProcessorCPtr processor, RecordCPtr record, ResultCPtr result)>;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
@@ -124,7 +124,7 @@ public:
   // Returns the processor's identifier
   const std::string &id() const;
 
-  virtual void set_result_callback(const PublishResultCallback &callback);
+  virtual void set_result_callback(PublishResultCallback callback);
 
   // Returns the current status of the processor
   Status status() const;
