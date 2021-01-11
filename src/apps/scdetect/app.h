@@ -22,8 +22,6 @@ namespace detect {
 
 class Application : public Client::StreamApplication {
 
-  using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
-
 public:
   Application(int argc, char **argv);
   ~Application() override;
@@ -199,6 +197,7 @@ private:
 
   DataModel::EventParametersPtr ep_;
 
+  using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
   StreamDetectorMap detectors_;
 };
 
