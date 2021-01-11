@@ -152,7 +152,7 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                         record->endTime().iso() + ".mseed"};
       auto fpath{debug_info_dir() / fname};
       std::ofstream ofs{fpath.string()};
-      waveform::Write(*dump_me.detach(), ofs);
+      waveform::Write(*dump_me.get(), ofs);
 
       result->debug_info.path_trace = fpath.string();
     }
