@@ -733,7 +733,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_sensitivity_correction(stream_config.sensitivity_correction)
           .set_publish_callback(boost::bind(&Detector::StoreTemplateResult,
-                                            detector_, _1, _2, _3))
+                                            detector_.get(), _1, _2, _3))
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config)
           .set_debug_info_dir(path_debug_info)
