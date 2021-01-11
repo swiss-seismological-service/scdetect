@@ -113,10 +113,8 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
     return false;
   }
 
-  ArrayPtr sliced{trace.data()->slice(offset, offset + samples)};
-
   trace.setStartTime(tw.startTime());
-  trace.setData(sliced.get());
+  trace.setData(trace.data()->slice(offset, offset + samples));
 
   return true;
 }
