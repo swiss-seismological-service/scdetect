@@ -283,7 +283,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
 }
 
 TemplateBuilder &TemplateBuilder::set_publish_callback(
-    const Processor::PublishResultCallback &callback) {
+    Processor::PublishResultCallback callback) {
   template_->set_result_callback(callback);
   return *this;
 }

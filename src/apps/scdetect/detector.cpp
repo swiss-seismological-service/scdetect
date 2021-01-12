@@ -761,7 +761,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 }
 
 DetectorBuilder &DetectorBuilder::set_publish_callback(
-    const Processor::PublishResultCallback &callback) {
+    Processor::PublishResultCallback callback) {
   detector_->set_result_callback(callback);
   return *this;
 }
