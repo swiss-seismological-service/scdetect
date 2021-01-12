@@ -26,7 +26,7 @@ bool Processor::enabled() const { return enabled_; }
 
 const std::string &Processor::id() const { return id_; }
 
-void Processor::set_result_callback(const PublishResultCallback &callback) {
+void Processor::set_result_callback(PublishResultCallback callback) {
   result_callback_ = callback;
 }
 

@@ -182,7 +182,7 @@ public:
              const boost::filesystem::path &path_debug_info = "");
   DetectorBuilder &
   // Set a callback function for publishing a detection
-  set_publish_callback(const Processor::PublishResultCallback &callback);
+  set_publish_callback(Processor::PublishResultCallback callback);
   // Set the path to the debug info directory
   DetectorBuilder &set_debug_info_dir(const boost::filesystem::path &path);
 

@@ -35,9 +35,16 @@ SET(
 #   -DSCDETECT_DEBUG
 # )
 
+if (${CMAKE_BUILD_TYPE} EQUAL "DEBUG")
+  ADD_COMPILE_OPTIONS(-fsanitize=address)
+  ADD_LINK_OPTIONS(-fsanitize=address)
+endif()
+
+
 SC_ADD_EXECUTABLE(DETECT ${DETECT_TARGET})
 SC_LINK_LIBRARIES_INTERNAL(${DETECT_TARGET} client)
-SC_INSTALL_INIT(${DETECT_TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py)
+SC_INSTALL_INIT(${DETECT_TARGET}
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py")
 
 FILE(GLOB descs "${CMAKE_CURRENT_SOURCE_DIR}/descriptions/*.xml")
 INSTALL(FILES ${descs} DESTINATION ${SC3_PACKAGE_APP_DESC_DIR})

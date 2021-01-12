@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <memory>
 #include <numeric>
 #include <sstream>
@@ -724,6 +725,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
                      stream_config.template_id.c_str());
+
   detector_->stream_configs_[stream_id].processor =
       Template::Create(stream_config.template_id)
           .set_phase(stream_config.template_config.phase)
@@ -732,8 +734,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_sensitivity_correction(stream_config.sensitivity_correction)
-          .set_publish_callback(boost::bind(&Detector::StoreTemplateResult,
-                                            detector_, _1, _2, _3))
+          .set_publish_callback(
+              std::bind(&Detector::StoreTemplateResult, detector_.get(),
+                        std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3))
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config)
           .set_debug_info_dir(path_debug_info)
@@ -757,7 +761,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 }
 
 DetectorBuilder &DetectorBuilder::set_publish_callback(
-    const Processor::PublishResultCallback &callback) {
+    Processor::PublishResultCallback callback) {
   detector_->set_result_callback(callback);
   return *this;
 }
