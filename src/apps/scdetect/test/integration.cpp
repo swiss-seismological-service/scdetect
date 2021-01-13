@@ -126,13 +126,19 @@ TempDirFixture::TempDirFixture() : path_tempdir{create_path_unique()} {
       BOOST_FAIL("Failed to create temporary directory. Too many tries.");
     }
   }
-  if (!fs::create_directories(path_tempdir)) {
-    BOOST_FAIL(std::string{"Failed to create temporary directory: " +
-                           path_tempdir.string()});
+  try {
+    fs::create_directories(path_tempdir);
+  } catch (fs::filesystem_error &e) {
+    BOOST_FAIL("Failed to create temporary directory: " << e.what());
   }
 }
 
-TempDirFixture::~TempDirFixture() { fs::remove_all(path_tempdir); }
+TempDirFixture::~TempDirFixture() {
+  try {
+    fs::remove_all(path_tempdir);
+  } catch (fs::filesystem_error &e) {
+  }
+}
 
 const std::string TempDirFixture::path_tempdir_str() const {
   return path_tempdir.string();
