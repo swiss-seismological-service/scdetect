@@ -147,16 +147,25 @@ void EventParametersCmp(DataModel::EventParametersCPtr lhs,
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {
   TempDirFixture();
+  TempDirFixture(bool keep_tempdir);
   ~TempDirFixture();
 
   const std::string path_tempdir_str() const;
   const char *path_tempdir_cstr() const;
 
-  static const fs::path create_path_unique();
   fs::path path_tempdir;
+
+protected:
+  static const fs::path CreatePathUnique();
+
+  void CreateTempdir();
 
 private:
   static const std::string path_subdir;
+  // Maximum number of tries in order to create the temporary directory
+  static const int max_tries;
+
+  bool keep_tempdir_{false};
 };
 
 /* -------------------------------------------------------------------------- */

@@ -350,17 +350,25 @@ const char *TempDirFixture::path_tempdir_cstr() const {
   return path_tempdir.c_str();
 }
 
-const fs::path TempDirFixture::create_path_unique() {
+const fs::path TempDirFixture::CreatePathUnique() {
   return fs::temp_directory_path() / TempDirFixture::path_subdir /
          fs::unique_path();
 }
 
-/* ------------------------------------------------------------------------- */
-fs::path CLIPathData::path{""};
+void TempDirFixture::CreateTempdir() {
+  int tries{max_tries};
+  while (fs::exists(path_tempdir)) {
+    path_tempdir = CreatePathUnique();
 
-CLIPathData::CLIPathData() {
-  BOOST_TEST_REQUIRE(utf::framework::master_test_suite().argc == 2);
-  BOOST_TEST_REQUIRE(utf::framework::master_test_suite().argv[2]);
+    if (!(--tries)) {
+      BOOST_FAIL("Failed to create temporary directory. Too many tries.");
+    }
+  }
+  try {
+    fs::create_directories(path_tempdir);
+  } catch (fs::filesystem_error &e) {
+    BOOST_FAIL("Failed to create temporary directory: " << e.what());
+  }
 }
 
 /* ------------------------------------------------------------------------- */

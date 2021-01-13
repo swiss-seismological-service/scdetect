@@ -91,19 +91,20 @@ Samples dataset{
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
 BOOST_TEST_DECORATOR(*utf::tolerance(test_unit_tolerance))
-BOOST_DATA_TEST_CASE_F(TempDirFixture, integration_general,
-                       utf_data::make(dataset)) {
+BOOST_DATA_TEST_CASE(integration_general, utf_data::make(dataset)) {
+
+  TempDirFixture fx{CLIParserFixture::keep_tempdir};
 
   // prepare empty SQLite DB from template DB
   const std::string db{"seiscomp_db.sqlite"};
-  fs::path path_db{path_tempdir / db};
+  fs::path path_db{fx.path_tempdir / db};
   try {
     fs::copy_file(CLIParserFixture::path_data / db, path_db);
   } catch (fs::filesystem_error &e) {
     BOOST_FAIL("Failed to prepare database:" << e.what());
   }
 
-  fs::path path_ep_result_scml{path_tempdir / "ep.scml"};
+  fs::path path_ep_result_scml{fx.path_tempdir / "ep.scml"};
 
   // prepare CLI flags
   std::vector<std::string> flags_str{
@@ -121,7 +122,7 @@ BOOST_DATA_TEST_CASE_F(TempDirFixture, integration_general,
 
   BOOST_TEST_MESSAGE("Running integration test with CLI args: "
                      << boost::algorithm::join(flags_str, " "));
-  BOOST_TEST_MESSAGE("Path to temporary test data: " << path_tempdir);
+  BOOST_TEST_MESSAGE("Path to temporary test data: " << fx.path_tempdir);
 
   auto StrToCStr = [](const std::string &str) {
     char *ret{new char[str.size() + 1]};
