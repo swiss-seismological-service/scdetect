@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
+  <EventParameters>
+    <origin publicID="Origin/20210105104407.725748.1979">
+      <time>
+        <value>2020-10-25T19:35:54.328393Z</value>
+      </time>
+      <latitude>
+        <value>46.90474746</value>
+      </latitude>
+      <longitude>
+        <value>9.124707839</value>
+      </longitude>
+      <depth>
+        <value>1.436523438</value>
+      </depth>
+      <epicenterFixed>true</epicenterFixed>
+      <methodID>SCDETECT</methodID>
+      <quality>
+        <associatedPhaseCount>1</associatedPhaseCount>
+        <usedPhaseCount>1</usedPhaseCount>
+        <associatedStationCount>1</associatedStationCount>
+        <usedStationCount>1</usedStationCount>
+        <standardError>4.440892099e-16</standardError>
+        <maximumDistance>0.6415833155</maximumDistance>
+        <minimumDistance>0.6415833155</minimumDistance>
+        <medianDistance>0.6415833155</medianDistance>
+      </quality>
+      <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora32</author>
+        <creationTime>2021-01-05T10:44:07.725627Z</creationTime>
+      </creationInfo>
+      <magnitude publicID="Magnitude/20210105104407.725702.1978">
+        <magnitude>
+          <value>4.324859837</value>
+        </magnitude>
+        <type>SCDETECT</type>
+        <stationCount>1</stationCount>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora32</author>
+          <creationTime>2021-01-05T10:44:07.725627Z</creationTime>
+        </creationInfo>
+      </magnitude>
+    </origin>
+  </EventParameters>
+</seiscomp>

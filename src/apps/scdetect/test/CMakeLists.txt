@@ -1,6 +1,7 @@
 set(TESTS
   template_xcorr.cpp
   utils_cma.cpp
+  integration.cpp
 )
 
 set(SOURCES_template_xcorr
@@ -14,6 +15,20 @@ set(SOURCES_template_xcorr
 set(SOURCES_utils_cma
   ../exception.cpp
   ../utils.cpp
+)
+
+set(SOURCES_integration
+  ../app.cpp
+  ../builder.cpp
+  ../config.cpp
+  ../detector.cpp
+  ../eventstore.cpp
+  ../exception.cpp
+  ../processor.cpp
+  ../utils.cpp
+  ../template.cpp
+  ../waveform.cpp
+  integration_utils.cpp
 )
 
 
@@ -31,6 +46,6 @@ foreach(TEST_SRC ${TESTS})
 	add_test(
 		NAME ${TEST_TARGET}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${TEST_TARGET}
+		COMMAND ${TEST_TARGET} --log_level=message -- "${CMAKE_CURRENT_SOURCE_DIR}/data"
 	)
 endforeach(TEST_SRC)
