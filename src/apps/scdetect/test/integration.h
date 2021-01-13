@@ -44,33 +44,75 @@ public:
   const std::string flag() const override;
 };
 
+class FlagConsole : public ArgFlag {
+public:
+  FlagConsole();
+  const std::string flag() const override;
+};
+
 class FlagOffline : public ArgFlag {
 public:
   FlagOffline();
   const std::string flag() const override;
 };
 
+class FlagTemplatesReload : public ArgFlag {
+public:
+  FlagTemplatesReload();
+  const std::string flag() const override;
+};
+
+class FlagAgencyId : public ArgFlag {
+public:
+  FlagAgencyId(const std::string &id);
+  const std::string flag() const override;
+};
+
+class FlagAuthor : public ArgFlag {
+public:
+  FlagAuthor(const std::string &id);
+  const std::string flag() const override;
+};
+
+class FlagPlugins : public ArgFlag {
+public:
+  FlagPlugins(const std::string &plugin);
+  FlagPlugins(const std::vector<std::string> &plugins);
+
+  const std::string flag() const override;
+};
+
 class FlagEp : public ArgFlag {
 public:
-  FlagEp(const std::string &fpath);
+  explicit FlagEp(const std::string &fpath);
+  explicit FlagEp(const fs::path &fpath);
+  const std::string flag() const override;
+};
+
+class FlagDB : public ArgFlag {
+public:
+  explicit FlagDB(const std::string &uri);
+  explicit FlagDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagInventoryDB : public ArgFlag {
 public:
-  FlagInventoryDB(const std::string &uri);
+  explicit FlagInventoryDB(const std::string &uri);
+  explicit FlagInventoryDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagEventDB : public ArgFlag {
 public:
-  FlagEventDB(const std::string &uri);
+  explicit FlagEventDB(const std::string &uri);
+  explicit FlagEventDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagRecordURL : public ArgFlag {
 public:
-  FlagRecordURL(const std::string &url);
+  explicit FlagRecordURL(const std::string &url);
   const std::string flag() const override;
 };
 
@@ -86,9 +128,10 @@ public:
   const std::string flag() const override;
 };
 
-class FlagTemplateJSON : public ArgFlag {
+class FlagTemplatesJSON : public ArgFlag {
 public:
-  FlagTemplateJSON(const std::string &fpath);
+  explicit FlagTemplatesJSON(const std::string &fpath);
+  explicit FlagTemplatesJSON(const fs::path &fpath);
   const std::string flag() const override;
 };
 
