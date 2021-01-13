@@ -159,12 +159,16 @@ private:
   static const std::string path_subdir;
 };
 
-struct CLIPathData {
-  CLIPathData();
+/* -------------------------------------------------------------------------- */
+struct CLIParserFixture {
+  CLIParserFixture();
+  ~CLIParserFixture();
+
   void setup();
   void teardown();
 
-  static fs::path path;
+  static fs::path path_data;
+  static bool keep_tempdir;
 };
 
 } // namespace test

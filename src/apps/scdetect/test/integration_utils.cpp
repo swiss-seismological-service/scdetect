@@ -8,6 +8,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/optional.hpp>
+#include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <seiscomp/core/exceptions.h>
@@ -17,6 +18,7 @@
 #include <seiscomp/datamodel/pick.h>
 
 namespace fs = boost::filesystem;
+namespace po = boost::program_options;
 namespace utf = boost::unit_test;
 
 namespace Seiscomp {
@@ -320,26 +322,22 @@ void EventParametersCmp(DataModel::EventParametersCPtr lhs,
 
 /* -------------------------------------------------------------------------- */
 const std::string TempDirFixture::path_subdir{"scdetect"};
+const int TempDirFixture::max_tries{5};
 
-TempDirFixture::TempDirFixture() : path_tempdir{create_path_unique()} {
-  int max_tries{5};
-  while (fs::exists(path_tempdir)) {
-    path_tempdir = create_path_unique();
+TempDirFixture::TempDirFixture() : path_tempdir{CreatePathUnique()} {
+  CreateTempdir();
+}
 
-    if (!(--max_tries)) {
-      BOOST_FAIL("Failed to create temporary directory. Too many tries.");
-    }
-  }
-  try {
-    fs::create_directories(path_tempdir);
-  } catch (fs::filesystem_error &e) {
-    BOOST_FAIL("Failed to create temporary directory: " << e.what());
-  }
+TempDirFixture::TempDirFixture(bool keep_tempdir)
+    : path_tempdir{CreatePathUnique()}, keep_tempdir_{keep_tempdir} {
+  CreateTempdir();
 }
 
 TempDirFixture::~TempDirFixture() {
   try {
-    fs::remove_all(path_tempdir);
+    if (!keep_tempdir_) {
+      fs::remove_all(path_tempdir);
+    }
   } catch (fs::filesystem_error &e) {
   }
 }
@@ -365,14 +363,45 @@ CLIPathData::CLIPathData() {
   BOOST_TEST_REQUIRE(utf::framework::master_test_suite().argv[2]);
 }
 
-void CLIPathData::setup() {
-  fs::path p{utf::framework::master_test_suite().argv[1]};
-  bool path_valid{fs::is_directory(p) && !fs::is_empty(p)};
-  BOOST_TEST_REQUIRE(path_valid, "Invalid path to test data directory:" << p);
-  path = fs::absolute(p);
+/* ------------------------------------------------------------------------- */
+fs::path CLIParserFixture::path_data{""};
+bool CLIParserFixture::keep_tempdir{false};
+
+CLIParserFixture::CLIParserFixture() {}
+CLIParserFixture::~CLIParserFixture() {}
+
+void CLIParserFixture::setup() {
+  try {
+    po::options_description desc;
+    desc.add_options()("keep-tempfiles",
+                       po::value<bool>(&keep_tempdir)->default_value(false),
+                       "Keep temporary files from tests")(
+        "path-data", po::value<fs::path>(&path_data),
+        "Path to test data directory");
+
+    po::positional_options_description pdesc;
+    pdesc.add("path-data", -1);
+
+    po::variables_map vm;
+    po::store(po::command_line_parser(utf::framework::master_test_suite().argc,
+                                      utf::framework::master_test_suite().argv)
+                  .options(desc)
+                  .positional(pdesc)
+                  .run(),
+              vm);
+    po::notify(vm);
+  } catch (std::exception &e) {
+    BOOST_TEST_FAIL(e.what());
+  }
+
+  // validate
+  BOOST_TEST_REQUIRE(
+      bool{fs::is_directory(path_data) && !fs::is_empty(path_data)},
+      "Invalid path to test data directory:" << path_data);
+  path_data = fs::absolute(path_data);
 }
 
-void CLIPathData::teardown() {}
+void CLIParserFixture::teardown() {}
 
 } // namespace test
 } // namespace detect

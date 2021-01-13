@@ -88,7 +88,7 @@ Samples dataset{
      "expected.scml",
      /*path_sample=*/"integration-single-stream-simple-with-picks"}};
 
-BOOST_TEST_GLOBAL_FIXTURE(CLIPathData);
+BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
 BOOST_TEST_DECORATOR(*utf::tolerance(test_unit_tolerance))
 BOOST_DATA_TEST_CASE_F(TempDirFixture, integration_general,
@@ -98,7 +98,7 @@ BOOST_DATA_TEST_CASE_F(TempDirFixture, integration_general,
   const std::string db{"seiscomp_db.sqlite"};
   fs::path path_db{path_tempdir / db};
   try {
-    fs::copy_file(CLIPathData::path / db, path_db);
+    fs::copy_file(CLIParserFixture::path_data / db, path_db);
   } catch (fs::filesystem_error &e) {
     BOOST_FAIL("Failed to prepare database:" << e.what());
   }
@@ -115,7 +115,7 @@ BOOST_DATA_TEST_CASE_F(TempDirFixture, integration_general,
       cli::to_string(cli::FlagDB{path_db}),
       cli::to_string(cli::FlagEp{path_ep_result_scml}),
       cli::to_string(cli::FlagAgencyId{"TEST"})};
-  auto flags_sample{sample.AsFlags(CLIPathData::path)};
+  auto flags_sample{sample.AsFlags(CLIParserFixture::path_data)};
   flags_str.insert(std::end(flags_str), std::begin(flags_sample),
                    std::end(flags_sample));
 
@@ -163,8 +163,8 @@ BOOST_DATA_TEST_CASE_F(TempDirFixture, integration_general,
 
   // read expected result
   DataModel::EventParametersPtr ep_expected;
-  fs::path path_ep_expected_scml{CLIPathData::path / sample.path_sample /
-                                 sample.path_expected};
+  fs::path path_ep_expected_scml{CLIParserFixture::path_data /
+                                 sample.path_sample / sample.path_expected};
   ReadEventParameters(path_ep_expected_scml, ep_expected);
   BOOST_TEST_REQUIRE(ep_expected,
                      "Failed to read file: " << path_ep_expected_scml);
