@@ -126,10 +126,6 @@ const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 
 } // namespace cli
 
-const std::string PathData(const std::string &fname) {
-  return fs::absolute(fs::path{"data"} / fname).string();
-}
-
 std::vector<char *>
 StringsToCStrings(const std::vector<std::string> &v_strings) {
   std::vector<char *> v_cstrings{v_strings.size()};

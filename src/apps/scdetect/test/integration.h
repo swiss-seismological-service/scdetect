@@ -139,8 +139,6 @@ public:
 
 } // namespace cli
 
-const std::string PathData(const std::string &fname = "");
-
 std::vector<char *>
 StringsToCStrings(const std::vector<std::string> &v_strings);
 /* -------------------------------------------------------------------------- */
