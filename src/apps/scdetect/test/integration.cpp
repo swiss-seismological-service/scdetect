@@ -10,6 +10,7 @@
 #include <boost/test/unit_test.hpp>
 
 namespace fs = boost::filesystem;
+namespace utf = boost::unit_test;
 
 namespace Seiscomp {
 namespace detect {
@@ -152,6 +153,23 @@ const fs::path TempDirFixture::create_path_unique() {
   return fs::temp_directory_path() / TempDirFixture::path_subdir /
          fs::unique_path();
 }
+
+/* ------------------------------------------------------------------------- */
+fs::path CLIPathData::path{""};
+
+CLIPathData::CLIPathData() {
+  BOOST_TEST_REQUIRE(utf::framework::master_test_suite().argc == 2);
+  BOOST_TEST_REQUIRE(utf::framework::master_test_suite().argv[2]);
+}
+
+void CLIPathData::setup() {
+  fs::path p{utf::framework::master_test_suite().argv[1]};
+  bool path_valid{fs::is_directory(p) && !fs::is_empty(p)};
+  BOOST_TEST_REQUIRE(path_valid, "Invalid path to test data directory:" << p);
+  path = fs::absolute(p);
+}
+
+void CLIPathData::teardown() {}
 
 } // namespace test
 } // namespace detect

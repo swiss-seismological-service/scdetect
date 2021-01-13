@@ -157,6 +157,14 @@ private:
   static const std::string path_subdir;
 };
 
+struct CLIPathData {
+  CLIPathData();
+  void setup();
+  void teardown();
+
+  static fs::path path;
+};
+
 } // namespace test
 } // namespace detect
 } // namespace Seiscomp
