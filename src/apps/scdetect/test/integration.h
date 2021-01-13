@@ -8,6 +8,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include <seiscomp/datamodel/eventparameters.h>
+
 namespace fs = boost::filesystem;
 
 namespace Seiscomp {
@@ -141,6 +143,10 @@ const std::string PathData(const std::string &fname = "");
 
 std::vector<char *>
 StringsToCStrings(const std::vector<std::string> &v_strings);
+/* -------------------------------------------------------------------------- */
+// Compare `DataModel::EventParameters element-wise
+void EventParametersCmp(DataModel::EventParametersCPtr lhs,
+                        DataModel::EventParametersCPtr rhs);
 
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {

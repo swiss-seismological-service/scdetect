@@ -7,7 +7,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/optional.hpp>
 #include <boost/test/unit_test.hpp>
+
+#include <seiscomp/core/exceptions.h>
+#include <seiscomp/datamodel/arrival.h>
+#include <seiscomp/datamodel/magnitude.h>
+#include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/pick.h>
 
 namespace fs = boost::filesystem;
 namespace utf = boost::unit_test;
@@ -15,6 +22,24 @@ namespace utf = boost::unit_test;
 namespace Seiscomp {
 namespace detect {
 namespace test {
+
+namespace {
+
+template <typename T, typename TFunc>
+auto GetOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
+  try {
+    return f(obj);
+  } catch (Core::ValueException &e) {
+    return boost::none;
+  }
+}
+
+template <typename T, typename TFunc>
+bool EqualOptional(const T &lhs, const T &rhs, TFunc f) {
+  return GetOptional(lhs, f) == GetOptional(rhs, f);
+}
+
+} // namespace
 
 namespace cli {
 
@@ -114,8 +139,199 @@ StringsToCStrings(const std::vector<std::string> &v_strings) {
   return v_cstrings;
 }
 
-/* --------------------------------------------------------------------------
- */
+/* ------------------------------------------------------------------------- */
+void EventParametersCmp(DataModel::EventParametersCPtr lhs,
+                        DataModel::EventParametersCPtr rhs) {
+
+  BOOST_TEST_CHECK(lhs->pickCount() == rhs->pickCount());
+  BOOST_TEST_CHECK(lhs->originCount() == rhs->originCount());
+
+  BOOST_TEST_CHECK(lhs->eventCount() == rhs->eventCount());
+
+  BOOST_TEST_CHECK(lhs->amplitudeCount() == rhs->amplitudeCount());
+  BOOST_TEST_CHECK(lhs->focalMechanismCount() == rhs->focalMechanismCount());
+
+  // compare picks
+  for (size_t i = 0; i < lhs->pickCount(); ++i) {
+    DataModel::PickCPtr pick_result{lhs->pick(i)};
+    DataModel::PickCPtr pick_expected{rhs->pick(i)};
+
+    // compare attributes since the `creationInfo` attribute differs, anyway
+
+    BOOST_TEST_CHECK(pick_result->time().value().iso() ==
+                     pick_expected->time().value().iso());
+    BOOST_TEST_CHECK(std::string{pick_result->waveformID()} ==
+                     std::string{pick_expected->waveformID()});
+    BOOST_TEST_CHECK(pick_result->filterID() == pick_expected->filterID());
+    BOOST_TEST_CHECK(pick_result->methodID() == pick_expected->methodID());
+
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
+          return p->horizontalSlowness();
+        }));
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected,
+                      [](DataModel::PickCPtr p) { return p->backazimuth(); }));
+
+    BOOST_TEST_CHECK(pick_result->slownessMethodID() ==
+                     pick_expected->slownessMethodID());
+
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected,
+                      [](DataModel::PickCPtr p) { return p->onset(); }));
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected,
+                      [](DataModel::PickCPtr p) { return p->phaseHint(); }));
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected,
+                      [](DataModel::PickCPtr p) { return p->polarity(); }));
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
+          return p->evaluationMode();
+        }));
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
+          return p->evaluationStatus();
+        }));
+
+    BOOST_TEST_CHECK(
+        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
+          return p->creationInfo().agencyID();
+        }));
+  }
+
+  // compare origins
+  for (size_t i = 0; i < lhs->originCount(); ++i) {
+    DataModel::OriginCPtr origin_result{lhs->origin(i)};
+    DataModel::OriginCPtr origin_expected{rhs->origin(i)};
+
+    BOOST_TEST_CHECK(origin_result->time().value().iso() ==
+                     origin_expected->time().value().iso());
+    BOOST_TEST_CHECK(origin_result->latitude() == origin_expected->latitude());
+    BOOST_TEST_CHECK(origin_result->longitude() ==
+                     origin_expected->longitude());
+
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->depth(); }));
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->depthType(); }));
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->timeFixed(); }));
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->epicenterFixed(); }));
+
+    BOOST_TEST_CHECK(origin_result->referenceSystemID() ==
+                     origin_expected->referenceSystemID());
+    BOOST_TEST_CHECK(origin_result->methodID() == origin_expected->methodID());
+    BOOST_TEST_CHECK(origin_result->earthModelID() ==
+                     origin_expected->earthModelID());
+
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->quality(); }));
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->uncertainty(); }));
+    BOOST_TEST_CHECK(
+        EqualOptional(origin_result, origin_expected,
+                      [](DataModel::OriginCPtr orig) { return orig->type(); }));
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->evaluationMode(); }));
+    BOOST_TEST_CHECK(EqualOptional(
+        origin_result, origin_expected,
+        [](DataModel::OriginCPtr orig) { return orig->evaluationStatus(); }));
+
+    BOOST_TEST_CHECK(EqualOptional(origin_result, origin_expected,
+                                   [](DataModel::OriginCPtr orig) {
+                                     return orig->creationInfo().agencyID();
+                                   }));
+
+    // compare arrivals
+    for (size_t j = 0; j < origin_result->arrivalCount(); ++j) {
+      DataModel::ArrivalCPtr arrival_result{origin_result->arrival(j)};
+      DataModel::ArrivalCPtr arrival_expected{origin_expected->arrival(j)};
+
+      BOOST_TEST_CHECK(arrival_result->phase().code() ==
+                       arrival_expected->phase().code());
+
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->timeCorrection(); }));
+      BOOST_TEST_CHECK(
+          EqualOptional(arrival_result, arrival_expected,
+                        [](DataModel::ArrivalCPtr a) { return a->azimuth(); }));
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->distance(); }));
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->takeOffAngle(); }));
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->timeResidual(); }));
+      BOOST_TEST_CHECK(EqualOptional(arrival_result, arrival_expected,
+                                     [](DataModel::ArrivalCPtr a) {
+                                       return a->horizontalSlownessResidual();
+                                     }));
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->timeUsed(); }));
+      BOOST_TEST_CHECK(EqualOptional(arrival_result, arrival_expected,
+                                     [](DataModel::ArrivalCPtr a) {
+                                       return a->horizontalSlownessUsed();
+                                     }));
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->backazimuthUsed(); }));
+      BOOST_TEST_CHECK(
+          EqualOptional(arrival_result, arrival_expected,
+                        [](DataModel::ArrivalCPtr a) { return a->weight(); }));
+      BOOST_TEST_CHECK(arrival_result->earthModelID() ==
+                       arrival_expected->earthModelID());
+      BOOST_TEST_CHECK(EqualOptional(
+          arrival_result, arrival_expected,
+          [](DataModel::ArrivalCPtr a) { return a->preliminary(); }));
+
+      BOOST_TEST_CHECK(EqualOptional(arrival_result, arrival_expected,
+                                     [](DataModel::ArrivalCPtr a) {
+                                       return a->creationInfo().agencyID();
+                                     }));
+    }
+
+    // compare magnitudes
+    for (size_t j = 0; j < origin_result->magnitudeCount(); ++j) {
+      DataModel::MagnitudeCPtr mag_result{origin_result->magnitude(j)};
+      DataModel::MagnitudeCPtr mag_expected{origin_result->magnitude(j)};
+
+      BOOST_TEST_CHECK(mag_result->magnitude() == mag_expected->magnitude());
+      BOOST_TEST_CHECK(mag_result->type() == mag_expected->type());
+      BOOST_TEST_CHECK(mag_result->originID() == mag_expected->originID());
+      BOOST_TEST_CHECK(mag_result->methodID() == mag_expected->methodID());
+
+      BOOST_TEST_CHECK(EqualOptional(
+          mag_result, mag_expected,
+          [](DataModel::MagnitudeCPtr m) { return m->stationCount(); }));
+      BOOST_TEST_CHECK(EqualOptional(
+          mag_result, mag_expected,
+          [](DataModel::MagnitudeCPtr m) { return m->azimuthalGap(); }));
+      BOOST_TEST_CHECK(EqualOptional(
+          mag_result, mag_expected,
+          [](DataModel::MagnitudeCPtr m) { return m->evaluationStatus(); }));
+
+      BOOST_TEST_CHECK(EqualOptional(mag_result, mag_expected,
+                                     [](DataModel::MagnitudeCPtr m) {
+                                       return m->creationInfo().agencyID();
+                                     }));
+    }
+  }
+}
+
+/* ------------------------------------------------------------------------- */
 const std::string TempDirFixture::path_subdir{"scdetect"};
 
 TempDirFixture::TempDirFixture() : path_tempdir{create_path_unique()} {
