@@ -1,6 +1,8 @@
 #include "integration.h"
 
 #include <algorithm>
+#include <ostream>
+#include <sstream>
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -13,12 +15,20 @@ namespace test {
 
 namespace cli {
 
-const std::string Flag::operator()() const { return flag(); }
-
-ArgFlag::ArgFlag(const std::string &arg) : arg_{arg} {}
-const std::string ArgFlag::operator()() const {
-  return std::string{flag() + "=" + arg_};
+std::string to_string(const Flag &flag) {
+  std::ostringstream oss;
+  oss << flag;
+  return oss.str();
 }
+
+void Flag::to_string(std::ostream &os) const { os << flag(); }
+
+std::ostream &operator<<(std::ostream &os, const Flag &flag) {
+  flag.to_string(os);
+  return os;
+}
+
+void ArgFlag::to_string(std::ostream &os) const { os << flag() << "=" << arg_; }
 
 const std::string FlagDebug::flag() const { return "--debug"; }
 

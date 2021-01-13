@@ -1,6 +1,8 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_H_
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_H_
 
+#include <ostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -14,16 +16,24 @@ namespace test {
 
 namespace cli {
 
+class Flag;
+std::string to_string(const Flag &flag);
+
 class Flag {
 public:
   virtual const std::string flag() const = 0;
-  virtual const std::string operator()() const;
+  friend std::ostream &operator<<(std::ostream &os, const Flag &flag);
+
+protected:
+  virtual void to_string(std::ostream &os) const;
 };
 
 class ArgFlag : public Flag {
 public:
   ArgFlag(const std::string &arg);
-  const std::string operator()() const override;
+
+protected:
+  void to_string(std::ostream &os) const override;
 
 private:
   std::string arg_;
