@@ -1,4 +1,3 @@
-#include "seiscomp/datamodel/magnitude.h"
 #define SEISCOMP_TEST_MODULE test_integration_general
 #include <seiscomp/unittest/unittests.h>
 
