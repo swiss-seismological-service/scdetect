@@ -139,8 +139,6 @@ public:
 
 } // namespace cli
 
-std::vector<char *>
-StringsToCStrings(const std::vector<std::string> &v_strings);
 /* -------------------------------------------------------------------------- */
 // Compare `DataModel::EventParameters element-wise
 void EventParametersCmp(DataModel::EventParametersCPtr lhs,

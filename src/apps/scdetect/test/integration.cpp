@@ -126,15 +126,6 @@ const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 
 } // namespace cli
 
-std::vector<char *>
-StringsToCStrings(const std::vector<std::string> &v_strings) {
-  std::vector<char *> v_cstrings{v_strings.size()};
-  std::transform(
-      v_strings.cbegin(), v_strings.cend(), v_cstrings.begin(),
-      [](const std::string &str) { return const_cast<char *>(str.c_str()); });
-  return v_cstrings;
-}
-
 /* ------------------------------------------------------------------------- */
 void EventParametersCmp(DataModel::EventParametersCPtr lhs,
                         DataModel::EventParametersCPtr rhs) {
@@ -327,7 +318,7 @@ void EventParametersCmp(DataModel::EventParametersCPtr lhs,
   }
 }
 
-/* ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 const std::string TempDirFixture::path_subdir{"scdetect"};
 
 TempDirFixture::TempDirFixture() : path_tempdir{create_path_unique()} {
