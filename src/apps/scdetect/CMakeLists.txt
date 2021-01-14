@@ -1,6 +1,6 @@
-SET(DETECT_TARGET scdetect)
+set(DETECT_TARGET scdetect)
 
-SET(
+set(
   DETECT_SOURCES
     app.cpp
     config.cpp
@@ -14,7 +14,7 @@ SET(
     waveform.cpp
 )
 
-SET(
+set(
   DETECT_HEADERS
     app.h
     builder.h
@@ -31,20 +31,20 @@ SET(
     waveform.h
 )
 
-# ADD_DEFINITIONS(
+# add_definitions(
 #   -DSCDETECT_DEBUG
 # )
 
 if (${CMAKE_BUILD_TYPE} EQUAL "DEBUG")
-  ADD_COMPILE_OPTIONS(-fsanitize=address)
-  ADD_LINK_OPTIONS(-fsanitize=address)
+  add_compile_options(-fsanitize=address)
+  add_link_options(-fsanitize=address)
 endif()
 
 
-SC_ADD_EXECUTABLE(DETECT ${DETECT_TARGET})
-SC_LINK_LIBRARIES_INTERNAL(${DETECT_TARGET} client)
-SC_INSTALL_INIT(${DETECT_TARGET}
+sc_add_executable(DETECT ${DETECT_TARGET})
+sc_link_libraries_internal(${DETECT_TARGET} client)
+sc_install_init(${DETECT_TARGET}
   "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py")
 
-FILE(GLOB descs "${CMAKE_CURRENT_SOURCE_DIR}/descriptions/*.xml")
-INSTALL(FILES ${descs} DESTINATION ${SC3_PACKAGE_APP_DESC_DIR})
+file(GLOB descs "${CMAKE_CURRENT_SOURCE_DIR}/descriptions/*.xml")
+install(FILES ${descs} DESTINATION ${SC3_PACKAGE_APP_DESC_DIR})
