@@ -1,34 +1,51 @@
-ADD_DEFINITIONS("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
-
-SET(TESTS
+set(TESTS
   template_xcorr.cpp
   utils_cma.cpp
+  integration.cpp
 )
 
-SET(SOURCES_template_xcorr
-  exception.cpp
-  processor.cpp
-  utils.cpp
-  template.cpp
-  waveform.cpp
+set(SOURCES_template_xcorr
+  ../exception.cpp
+  ../processor.cpp
+  ../utils.cpp
+  ../template.cpp
+  ../waveform.cpp
 )
 
-SET(SOURCES_utils_cma
-  exception.cpp
-  utils.cpp
+set(SOURCES_utils_cma
+  ../exception.cpp
+  ../utils.cpp
 )
 
-FOREACH(test_src ${TESTS})
-	GET_FILENAME_COMPONENT(test_fname ${test_src} NAME_WE)
-	SET(test_name test_scdetect_${test_fname})
-  LIST(TRANSFORM SOURCES_${test_fname} PREPEND "../")
-  ADD_EXECUTABLE(${test_name} ${test_src} ${SOURCES_${test_fname}})
-	SC_LINK_LIBRARIES_INTERNAL(${test_name} unittest core client)
-	SC_LINK_LIBRARIES(${test_name} ${Boost_unit_test_framework_LIBRARY})
+set(SOURCES_integration
+  ../app.cpp
+  ../builder.cpp
+  ../config.cpp
+  ../detector.cpp
+  ../eventstore.cpp
+  ../exception.cpp
+  ../processor.cpp
+  ../utils.cpp
+  ../template.cpp
+  ../waveform.cpp
+  integration_utils.cpp
+)
 
-	ADD_TEST(
-		NAME ${test_name}
+
+add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
+# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+# add_link_options(-fsanitize=address)
+
+foreach(TEST_SRC ${TESTS})
+	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
+	set(TEST_TARGET test_scdetect_${TEST_FNAME})
+  add_executable(${TEST_TARGET} ${TEST_SRC} ${SOURCES_${TEST_FNAME}})
+	sc_link_libraries_internal(${TEST_TARGET} unittest core client)
+	sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
+
+	add_test(
+		NAME ${TEST_TARGET}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${test_name}
+		COMMAND ${TEST_TARGET} --log_level=message -- "${CMAKE_CURRENT_SOURCE_DIR}/data"
 	)
-ENDFOREACH(test_src)
+endforeach(TEST_SRC)

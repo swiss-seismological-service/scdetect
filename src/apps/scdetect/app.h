@@ -22,11 +22,9 @@ namespace detect {
 
 class Application : public Client::StreamApplication {
 
-  using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
-
 public:
   Application(int argc, char **argv);
-  ~Application(){};
+  ~Application() override;
 
   class BaseException : public Exception {
   public:
@@ -70,6 +68,7 @@ public:
     std::string url_event_db;
 
     bool load_templates_only{false};
+    bool templates_no_cache{false};
 
     // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
@@ -198,6 +197,7 @@ private:
 
   DataModel::EventParametersPtr ep_;
 
+  using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
   StreamDetectorMap detectors_;
 };
 

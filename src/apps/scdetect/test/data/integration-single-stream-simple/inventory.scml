@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
+  <Inventory>
+    <sensor publicID="Sensor/20210104172100.123647.7" name="CH.GRIMS.HHZ.2015.303.10.50.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111047.146887.34">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <datalogger publicID="Datalogger/20210104172100.123541.6" name="CH.GRIMS.HHZ.2015.303.10.50.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="100" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111047.144062.21 smi:ch.ethz.sed/ResponseFIR/20150105111047.144145.22</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ/20150105111047.146887.34" name="GRIMS.2011.313.HZ">
+      <type>A</type>
+      <gain>1500</gain>
+      <gainFrequency>1</gainFrequency>
+      <normalizationFactor>3.4684e+17</normalizationFactor>
+      <normalizationFrequency>1</normalizationFrequency>
+      <numberOfZeros>6</numberOfZeros>
+      <numberOfPoles>11</numberOfPoles>
+      <zeros>(0,0) (0,0) (-15.15,0) (-176.6,0) (-463.1,-430.5) (-463.1,430.5)</zeros>
+      <poles>(-0.037,-0.037) (-0.037,0.037) (-15.64,0) (-97.34,-400.7) (-97.34,400.7) (-374.8,0) (-520.3,0) (-10530,-10050) (-10530,10050) (-13300,0) (-255.097,0)</poles>
+    </responsePAZ>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111047.144062.21" name="GRIMS..HHE.2011.313.stage_2">
+      <gain>1677720</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>1</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>1</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111047.144145.22" name="GRIMS..HHE.2011.313.stage_3">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>33</delay>
+      <correction>33</correction>
+      <numberOfCoefficients>65</numberOfCoefficients>
+      <symmetry>A</symmetry>
+      <coefficients>6.43711e-14 6.58258e-08 -7.53118e-07 6.26743e-07 2.47069e-06 -3.15256e-06 5.4824e-06 -7.78113e-06 5.10559e-06 3.31568e-05 -0.000268238 -0.000353056 0.000622489 -0.00101006 0.00127276 -0.00118431 0.000512697 0.000910091 -0.00309045 0.00581107 -0.00857787 0.0106344 -0.0110399 0.00881308 -0.00307778 -0.00464808 0.016017 -0.0372088 0.0536013 -0.0726163 0.0878551 -0.0979276 0.0946782 0.888891 0.138422 -0.115331 0.0951158 -0.0743198 0.0521264 -0.0339684 0.0122831 -0.00140239 -0.00585837 0.0107618 -0.0121488 0.0110276 -0.00845663 0.00539437 -0.00257072 0.000426728 0.000881093 -0.00141391 0.00137928 -0.00102993 0.000596299 -0.000303778 -0.000298773 3.41094e-05 5.26981e-06 -8.09269e-06 5.56459e-06 -2.95383e-06 2.26184e-06 7.69085e-07 -7.49759e-07</coefficients>
+    </responseFIR>
+    <network publicID="NET/CH/20210104172100.122139.181" code="CH">
+      <start>1980-01-01T00:00:00.0000Z</start>
+      <description>National Seismic Networks of Switzerland</description>
+      <restricted>false</restricted>
+      <shared>true</shared>
+      <station publicID="STA/CH/GRIMS/20210104172100.12313.182" code="GRIMS">
+        <start>2011-11-09T00:00:00.0000Z</start>
+        <description>Grimsel, Gerstenegg, BE</description>
+        <latitude>46.578146</latitude>
+        <longitude>8.318864</longitude>
+        <elevation>1746</elevation>
+        <country>Switzerland</country>
+        <restricted>false</restricted>
+        <shared>true</shared>
+        <sensorLocation publicID="LOC/CH/GRIMS//20210104172100.123298.183" code="">
+          <start>2015-10-30T10:50:00.0000Z</start>
+          <latitude>46.578146</latitude>
+          <longitude>8.318864</longitude>
+          <elevation>1746</elevation>
+          <stream publicID="Stream/20210104172100.123416.5" code="HHZ" datalogger="Datalogger/20210104172100.123541.6" sensor="Sensor/20210104172100.123647.7">
+            <start>2015-10-30T10:50:00.0000Z</start>
+            <dataloggerSerialNumber>5671</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>39905</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>100</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>2516580000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+        </sensorLocation>
+      </station>
+    </network>
+  </Inventory>
+</seiscomp>

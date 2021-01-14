@@ -64,6 +64,11 @@ void EventStore::Load(DataModel::DatabaseReaderPtr db) {
   }
 }
 
+void EventStore::Reset() {
+  event_parameters_.reset();
+  cache_.clear();
+}
+
 EventStore::SCMLException::SCMLException() : Exception{"SCML exception"} {}
 
 DataModel::EventParametersCPtr EventStore::event_parameters() const {

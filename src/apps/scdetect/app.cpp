@@ -188,6 +188,8 @@ Application::Application(int argc, char **argv)
   SetupConfigurationOptions();
 }
 
+Application::~Application() {}
+
 Application::BaseException::BaseException()
     : Exception{"base application exception"} {}
 
@@ -358,10 +360,12 @@ bool Application::init() {
   // TODO(damb): Check if std::unique_ptr wouldn't be sufficient, here.
   WaveformHandlerIfacePtr waveform_handler{
       utils::make_smart<WaveformHandler>(recordStreamURL())};
-  // cache template waveforms on filesystem
-  waveform_handler = utils::make_smart<FileSystemCache>(
-      waveform_handler, config_.path_filesystem_cache,
-      settings::kCacheRawWaveforms);
+  if (!config_.templates_no_cache) {
+    // cache template waveforms on filesystem
+    waveform_handler = utils::make_smart<FileSystemCache>(
+        waveform_handler, config_.path_filesystem_cache,
+        settings::kCacheRawWaveforms);
+  }
 
   if (!InitDetectors(waveform_handler))
     return false;
@@ -414,7 +418,7 @@ void Application::done() {
     ar << ep_;
     ar.close();
     SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
-    /* ep_ = nullptr; */
+    ep_.reset();
   }
 
   // optionally, create debug info files
@@ -447,6 +451,8 @@ void Application::done() {
       }
     }
   }
+
+  EventStore::Instance().Reset();
 
   StreamApplication::done();
 }
@@ -754,6 +760,8 @@ void Application::SetupConfigurationOptions() {
               "dump additional debug information (e.g. waveforms, stats etc.)");
   NEW_OPT_CLI(config_.load_templates_only, "Mode", "templates-load-only",
               "load templates and exit");
+  NEW_OPT_CLI(config_.templates_no_cache, "Mode", "templates-reload",
+              "force reloading templates and omit caching waveforms");
 
   NEW_OPT_CLI(config_.path_template_json, "Input", "templates-json",
               "path to a template configuration file (json-formatted)");

@@ -4,17 +4,14 @@
 #include "log.h"
 
 int main(int argc, char **argv) {
-  int retCode = EXIT_SUCCESS;
+  int code{EXIT_SUCCESS};
 
   // Create an own block to make sure the application object
-  // is destroyed when printing the overall objectcount
-  {
-    Seiscomp::detect::Application app(argc, argv);
-    retCode = app.exec();
-  }
+  // is destroyed when printing the overall object count.
+  { code = Seiscomp::detect::Application{argc, argv}(); }
 
-  SCDETECT_LOG_DEBUG("EXIT(%d), remaining objects: %d", retCode,
+  SCDETECT_LOG_DEBUG("EXIT(%d), remaining objects: %d", code,
                      Seiscomp::Core::BaseObject::ObjectCount());
 
-  return retCode;
+  return code;
 }

@@ -30,6 +30,9 @@ public:
   void Load(DataModel::EventParametersPtr ep);
   void Load(DataModel::DatabaseReaderPtr db);
 
+  // Reset the store
+  void Reset();
+
   DataModel::EventParametersCPtr event_parameters() const;
 
   template <typename T> SmartPointer<T> Get(const std::string &public_id) {
@@ -52,7 +55,7 @@ protected:
 private:
   EventStore() {}
 
-  DataModel::EventParametersPtr event_parameters_{nullptr};
+  DataModel::EventParametersPtr event_parameters_;
   DataModel::PublicObjectTimeSpanBuffer cache_;
 };
 
