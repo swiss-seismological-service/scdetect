@@ -90,7 +90,7 @@ Samples dataset{
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
 BOOST_TEST_DECORATOR(*utf::tolerance(test_unit_tolerance))
-BOOST_DATA_TEST_CASE(integration_general, utf_data::make(dataset)) {
+BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
 
   TempDirFixture fx{CLIParserFixture::keep_tempdir};
 
