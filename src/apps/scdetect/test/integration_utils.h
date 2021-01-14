@@ -180,6 +180,20 @@ struct CLIParserFixture {
   static bool keep_tempdir;
 };
 
+/* -------------------------------------------------------------------------- */
+template <typename TApp> class ApplicationWrapper {
+public:
+  ApplicationWrapper(const std::vector<std::string> &argv);
+  ~ApplicationWrapper();
+
+  int operator()();
+
+private:
+  std::vector<char *> argv_;
+};
+
+#include "integration_utils.ipp"
+
 } // namespace test
 } // namespace detect
 } // namespace Seiscomp

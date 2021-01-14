@@ -123,25 +123,8 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
                      << boost::algorithm::join(flags_str, " "));
   BOOST_TEST_MESSAGE("Path to temporary test data: " << fx.path_tempdir);
 
-  auto StrToCStr = [](const std::string &str) {
-    char *ret{new char[str.size() + 1]};
-    std::strcpy(ret, str.c_str());
-    return ret;
-  };
-  std::vector<char *> flags_cstr;
-  flags_cstr.reserve(flags_str.size());
-  std::transform(flags_str.cbegin(), flags_str.cend(),
-                 back_inserter(flags_cstr), StrToCStr);
-
   int retval{EXIT_FAILURE};
-  {
-    retval =
-        Application{static_cast<int>(flags_cstr.size()), flags_cstr.data()}();
-  }
-
-  for (size_t i = 0; i < flags_cstr.size(); ++i) {
-    delete[] flags_cstr[i];
-  }
+  { retval = ApplicationWrapper<Application>{flags_str}(); }
 
   BOOST_TEST_CHECK(EXIT_SUCCESS == retval);
 
