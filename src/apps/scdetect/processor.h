@@ -132,7 +132,8 @@ public:
   // Returns the value associated with the status
   double status_value() const;
 
-  // Sets the filter to apply
+  // Sets the filter to apply; the filter pointer passed is owned by the
+  // `Processor`
   virtual void set_filter(Filter *filter) = 0;
   // Returns the processor's initialization time in seconds
   virtual const Core::TimeSpan init_time() const;
