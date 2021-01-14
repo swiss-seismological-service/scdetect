@@ -2,8 +2,8 @@
 #include <seiscomp/unittest/unittests.h>
 
 #include <cstdlib>
-#include <iterator>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #include <boost/algorithm/string/join.hpp>

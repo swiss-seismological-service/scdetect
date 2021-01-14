@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
 
 #include <algorithm>
+#include <iterator>
 
 template <typename TApp>
 ApplicationWrapper<TApp>::ApplicationWrapper(
