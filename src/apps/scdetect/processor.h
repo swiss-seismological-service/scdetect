@@ -135,7 +135,7 @@ public:
   // Sets the filter to apply; the filter pointer passed is owned by the
   // `Processor`
   virtual void set_filter(Filter *filter) = 0;
-  // Returns the processor's initialization time in seconds
+  // Returns the processor's initialization time
   virtual const Core::TimeSpan init_time() const;
 
   // Sets the maximal gap length in seconds for that missing samples are
