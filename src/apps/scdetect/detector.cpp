@@ -477,18 +477,28 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 
 void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples) {
+
+  auto &sc{stream_configs_.at(record->streamID())};
   // XXX(damb): The detector does not filter the data. Data is buffered, only.
   stream_state.received_samples += n;
 
   // buffer filled data
+  auto &buffer{sc.stream_buffer};
   auto filled{utils::make_smart<GenericRecord>(
       record->networkCode(), record->stationCode(), record->locationCode(),
-      record->channelCode(), record->startTime(), record->samplingFrequency())};
+      record->channelCode(),
+      record->sampleCount() > 0
+          ? record->startTime()
+          : buffer->timeWindow().endTime() +
+                Core::TimeSpan{1.0 / record->samplingFrequency()},
+      record->samplingFrequency())};
   filled->setData(n, samples, Array::DOUBLE);
 
-  try {
-    stream_configs_.at(record->streamID()).stream_buffer->feed(filled.get());
-  } catch (std::out_of_range &e) {
+  if (!buffer->feed(filled.get())) {
+    SCDETECT_LOG_WARNING_PROCESSOR(
+        this, "%s: Error while buffering data: start=%s, end=%s, samples=%d",
+        filled->streamID().c_str(), filled->startTime().iso().c_str(),
+        filled->endTime().iso().c_str(), filled->sampleCount());
   }
 }
 

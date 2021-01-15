@@ -1,5 +1,7 @@
 #include "processor.h"
+
 #include "log.h"
+#include "utils.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -177,16 +179,22 @@ bool Processor::FillGap(StreamState &stream_state, RecordCPtr record,
                         size_t missing_samples) {
   if (duration <= gap_tolerance_) {
     if (gap_interpolation_) {
+      auto header_only{utils::make_smart<GenericRecord>(
+          record->networkCode(), record->stationCode(), record->locationCode(),
+          record->channelCode(), record->startTime(),
+          record->samplingFrequency())};
+
       double delta{next_sample - stream_state.last_sample};
       double step{1. / static_cast<double>(missing_samples + 1)};
       double di = step;
       for (size_t i = 0; i < missing_samples; ++i, di += step) {
         double value{stream_state.last_sample + di * delta};
-        Fill(stream_state, record, 1, &value);
+        // XXX(damb): Passing `header_only` record indicates gap filling; check
+        // if there is a more elegant solution
+        Fill(stream_state, /*record=*/header_only, 1, &value);
       }
+      return true;
     }
-
-    return true;
   }
 
   return false;
