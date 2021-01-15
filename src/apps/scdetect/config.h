@@ -94,7 +94,7 @@ struct DetectorConfig {
   // Flag indicating whether to interpolate gaps linearly. Valid for gaps <=
   // gap_tolerance.
   bool gap_interpolation{false};
-  // Maximum gap length in seconds to handle.
+  // Maximum gap length in seconds to tolerate and to be handled
   double gap_tolerance{4.5};
   // Maximum data latency a in seconds tolerated
   double maximum_latency{10};
