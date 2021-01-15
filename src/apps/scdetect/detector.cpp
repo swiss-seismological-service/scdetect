@@ -63,6 +63,18 @@ void Detector::set_filter(Filter *filter) {
   delete filter;
 }
 
+void Detector::set_gap_tolerance(const Core::TimeSpan &duration) {
+  config_.gap_tolerance = static_cast<double>(duration);
+}
+
+const Core::TimeSpan Detector::gap_tolerance() const {
+  return Core::TimeSpan{config_.gap_tolerance};
+}
+
+void Detector::set_gap_interpolation(bool e) { config_.gap_interpolation = e; }
+
+bool Detector::gap_interpolation() const { return config_.gap_interpolation; }
+
 bool Detector::Feed(const Record *record) {
   if (record->sampleCount() == 0)
     return false;
@@ -475,30 +487,62 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 }
 
+bool Detector::HandleGap(StreamState &stream_state, RecordCPtr record,
+                         DoubleArrayPtr data) {
+
+  if (stream_state.last_record) {
+    if (record == stream_state.last_record)
+      return false;
+
+    Core::TimeSpan gap{record->startTime() -
+                       stream_state.data_time_window.endTime() -
+                       /* one usec*/ Core::TimeSpan(0, 1)};
+    double gap_seconds = static_cast<double>(gap);
+
+    if (gap > Core::TimeSpan{config_.gap_threshold}) {
+      size_t gap_samples = static_cast<size_t>(
+          ceil(stream_state.sampling_frequency * gap_seconds));
+      if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
+        SCDETECT_LOG_DEBUG_PROCESSOR(
+            this, "%s: detected gap (%.6f secs, %lu samples) (handled)",
+            record->streamID().c_str(), gap_seconds, gap_samples);
+      } else {
+        SCDETECT_LOG_DEBUG_PROCESSOR(
+            this,
+            "%s: detected gap (%.6f secs, %lu samples) (NOT "
+            "handled): status=%d",
+            record->streamID().c_str(), gap_seconds, gap_samples,
+            // TODO(damb): Verify if this is the correct status
+            // to be displayed
+            static_cast<int>(status()));
+        if (status() > Processor::Status::kInProgress)
+          return false;
+      }
+    } else if (gap_seconds < 0) {
+      // handle record from the past
+      size_t gap_samples = static_cast<size_t>(
+          ceil(-1 * stream_state.sampling_frequency * gap_seconds));
+      if (gap_samples > 1)
+        return false;
+    }
+    stream_state.data_time_window.setEndTime(record->endTime());
+  }
+  return true;
+}
+
 void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples) {
-
-  auto &sc{stream_configs_.at(record->streamID())};
   // XXX(damb): The detector does not filter the data. Data is buffered, only.
+
   stream_state.received_samples += n;
 
-  // buffer filled data
-  auto &buffer{sc.stream_buffer};
-  auto filled{utils::make_smart<GenericRecord>(
-      record->networkCode(), record->stationCode(), record->locationCode(),
-      record->channelCode(),
-      record->sampleCount() > 0
-          ? record->startTime()
-          : buffer->timeWindow().endTime() +
-                Core::TimeSpan{1.0 / record->samplingFrequency()},
-      record->samplingFrequency())};
-  filled->setData(n, samples, Array::DOUBLE);
-
-  if (!buffer->feed(filled.get())) {
+  // buffer record
+  auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
+  if (!buffer->feed(record.get())) {
     SCDETECT_LOG_WARNING_PROCESSOR(
         this, "%s: Error while buffering data: start=%s, end=%s, samples=%d",
-        filled->streamID().c_str(), filled->startTime().iso().c_str(),
-        filled->endTime().iso().c_str(), filled->sampleCount());
+        record->streamID().c_str(), record->startTime().iso().c_str(),
+        record->endTime().iso().c_str(), record->sampleCount());
   }
 }
 
@@ -539,6 +583,39 @@ void Detector::ResetProcessors() {
   }
 }
 
+bool Detector::FillGap(StreamState &stream_state, RecordCPtr record,
+                       const Core::TimeSpan &duration, double next_sample,
+                       size_t missing_samples) {
+  if (duration <= Core::TimeSpan{config_.gap_tolerance}) {
+    if (config_.gap_interpolation) {
+
+      auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
+
+      auto filled{utils::make_smart<GenericRecord>(
+          record->networkCode(), record->stationCode(), record->locationCode(),
+          record->channelCode(), buffer->timeWindow().endTime(),
+          record->samplingFrequency())};
+
+      auto data_ptr{utils::make_unique<DoubleArray>(missing_samples)};
+      double delta{next_sample - stream_state.last_sample};
+      double step{1. / static_cast<double>(missing_samples + 1)};
+      double di = step;
+      for (size_t i = 0; i < missing_samples; ++i, di += step) {
+        const double value{stream_state.last_sample + di * delta};
+        data_ptr->set(i, value);
+      }
+
+      filled->setData(missing_samples, data_ptr->typedData(), Array::DOUBLE);
+      Fill(stream_state, /*record=*/filled, missing_samples,
+           data_ptr->typedData());
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /* -------------------------------------------------------------------------- */
 // XXX(damb): Using `new` to access a non-public ctor; see also
 // https://abseil.io/tips/134
@@ -556,9 +633,6 @@ DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
   detector_->config_ = config;
 
   detector_->enabled_ = config.enabled;
-
-  detector_->gap_interpolation_ = config.gap_interpolation;
-  detector_->gap_tolerance_ = config.gap_tolerance;
 
   return *this;
 }

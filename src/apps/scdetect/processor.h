@@ -138,15 +138,6 @@ public:
   // Returns the processor's initialization time
   virtual const Core::TimeSpan init_time() const;
 
-  // Sets the maximal gap length in seconds for that missing samples are
-  // handled or tolerated. Default: no tolerance
-  virtual void set_gap_tolerance(const Core::TimeSpan &duration);
-  virtual const Core::TimeSpan &gap_tolerance() const;
-  // Enables/disables the linear interpolation of missing samples
-  // inside a set gap tolerance
-  virtual void set_gap_interpolation(bool e);
-  virtual bool gap_interpolation() const;
-
   // Default implementation returns if the status if greater than
   // Status::kInProgress.
   virtual bool finished() const;
@@ -215,10 +206,7 @@ protected:
   // Handles gaps. Returns whether the gap has been handled or not.
   virtual bool HandleGap(StreamState &stream_state, RecordCPtr record,
                          DoubleArrayPtr data);
-  // Fill gaps
-  virtual bool FillGap(StreamState &stream_state, RecordCPtr record,
-                       const Core::TimeSpan &duration, double next_sample,
-                       size_t missing_samples);
+
   // Fill data and perform filtering (if required)
   virtual void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples);
@@ -256,13 +244,6 @@ protected:
 
   // Processor initialization time
   Core::TimeSpan init_time_;
-
-  //! Threshold to recognize a gap
-  Core::TimeSpan gap_threshold_{0.1};
-  // Maximum gap length to tolerate and to be handled
-  Core::TimeSpan gap_tolerance_{0.5};
-
-  bool gap_interpolation_{false};
 
   PublishResultCallback result_callback_;
 

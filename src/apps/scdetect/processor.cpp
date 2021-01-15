@@ -36,19 +36,7 @@ Processor::Status Processor::status() const { return status_; }
 
 double Processor::status_value() const { return status_value_; }
 
-void Processor::set_gap_tolerance(const Core::TimeSpan &duration) {
-  gap_tolerance_ = duration;
-}
-
 const Core::TimeSpan Processor::init_time() const { return init_time_; }
-
-const Core::TimeSpan &Processor::gap_tolerance() const {
-  return gap_tolerance_;
-}
-
-void Processor::set_gap_interpolation(bool e) { gap_interpolation_ = e; }
-
-bool Processor::gap_interpolation() const { return gap_interpolation_; }
 
 bool Processor::finished() const { return Status::kInProgress < status_; }
 
@@ -134,70 +122,7 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
 
 bool Processor::HandleGap(StreamState &stream_state, RecordCPtr record,
                           DoubleArrayPtr data) {
-  if (stream_state.last_record) {
-    if (record == stream_state.last_record)
-      return false;
-
-    Core::TimeSpan gap{record->startTime() -
-                       stream_state.data_time_window.endTime() -
-                       /* one usec*/ Core::TimeSpan(0, 1)};
-    double gap_seconds = static_cast<double>(gap);
-
-    if (gap > gap_threshold_) {
-      size_t gap_samples = static_cast<size_t>(
-          ceil(stream_state.sampling_frequency * gap_seconds));
-      if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
-        SCDETECT_LOG_DEBUG_PROCESSOR(
-            this, "%s: detected gap (%.6f secs, %lu samples) (handled)",
-            record->streamID().c_str(), gap_seconds, gap_samples);
-      } else {
-        SCDETECT_LOG_DEBUG_PROCESSOR(
-            this,
-            "%s: detected gap (%.6f secs, %lu samples) (NOT "
-            "handled): status=%d",
-            record->streamID().c_str(), gap_seconds, gap_samples,
-            // TODO(damb): Verify if this is the correct status
-            // to be displayed
-            static_cast<int>(status()));
-        if (status() > Processor::Status::kInProgress)
-          return false;
-      }
-    } else if (gap_seconds < 0) {
-      // handle record from the past
-      size_t gap_samples = static_cast<size_t>(
-          ceil(-1 * stream_state.sampling_frequency * gap_seconds));
-      if (gap_samples > 1)
-        return false;
-    }
-    stream_state.data_time_window.setEndTime(record->endTime());
-  }
   return true;
-}
-
-bool Processor::FillGap(StreamState &stream_state, RecordCPtr record,
-                        const Core::TimeSpan &duration, double next_sample,
-                        size_t missing_samples) {
-  if (duration <= gap_tolerance_) {
-    if (gap_interpolation_) {
-      auto header_only{utils::make_smart<GenericRecord>(
-          record->networkCode(), record->stationCode(), record->locationCode(),
-          record->channelCode(), record->startTime(),
-          record->samplingFrequency())};
-
-      double delta{next_sample - stream_state.last_sample};
-      double step{1. / static_cast<double>(missing_samples + 1)};
-      double di = step;
-      for (size_t i = 0; i < missing_samples; ++i, di += step) {
-        double value{stream_state.last_sample + di * delta};
-        // XXX(damb): Passing `header_only` record indicates gap filling; check
-        // if there is a more elegant solution
-        Fill(stream_state, /*record=*/header_only, 1, &value);
-      }
-      return true;
-    }
-  }
-
-  return false;
 }
 
 void Processor::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
