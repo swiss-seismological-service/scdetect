@@ -750,9 +750,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   detector_->stream_configs_[stream_id].stream_buffer =
-      utils::make_unique<RingBuffer>(
-          detector_->stream_configs_[stream_id].processor->init_time() *
-          settings::kBufferMultiplicator);
+      utils::make_unique<RingBuffer>(template_init_time *
+                                     settings::kBufferMultiplicator);
 
   detector_->stream_configs_[stream_id].metadata.sensor_location =
       stream->sensorLocation();
