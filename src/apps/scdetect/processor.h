@@ -258,9 +258,9 @@ protected:
   Core::TimeSpan init_time_;
 
   //! Threshold to recognize a gap
-  Core::TimeSpan gap_threshold_;
+  Core::TimeSpan gap_threshold_{0.1};
   // Gap length to tolerate
-  Core::TimeSpan gap_tolerance_;
+  Core::TimeSpan gap_tolerance_{0.5};
 
   bool gap_interpolation_{false};
 
