@@ -194,8 +194,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
     stream_ids = utils::filter_keys(stream_configs_, if_enabled);
     strict = false;
   }
-  auto tw{FindBufferedTimeWindow(stream_ids, strict)};
 
+  auto tw{FindBufferedTimeWindow(stream_ids, strict)};
   if (!tw)
     return;
 
