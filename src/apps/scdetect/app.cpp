@@ -724,6 +724,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.gapInterpolation");
 
+  NEW_OPT(config_.detector_config.gap_threshold, "processing.minGapLength");
   NEW_OPT(config_.detector_config.gap_tolerance, "processing.maxGapLength");
   NEW_OPT(config_.detector_config.trigger_on, "detector.triggerOnThreshold");
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
