@@ -54,8 +54,8 @@
         </parameter>
         <parameter name="maxGapLength" type="double" default="4.5" unit="s">
           <description>
-            The maximum gap length in seconds to handle. Gaps larger than the
-            value specified will cause the detector to be reset.
+            The default maximum gap length in seconds to handle. Gaps larger
+            than the value specified will cause the detector to be reset.
           </description>
         </parameter>
       </group>
