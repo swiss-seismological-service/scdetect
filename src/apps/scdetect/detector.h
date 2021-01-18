@@ -80,6 +80,16 @@ public:
 
   void set_filter(Filter *filter) override;
 
+  // Sets the maximal gap length to be tolerated
+  void set_gap_tolerance(const Core::TimeSpan &duration);
+  // Returns the gap tolerance
+  const Core::TimeSpan gap_tolerance() const;
+  // Enables/disables the linear interpolation of missing samples
+  // if the gap is smaller than the configured gap tolerance
+  void set_gap_interpolation(bool e);
+  // Returns if gap interpolation is enabled or disabled, respectively
+  bool gap_interpolation() const;
+
   bool Feed(const Record *rec) override;
   void Reset() override;
 
@@ -90,6 +100,9 @@ public:
 protected:
   void Process(StreamState &stream_state, RecordCPtr record,
                const DoubleArray &filtered_data) override;
+
+  bool HandleGap(StreamState &stream_state, RecordCPtr record,
+                 DoubleArrayPtr data) override;
 
   void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
             double *samples) override;
@@ -105,6 +118,11 @@ protected:
   void ResetProcessors();
 
 private:
+  // Fill gaps
+  bool FillGap(StreamState &stream_state, RecordCPtr record,
+               const Core::TimeSpan &duration, double next_sample,
+               size_t missing_samples);
+
   using WaveformStreamID = std::string;
 
   struct StreamConfig;
@@ -178,7 +196,7 @@ public:
   // Set stream related template configuration
   DetectorBuilder &
   set_stream(const std::string &stream_id, const StreamConfig &stream_config,
-             WaveformHandlerIfacePtr wf_handler,
+             WaveformHandlerIfacePtr wf_handler, double gap_tolerance,
              const boost::filesystem::path &path_debug_info = "");
   DetectorBuilder &
   // Set a callback function for publishing a detection

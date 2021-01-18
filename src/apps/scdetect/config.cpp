@@ -91,7 +91,8 @@ bool DetectorConfig::IsValid() const {
   return (utils::ValidateXCorrThreshold(trigger_on) &&
           utils::ValidateXCorrThreshold(trigger_off) &&
           (!gap_interpolation ||
-           (gap_interpolation && utils::IsGeZero(gap_tolerance))));
+           (gap_interpolation && utils::IsGeZero(gap_threshold) &&
+            utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
@@ -109,8 +110,10 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("timeCorrection", detector_defaults.time_correction);
   detector_config_.gap_interpolation =
       pt.get<bool>("gapInterpolation", detector_defaults.gap_interpolation);
+  detector_config_.gap_threshold =
+      pt.get<double>("gapThreshold", detector_defaults.gap_threshold);
   detector_config_.gap_tolerance =
-      pt.get<bool>("gapTolerance", detector_defaults.gap_tolerance);
+      pt.get<double>("gapTolerance", detector_defaults.gap_tolerance);
   // TODO(damb): Should we specify the detector's init time based on the init
   // times of the underlying Template processors?
   detector_config_.maximum_latency =
@@ -120,7 +123,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
 
   if (!detector_config_.IsValid()) {
     throw config::ParserException{
-        "Invalid template specific detector configuration."};
+        "Invalid template specific detector configuration"};
   }
 
   // patch stream defaults with detector config globals

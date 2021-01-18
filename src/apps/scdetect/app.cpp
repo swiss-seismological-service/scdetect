@@ -724,6 +724,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.gapInterpolation");
 
+  NEW_OPT(config_.detector_config.gap_threshold, "processing.minGapLength");
   NEW_OPT(config_.detector_config.gap_tolerance, "processing.maxGapLength");
   NEW_OPT(config_.detector_config.trigger_on, "detector.triggerOnThreshold");
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
@@ -855,7 +856,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
             try {
               detector_builder.set_stream(stream_config_pair.first,
                                           stream_config_pair.second,
-                                          waveform_handler, path_debug_info);
+                                          waveform_handler, 0, path_debug_info);
             } catch (builder::NoSensorLocation &e) {
               if (config_.skip_template_if_no_sensor_location_data) {
                 SCDETECT_LOG_WARNING(

@@ -132,19 +132,11 @@ public:
   // Returns the value associated with the status
   double status_value() const;
 
-  // Sets the filter to apply
+  // Sets the filter to apply; the filter pointer passed is owned by the
+  // `Processor`
   virtual void set_filter(Filter *filter) = 0;
-  // Returns the processor's initialization time in seconds
+  // Returns the processor's initialization time
   virtual const Core::TimeSpan init_time() const;
-
-  // Sets the maximal gap length in seconds for that missing samples are
-  // handled or tolerated. Default: no tolerance
-  virtual void set_gap_tolerance(const Core::TimeSpan &duration);
-  virtual const Core::TimeSpan &gap_tolerance() const;
-  // Enables/disables the linear interpolation of missing samples
-  // inside a set gap tolerance
-  virtual void set_gap_interpolation(bool e);
-  virtual bool gap_interpolation() const;
 
   // Default implementation returns if the status if greater than
   // Status::kInProgress.
@@ -214,10 +206,7 @@ protected:
   // Handles gaps. Returns whether the gap has been handled or not.
   virtual bool HandleGap(StreamState &stream_state, RecordCPtr record,
                          DoubleArrayPtr data);
-  // Fill gaps
-  virtual bool FillGap(StreamState &stream_state, RecordCPtr record,
-                       const Core::TimeSpan &duration, double next_sample,
-                       size_t missing_samples);
+
   // Fill data and perform filtering (if required)
   virtual void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
                     double *samples);
@@ -255,13 +244,6 @@ protected:
 
   // Processor initialization time
   Core::TimeSpan init_time_;
-
-  //! Threshold to recognize a gap
-  Core::TimeSpan gap_threshold_;
-  // Gap length to tolerate
-  Core::TimeSpan gap_tolerance_;
-
-  bool gap_interpolation_{false};
 
   PublishResultCallback result_callback_;
 
