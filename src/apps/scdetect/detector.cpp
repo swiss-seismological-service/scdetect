@@ -160,7 +160,7 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
       if (it == stream_configs_.end())
         continue;
 
-      const auto &buffered_tw{it->second.stream_buffer->timeWindow()};
+      const auto buffered_tw{it->second.stream_buffer->windows().back()};
 
       // Ignore data with too high latency
       if (config.maximum_latency > 0 &&
@@ -214,8 +214,12 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   if (processed()) {
     if (tw.endTime() <= processed().endTime())
       return;
-    // TODO(damb): Define margin?
-    tw.setStartTime(processed().endTime());
+
+    // take gaps into account
+    if (tw.startTime() < processed().endTime()) {
+      // TODO(damb): Define margin?
+      tw.setStartTime(processed().endTime());
+    }
   }
 
   // process templates i.e. compute cross-correlations
