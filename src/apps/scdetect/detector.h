@@ -196,7 +196,7 @@ public:
   // Set stream related template configuration
   DetectorBuilder &
   set_stream(const std::string &stream_id, const StreamConfig &stream_config,
-             WaveformHandlerIfacePtr wf_handler,
+             WaveformHandlerIfacePtr wf_handler, double gap_tolerance,
              const boost::filesystem::path &path_debug_info = "");
   DetectorBuilder &
   // Set a callback function for publishing a detection

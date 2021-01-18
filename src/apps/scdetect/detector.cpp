@@ -690,11 +690,10 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   return *this;
 }
 
-DetectorBuilder &
-DetectorBuilder::set_stream(const std::string &stream_id,
-                            const StreamConfig &stream_config,
-                            WaveformHandlerIfacePtr waveform_handler,
-                            const boost::filesystem::path &path_debug_info)
+DetectorBuilder &DetectorBuilder::set_stream(
+    const std::string &stream_id, const StreamConfig &stream_config,
+    WaveformHandlerIfacePtr waveform_handler, double gap_tolerance,
+    const boost::filesystem::path &path_debug_info)
 
 {
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
@@ -845,8 +844,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   detector_->stream_configs_[stream_id].stream_buffer =
-      utils::make_unique<RingBuffer>(template_init_time *
-                                     settings::kBufferMultiplicator);
+      utils::make_unique<RingBuffer>(
+          template_init_time * settings::kBufferMultiplicator, gap_tolerance);
 
   detector_->stream_configs_[stream_id].metadata.sensor_location =
       stream->sensorLocation();
