@@ -111,9 +111,9 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   detector_config_.gap_interpolation =
       pt.get<bool>("gapInterpolation", detector_defaults.gap_interpolation);
   detector_config_.gap_threshold =
-      pt.get<bool>("gapThreshold", detector_defaults.gap_threshold);
+      pt.get<double>("gapThreshold", detector_defaults.gap_threshold);
   detector_config_.gap_tolerance =
-      pt.get<bool>("gapTolerance", detector_defaults.gap_tolerance);
+      pt.get<double>("gapTolerance", detector_defaults.gap_tolerance);
   // TODO(damb): Should we specify the detector's init time based on the init
   // times of the underlying Template processors?
   detector_config_.maximum_latency =
