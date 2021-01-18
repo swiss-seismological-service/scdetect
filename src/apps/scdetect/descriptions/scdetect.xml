@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp>
-	<module name="scdetect" category="Processing" inherit-global-bindings="true">
-		<description>Template matching based earthquake detection</description>
-		<configuration>
+  <module name="scdetect" category="Processing" inherit-global-bindings="true">
+    <description>Template matching based earthquake detection</description>
+    <configuration>
       <group name="template">
         <parameter name="phase" type="string" default="Pg">
           <description>
@@ -23,15 +23,16 @@
         </parameter>
         <parameter name="filter" type="string">
           <description>
-            Defines the default filter in place during the template waveform creation.
+            Defines the default filter in place during the template waveform
+            creation.
           </description>
         </parameter>
       </group>
       <group name="processing">
         <parameter name="sensitivityCorrection" type="boolean" default="false">
           <description>
-            Defines whether processors apply sensitivity correction (applying the
-            gain) or not in advance to filter the data.
+            Defines whether processors apply sensitivity correction (applying
+            the gain) or not in advance to filter the data.
           </description>
         </parameter>
         <parameter name="filter" type="string">
@@ -74,9 +75,9 @@
         <parameter name="triggerOn" type="double" default="0.85">
           <description>
             Default threshold which defines when a detector is triggered.
-					</description>
-				</parameter>
-				<parameter name="triggerOff" type="double" default="0.65">
+          </description>
+        </parameter>
+        <parameter name="triggerOff" type="double" default="0.65">
           <description>
             Default threshold which defines when the detector is enabled in
             order to produce new origins, again. Note that this threshold
@@ -84,12 +85,12 @@
             soon as the *triggerOff* threshold is met a detector result is
             issued.
           </description>
-				</parameter>
-				<parameter name="triggerDuration" type="double" default="2" unit="s">
+        </parameter>
+        <parameter name="triggerDuration" type="double" default="2" unit="s">
           <description>
             Maximum default duration in seconds after reaching the *triggerOn*
-            threshold to search for the maximum correlation
-            between configured streams.
+            threshold to search for the maximum correlation between configured
+            streams.
           </description>
         </parameter>
         <parameter name="createPicks" type="boolean" default="false">
@@ -97,98 +98,98 @@
             Defines the default value for computing and associating
             *theoretical picks* with created origins i.e. detections.
           </description>
-				</parameter>
+        </parameter>
       </group>
     </configuration>
 
-		<command-line>
-			<group name="Generic">
-				<optionReference>generic#help</optionReference>
-				<optionReference>generic#version</optionReference>
-				<optionReference>generic#config-file</optionReference>
-				<optionReference>generic#plugins</optionReference>
-				<optionReference>generic#daemon</optionReference>
-				<optionReference>generic#auto-shutdown</optionReference>
-				<optionReference>generic#shutdown-master-module</optionReference>
-				<optionReference>generic#shutdown-master-username</optionReference>
-			</group>
+    <command-line>
+      <group name="Generic">
+        <optionReference>generic#help</optionReference>
+        <optionReference>generic#version</optionReference>
+        <optionReference>generic#config-file</optionReference>
+        <optionReference>generic#plugins</optionReference>
+        <optionReference>generic#daemon</optionReference>
+        <optionReference>generic#auto-shutdown</optionReference>
+        <optionReference>generic#shutdown-master-module</optionReference>
+        <optionReference>generic#shutdown-master-username</optionReference>
+      </group>
 
-			<group name="Verbosity">
-				<optionReference>verbosity#verbosity</optionReference>
-				<optionReference>verbosity#v</optionReference>
-				<optionReference>verbosity#quiet</optionReference>
-				<optionReference>verbosity#component</optionReference>
-				<optionReference>verbosity#syslog</optionReference>
-				<optionReference>verbosity#lockfile</optionReference>
-				<optionReference>verbosity#console</optionReference>
-				<optionReference>verbosity#debug</optionReference>
-				<optionReference>verbosity#log-file</optionReference>
-			</group>
+      <group name="Verbosity">
+        <optionReference>verbosity#verbosity</optionReference>
+        <optionReference>verbosity#v</optionReference>
+        <optionReference>verbosity#quiet</optionReference>
+        <optionReference>verbosity#component</optionReference>
+        <optionReference>verbosity#syslog</optionReference>
+        <optionReference>verbosity#lockfile</optionReference>
+        <optionReference>verbosity#console</optionReference>
+        <optionReference>verbosity#debug</optionReference>
+        <optionReference>verbosity#log-file</optionReference>
+      </group>
 
-			<group name="Messaging">
-				<optionReference>messaging#user</optionReference>
-				<optionReference>messaging#host</optionReference>
-				<optionReference>messaging#timeout</optionReference>
-				<optionReference>messaging#primary-group</optionReference>
-				<optionReference>messaging#subscribe-group</optionReference>
-				<optionReference>messaging#content-type</optionReference>
-				<optionReference>messaging#start-stop-msg</optionReference>
-				<option flag="" long-flag="offline">
+      <group name="Messaging">
+        <optionReference>messaging#user</optionReference>
+        <optionReference>messaging#host</optionReference>
+        <optionReference>messaging#timeout</optionReference>
+        <optionReference>messaging#primary-group</optionReference>
+        <optionReference>messaging#subscribe-group</optionReference>
+        <optionReference>messaging#content-type</optionReference>
+        <optionReference>messaging#start-stop-msg</optionReference>
+        <option flag="" long-flag="offline">
           <description>
             Do not connect to the messaging system.
           </description>
         </option>
-				<option flag="" long-flag="no-publish">
-					<description>
+        <option flag="" long-flag="no-publish">
+          <description>
             Runs the module as usual but does not send any messages. This can
             be useful to test the module within a running system.
-					</description>
-				</option>
-				<option flag="" long-flag="ep">
+          </description>
+        </option>
+        <option flag="" long-flag="ep">
           <description>
             Same as --no-publish, but outputs all event parameters scml
             formatted; specifying the output path as '-' (a single dash) will
             force the output to be redirected to stdout.
-					</description>
-				</option>
-			</group>
+          </description>
+        </option>
+      </group>
 
-			<group name="Database">
-				<optionReference>database#db-driver-list</optionReference>
-				<optionReference>database#database</optionReference>
-				<optionReference>database#config-module</optionReference>
-				<optionReference>database#inventory-db</optionReference>
-				<option flag="" long-flag="db-disable" argument="" publicID="database#db-disable">
+      <group name="Database">
+        <optionReference>database#db-driver-list</optionReference>
+        <optionReference>database#database</optionReference>
+        <optionReference>database#config-module</optionReference>
+        <optionReference>database#inventory-db</optionReference>
+        <option flag="" long-flag="db-disable" argument="" publicID="database#db-disable">
           <description>Do not use the database at all</description>
-				</option>
-				<option flag="" long-flag="event-db" argument="">
+        </option>
+        <option flag="" long-flag="event-db" argument="">
           <description>
             Load events from the given database or file, format:
             [service://]location
           </description>
-				</option>
-			</group>
+        </option>
+      </group>
 
-			<group name="Records">
-				<optionReference>records#record-driver-list</optionReference>
-				<optionReference>records#record-url</optionReference>
-				<optionReference>records#record-file</optionReference>
-				<optionReference>records#record-type</optionReference>
-				<option flag="" long-flag="record-starttime" argument="">
+      <group name="Records">
+        <optionReference>records#record-driver-list</optionReference>
+        <optionReference>records#record-url</optionReference>
+        <optionReference>records#record-file</optionReference>
+        <optionReference>records#record-type</optionReference>
+        <option flag="" long-flag="record-starttime" argument="">
           <description>
             Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
             records from the configured archive recordstream. Useful for
             reprocessing.
           </description>
-				</option>
-				<option flag="" long-flag="record-endtime" argument="">
+        </option>
+        <option flag="" long-flag="record-endtime" argument="">
           <description>
             Defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
             records from the configured archive recordstream. Useful for
             reprocessing.
           </description>
-				</option>
-			</group>
+        </option>
+      </group>
 
       <group name="Mode">
         <option flag="" long-flag="debug-info">
@@ -200,16 +201,16 @@
         <option flag="" long-flag="load-templates">
           <description>Load templates and exit.</description>
         </option>
-			</group>
+      </group>
 
       <group name="Input">
-				<option flag="" long-flag="template-json">
+        <option flag="" long-flag="template-json">
           <description>
             Path to a template configuration file (JSON formatted).
-					</description>
-				</option>
-			</group>
+          </description>
+        </option>
+      </group>
 
-		</command-line>
-	</module>
+    </command-line>
+  </module>
 </seiscomp>
