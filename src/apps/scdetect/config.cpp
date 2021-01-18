@@ -92,7 +92,7 @@ bool DetectorConfig::IsValid() const {
           utils::ValidateXCorrThreshold(trigger_off) &&
           (!gap_interpolation ||
            (gap_interpolation && utils::IsGeZero(gap_threshold) &&
-            utils::IsGeZero(gap_tolerance))));
+            utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
