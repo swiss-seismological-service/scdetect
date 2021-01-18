@@ -123,7 +123,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
 
   if (!detector_config_.IsValid()) {
     throw config::ParserException{
-        "Invalid template specific detector configuration."};
+        "Invalid template specific detector configuration"};
   }
 
   // patch stream defaults with detector config globals
