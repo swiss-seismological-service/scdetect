@@ -80,12 +80,16 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
 
 // samples for parameterized testing
 using Samples = std::vector<ds::Sample>;
-Samples dataset{
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml", /*path_sample=*/"integration-single-stream-simple"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-with-picks"}};
+Samples dataset{{"templates.json", "inventory.scml", "catalog.scml",
+                 "data.mseed", "expected.scml",
+                 /*path_sample=*/"integration-single-stream-simple"},
+                {"templates.json", "inventory.scml", "catalog.scml",
+                 "data.mseed", "expected.scml",
+                 /*path_sample=*/"integration-single-stream-simple-with-picks"},
+                {"templates.json", "inventory.scml", "catalog.scml",
+                 "data.mseed", "expected.scml",
+                 /*path_sample=*/
+                 "integration-multi-detector-single-stream-simple-with-picks"}};
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
