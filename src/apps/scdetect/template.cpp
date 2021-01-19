@@ -53,10 +53,18 @@ std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-Template::Template(const std::string &template_id) : Processor{template_id} {}
+Template::Template(const std::string &template_id, const Processor *p)
+    : Processor{template_id}, detector_{p} {}
 
-TemplateBuilder Template::Create(const std::string &template_id) {
-  return TemplateBuilder(template_id);
+TemplateBuilder Template::Create(const std::string &template_id,
+                                 const Processor *p) {
+  return TemplateBuilder(template_id, p);
+}
+
+const std::string Template::id() const {
+  return detector_ ? std::string{detector_->id() + settings::kProcessorIdSep +
+                                 Processor::id()}
+                   : Processor::id();
 }
 
 void Template::set_filter(Filter *filter) {
@@ -221,8 +229,9 @@ void Template::InitFilter(StreamState &stream_state, double sampling_freq) {
 /* ------------------------------------------------------------------------- */
 // XXX(damb): Using `new` to access a non-public ctor; see also
 // https://abseil.io/tips/134
-TemplateBuilder::TemplateBuilder(const std::string &template_id)
-    : template_(new Template{template_id}) {}
+TemplateBuilder::TemplateBuilder(const std::string &template_id,
+                                 const Processor *p)
+    : template_(new Template{template_id, p}) {}
 
 TemplateBuilder &
 TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {

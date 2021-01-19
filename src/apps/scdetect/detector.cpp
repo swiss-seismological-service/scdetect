@@ -825,7 +825,7 @@ DetectorBuilder &DetectorBuilder::set_stream(
                      stream_config.template_id.c_str());
 
   detector_->stream_configs_[stream_id].processor =
-      Template::Create(stream_config.template_id)
+      Template::Create(stream_config.template_id, detector_.get())
           .set_phase(stream_config.template_config.phase)
           .set_arrival_weight(arrival_weight)
           .set_pick(pick)

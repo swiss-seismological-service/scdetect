@@ -28,31 +28,17 @@ StreamConfig::StreamConfig(const std::string &wf_stream_id,
                            const std::string &filter, const double init_time,
                            const bool sensitivity_correction,
                            const TemplateStreamConfig &template_config,
-                           const std::string &detector_id,
                            const std::string &template_id)
     : wf_stream_id(wf_stream_id), init_time(init_time), filter(filter),
       sensitivity_correction(sensitivity_correction),
-      template_config(template_config) {
-
-  // concat ids
-  auto EmergeTemplateId = [&template_id]() {
-    return template_id.empty() ? utils::CreateUUID() : template_id;
-  };
-  this->template_id =
-      detector_id.empty()
-          ? EmergeTemplateId()
-          : detector_id + settings::kProcessorIdSep + EmergeTemplateId();
-}
+      template_config(template_config) {}
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
-                           const StreamConfig &defaults,
-                           const std::string &detector_id)
+                           const StreamConfig &defaults)
     // concat ids
-    : template_id{detector_id.empty()
-                      ? pt.get<std::string>("templateId", utils::CreateUUID())
-                      : detector_id + settings::kProcessorIdSep +
-                            pt.get<std::string>("templateId",
-                                                utils::CreateUUID())},
+    : template_id{pt.get<std::string>("templateId", utils::CreateUUID())
+
+      },
       wf_stream_id(pt.get<std::string>("waveformId")),
       init_time(pt.get<double>("initTime", defaults.init_time)),
       filter(pt.get<std::string>("filter", defaults.filter)),
@@ -151,7 +137,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       std::string wf_id;
       try {
         StreamConfig stream_config{stream_config_pair.second,
-                                   patched_stream_defaults, detector_id_};
+                                   patched_stream_defaults};
         stream_configs.emplace(stream_config.wf_stream_id, stream_config);
         wf_id = stream_config.wf_stream_id;
       } catch (boost::property_tree::ptree_error &e) {

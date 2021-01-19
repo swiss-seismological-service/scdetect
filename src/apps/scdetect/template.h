@@ -23,11 +23,12 @@ class TemplateBuilder;
 DEFINE_SMARTPOINTER(Template);
 class Template : public Processor {
 
-  Template(const std::string &template_id);
+  Template(const std::string &template_id, const Processor *p = nullptr);
 
 public:
   friend class TemplateBuilder;
-  static TemplateBuilder Create(const std::string &template_id);
+  static TemplateBuilder Create(const std::string &template_id,
+                                const Processor *p = nullptr);
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
@@ -67,7 +68,10 @@ public:
                                     const MatchResult &result);
   };
 
+  const std::string id() const override;
+
   void set_filter(Filter *filter) override;
+
   const Core::TimeSpan init_time() const override;
 
   bool Feed(const Record *record) override;
@@ -111,11 +115,13 @@ private:
   double waveform_squared_sum_{0};
   // Template waveform samples summed
   double waveform_sum_{0};
+
+  const Processor *detector_{nullptr};
 };
 
 class TemplateBuilder : public Builder<TemplateBuilder> {
 public:
-  TemplateBuilder(const std::string &template_id);
+  TemplateBuilder(const std::string &template_id, const Processor *p);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
   TemplateBuilder &set_phase(const std::string &phase);
   TemplateBuilder &set_pick(DataModel::PickCPtr pick);
