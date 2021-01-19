@@ -1,5 +1,6 @@
 [
     {
+        "detectorId": "detector-01",
         "createPicks": true,
         "sensitivityCorrection": false,
         "triggerDuration": -1,
@@ -9,6 +10,7 @@
         "streams": [
             [
                 {
+                    "templateId": "template-01",
                     "initTime": 10,
                     "templateWaveformStart": -2,
                     "templateWaveformEnd": 2,
