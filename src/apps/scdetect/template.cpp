@@ -61,6 +61,12 @@ TemplateBuilder Template::Create(const std::string &template_id,
   return TemplateBuilder(template_id, p);
 }
 
+const std::string Template::id() const {
+  return detector_ ? std::string{detector_->id() + settings::kProcessorIdSep +
+                                 Processor::id()}
+                   : Processor::id();
+}
+
 void Template::set_filter(Filter *filter) {
   if (stream_state_.filter)
     delete stream_state_.filter;

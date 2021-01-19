@@ -122,7 +122,7 @@ public:
   bool enabled() const;
 
   // Returns the processor's identifier
-  const std::string &id() const;
+  virtual const std::string id() const;
 
   virtual void set_result_callback(PublishResultCallback callback);
 

@@ -51,11 +51,9 @@ struct StreamConfig {
   StreamConfig(const std::string &wf_stream_id, const std::string &filter,
                const double init_time, const bool sensitivity_correction,
                const TemplateStreamConfig &template_config,
-               const std::string &detector_id = "",
                const std::string &template_id = "");
   StreamConfig(const boost::property_tree::ptree &pt,
-               const StreamConfig &defaults,
-               const std::string &detector_id = "");
+               const StreamConfig &defaults);
 
   bool IsValid() const;
 
