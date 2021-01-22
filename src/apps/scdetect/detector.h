@@ -107,6 +107,8 @@ protected:
   void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
             double *samples) override;
 
+  void InitStream(StreamState &stream_state, RecordCPtr record) override;
+
   bool EnoughDataReceived(const StreamState &stream_state) const override;
 
   void StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,

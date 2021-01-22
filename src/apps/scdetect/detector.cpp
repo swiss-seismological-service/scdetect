@@ -497,17 +497,6 @@ bool Detector::HandleGap(StreamState &stream_state, RecordCPtr record,
   if (record == stream_state.last_record)
     return false;
 
-  const auto min_thres{2 * 1.0 / record->samplingFrequency()};
-  if (min_thres > config_.gap_threshold) {
-    SCDETECT_LOG_WARNING_PROCESSOR(
-        this,
-        "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
-        "Resetting gap threshold.",
-        min_thres, config_.gap_threshold);
-
-    config_.gap_threshold = min_thres;
-  }
-
   Core::TimeSpan gap{record->startTime() -
                      stream_state.data_time_window.endTime() -
                      /* one usec*/ Core::TimeSpan(0, 1)};
@@ -557,6 +546,21 @@ void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
         this, "%s: Error while buffering data: start=%s, end=%s, samples=%d",
         record->streamID().c_str(), record->startTime().iso().c_str(),
         record->endTime().iso().c_str(), record->sampleCount());
+  }
+}
+
+void Detector::InitStream(StreamState &stream_state, RecordCPtr record) {
+  Processor::InitStream(stream_state, record);
+
+  const auto min_thres{2 * 1.0 / record->samplingFrequency()};
+  if (min_thres > config_.gap_threshold) {
+    SCDETECT_LOG_WARNING_PROCESSOR(
+        this,
+        "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
+        "Resetting gap threshold.",
+        min_thres, config_.gap_threshold);
+
+    config_.gap_threshold = min_thres;
   }
 }
 
