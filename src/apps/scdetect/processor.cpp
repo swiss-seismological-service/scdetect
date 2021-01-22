@@ -84,7 +84,7 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   // XXX: Do not use else here, because stream_state.last_record can be set to
   // nullptr when calling Reset() in FillGap(...)
   if (!stream_state.last_record) {
-    InitFilter(stream_state, record->samplingFrequency());
+    InitStream(stream_state, record->samplingFrequency());
 
     // update the received data timewindow
     stream_state.data_time_window = record->timeWindow();
@@ -150,7 +150,7 @@ void Processor::EmitResult(RecordCPtr record, ResultCPtr result) {
     result_callback_(this, record, result);
 }
 
-void Processor::InitFilter(StreamState &stream_state, double sampling_freq) {
+void Processor::InitStream(StreamState &stream_state, double sampling_freq) {
   stream_state.sampling_frequency = sampling_freq;
   stream_state.needed_samples =
       static_cast<size_t>(init_time_ * stream_state.sampling_frequency + 0.5);
