@@ -150,12 +150,12 @@ void Processor::EmitResult(RecordCPtr record, ResultCPtr result) {
     result_callback_(this, record, result);
 }
 
-void Processor::InitStream(StreamState &stream_state, double sampling_freq) {
-  stream_state.sampling_frequency = sampling_freq;
-  stream_state.needed_samples =
-      static_cast<size_t>(init_time_ * stream_state.sampling_frequency + 0.5);
+void Processor::InitStream(StreamState &stream_state, RecordCPtr record) {
+  const auto &f{record->samplingFrequency()};
+  stream_state.sampling_frequency = f;
+  stream_state.needed_samples = static_cast<size_t>(init_time_ * f + 0.5);
   if (stream_state.filter)
-    stream_state.filter->setSamplingFrequency(sampling_freq);
+    stream_state.filter->setSamplingFrequency(f);
 }
 
 void Processor::set_status(Status status, double value) {
