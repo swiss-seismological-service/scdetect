@@ -216,8 +216,8 @@ protected:
   virtual bool EnoughDataReceived(const StreamState &stream_state) const;
 
   virtual void EmitResult(RecordCPtr record, ResultCPtr result);
-  // Initialize the filter for the given sampling frequency
-  virtual void InitFilter(StreamState &stream_state, double sampling_freq);
+  // Initialize the stream
+  virtual void InitStream(StreamState &stream_state, RecordCPtr record);
 
   void set_status(Status status, double value);
 

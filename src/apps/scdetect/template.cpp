@@ -218,8 +218,8 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   data_.append(n, samples);
 }
 
-void Template::InitFilter(StreamState &stream_state, double sampling_freq) {
-  Processor::InitFilter(stream_state, sampling_freq);
+void Template::InitStream(StreamState &stream_state, RecordCPtr record) {
+  Processor::InitStream(stream_state, record);
 
   stream_state.needed_samples =
       std::max(static_cast<size_t>(waveform_->sampleCount()),

@@ -84,7 +84,7 @@ protected:
   void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
             double *samples) override;
 
-  void InitFilter(StreamState &stream_state, double sampling_freq) override;
+  void InitStream(StreamState &stream_state, RecordCPtr record) override;
 
   DoubleArray data_;
 

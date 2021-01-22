@@ -494,54 +494,41 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
 bool Detector::HandleGap(StreamState &stream_state, RecordCPtr record,
                          DoubleArrayPtr data) {
 
-  if (stream_state.last_record) {
-    if (record == stream_state.last_record)
-      return false;
+  if (record == stream_state.last_record)
+    return false;
 
-    const auto min_thres{2 * 1.0 / record->samplingFrequency()};
-    if (min_thres > config_.gap_threshold) {
-      SCDETECT_LOG_WARNING_PROCESSOR(
+  Core::TimeSpan gap{record->startTime() -
+                     stream_state.data_time_window.endTime() -
+                     /* one usec*/ Core::TimeSpan(0, 1)};
+  double gap_seconds = static_cast<double>(gap);
+
+  if (gap > Core::TimeSpan{config_.gap_threshold}) {
+    size_t gap_samples = static_cast<size_t>(
+        ceil(stream_state.sampling_frequency * gap_seconds));
+    if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
+      SCDETECT_LOG_DEBUG_PROCESSOR(
+          this, "%s: detected gap (%.6f secs, %lu samples) (handled)",
+          record->streamID().c_str(), gap_seconds, gap_samples);
+    } else {
+      SCDETECT_LOG_DEBUG_PROCESSOR(
           this,
-          "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
-          "Resetting gap threshold.",
-          min_thres, config_.gap_threshold);
-
-      config_.gap_threshold = min_thres;
-    }
-
-    Core::TimeSpan gap{record->startTime() -
-                       stream_state.data_time_window.endTime() -
-                       /* one usec*/ Core::TimeSpan(0, 1)};
-    double gap_seconds = static_cast<double>(gap);
-
-    if (gap > Core::TimeSpan{config_.gap_threshold}) {
-      size_t gap_samples = static_cast<size_t>(
-          ceil(stream_state.sampling_frequency * gap_seconds));
-      if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
-        SCDETECT_LOG_DEBUG_PROCESSOR(
-            this, "%s: detected gap (%.6f secs, %lu samples) (handled)",
-            record->streamID().c_str(), gap_seconds, gap_samples);
-      } else {
-        SCDETECT_LOG_DEBUG_PROCESSOR(
-            this,
-            "%s: detected gap (%.6f secs, %lu samples) (NOT "
-            "handled): status=%d",
-            record->streamID().c_str(), gap_seconds, gap_samples,
-            // TODO(damb): Verify if this is the correct status
-            // to be displayed
-            static_cast<int>(status()));
-        if (status() > Processor::Status::kInProgress)
-          return false;
-      }
-    } else if (gap_seconds < 0) {
-      // handle record from the past
-      size_t gap_samples = static_cast<size_t>(
-          ceil(-1 * stream_state.sampling_frequency * gap_seconds));
-      if (gap_samples > 1)
+          "%s: detected gap (%.6f secs, %lu samples) (NOT "
+          "handled): status=%d",
+          record->streamID().c_str(), gap_seconds, gap_samples,
+          // TODO(damb): Verify if this is the correct status
+          // to be displayed
+          static_cast<int>(status()));
+      if (status() > Processor::Status::kInProgress)
         return false;
     }
-    stream_state.data_time_window.setEndTime(record->endTime());
+  } else if (gap_seconds < 0) {
+    // handle record from the past
+    size_t gap_samples = static_cast<size_t>(
+        ceil(-1 * stream_state.sampling_frequency * gap_seconds));
+    if (gap_samples > 1)
+      return false;
   }
+
   return true;
 }
 
@@ -558,6 +545,25 @@ void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
         this, "%s: Error while buffering data: start=%s, end=%s, samples=%d",
         record->streamID().c_str(), record->startTime().iso().c_str(),
         record->endTime().iso().c_str(), record->sampleCount());
+  }
+}
+
+void Detector::InitStream(StreamState &stream_state, RecordCPtr record) {
+  Processor::InitStream(stream_state, record);
+
+  const auto min_thres{2 * 1.0 / record->samplingFrequency()};
+  if (min_thres > config_.gap_threshold) {
+    SCDETECT_LOG_WARNING_PROCESSOR(
+        this,
+        "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
+        "Resetting gap threshold.",
+        min_thres, config_.gap_threshold);
+
+    // TODO(damb): When implementing the feature/handle-changing-sampling rates
+    // (see: https://github.com/damb/scdetect/issues/20) store remember the
+    // configured gap threshold value and reset the current gap threshold to
+    // the configured one, once the sampling interval decreases.
+    config_.gap_threshold = min_thres;
   }
 }
 

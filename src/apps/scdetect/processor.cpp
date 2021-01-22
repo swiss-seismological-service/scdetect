@@ -78,24 +78,15 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   DoubleArrayPtr data{
       dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-  if (!HandleGap(stream_state, record, data))
-    return false;
-
-  // XXX: Do not use else here, because stream_state.last_record can be set to
-  // nullptr when calling Reset() in FillGap(...)
   if (!stream_state.last_record) {
-    InitFilter(stream_state, record->samplingFrequency());
+    InitStream(stream_state, record);
+  } else {
+    if (!HandleGap(stream_state, record, data))
+      return false;
 
-    // update the received data timewindow
-    stream_state.data_time_window = record->timeWindow();
-
-    if (stream_state.filter) {
-      stream_state.filter->setStartTime(record->startTime());
-      stream_state.filter->setStreamID(
-          record->networkCode(), record->stationCode(), record->locationCode(),
-          record->channelCode());
-    }
+    stream_state.data_time_window.setEndTime(record->endTime());
   }
+
   Fill(stream_state, record, data->size(), data->typedData());
   if (Status::kInProgress < status())
     return false;
@@ -150,12 +141,33 @@ void Processor::EmitResult(RecordCPtr record, ResultCPtr result) {
     result_callback_(this, record, result);
 }
 
-void Processor::InitFilter(StreamState &stream_state, double sampling_freq) {
-  stream_state.sampling_frequency = sampling_freq;
-  stream_state.needed_samples =
-      static_cast<size_t>(init_time_ * stream_state.sampling_frequency + 0.5);
-  if (stream_state.filter)
-    stream_state.filter->setSamplingFrequency(sampling_freq);
+void Processor::InitStream(StreamState &stream_state, RecordCPtr record) {
+  const auto &f{record->samplingFrequency()};
+  stream_state.sampling_frequency = f;
+  stream_state.needed_samples = static_cast<size_t>(init_time_ * f + 0.5);
+  if (stream_state.filter) {
+    stream_state.filter->setSamplingFrequency(f);
+  }
+
+  // update the received data timewindow
+  stream_state.data_time_window = record->timeWindow();
+
+  if (stream_state.filter) {
+    stream_state.filter->setStartTime(record->startTime());
+    stream_state.filter->setStreamID(
+        record->networkCode(), record->stationCode(), record->locationCode(),
+        record->channelCode());
+  }
+
+  // update the received data timewindow
+  stream_state.data_time_window = record->timeWindow();
+
+  if (stream_state.filter) {
+    stream_state.filter->setStartTime(record->startTime());
+    stream_state.filter->setStreamID(
+        record->networkCode(), record->stationCode(), record->locationCode(),
+        record->channelCode());
+  }
 }
 
 void Processor::set_status(Status status, double value) {
