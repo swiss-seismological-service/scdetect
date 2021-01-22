@@ -78,13 +78,8 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   DoubleArrayPtr data{
       dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-  if (!HandleGap(stream_state, record, data))
-    return false;
-
-  // XXX: Do not use else here, because stream_state.last_record can be set to
-  // nullptr when calling Reset() in FillGap(...)
   if (!stream_state.last_record) {
-    InitStream(stream_state, record->samplingFrequency());
+    InitStream(stream_state, record);
 
     // update the received data timewindow
     stream_state.data_time_window = record->timeWindow();
@@ -95,7 +90,11 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
           record->networkCode(), record->stationCode(), record->locationCode(),
           record->channelCode());
     }
+  } else {
+    if (!HandleGap(stream_state, record, data))
+      return false;
   }
+
   Fill(stream_state, record, data->size(), data->typedData());
   if (Status::kInProgress < status())
     return false;
