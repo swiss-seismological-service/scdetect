@@ -80,16 +80,6 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
 
   if (!stream_state.last_record) {
     InitStream(stream_state, record);
-
-    // update the received data timewindow
-    stream_state.data_time_window = record->timeWindow();
-
-    if (stream_state.filter) {
-      stream_state.filter->setStartTime(record->startTime());
-      stream_state.filter->setStreamID(
-          record->networkCode(), record->stationCode(), record->locationCode(),
-          record->channelCode());
-    }
   } else {
     if (!HandleGap(stream_state, record, data))
       return false;
@@ -153,8 +143,29 @@ void Processor::InitStream(StreamState &stream_state, RecordCPtr record) {
   const auto &f{record->samplingFrequency()};
   stream_state.sampling_frequency = f;
   stream_state.needed_samples = static_cast<size_t>(init_time_ * f + 0.5);
-  if (stream_state.filter)
+  if (stream_state.filter) {
     stream_state.filter->setSamplingFrequency(f);
+  }
+
+  // update the received data timewindow
+  stream_state.data_time_window = record->timeWindow();
+
+  if (stream_state.filter) {
+    stream_state.filter->setStartTime(record->startTime());
+    stream_state.filter->setStreamID(
+        record->networkCode(), record->stationCode(), record->locationCode(),
+        record->channelCode());
+  }
+
+  // update the received data timewindow
+  stream_state.data_time_window = record->timeWindow();
+
+  if (stream_state.filter) {
+    stream_state.filter->setStartTime(record->startTime());
+    stream_state.filter->setStreamID(
+        record->networkCode(), record->stationCode(), record->locationCode(),
+        record->channelCode());
+  }
 }
 
 void Processor::set_status(Status status, double value) {
