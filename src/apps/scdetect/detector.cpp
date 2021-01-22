@@ -528,7 +528,6 @@ bool Detector::HandleGap(StreamState &stream_state, RecordCPtr record,
     if (gap_samples > 1)
       return false;
   }
-  stream_state.data_time_window.setEndTime(record->endTime());
 
   return true;
 }

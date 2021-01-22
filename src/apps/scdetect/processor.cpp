@@ -83,6 +83,8 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   } else {
     if (!HandleGap(stream_state, record, data))
       return false;
+
+    stream_state.data_time_window.setEndTime(record->endTime());
   }
 
   Fill(stream_state, record, data->size(), data->typedData());
