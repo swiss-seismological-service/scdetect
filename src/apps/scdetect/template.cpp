@@ -204,13 +204,13 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
     if (waveform_sampling_frequency_ < stream_state.sampling_frequency) {
       auto tmp{utils::make_smart<DoubleArray>(static_cast<int>(n), samples)};
       waveform::Resample(tmp, stream_state.sampling_frequency,
-                         waveform_sampling_frequency_, true);
+                         waveform_sampling_frequency_);
 
       n = tmp->size();
       samples = tmp->typedData();
     } else {
       auto resampled{utils::make_smart<GenericRecord>(*waveform_)};
-      waveform::Resample(*resampled, stream_state.sampling_frequency, true);
+      waveform::Resample(*resampled, stream_state.sampling_frequency);
       waveform_ = resampled;
       waveform_sampling_frequency_ = stream_state.sampling_frequency;
     }

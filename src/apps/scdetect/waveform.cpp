@@ -141,70 +141,77 @@ bool Filter(GenericRecord &trace, const std::string &filter_string) {
   return true;
 }
 
-void Resample(GenericRecord &trace, double sampling_frequency, bool average) {
+void Resample(GenericRecord &trace, double sampling_frequency) {
   if (sampling_frequency <= 0 ||
       trace.samplingFrequency() == sampling_frequency)
     return;
 
   DoubleArrayPtr data{DoubleArray::Cast(trace.data())};
-  Resample(data, trace.samplingFrequency(), sampling_frequency, average);
+  Resample(data, trace.samplingFrequency(), sampling_frequency);
 
   trace.setSamplingFrequency(static_cast<double>(sampling_frequency));
   trace.dataUpdated();
 }
 
-void Resample(DoubleArrayPtr data, double sampling_frequency_from,
-              double sampling_frequency_to, bool average) {
+void Resample(DoubleArrayPtr dataArr, double sampling_frequency_from,
+              double sampling_frequency_to) {
+  const double resamp_factor = sampling_frequency_to / sampling_frequency_from;
+  const double nyquist =
+      std::min(sampling_frequency_to, sampling_frequency_from) / 2.;
 
-  double step = sampling_frequency_from / sampling_frequency_to;
+  const double *data = dataArr->typedData();
+  const int data_size = dataArr->size();
 
-  if (sampling_frequency_from < sampling_frequency_to) {
-    // upsampling
-    double fi = data->size() - 1;
-    data->resize(data->size() / step);
+  const int resampled_data_size = data_size * resamp_factor;
+  double resampled_data[resampled_data_size];
 
-    for (int i = data->size() - 1; i >= 0; i--) {
-      (*data)[i] = (*data)[static_cast<int>(fi)];
-      fi -= step;
-    }
-  } else {
-    // downsampling
-    int w = average ? step * 0.5 + 0.5 : 0;
-    int i = 0;
-    double fi = 0.0;
-    int cnt = data->size();
+  /*
+   * Compute one sample of the resampled data:
+   *
+   * x: new sample point location (relative to old indexes)
+   *    (e.g. every other integer for 0.5x decimation)
+   * fmax: low pass filter cutoff frequency. Fmax should be less
+   *       than half of data_freq, and less than half of the
+   *       new sample frequency (the reciprocal of the x step size).
+   * win_len: width of windowed Sinc used as the low pass filter
+   *          Filter quality increases with a larger window width.
+   *          The wider the window, the closer fmax can approach half of
+   *          data_freq or the new sample frequency
+   */
+  auto new_sample = [&data, &data_size, &sampling_frequency_from](
+                        double x, double fmax, double win_len) -> double {
+    double r_g =
+        2 * fmax / sampling_frequency_from;  // Calc gain correction factor
+    double r_y = 0;
 
-    if (w <= 0) {
-      while (fi < cnt) {
-        (*data)[i++] = (*data)[static_cast<int>(fi)];
-        fi += step;
-      }
-    } else {
-      while (fi < cnt) {
-        int ci = static_cast<int>(fi);
-        double scale = 1.0;
-        double v = (*data)[ci];
-
-        for (int g = 1; g < w; ++g) {
-          if (ci >= g) {
-            v += (*data)[ci - g];
-            scale += 1.0;
-          }
-
-          if (ci + g < cnt) {
-            v += (*data)[ci + g];
-            scale += 1.0;
-          }
-        }
-
-        v /= scale;
-
-        (*data)[i++] = v;
-        fi += step;
+    // For 1 window width
+    for (double win_i = -(win_len / 2.); win_i < (win_len / 2.); win_i += 1.) {
+      int j = int(x + win_i);  // input sample index
+      if (j >= 0 && j < data_size) {
+        // calculate von Hann Window. Scale and calculate Sinc
+        double r_w = 0.5 - 0.5 * std::cos(2 * M_PI * (0.5 + (j - x) / win_len));
+        double r_a = 2 * M_PI * (j - x) * fmax / sampling_frequency_from;
+        double r_snc = (r_a != 0) ? std::sin(r_a) / r_a : 1;
+        r_y = r_y + r_g * r_w * r_snc * data[j];
       }
     }
-    data->resize(i);
+    return r_y;
+  };
+
+  for (int i = 0; i < resampled_data_size; i++) {
+    /*
+     * If the x step size is rational the same Window and Sinc values
+     * will be recalculated repeatedly. Therefore these values can either
+     * be cached, or pre-calculated and stored in a table (polyphase
+     * interpolation); or interpolated from a smaller pre-calculated table;
+     * or computed from a set of low-order polynomials fitted to each
+     * section or lobe between  zero-crossings of the windowed Sinc (Farrow)
+     */
+    double x = i / resamp_factor;
+    resampled_data[i] = new_sample(x, nyquist, 4);
   }
+
+  dataArr->setData(resampled_data_size, resampled_data);
 }
 
 void Demean(GenericRecord &trace) {
@@ -413,7 +420,7 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
     waveform::Demean(*trace_ptr);
 
   if (config.resample_frequency)
-    waveform::Resample(*trace_ptr, config.resample_frequency, true);
+    waveform::Resample(*trace_ptr, config.resample_frequency);
 
   if (!config.filter_string.empty()) {
     if (!waveform::Filter(*trace_ptr, config.filter_string)) {

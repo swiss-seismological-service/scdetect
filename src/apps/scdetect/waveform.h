@@ -22,9 +22,9 @@ namespace waveform {
 bool Merge(GenericRecord &trace, const RecordSequence &seq);
 bool Trim(GenericRecord &trace, const Core::TimeWindow &tw);
 bool Filter(GenericRecord &trace, const std::string &filter_string);
-void Resample(GenericRecord &trace, double sampling_frequency, bool average);
+void Resample(GenericRecord &trace, double sampling_frequency);
 void Resample(DoubleArrayPtr data, double sampling_frequency_from,
-              double sampling_frequency_to, bool average);
+              double sampling_frequency_to);
 void Demean(GenericRecord &trace);
 void Demean(DoubleArrayPtr data);
 bool Write(const GenericRecord &trace, std::ostream &out);
