@@ -123,7 +123,19 @@ bool Filter(GenericRecord &trace, const std::string &filter_string) {
   if (filter_string.empty())
     return false;
 
-  DoubleArrayPtr data{DoubleArray::Cast(trace.data())};
+  auto data{DoubleArray::Cast(trace.data())};
+  if (!Filter(*data, filter_string, trace.samplingFrequency())) {
+    return false;
+  }
+  trace.dataUpdated();
+
+  return true;
+}
+
+bool Filter(DoubleArray &data, const std::string &filter_string,
+            double sampling_freq) {
+  if (filter_string.empty() || sampling_freq <= 0)
+    return false;
 
   std::string filter_error;
   auto filter = Math::Filtering::InPlaceFilter<double>::Create(filter_string,
@@ -133,10 +145,9 @@ bool Filter(GenericRecord &trace, const std::string &filter_string) {
                          filter_string.c_str(), filter_error.c_str());
     return false;
   }
-  filter->setSamplingFrequency(trace.samplingFrequency());
-  filter->apply(data->size(), data->typedData());
+  filter->setSamplingFrequency(sampling_freq);
+  filter->apply(data.size(), data.typedData());
   delete filter;
-  trace.dataUpdated();
 
   return true;
 }
