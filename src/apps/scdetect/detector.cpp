@@ -553,10 +553,10 @@ void Detector::InitStream(StreamState &stream_state, RecordCPtr record) {
         "Resetting gap threshold.",
         min_thres, config_.gap_threshold);
 
-    // TODO(damb): When implementing the feature/handle-changing-sampling rates
-    // (see: https://github.com/damb/scdetect/issues/20) store remember the
-    // configured gap threshold value and reset the current gap threshold to
-    // the configured one, once the sampling interval decreases.
+    // TODO(damb): When implementing the feature/handle-changing-sampling
+    // rates (see: https://github.com/damb/scdetect/issues/20) store remember
+    // the configured gap threshold value and reset the current gap threshold
+    // to the configured one, once the sampling interval decreases.
     config_.gap_threshold = min_thres;
   }
 }
