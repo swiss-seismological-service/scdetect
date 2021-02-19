@@ -169,12 +169,6 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,
                              waveform_sampling_frequency_, result, this)) {
-#ifdef SCDETECT_DEBUG
-    SCDETECT_LOG_DEBUG_PROCESSOR(
-        this, "[%s - %s]: fit=%f, lag=%f", record->startTime().iso().c_str(),
-        record->endTime().iso().c_str(), result->coefficient, result->lag);
-#endif
-
     EmitResult(record, result);
     merge_processed(Core::TimeWindow{
         record->startTime(),
