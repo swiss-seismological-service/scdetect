@@ -113,7 +113,8 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
     return false;
   }
 
-  trace.setStartTime(tw.startTime());
+  trace.setStartTime(trace.startTime() +
+                     Core::TimeSpan{offset / trace.samplingFrequency()});
   trace.setData(trace.data()->slice(offset, offset + samples));
 
   return true;
