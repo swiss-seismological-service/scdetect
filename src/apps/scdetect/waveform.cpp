@@ -146,25 +146,25 @@ void Resample(GenericRecord &trace, double sampling_frequency, bool average) {
       trace.samplingFrequency() == sampling_frequency)
     return;
 
-  DoubleArrayPtr data{DoubleArray::Cast(trace.data())};
-  Resample(data, trace.samplingFrequency(), sampling_frequency, average);
+  auto data{DoubleArray::Cast(trace.data())};
+  Resample(*data, trace.samplingFrequency(), sampling_frequency, average);
 
   trace.setSamplingFrequency(static_cast<double>(sampling_frequency));
   trace.dataUpdated();
 }
 
-void Resample(DoubleArrayPtr data, double sampling_frequency_from,
+void Resample(DoubleArray &data, double sampling_frequency_from,
               double sampling_frequency_to, bool average) {
 
   double step = sampling_frequency_from / sampling_frequency_to;
 
   if (sampling_frequency_from < sampling_frequency_to) {
     // upsampling
-    double fi = data->size() - 1;
-    data->resize(data->size() / step);
+    double fi = data.size() - 1;
+    data.resize(data.size() / step);
 
-    for (int i = data->size() - 1; i >= 0; i--) {
-      (*data)[i] = (*data)[static_cast<int>(fi)];
+    for (int i = data.size() - 1; i >= 0; i--) {
+      data[i] = data[static_cast<int>(fi)];
       fi -= step;
     }
   } else {
@@ -172,48 +172,48 @@ void Resample(DoubleArrayPtr data, double sampling_frequency_from,
     int w = average ? step * 0.5 + 0.5 : 0;
     int i = 0;
     double fi = 0.0;
-    int cnt = data->size();
+    int cnt = data.size();
 
     if (w <= 0) {
       while (fi < cnt) {
-        (*data)[i++] = (*data)[static_cast<int>(fi)];
+        data[i++] = data[static_cast<int>(fi)];
         fi += step;
       }
     } else {
       while (fi < cnt) {
         int ci = static_cast<int>(fi);
         double scale = 1.0;
-        double v = (*data)[ci];
+        double v = data[ci];
 
         for (int g = 1; g < w; ++g) {
           if (ci >= g) {
-            v += (*data)[ci - g];
+            v += data[ci - g];
             scale += 1.0;
           }
 
           if (ci + g < cnt) {
-            v += (*data)[ci + g];
+            v += data[ci + g];
             scale += 1.0;
           }
         }
 
         v /= scale;
 
-        (*data)[i++] = v;
+        data[i++] = v;
         fi += step;
       }
     }
-    data->resize(i);
+    data.resize(i);
   }
 }
 
 void Demean(GenericRecord &trace) {
-  DoubleArrayPtr data{DoubleArray::Cast(trace.data())};
-  Demean(data);
+  auto data{DoubleArray::Cast(trace.data())};
+  Demean(*data);
   trace.dataUpdated();
 }
 
-void Demean(DoubleArrayPtr data) { *data -= data->mean(); }
+void Demean(DoubleArray &data) { data -= data.mean(); }
 
 bool Write(const GenericRecord &trace, std::ostream &out) {
   IO::MSeedRecord rec{trace};
