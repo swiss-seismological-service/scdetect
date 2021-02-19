@@ -22,8 +22,8 @@ template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
 bool ValidateXCorrThreshold(const double &thres);
 
 template <typename TMap>
-auto map_keys(const TMap &map) -> std::vector<decltype(TMap::key_type)> {
-  std::vector<decltype(TMap::key_type)> retval;
+auto map_keys(const TMap &map) -> std::vector<typename TMap::key_type> {
+  std::vector<typename TMap::key_type> retval;
   for (const auto &pair : map)
     retval.push_back(pair.first);
 
@@ -31,8 +31,8 @@ auto map_keys(const TMap &map) -> std::vector<decltype(TMap::key_type)> {
 }
 
 template <typename TMap>
-auto map_values(const TMap &map) -> std::vector<decltype(TMap::key_type)> {
-  std::vector<decltype(TMap::key_type)> retval;
+auto map_values(const TMap &map) -> std::vector<typename TMap::mapped_type> {
+  std::vector<typename TMap::mapped_type> retval;
   for (const auto &pair : map)
     retval.push_back(pair.second);
 
