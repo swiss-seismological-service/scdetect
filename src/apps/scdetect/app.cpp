@@ -534,14 +534,14 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   DataModel::OriginQuality origin_quality{};
 
   if (azimuths.size() > 2) {
-    double azGap{};
+    double az_gap{};
     for (size_t i = 0; i < azimuths.size() - 1; ++i)
-      azGap = (azimuths[i + 1] - azimuths[i]) > azGap
-                  ? (azimuths[i + 1] - azimuths[i])
-                  : azGap;
+      az_gap = (azimuths[i + 1] - azimuths[i]) > az_gap
+                   ? (azimuths[i + 1] - azimuths[i])
+                   : az_gap;
 
-    origin_quality.setAzimuthalGap(azGap);
-    magnitude->setAzimuthalGap(azGap);
+    origin_quality.setAzimuthalGap(az_gap);
+    magnitude->setAzimuthalGap(az_gap);
   }
 
   if (!distances.empty()) {
