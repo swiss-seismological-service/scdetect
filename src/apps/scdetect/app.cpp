@@ -461,13 +461,7 @@ void Application::handleRecord(Record *rec) {
   if (!rec->data())
     return;
 
-  /* std::cerr << "Received record for " << rec->streamID() << ", " <<
-   * className() */
-  /*           << " [" << rec->startTime().iso() << " - " <<
-   * rec->endTime().iso() */
-  /*           << "]" << std::endl; */
-
-  auto range = detectors_.equal_range(std::string{rec->streamID()});
+  auto range{detectors_.equal_range(std::string{rec->streamID()})};
   for (auto it = range.first; it != range.second; ++it) {
     bool success{true};
 
