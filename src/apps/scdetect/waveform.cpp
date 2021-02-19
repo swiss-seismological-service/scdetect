@@ -213,7 +213,10 @@ void Demean(GenericRecord &trace) {
   trace.dataUpdated();
 }
 
-void Demean(DoubleArray &data) { data -= data.mean(); }
+void Demean(DoubleArray &data) {
+  const auto mean{utils::CMA(data.typedData(), data.size())};
+  data -= mean;
+}
 
 bool Write(const GenericRecord &trace, std::ostream &out) {
   IO::MSeedRecord rec{trace};
