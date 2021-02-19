@@ -492,7 +492,8 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};
 
-  SCDETECT_LOG_DEBUG_TAGGED(processor->id(), "Creating origin ...");
+  SCDETECT_LOG_DEBUG_TAGGED(processor->id(), "Creating origin (time=%s) ...",
+                            detection->time.iso().c_str());
   Core::Time now{Core::Time::GMT()};
 
   DataModel::CreationInfo ci;
