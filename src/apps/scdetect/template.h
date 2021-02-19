@@ -127,10 +127,15 @@ public:
   TemplateBuilder &set_pick(DataModel::PickCPtr pick);
   TemplateBuilder &set_arrival_weight(const double weight);
   TemplateBuilder &
+  // Set the template waveform of the `Template` waveform processor built.
+  // While `wf_start` and `wf_end` refer to the target template waveform start
+  // and end times, `wf_start_waveform` and `wf_end_waveform` refer to the
+  // actual times of the resulting waveform.
   set_waveform(WaveformHandlerIfacePtr waveform_handler,
                const std::string &stream_id, const Core::Time &wf_start,
                const Core::Time &wf_end,
-               const WaveformHandlerIface::ProcessingConfig &config);
+               const WaveformHandlerIface::ProcessingConfig &config,
+               Core::Time &wf_start_waveform, Core::Time &wf_end_waveform);
   TemplateBuilder &
   set_publish_callback(Processor::PublishResultCallback callback);
   TemplateBuilder &set_filter(Processor::Filter *filter,

@@ -251,7 +251,8 @@ TemplateBuilder &TemplateBuilder::set_arrival_weight(const double weight) {
 TemplateBuilder &TemplateBuilder::set_waveform(
     WaveformHandlerIfacePtr waveform_handler, const std::string &stream_id,
     const Core::Time &wf_start, const Core::Time &wf_end,
-    const WaveformHandlerIface::ProcessingConfig &config) {
+    const WaveformHandlerIface::ProcessingConfig &config,
+    Core::Time &wf_start_waveform, Core::Time &wf_end_waveform) {
 
   template_->waveform_start_ = wf_start;
   template_->waveform_end_ = wf_end;
@@ -264,6 +265,9 @@ TemplateBuilder &TemplateBuilder::set_waveform(
     template_->waveform_ =
         waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
                               wf_tokens[3], wf_start, wf_end, config);
+
+    wf_start_waveform = product_->waveform_->startTime();
+    wf_end_waveform = product_->waveform_->endTime();
   } catch (WaveformHandler::NoData &e) {
     throw builder::NoWaveformData{
         std::string{"Failed to load template waveform: "} + e.what()};
