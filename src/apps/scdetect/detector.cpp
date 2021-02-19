@@ -54,13 +54,7 @@ DetectorBuilder Detector::Create(const std::string &detector_id,
 }
 
 void Detector::set_filter(Filter *filter) {
-  if (!filter)
-    return;
-
-  for (const auto &config : stream_configs_)
-    config.second.processor->set_filter(filter->clone());
-
-  delete filter;
+  // XXX(damb): `Detector` does not implement filter facilities.
 }
 
 void Detector::set_gap_tolerance(const Core::TimeSpan &duration) {
