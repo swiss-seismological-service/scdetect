@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_UTILS_H_
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -80,6 +81,51 @@ template <typename T> double CMA(T *samples, size_t n) {
     cma += (samples[i] - cma) / (i + 1);
   }
   return cma;
+}
+
+// Returns `true` if the difference between two floating point numbers is
+// smaller than epsilon, else `false`
+template <typename TFloatingPoint>
+bool AlmostEqual(TFloatingPoint lhs, TFloatingPoint rhs,
+                 TFloatingPoint epsilon) {
+  // The IEEE standard says that any comparison operation involving
+  // a NAN must return false.
+  if (isnan(lhs) || isnan(rhs)) {
+    return false;
+  }
+
+  // From Knuth - The Art of Computer Programming
+  return std::abs(rhs - lhs) <=
+         std::max(std::abs(lhs), std::abs(rhs)) * epsilon;
+}
+
+// Returns `true` if `lhs` is greater than `rhs` under consideration of an
+// accuracy of `epsilon`. If `lhs` is smaller than `rhs`, `false` is returned.
+template <typename TFloatingPoint>
+bool GreaterThan(TFloatingPoint lhs, TFloatingPoint rhs,
+                 TFloatingPoint epsilon) {
+  // The IEEE standard says that any comparison operation involving
+  // a NAN must return false.
+  if (isnan(lhs) || isnan(rhs)) {
+    return false;
+  }
+
+  // From Knuth - The Art of Computer Programming
+  return (lhs - rhs) > std::max(std::abs(lhs), std::abs(rhs)) * epsilon;
+}
+
+// Returns `true` if `lhs` is smaller than `rhs` under consideration of an
+// accuracy of `epsilon`. If `lhs` is smaller than `rhs`, `false` is returned.
+template <typename TFloatingPoint>
+bool LessThan(TFloatingPoint lhs, TFloatingPoint rhs, TFloatingPoint epsilon) {
+  // The IEEE standard says that any comparison operation involving
+  // a NAN must return false.
+  if (isnan(lhs) || isnan(rhs)) {
+    return false;
+  }
+
+  // From Knuth - The Art of Computer Programming
+  return (rhs - lhs) > std::max(std::abs(lhs), std::abs(rhs)) * epsilon;
 }
 
 /* ------------------------------------------------------------------------- */
