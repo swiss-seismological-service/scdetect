@@ -22,7 +22,7 @@ const std::string CreateUUID() {
 }
 
 bool ValidateXCorrThreshold(const double &thres) {
-  return 0 <= thres && 1 >= thres;
+  return -1 <= thres && 1 >= thres;
 }
 
 /* ------------------------------------------------------------------------- */
