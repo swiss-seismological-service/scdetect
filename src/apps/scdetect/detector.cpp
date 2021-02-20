@@ -2,28 +2,25 @@
 
 #include <algorithm>
 #include <cmath>
-#include <functional>
 #include <memory>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
+#include <boost/none.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/copy.hpp>
 
 #include <seiscomp/client/inventory.h>
 #include <seiscomp/core/datetime.h>
+#include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/eventparameters.h>
-#include <seiscomp/datamodel/sensorlocation.h>
-#include <seiscomp/datamodel/waveformstreamid.h>
 
 #include "eventstore.h"
 #include "log.h"
+#include "processor.h"
 #include "settings.h"
 #include "template.h"
 #include "utils.h"
@@ -31,22 +28,8 @@
 namespace Seiscomp {
 namespace detect {
 
-Detector::Detector(const std::string &id) : Processor{id} {}
-
-Detector::Detection::Detection(
-    const double fit, const Core::Time &time, const double magnitude,
-    const double lat, const double lon, const double depth,
-    const Detector::Detection::SensorLocations &sensor_locations,
-    const size_t num_stations_associated, const size_t num_stations_used,
-    const size_t num_channels_associated, const size_t num_channels_used,
-    const Detector::Detection::TemplateResults &template_results)
-    : fit(fit), time(time), magnitude(magnitude), latitude(lat), longitude(lon),
-      depth(depth), sensor_locations(sensor_locations),
-      num_stations_associated(num_stations_associated),
-      num_stations_used(num_stations_used),
-      num_channels_associated(num_channels_associated),
-      num_channels_used(num_channels_used), template_results(template_results) {
-}
+Detector::Detector(const std::string &id, const DataModel::OriginCPtr &origin)
+    : Processor{id}, detector_{this, origin}, origin_{origin} {}
 
 DetectorBuilder Detector::Create(const std::string &detector_id,
                                  const std::string &origin_id) {
@@ -88,7 +71,8 @@ void Detector::Reset() {
     stream_config_pair.second.stream_state = Processor::StreamState{};
     stream_config_pair.second.stream_buffer->clear();
   }
-  ResetProcessing();
+
+  detector_.Reset();
 
   Processor::Reset();
 }
@@ -116,372 +100,34 @@ bool Detector::WithPicks() const { return config_.create_picks; }
 
 void Detector::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
+  try {
+    detector_.Process(record->streamID());
+  } catch (detector::Detector::ProcessingError &e) {
+    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s", record->streamID().c_str(),
+                                   e.what());
+    detector_.Reset();
+  } catch (std::exception &e) {
+    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: Unhandled exception: %s",
+                                 record->streamID().c_str(), e.what());
 
-  const auto &config{config_};
-  const auto &trigger_end{processing_state_.trigger_end};
-  auto WithTrigger = [config]() { return config.trigger_duration > 0; };
-  auto Triggered = [config, trigger_end]() {
-    return config.trigger_duration > 0 && trigger_end;
-  };
-  auto NotTriggered = [config, trigger_end]() {
-    return config.trigger_duration > 0 && !trigger_end;
-  };
+    set_status(Processor::Status::kError, 0);
+  } catch (...) {
+    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: Unknown exception.",
+                                 record->streamID().c_str());
 
-  // Returns the maximum buffered time window of data for stream buffers
-  // identified by `stream_ids`. If `strict` is `true`, and the buffered
-  // endtime is older than the `Detector`'s configured maximum allowed data
-  // latency, an empty time window (i.e. duration is equal to zero) is
-  // returned. Else the corresponding buffer is skipped when determining the
-  // time window.
-  auto FindBufferedTimeWindow =
-      [this, config](const std::vector<WaveformStreamID> &stream_ids,
-                     bool strict) -> Core::TimeWindow {
-    // find max buffered endtime
-    Core::Time max_endtime{};
-    for (const auto &stream_id : stream_ids) {
-      const auto it{stream_configs_.find(stream_id)};
-      if (it == stream_configs_.end())
-        continue;
-
-      const auto &endtime{it->second.stream_buffer->timeWindow().endTime()};
-      if (endtime && endtime > max_endtime)
-        max_endtime = endtime;
-    }
-
-    Core::TimeWindow tw{};
-    for (const auto &stream_id : stream_ids) {
-      const auto it{stream_configs_.find(stream_id)};
-      if (it == stream_configs_.end())
-        continue;
-
-      const auto buffered_tw{it->second.stream_buffer->windows().back()};
-
-      // Ignore data with too high latency
-      if (config.maximum_latency > 0 &&
-          static_cast<double>(max_endtime - buffered_tw.endTime()) >
-              config.maximum_latency) {
-
-        if (strict) {
-          tw.setLength(0);
-          return tw;
-        }
-
-        continue;
-      }
-
-      if (!tw)
-        tw = buffered_tw;
-      else
-        tw = tw.overlap(buffered_tw);
-    }
-
-    return tw;
-  };
-
-  // prepare data to be processed
-  std::vector<WaveformStreamID> stream_ids;
-  bool strict{true};
-  if (WithTrigger() && processing_state_.trigger_end) {
-    // Once triggered, only take those streams into consideration which
-    // are already part of the processing procedure.
-    auto if_enabled =
-        [](const decltype(
-            processing_state_.processor_states)::value_type &pair) {
-          return pair.second.processor->enabled();
-        };
-
-    stream_ids =
-        utils::filter_keys(processing_state_.processor_states, if_enabled);
-  } else {
-    auto if_enabled = [](const decltype(stream_configs_)::value_type &pair) {
-      return pair.second.processor->enabled();
-    };
-
-    stream_ids = utils::filter_keys(stream_configs_, if_enabled);
-    strict = false;
+    set_status(Processor::Status::kError, 0);
   }
 
-  auto tw{FindBufferedTimeWindow(stream_ids, strict)};
-  if (!tw)
-    return;
+  if (!finished()) {
+    merge_processed(detector_.processed());
 
-  if (processed()) {
-    if (tw.endTime() <= processed().endTime())
-      return;
+    if (detection_) {
+      auto detection{utils::make_smart<Detection>()};
+      PrepareDetection(detection, *detection_);
+      EmitResult(record, detection);
 
-    // take gaps into account
-    if (tw.startTime() < processed().endTime()) {
-      // TODO(damb): Define margin?
-      tw.setStartTime(processed().endTime());
+      detection_ = boost::none;
     }
-  }
-
-  // process templates i.e. compute cross-correlations
-  bool waiting_for_data{false}, feeding_data_failed{false};
-  for (const auto &stream_config_pair : stream_configs_) {
-    // TODO(damb): Check if the stream was actually used. This info might be
-    // saved while computing the time window to be processed.
-    auto const &buffered_tw{
-        stream_config_pair.second.stream_buffer->timeWindow()};
-    if (!buffered_tw.contains(tw)) {
-      stream_config_pair.second.processor->enable();
-      continue;
-    }
-
-    // initialize processing related stream states
-    if (!WithTrigger() || !processing_state_.trigger_end) {
-      processing_state_.processor_states[stream_config_pair.first] =
-          ProcessingState::ProcessorState{};
-    }
-
-    auto trace{
-        stream_config_pair.second.stream_buffer->contiguousRecord<double>(&tw)};
-
-    if (!stream_config_pair.second.processor->Feed(trace)) {
-      feeding_data_failed = true;
-      // feeding/storing data failed (not processing related)
-      const auto status{stream_config_pair.second.processor->status()};
-      const auto status_value{
-          stream_config_pair.second.processor->status_value()};
-
-      SCDETECT_LOG_ERROR_PROCESSOR(
-          this,
-          "%s: Failed to feed data to processor. Reason: status=%d, "
-          "status_value=%f",
-          stream_config_pair.first.c_str(), utils::as_integer(status),
-          status_value);
-      break;
-    }
-
-    if (Status::kWaitingForData ==
-        stream_config_pair.second.processor->status()) {
-      waiting_for_data = true;
-    }
-  }
-
-  // XXX(damb): Regarding `waiting_for_data`, this is a workaround. Actually, it
-  // would be better to make use of the Templates' internal buffers (similiar to
-  // Seiscomp::Processing::TimeWindowProcessor). On the other hand, this way it
-  // is easier to track that exactly the same, overlapping time window was
-  // processed.
-  if (feeding_data_failed || waiting_for_data) {
-    if (processing_state_.trigger_end) {
-      ResetProcessors();
-    } else {
-      ResetProcessing();
-    }
-    return;
-  }
-
-  // compute the fit (i.e. currently mean coefficient)
-  double fit{0};
-  size_t xcorr_failed{0};
-  Core::TimeWindow min_correlated;
-  for (const auto &processor_state_pair : processing_state_.processor_states) {
-
-    const auto &processor{
-        stream_configs_.at(processor_state_pair.first).processor};
-
-    if (!processor_state_pair.second.result) {
-      ++xcorr_failed;
-
-      std::string msg{processor_state_pair.first +
-                      ": Failed to match template. Reason: "};
-      if (processor->enabled()) {
-        const auto status{processor->status()};
-        const auto status_value{processor->status_value()};
-        msg += "status=" + std::to_string(utils::as_integer(status)) +
-               ", status_value=" + std::to_string(status_value);
-      } else {
-        msg += "unknown (processor disabled)";
-      }
-      SCDETECT_LOG_WARNING_PROCESSOR(this, "%s", msg.c_str());
-
-      continue;
-    }
-
-    fit += processor_state_pair.second.result->coefficient;
-
-    if (!min_correlated) {
-      min_correlated = processor->processed();
-    } else if (min_correlated.endTime() > processor->processed().endTime()) {
-      min_correlated.setEndTime(processor->processed().endTime());
-    }
-
-    if (debug_mode() && record->streamID() == processor_state_pair.first) {
-      debug_cc_results_.emplace(record->streamID(),
-                                processor_state_pair.second.result);
-    }
-  }
-
-  if (xcorr_failed) {
-    set_status(Status::kError, xcorr_failed);
-    return;
-  }
-
-  fit /= processing_state_.processor_states.size();
-
-  merge_processed(min_correlated);
-
-  auto CreateStatsMsg = [config, &tw](const double &fit) {
-    return std::string{
-        "[" + tw.startTime().iso() + " - " + tw.endTime().iso() +
-        "] fit=" + std::to_string(fit) +
-        ", trigger_on=" + std::to_string(config.trigger_on) +
-        ", trigger_off=" + std::to_string(config.trigger_off) +
-        ", trigger_duration=" + std::to_string(config.trigger_duration)};
-  };
-
-  bool reset_processing{false};
-  if (fit >= config_.trigger_on) {
-    // initialize trigger
-    if (NotTriggered()) {
-      SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector triggered: %s",
-                                   CreateStatsMsg(fit).c_str());
-
-      processing_state_.trigger_end =
-          tw.endTime() + Core::TimeSpan{config_.trigger_duration};
-    } else if (!WithTrigger()) {
-      SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result: %s",
-                                   CreateStatsMsg(fit).c_str());
-    } else {
-      SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggered): %s",
-                                   CreateStatsMsg(fit).c_str());
-    }
-
-    if ((!WithTrigger() || processing_state_.trigger_end) &&
-        (!std::isfinite(processing_state_.result.fit) ||
-         fit > processing_state_.result.fit)) {
-      // TODO(damb): Fit magnitude
-      const auto processor_state_pair{
-          processing_state_.processor_states.find(record->streamID())};
-      if (processor_state_pair == processing_state_.processor_states.end()) {
-        set_status(Status::kInvalidStream, 0);
-        return;
-      }
-
-      auto origin_time{
-          tw.startTime() +
-          Core::TimeSpan{processor_state_pair->second.result->lag}};
-
-      processing_state_.result.origin_time = origin_time;
-      processing_state_.result.fit = fit;
-      processing_state_.result.magnitude = magnitude_->magnitude().value();
-
-      if (WithPicks()) {
-        processing_state_.result.time_window = tw;
-        for (const auto &processor_state_pair :
-             processing_state_.processor_states) {
-          processing_state_.result.lags.emplace(
-              processor_state_pair.first,
-              processor_state_pair.second.result->lag);
-        }
-      }
-    }
-
-    ResetProcessors();
-  } else if (Triggered() && fit < config_.trigger_on &&
-             fit >= config_.trigger_off) {
-
-    SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result: %s",
-                                 CreateStatsMsg(fit).c_str());
-    ResetProcessors();
-  } else {
-    SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result: %s",
-                                 CreateStatsMsg(fit).c_str());
-
-    if (!WithTrigger() || !processing_state_.trigger_end) {
-      reset_processing = true;
-    }
-  }
-
-  if ((!WithTrigger() && processing_state_.result.fit >= config_.trigger_on) ||
-      (Triggered() && processed().endTime() >= processing_state_.trigger_end) ||
-      (Triggered() && fit < config_.trigger_off)) {
-
-    SCDETECT_LOG_INFO_PROCESSOR(
-        this, "Detection: %s",
-        CreateStatsMsg(processing_state_.result.fit).c_str());
-
-    auto CountStations =
-        [this](const std::vector<WaveformStreamID> &stream_ids) {
-          std::unordered_set<WaveformStreamID> used_stations{};
-
-          for (const auto &stream_id : stream_ids) {
-            auto it{stream_configs_.find(stream_id)};
-            if (it == stream_configs_.end())
-              continue;
-
-            auto station{it->second.metadata.sensor_location->station()};
-            used_stations.insert(station->publicID());
-          }
-
-          return used_stations.size();
-        };
-
-    const auto &processor_states = processing_state_.processor_states;
-    auto LoadSensorLocations = [this, processor_states]() {
-      Detection::SensorLocations sensor_locations{};
-      for (const auto &processor_state_pair : processor_states) {
-        auto it{stream_configs_.find(processor_state_pair.first)};
-        if (it == stream_configs_.end())
-          continue;
-
-        sensor_locations.push_back(it->second.metadata.sensor_location);
-      }
-      return sensor_locations;
-    };
-
-    std::vector<WaveformStreamID> stream_ids_used{};
-    boost::copy(processing_state_.processor_states | boost::adaptors::map_keys,
-                std::back_inserter(stream_ids_used));
-    auto num_stations_used{CountStations(stream_ids_used)};
-    std::vector<WaveformStreamID> stream_ids{};
-    boost::copy(stream_configs_ | boost::adaptors::map_keys,
-                std::back_inserter(stream_ids));
-    auto num_stations_associated{stream_ids.size()};
-    auto num_channels_used{processing_state_.processor_states.size()};
-    auto num_channels_associated{stream_configs_.size()};
-    auto sensor_locations{LoadSensorLocations()};
-
-    Detection::TemplateResults template_results;
-    for (const auto &processor_state_pair :
-         processing_state_.processor_states) {
-
-      Core::Time time_lag{};
-      if (WithPicks()) {
-        // compute pick times
-        auto lag_pair{
-            processing_state_.result.lags.find(processor_state_pair.first)};
-        if (lag_pair == processing_state_.result.lags.end()) {
-          continue;
-        }
-        time_lag = processing_state_.result.time_window.startTime() +
-                   Core::TimeSpan{lag_pair->second};
-      }
-      Detection::TemplateResult tr{
-          time_lag, processor_state_pair.second.result->metadata};
-
-      template_results.emplace(processor_state_pair.first, tr);
-    }
-
-    ResultPtr detection{utils::make_smart<Detection>(
-        processing_state_.result.fit,
-        processing_state_.result.origin_time +
-            Core::TimeSpan(config_.time_correction),
-        processing_state_.result.magnitude, origin_->latitude().value(),
-        origin_->longitude().value(), origin_->depth().value(),
-        sensor_locations, num_stations_associated, num_stations_used,
-        num_channels_associated, num_channels_used, template_results)};
-
-    EmitResult(record, detection);
-    reset_processing = true;
-
-    // TODO(damb): Implement and set trigger_dead_time
-  }
-
-  if (reset_processing) {
-    ResetProcessing();
   }
 }
 
@@ -571,31 +217,27 @@ bool Detector::EnoughDataReceived(const StreamState &stream_state) const {
   return true;
 }
 
-void Detector::StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
-                                   ResultCPtr result) {
-  if (!record || !result)
-    return;
-
-  auto it{processing_state_.processor_states.find(record->streamID())};
-  if (it == processing_state_.processor_states.end())
-    return;
-
-  it->second.processor = processor;
-  it->second.trace = record;
-  it->second.result =
-      boost::dynamic_pointer_cast<const Template::MatchResult>(result);
+void Detector::StoreDetection(const detector::Detector::Result &res) {
+  detection_ = res;
 }
 
-void Detector::ResetProcessing() {
-  processing_state_ = ProcessingState{};
+void Detector::PrepareDetection(DetectionPtr &detection,
+                                const detector::Detector::Result &res) {
+  detection->fit = detection_.value().fit;
+  detection->time = res.origin_time + Core::TimeSpan(config_.time_correction);
+  detection->latitude = origin_->latitude().value();
+  detection->longitude = origin_->longitude().value();
+  detection->depth = origin_->depth().value();
 
-  ResetProcessors();
-}
+  const auto &mag{res.magnitude};
+  detection->magnitude = mag.value_or(magnitude_->magnitude().value());
 
-void Detector::ResetProcessors() {
-  for (auto &stream_config_pair : stream_configs_) {
-    stream_config_pair.second.processor->Reset();
-  }
+  detection->num_channels_associated = res.num_channels_associated;
+  detection->num_channels_used = res.num_channels_used;
+  detection->num_stations_associated = res.num_stations_associated;
+  detection->num_stations_used = res.num_stations_used;
+
+  detection->template_results = res.template_results;
 }
 
 bool Detector::FillGap(StreamState &stream_state, RecordCPtr record,

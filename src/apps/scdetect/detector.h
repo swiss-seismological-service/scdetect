@@ -15,8 +15,12 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/sensorlocation.h>
 
+#include <boost/optional.hpp>
+
 #include "builder.h"
 #include "config.h"
+#include "detector/detector.h"
+#include "detector/pot.h"
 #include "processor.h"
 #include "settings.h"
 #include "template.h"
@@ -30,46 +34,28 @@ class DetectorBuilder;
 DEFINE_SMARTPOINTER(Detector);
 class Detector : public Processor {
 
-  Detector(const std::string &id);
+  Detector(const std::string &id, const DataModel::OriginCPtr &origin);
 
 public:
   DEFINE_SMARTPOINTER(Detection);
   struct Detection : public Result {
-
-    using SensorLocations = std::vector<DataModel::SensorLocationCPtr>;
-    struct TemplateResult {
-      // Template specific lag required for setting the pick time
-      Core::Time lag;
-      // Template related metadata
-      Template::MatchResult::MetaData metadata;
-    };
-
-    using TemplateResults = std::unordered_map<std::string, TemplateResult>;
-
-    Detection(const double fit, const Core::Time &time, const double magnitude,
-              const double lat, const double lon, const double depth,
-              const SensorLocations &sensor_locations,
-              const size_t num_stations_associated,
-              const size_t num_stations_used,
-              const size_t num_channels_associated,
-              const size_t num_channels_used,
-              const TemplateResults &template_results);
-
     double fit{};
 
     Core::Time time{};
-    double magnitude{};
     double latitude{};
     double longitude{};
     double depth{};
 
-    SensorLocations sensor_locations;
+    double magnitude{};
 
     size_t num_stations_associated{};
     size_t num_stations_used{};
     size_t num_channels_associated{};
     size_t num_channels_used{};
 
+    using TemplateResult = detector::Detector::Result::TemplateResult;
+    using TemplateResults =
+        std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
     TemplateResults template_results;
   };
@@ -110,14 +96,10 @@ protected:
   void InitStream(StreamState &stream_state, RecordCPtr record) override;
 
   bool EnoughDataReceived(const StreamState &stream_state) const override;
-
-  void StoreTemplateResult(ProcessorCPtr processor, RecordCPtr record,
-                           ResultCPtr result);
-
-  void ResetProcessing();
-
-  // Reset template (child) processors
-  void ResetProcessors();
+  // Callback function storing `res`
+  void StoreDetection(const detector::Detector::Result &res);
+  // Prepares the detection from `res`
+  void PrepareDetection(DetectionPtr &d, const detector::Detector::Result &res);
 
 private:
   // Fill gaps
@@ -125,9 +107,8 @@ private:
                const Core::TimeSpan &duration, double next_sample,
                size_t missing_samples);
 
-  using WaveformStreamID = std::string;
-
   struct StreamConfig;
+  using WaveformStreamID = std::string;
   using StreamConfigs = std::unordered_map<WaveformStreamID, StreamConfig>;
 
   struct StreamConfig {
@@ -136,51 +117,17 @@ private:
     // - The detector does no filtering -> no gain is applied.
     // -
     // Processing::Stream stream_config;
-    std::unique_ptr<RecordSequence> stream_buffer;
-    // Template matching processor
-    ProcessorPtr processor;
-
-    struct MetaData {
-      DataModel::SensorLocationCPtr sensor_location;
-    } metadata;
-  };
-
-  struct ProcessingState {
-
-    struct ProcessorState {
-
-      ProcessorCPtr processor;
-      Template::MatchResultCPtr result{nullptr};
-
-      RecordCPtr trace;
-    };
-
-    using ProcessorStates =
-        std::unordered_map<WaveformStreamID, ProcessorState>;
-    ProcessorStates processor_states;
-
-    struct Result {
-      using Lags = std::unordered_map<WaveformStreamID, double>;
-
-      Core::Time origin_time;
-      double fit{std::nan("")};
-      double magnitude{0};
-
-      // Lag related data
-      Core::TimeWindow time_window;
-      Lags lags;
-
-    } result;
-
-    Core::Time trigger_end;
+    std::shared_ptr<RecordSequence> stream_buffer;
   };
 
   StreamConfigs stream_configs_;
-  ProcessingState processing_state_;
 
   DetectorConfig config_;
 
-  DataModel::OriginPtr origin_;
+  detector::Detector detector_;
+  boost::optional<detector::Detector::Result> detection_;
+
+  DataModel::OriginCPtr origin_;
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
 

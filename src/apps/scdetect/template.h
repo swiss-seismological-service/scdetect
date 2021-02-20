@@ -33,10 +33,8 @@ public:
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
 
-    struct MetaData;
     MatchResult(const double sum_template, const double squared_sum_template,
-                const int num_samples_template, const Core::TimeWindow &tw,
-                MetaData metadata);
+                const int num_samples_template, const Core::TimeWindow &tw);
 
     double coefficient{std::nan("")};
     int num_samples_template;
@@ -49,15 +47,6 @@ public:
 
     // Time window for w.r.t. the match result
     Core::TimeWindow time_window;
-
-    struct MetaData {
-      // Original template pick
-      DataModel::PickCPtr pick;
-      // Template phase
-      std::string phase;
-      // Template arrival weight
-      double arrival_weight;
-    } metadata;
 
     struct DebugInfo {
       std::string path_template;
@@ -91,13 +80,6 @@ protected:
 private:
   StreamState stream_state_;
   Processing::Stream stream_config_;
-
-  // Template related pick
-  DataModel::PickCPtr pick_{nullptr};
-  // Template related phase code
-  std::string phase_{""};
-  // Template related arrival weight
-  double arrival_weight_{0};
 
   // Template waveform starttime
   Core::Time waveform_start_;

@@ -5,6 +5,10 @@ set(
     app.cpp
     config.cpp
     detector.cpp
+    detector/arrival.cpp
+    detector/detector.cpp
+    detector/linker.cpp
+    detector/pot.cpp
     eventstore.cpp
     exception.cpp
     main.cpp
@@ -20,6 +24,10 @@ set(
     builder.h
     config.h
     detector.h
+    detector/arrival.h
+    detector/detector.h
+    detector/linker.h
+    detector/pot.h
     eventstore.h
     exception.h
     log.h

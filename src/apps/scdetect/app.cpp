@@ -16,6 +16,7 @@
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/phase.h>
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
@@ -518,10 +519,11 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
 
   std::vector<double> azimuths;
   std::vector<double> distances;
-  for (const auto &sensor_location : detection->sensor_locations) {
+  for (const auto &result_pair : detection->template_results) {
     double az, baz, dist;
+    const auto &sensor_location{result_pair.second.sensor_location};
     Math::Geo::delazi(detection->latitude, detection->longitude,
-                      sensor_location->latitude(), sensor_location->longitude(),
+                      sensor_location.latitude, sensor_location.longitude,
                       &dist, &az, &baz);
 
     distances.push_back(dist);
@@ -565,26 +567,25 @@ void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
   std::vector<ArrivalPick> arrival_picks;
   auto with_picks{processor->WithPicks()};
   if (with_picks) {
-    for (const auto &template_result_pair : detection->template_results) {
+    for (const auto &result_pair : detection->template_results) {
+      const auto &res{result_pair.second};
       DataModel::PickPtr pick{DataModel::Pick::Create()};
 
-      pick->setTime(template_result_pair.second.lag);
-      pick->setWaveformID(template_result_pair.first);
+      pick->setTime(res.arrival.pick.time);
+      pick->setWaveformID(res.arrival.pick.waveform_id);
       pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
-      try {
-        pick->setPhaseHint(
-            template_result_pair.second.metadata.pick->phaseHint());
-      } catch (...) {
+      if (res.arrival.pick.phase_hint) {
+        pick->setPhaseHint(DataModel::Phase{*res.arrival.pick.phase_hint});
       }
 
       // create arrival
       auto arrival{utils::make_smart<DataModel::Arrival>()};
       arrival->setCreationInfo(ci);
       arrival->setPickID(pick->publicID());
-      arrival->setPhase(template_result_pair.second.metadata.phase);
-      if (template_result_pair.second.metadata.arrival_weight)
-        arrival->setWeight(template_result_pair.second.metadata.arrival_weight);
+      arrival->setPhase(res.arrival.phase);
+      if (res.arrival.weight)
+        arrival->setWeight(res.arrival.weight);
 
       arrival_picks.push_back({arrival, pick});
     }

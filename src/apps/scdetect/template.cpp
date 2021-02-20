@@ -109,7 +109,7 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
   MatchResultPtr result{utils::make_smart<MatchResult>(
       waveform_sum_, waveform_squared_sum_, num_samples_template,
-      record->timeWindow(), MatchResult::MetaData{pick_, phase_})};
+      record->timeWindow())};
 
   if (num_samples_template > num_samples_trace) {
     set_status(Status::kWaitingForData,
