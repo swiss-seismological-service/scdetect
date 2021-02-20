@@ -75,7 +75,6 @@ protected:
 
   void InitStream(StreamState &stream_state, RecordCPtr record) override;
 
-  DoubleArray data_;
 
 private:
   StreamState stream_state_;

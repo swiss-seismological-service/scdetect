@@ -95,17 +95,15 @@ void Template::Reset() {
   }
 
   Processor::Reset();
-
-  data_ = DoubleArray();
 }
 
 void Template::Process(StreamState &stream_state, RecordCPtr record,
                        const DoubleArray &filtered_data) {
   const double *samples_template{
       DoubleArray::ConstCast(waveform_->data())->typedData()};
-  const double *samples_trace{data_.typedData()};
+  const double *samples_trace{filtered_data.typedData()};
   const int num_samples_template{waveform_->data()->size()};
-  const int num_samples_trace{data_.size()};
+  const int num_samples_trace{filtered_data.size()};
 
   MatchResultPtr result{utils::make_smart<MatchResult>(
       waveform_sum_, waveform_squared_sum_, num_samples_template,
@@ -151,7 +149,8 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
     // dump real-time trace (filtered)
     {
       auto dump_me{utils::make_smart<GenericRecord>(*record.get())};
-      dump_me->setData(&data_);
+      dump_me->setData(filtered_data.size(), filtered_data.typedData(),
+                       Array::DOUBLE);
       dump_me->setSamplingFrequency(waveform_sampling_frequency_);
       dump_me->dataUpdated();
 
@@ -209,7 +208,6 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
       waveform_sampling_frequency_ = stream_state.sampling_frequency;
     }
   }
-  data_.append(n, samples);
 }
 
 void Template::InitStream(StreamState &stream_state, RecordCPtr record) {
