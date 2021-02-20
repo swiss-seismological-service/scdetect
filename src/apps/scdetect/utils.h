@@ -90,7 +90,7 @@ bool AlmostEqual(TFloatingPoint lhs, TFloatingPoint rhs,
                  TFloatingPoint epsilon) {
   // The IEEE standard says that any comparison operation involving
   // a NAN must return false.
-  if (isnan(lhs) || isnan(rhs)) {
+  if (std::isnan(lhs) || std::isnan(rhs)) {
     return false;
   }
 
@@ -106,7 +106,7 @@ bool GreaterThan(TFloatingPoint lhs, TFloatingPoint rhs,
                  TFloatingPoint epsilon) {
   // The IEEE standard says that any comparison operation involving
   // a NAN must return false.
-  if (isnan(lhs) || isnan(rhs)) {
+  if (std::isnan(lhs) || std::isnan(rhs)) {
     return false;
   }
 
@@ -120,7 +120,7 @@ template <typename TFloatingPoint>
 bool LessThan(TFloatingPoint lhs, TFloatingPoint rhs, TFloatingPoint epsilon) {
   // The IEEE standard says that any comparison operation involving
   // a NAN must return false.
-  if (isnan(lhs) || isnan(rhs)) {
+  if (std::isnan(lhs) || std::isnan(rhs)) {
     return false;
   }
 
