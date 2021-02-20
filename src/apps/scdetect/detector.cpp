@@ -98,7 +98,7 @@ std::string Detector::DebugString() const {
 
 bool Detector::WithPicks() const { return config_.create_picks; }
 
-void Detector::Process(StreamState &stream_state, RecordCPtr record,
+void Detector::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
   try {
     detector_.Process(record->streamID());
@@ -131,8 +131,8 @@ void Detector::Process(StreamState &stream_state, RecordCPtr record,
   }
 }
 
-bool Detector::HandleGap(StreamState &stream_state, RecordCPtr record,
-                         DoubleArrayPtr data) {
+bool Detector::HandleGap(StreamState &stream_state, const Record *record,
+                         DoubleArrayPtr &data) {
 
   if (record == stream_state.last_record)
     return false;
@@ -172,15 +172,14 @@ bool Detector::HandleGap(StreamState &stream_state, RecordCPtr record,
   return true;
 }
 
-void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-                    double *samples) {
+void Detector::Fill(StreamState &stream_state, const Record *record,
+                    DoubleArrayPtr &data) {
   // XXX(damb): The detector does not filter the data. Data is buffered, only.
+  stream_state.received_samples += data->size();
 
-  stream_state.received_samples += n;
-
-  // buffer record
   auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
-  if (!buffer->feed(record.get())) {
+  // buffer record
+  if (!buffer->feed(record)) {
     SCDETECT_LOG_WARNING_PROCESSOR(
         this, "%s: Error while buffering data: start=%s, end=%s, samples=%d",
         record->streamID().c_str(), record->startTime().iso().c_str(),
@@ -188,7 +187,7 @@ void Detector::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   }
 }
 
-void Detector::InitStream(StreamState &stream_state, RecordCPtr record) {
+void Detector::InitStream(StreamState &stream_state, const Record *record) {
   Processor::InitStream(stream_state, record);
 
   const auto min_thres{2 * 1.0 / record->samplingFrequency()};
@@ -240,7 +239,7 @@ void Detector::PrepareDetection(DetectionPtr &detection,
   detection->template_results = res.template_results;
 }
 
-bool Detector::FillGap(StreamState &stream_state, RecordCPtr record,
+bool Detector::FillGap(StreamState &stream_state, const Record *record,
                        const Core::TimeSpan &duration, double next_sample,
                        size_t missing_samples) {
   if (duration <= Core::TimeSpan{config_.gap_tolerance}) {
@@ -253,7 +252,7 @@ bool Detector::FillGap(StreamState &stream_state, RecordCPtr record,
           record->channelCode(), buffer->timeWindow().endTime(),
           record->samplingFrequency())};
 
-      auto data_ptr{utils::make_unique<DoubleArray>(missing_samples)};
+      auto data_ptr{utils::make_smart<DoubleArray>(missing_samples)};
       double delta{next_sample - stream_state.last_sample};
       double step{1. / static_cast<double>(missing_samples + 1)};
       double di = step;
@@ -263,8 +262,7 @@ bool Detector::FillGap(StreamState &stream_state, RecordCPtr record,
       }
 
       filled->setData(missing_samples, data_ptr->typedData(), Array::DOUBLE);
-      Fill(stream_state, /*record=*/filled, missing_samples,
-           data_ptr->typedData());
+      Fill(stream_state, /*record=*/filled.get(), data_ptr);
 
       return true;
     }

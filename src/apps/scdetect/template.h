@@ -67,14 +67,13 @@ public:
   void Reset() override;
 
 protected:
-  void Process(StreamState &stream_state, RecordCPtr record,
+  void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
-  void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-            double *samples) override;
+  void Fill(StreamState &stream_state, const Record *record,
+            DoubleArrayPtr &data) override;
 
-  void InitStream(StreamState &stream_state, RecordCPtr record) override;
-
+  void InitStream(StreamState &stream_state, const Record *record) override;
 
 private:
   StreamState stream_state_;
@@ -132,7 +131,8 @@ namespace template_detail {
  */
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           Template::MatchResultPtr result, ProcessorCPtr processor = nullptr);
+           Template::MatchResultPtr &result,
+           const Processor *processor = nullptr);
 
 } // namespace template_detail
 

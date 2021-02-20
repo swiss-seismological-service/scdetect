@@ -84,16 +84,16 @@ public:
   bool WithPicks() const override;
 
 protected:
-  void Process(StreamState &stream_state, RecordCPtr record,
+  void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
-  bool HandleGap(StreamState &stream_state, RecordCPtr record,
-                 DoubleArrayPtr data) override;
+  bool HandleGap(StreamState &stream_state, const Record *record,
+                 DoubleArrayPtr &data) override;
 
-  void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-            double *samples) override;
+  void Fill(StreamState &stream_state, const Record *record,
+            DoubleArrayPtr &data) override;
 
-  void InitStream(StreamState &stream_state, RecordCPtr record) override;
+  void InitStream(StreamState &stream_state, const Record *record) override;
 
   bool EnoughDataReceived(const StreamState &stream_state) const override;
   // Callback function storing `res`
@@ -103,7 +103,7 @@ protected:
 
 private:
   // Fill gaps
-  bool FillGap(StreamState &stream_state, RecordCPtr record,
+  bool FillGap(StreamState &stream_state, const Record *record,
                const Core::TimeSpan &duration, double next_sample,
                size_t missing_samples);
 

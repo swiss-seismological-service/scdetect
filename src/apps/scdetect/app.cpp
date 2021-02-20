@@ -487,8 +487,9 @@ void Application::handleRecord(Record *rec) {
   }
 }
 
-void Application::EmitDetection(ProcessorCPtr processor, RecordCPtr record,
-                                Processor::ResultCPtr result) {
+void Application::EmitDetection(const Processor *processor,
+                                const Record *record,
+                                const Processor::ResultCPtr &result) {
 
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};

@@ -97,7 +97,7 @@ void Template::Reset() {
   Processor::Reset();
 }
 
-void Template::Process(StreamState &stream_state, RecordCPtr record,
+void Template::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
   const double *samples_template{
       DoubleArray::ConstCast(waveform_->data())->typedData()};
@@ -148,7 +148,7 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
     // dump real-time trace (filtered)
     {
-      auto dump_me{utils::make_smart<GenericRecord>(*record.get())};
+      auto dump_me{utils::make_smart<GenericRecord>(*record)};
       dump_me->setData(filtered_data.size(), filtered_data.typedData(),
                        Array::DOUBLE);
       dump_me->setSamplingFrequency(waveform_sampling_frequency_);
@@ -177,32 +177,31 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                 waveform_sampling_frequency_ /* samples to seconds */}}});
     set_status(Processor::Status::kFinished, 100);
 
-    EmitResult(record, result);
+    EmitResult(record, result.get());
     return;
   }
   set_status(Processor::Status::kError, 0);
 }
 
-void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-                    double *samples) {
-  Processor::Fill(stream_state, record, n, samples);
+void Template::Fill(StreamState &stream_state, const Record *record,
+                    DoubleArrayPtr &data) {
 
-  // demean
-  const auto mean{utils::CMA(samples, n)};
-  for (size_t i = 0; i < n; ++i) {
-    samples[i] -= mean;
-  }
+  Processor::Fill(stream_state, record, data);
+
+  waveform::Demean(*data);
 
   // resample (i.e. always downsample)
   if (waveform_sampling_frequency_ != stream_state_.sampling_frequency) {
     if (waveform_sampling_frequency_ < stream_state.sampling_frequency) {
-      auto tmp{utils::make_smart<DoubleArray>(static_cast<int>(n), samples)};
-      waveform::Resample(tmp, stream_state.sampling_frequency,
+      // resample trace (real-time data)
+      auto tmp{
+          utils::make_unique<DoubleArray>(data->size(), data->typedData())};
+      waveform::Resample(*tmp, stream_state.sampling_frequency,
                          waveform_sampling_frequency_, true);
 
-      n = tmp->size();
-      samples = tmp->typedData();
+      data.reset(tmp.release());
     } else {
+      // resample template waveform
       auto resampled{utils::make_smart<GenericRecord>(*waveform_)};
       waveform::Resample(*resampled, stream_state.sampling_frequency, true);
       waveform_ = resampled;
@@ -211,7 +210,7 @@ void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
   }
 }
 
-void Template::InitStream(StreamState &stream_state, RecordCPtr record) {
+void Template::InitStream(StreamState &stream_state, const Record *record) {
   Processor::InitStream(stream_state, record);
 
   stream_state.needed_samples =
@@ -305,7 +304,7 @@ namespace template_detail {
 
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           Template::MatchResultPtr result, ProcessorCPtr processor) {
+           Template::MatchResultPtr &result, const Processor *processor) {
 
   /*
    * Pearson correlation coefficient for time series X and Y of length n

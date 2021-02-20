@@ -179,8 +179,8 @@ protected:
 
   void handleRecord(Record *rec) override;
 
-  void EmitDetection(ProcessorCPtr processor, RecordCPtr record,
-                     Processor::ResultCPtr result);
+  void EmitDetection(const Processor *processor, const Record *record,
+                     const Processor::ResultCPtr &result);
 
 protected:
   // Load events either from `event_db` or `db`.
