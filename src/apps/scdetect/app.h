@@ -197,8 +197,9 @@ private:
 
   DataModel::EventParametersPtr ep_;
 
-  using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
-  StreamDetectorMap detectors_;
+  using DetectorMap =
+      std::unordered_multimap<std::string, std::shared_ptr<Processor>>;
+  DetectorMap detectors_;
 };
 
 } // namespace detect

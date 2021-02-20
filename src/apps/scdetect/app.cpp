@@ -825,13 +825,9 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         }
 
         auto detector_builder{
-            Detector::Create(tc.detector_id(), tc.origin_id())
-                .set_config(tc.detector_config())
-                .set_eventparameters()
-                .set_publish_callback([this](ProcessorCPtr p, RecordCPtr rec,
-                                             Processor::ResultCPtr res) {
-                  EmitDetection(p, rec, res);
-                })};
+            std::move(Detector::Create(tc.detector_id(), tc.origin_id())
+                          .set_config(tc.detector_config())
+                          .set_eventparameters())};
 
         boost::filesystem::path path_debug_info;
         if (config_.dump_debug_info) {
@@ -851,7 +847,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
             try {
               detector_builder.set_stream(stream_config_pair.first,
                                           stream_config_pair.second,
-                                          waveform_handler, 0, path_debug_info);
+                                          waveform_handler, path_debug_info);
             } catch (builder::NoSensorLocation &e) {
               if (config_.skip_template_if_no_sensor_location_data) {
                 SCDETECT_LOG_WARNING(
@@ -890,9 +886,15 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           }
         }
 
-        auto detector{detector_builder.build()};
+        std::shared_ptr<detect::Detector> detector_ptr{
+            detector_builder.Build()};
+        detector_ptr->set_result_callback(
+            [this](const Processor *proc, const Record *rec,
+                   const Processor::ResultCPtr &res) {
+              EmitDetection(proc, rec, res);
+            });
         for (const auto &stream_id : stream_ids)
-          detectors_.emplace(stream_id, detector);
+          detectors_.emplace(stream_id, detector_ptr);
 
       } catch (Exception &e) {
         SCDETECT_LOG_WARNING("Failed to create detector: %s. Skipping.",
