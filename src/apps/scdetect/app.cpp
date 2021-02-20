@@ -464,25 +464,30 @@ void Application::handleRecord(Record *rec) {
 
   auto range{detectors_.equal_range(std::string{rec->streamID()})};
   for (auto it = range.first; it != range.second; ++it) {
-    bool success{true};
 
-    success = it->second->Feed(rec);
-    if (!success) {
-      SCDETECT_LOG_WARNING(
-          "%s: Failed to feed record into detector. Resetting.",
-          it->first.c_str());
-      it->second->Reset();
-      continue;
-    }
+    auto &detector_ptr{it->second};
+    if (detector_ptr->enabled()) {
+      if (!detector_ptr->Feed(rec)) {
+        SCDETECT_LOG_WARNING(
+            "%s: Failed to feed record into detector (id=%s). Resetting.",
+            it->first.c_str(), detector_ptr->id().c_str());
+        detector_ptr->Reset();
+        continue;
+      }
 
-    success = !it->second->finished();
-    if (!success) {
-      SCDETECT_LOG_WARNING(
-          "%s: Detector finished (status=%d, status_value=%f). Resetting.",
-          it->first.c_str(), utils::as_integer(it->second->status()),
-          it->second->status_value());
-      it->second->Reset();
-      continue;
+      if (detector_ptr->finished()) {
+        SCDETECT_LOG_WARNING("%s: Detector (id=%s) finished (status=%d, "
+                             "status_value=%f). Resetting.",
+                             it->first.c_str(), detector_ptr->id().c_str(),
+                             utils::as_integer(detector_ptr->status()),
+                             detector_ptr->status_value());
+        detector_ptr->Reset();
+        continue;
+      }
+    } else {
+      SCDETECT_LOG_DEBUG(
+          "%s: Skip feeding record into detector (id=%s). Reason: Disabled.",
+          it->first.c_str(), detector_ptr->id().c_str());
     }
   }
 }
