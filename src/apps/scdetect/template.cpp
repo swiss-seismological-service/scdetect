@@ -168,7 +168,6 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,
                              waveform_sampling_frequency_, result, this)) {
-    EmitResult(record, result);
     merge_processed(Core::TimeWindow{
         record->startTime(),
         Core::Time{
@@ -177,6 +176,8 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                 (num_samples_trace - num_samples_template) /
                 waveform_sampling_frequency_ /* samples to seconds */}}});
     set_status(Processor::Status::kFinished, 100);
+
+    EmitResult(record, result);
     return;
   }
   set_status(Processor::Status::kError, 0);
