@@ -187,7 +187,7 @@ private:
   std::multimap<WaveformStreamID, Template::MatchResultCPtr> debug_cc_results_;
 };
 
-class DetectorBuilder : public Builder<DetectorBuilder> {
+class DetectorBuilder : public Builder<Detector> {
 
 public:
   DetectorBuilder(const std::string &detector_id, const std::string &origin_id);
@@ -198,26 +198,41 @@ public:
   // Set stream related template configuration
   DetectorBuilder &
   set_stream(const std::string &stream_id, const StreamConfig &stream_config,
-             WaveformHandlerIfacePtr wf_handler, double gap_tolerance,
+             WaveformHandlerIfacePtr wf_handler,
              const boost::filesystem::path &path_debug_info = "");
-  DetectorBuilder &
-  // Set a callback function for publishing a detection
-  set_publish_callback(Processor::PublishResultCallback callback);
   // Set the path to the debug info directory
   DetectorBuilder &set_debug_info_dir(const boost::filesystem::path &path);
 
-  DetectorPtr build();
-
 protected:
+  void Finalize() override;
+
   bool IsValidArrival(const DataModel::ArrivalCPtr arrival,
                       const DataModel::PickCPtr pick);
 
-  bool set_origin(const std::string &origin_id);
-
 private:
+  struct TemplateProcessorConfig {
+    // Template matching processor
+    std::unique_ptr<Processor> processor;
+
+    struct MetaData {
+      // TODO(damb): Sensor location is not required, anymore
+      DataModel::SensorLocationCPtr sensor_location;
+      // The template related pick
+      DataModel::PickCPtr pick;
+      // The template related arrival
+      DataModel::ArrivalCPtr arrival;
+      // The template waveform pick offset
+      Core::TimeSpan pick_offset;
+    } metadata;
+  };
+
   std::string origin_id_;
 
-  DetectorPtr detector_;
+  std::vector<detector::POT::ArrivalPick> arrival_picks_;
+
+  using TemplateProcessorConfigs =
+      std::unordered_map<std::string, TemplateProcessorConfig>;
+  TemplateProcessorConfigs processor_configs_;
 };
 
 } // namespace detect

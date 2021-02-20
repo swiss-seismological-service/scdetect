@@ -221,30 +221,21 @@ void Template::InitStream(StreamState &stream_state, RecordCPtr record) {
 }
 
 /* ------------------------------------------------------------------------- */
-// XXX(damb): Using `new` to access a non-public ctor; see also
-// https://abseil.io/tips/134
+
+
+}
+
+/* ------------------------------------------------------------------------- */
 TemplateBuilder::TemplateBuilder(const std::string &template_id,
-                                 const Processor *p)
-    : template_(new Template{template_id, p}) {}
+                                 const Processor *p) {
+  // XXX(damb): Using `new` to access a non-public ctor; see also
+  // https://abseil.io/tips/134
+  product_ = std::unique_ptr<Template>(new Template{template_id, p});
+}
 
 TemplateBuilder &
 TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
-  template_->stream_config_.init(&stream_config);
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_phase(const std::string &phase) {
-  template_->phase_ = phase;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_pick(DataModel::PickCPtr pick) {
-  template_->pick_ = pick;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_arrival_weight(const double weight) {
-  template_->arrival_weight_ = weight;
+  product_->stream_config_.init(&stream_config);
   return *this;
 }
 
@@ -254,15 +245,16 @@ TemplateBuilder &TemplateBuilder::set_waveform(
     const WaveformHandlerIface::ProcessingConfig &config,
     Core::Time &wf_start_waveform, Core::Time &wf_end_waveform) {
 
-  template_->waveform_start_ = wf_start;
-  template_->waveform_end_ = wf_end;
-  template_->waveform_stream_id_ = stream_id;
+  product_->waveform_start_ = wf_start;
+  product_->waveform_end_ = wf_end;
+  product_->waveform_length_ = wf_end - wf_start;
+  product_->waveform_stream_id_ = stream_id;
 
   // prepare waveform stream id
   std::vector<std::string> wf_tokens;
   Core::split(wf_tokens, stream_id, ".", false);
   try {
-    template_->waveform_ =
+    product_->waveform_ =
         waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
                               wf_tokens[3], wf_start, wf_end, config);
 
@@ -275,47 +267,39 @@ TemplateBuilder &TemplateBuilder::set_waveform(
     throw builder::BaseException{
         std::string{"Failed to load template waveform: "} + e.what()};
   }
-  template_->waveform_sampling_frequency_ =
-      template_->waveform_->samplingFrequency();
-  template_->waveform_filter_ = config.filter_string;
+  product_->waveform_sampling_frequency_ =
+      product_->waveform_->samplingFrequency();
+  product_->waveform_filter_ = config.filter_string;
 
   const double *samples_template{
-      DoubleArray::ConstCast(template_->waveform_->data())->typedData()};
-  for (int i = 0; i < template_->waveform_->data()->size(); ++i) {
-    template_->waveform_sum_ += samples_template[i];
-    template_->waveform_squared_sum_ +=
+      DoubleArray::ConstCast(product_->waveform_->data())->typedData()};
+  for (int i = 0; i < product_->waveform_->data()->size(); ++i) {
+    product_->waveform_sum_ += samples_template[i];
+    product_->waveform_squared_sum_ +=
         samples_template[i] * samples_template[i];
   }
   return *this;
 }
 
-TemplateBuilder &TemplateBuilder::set_publish_callback(
-    Processor::PublishResultCallback callback) {
-  template_->set_result_callback(callback);
-  return *this;
-}
-
 TemplateBuilder &TemplateBuilder::set_filter(Processor::Filter *filter,
                                              const double init_time) {
-  template_->set_filter(filter);
-  template_->init_time_ = Core::TimeSpan{init_time};
+  product_->set_filter(filter);
+  product_->init_time_ = Core::TimeSpan{init_time};
   return *this;
 }
 
 TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
                                                              double thres) {
-  template_->set_saturation_check(enabled);
-  template_->set_saturation_threshold(thres);
+  product_->set_saturation_check(enabled);
+  product_->set_saturation_threshold(thres);
   return *this;
 }
 
 TemplateBuilder &
 TemplateBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
-  template_->set_debug_info_dir(path);
+  product_->set_debug_info_dir(path);
   return *this;
 }
-
-ProcessorPtr TemplateBuilder::build() { return template_; }
 
 /* ------------------------------------------------------------------------- */
 namespace template_detail {

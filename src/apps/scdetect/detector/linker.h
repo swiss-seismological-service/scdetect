@@ -21,7 +21,7 @@ namespace detector {
 class Linker {
 public:
   Linker(const Core::TimeSpan &on_hold = 0.0,
-         double arrival_offset_thres = 2 * 1.0e-6);
+         double arrival_offset_thres = 2.0e-6);
   virtual ~Linker();
 
   enum class Status { kWaitingForData, kTerminated };
@@ -149,7 +149,7 @@ private:
   // validation is disabled; the default arrival offset corresponds to twice
   // the maximum accuracy `scdetect` is operating when it comes to trimming
   // waveforms (1 micro second (i.e. 1 us)).
-  boost::optional<double> thres_arrival_offset_{2 * 1.0e-6};
+  boost::optional<double> thres_arrival_offset_{2.0e-6};
   // The fit threshold indicating when template results are taken into
   // consideration
   boost::optional<double> thres_result_;

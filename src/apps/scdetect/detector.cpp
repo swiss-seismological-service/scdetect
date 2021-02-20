@@ -632,22 +632,27 @@ bool Detector::FillGap(StreamState &stream_state, RecordCPtr record,
 }
 
 /* -------------------------------------------------------------------------- */
-// XXX(damb): Using `new` to access a non-public ctor; see also
-// https://abseil.io/tips/134
 DetectorBuilder::DetectorBuilder(const std::string &detector_id,
                                  const std::string &origin_id)
-    : origin_id_{origin_id}, detector_{new Detector{detector_id}} {
+    : origin_id_{origin_id} {
 
-  if (!set_origin(origin_id_)) {
+  DataModel::OriginCPtr origin{
+      EventStore::Instance().Get<DataModel::Origin>(origin_id)};
+  if (!origin) {
+    SCDETECT_LOG_WARNING("Origin %s not found.", origin_id.c_str());
     throw builder::BaseException{std::string{"Error while assigning origin: "} +
                                  origin_id};
   }
+
+  // XXX(damb): Using `new` to access a non-public ctor; see also
+  // https://abseil.io/tips/134
+  product_ = std::unique_ptr<Detector>(new Detector{detector_id, origin});
 }
 
 DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
-  detector_->config_ = config;
+  product_->config_ = config;
 
-  detector_->enabled_ = config.enabled;
+  product_->enabled_ = config.enabled;
 
   return *this;
 }
@@ -655,7 +660,7 @@ DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
 DetectorBuilder &DetectorBuilder::set_eventparameters() {
 
   DataModel::EventParametersPtr event_parameters{
-      detector_->origin_->eventParameters()};
+      product_->origin_->eventParameters()};
   // find the origin's associated event
   bool found{false};
   for (size_t i = 0; i < event_parameters->eventCount(); ++i) {
@@ -663,7 +668,7 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
     for (size_t j = 0; j < event->originReferenceCount(); ++j) {
       DataModel::OriginReferencePtr origin_ref = event->originReference(j);
       if (origin_ref->originID() == origin_id_) {
-        detector_->event_ = event;
+        product_->event_ = event;
         found = true;
         break;
       }
@@ -679,12 +684,12 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
     throw builder::BaseException{msg};
   }
 
-  detector_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
-      detector_->event_->preferredMagnitudeID());
+  product_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
+      product_->event_->preferredMagnitudeID());
 
-  if (!detector_->magnitude_) {
+  if (!product_->magnitude_) {
     auto msg{std::string{"No magnitude associated with event: "} +
-             detector_->event_->publicID() + std::string{" (origin="} +
+             product_->event_->publicID() + std::string{" (origin="} +
              origin_id_ + std::string{")"}};
 
     SCDETECT_LOG_WARNING("%s", msg.c_str());
@@ -694,10 +699,11 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   return *this;
 }
 
-DetectorBuilder &DetectorBuilder::set_stream(
-    const std::string &stream_id, const StreamConfig &stream_config,
-    WaveformHandlerIfacePtr waveform_handler, double gap_tolerance,
-    const boost::filesystem::path &path_debug_info)
+DetectorBuilder &
+DetectorBuilder::set_stream(const std::string &stream_id,
+                            const StreamConfig &stream_config,
+                            WaveformHandlerIfacePtr waveform_handler,
+                            const boost::filesystem::path &path_debug_info)
 
 {
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
@@ -710,9 +716,9 @@ DetectorBuilder &DetectorBuilder::set_stream(
   // configure pick from arrival
   DataModel::PickPtr pick;
   DataModel::WaveformStreamID pick_waveform_id;
-  double arrival_weight;
-  for (size_t i = 0; i < detector_->origin_->arrivalCount(); ++i) {
-    DataModel::ArrivalPtr arrival{detector_->origin_->arrival(i)};
+  DataModel::ArrivalPtr arrival;
+  for (size_t i = 0; i < product_->origin_->arrivalCount(); ++i) {
+    arrival = product_->origin_->arrival(i);
 
     if (arrival->phase().code() != stream_config.template_config.phase) {
       continue;
@@ -752,11 +758,11 @@ DetectorBuilder &DetectorBuilder::set_stream(
       continue;
     }
 
-    arrival_weight = arrival->weight();
     break;
   }
 
   if (!pick) {
+    arrival.reset();
     auto msg{log_prefix + std::string{"Failed to load pick: origin="} +
              origin_id_ + std::string{", phase="} +
              stream_config.template_config.phase};
@@ -798,11 +804,14 @@ DetectorBuilder &DetectorBuilder::set_stream(
                      log_prefix.c_str(), wf_start.iso().c_str(),
                      wf_end.iso().c_str());
 
+  SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
+                     stream_config.template_id.c_str());
+
+  product_->stream_configs_[stream_id] = Detector::StreamConfig{};
+
   // set template related filter (used for template waveform processing)
   WaveformHandlerIface::ProcessingConfig template_wf_config;
   template_wf_config.filter_string = stream_config.template_config.filter;
-
-  detector_->stream_configs_[stream_id] = Detector::StreamConfig{};
 
   // create template related filter (used during real-time stream
   // processing)
@@ -821,55 +830,109 @@ DetectorBuilder &DetectorBuilder::set_stream(
     }
   }
 
-  SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
-                     stream_config.template_id.c_str());
-
-  detector_->stream_configs_[stream_id].processor =
-      Template::Create(stream_config.template_id, detector_.get())
-          .set_phase(stream_config.template_config.phase)
-          .set_arrival_weight(arrival_weight)
-          .set_pick(pick)
+  Core::Time start, end;
+  // template processor
+  auto template_proc{
+      Template::Create(stream_config.template_id, product_.get())
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_sensitivity_correction(stream_config.sensitivity_correction)
-          .set_publish_callback(
-              std::bind(&Detector::StoreTemplateResult, detector_.get(),
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3))
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
-                        template_wf_config)
+                        template_wf_config, start, end)
           .set_debug_info_dir(path_debug_info)
-          .build();
+          .Build()};
 
-  const auto &template_init_time{
-      detector_->stream_configs_[stream_id].processor->init_time()};
-  if (template_init_time > detector_->init_time()) {
-    detector_->init_time_ = template_init_time;
-  }
+  TemplateProcessorConfig c{
+      std::move(template_proc),
+      {stream->sensorLocation(), pick, arrival, pick->time().value() - start}};
 
-  detector_->stream_configs_[stream_id].stream_buffer =
-      utils::make_unique<RingBuffer>(
-          template_init_time * settings::kBufferMultiplicator, gap_tolerance);
+  processor_configs_.emplace(stream_id, std::move(c));
 
-  detector_->stream_configs_[stream_id].metadata.sensor_location =
-      stream->sensorLocation();
+  arrival_picks_.push_back(detector::POT::ArrivalPick{arrival, pick});
 
-  return *this;
-}
-
-DetectorBuilder &DetectorBuilder::set_publish_callback(
-    Processor::PublishResultCallback callback) {
-  detector_->set_result_callback(callback);
   return *this;
 }
 
 DetectorBuilder &
 DetectorBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
-  detector_->set_debug_info_dir(path);
+  product_->set_debug_info_dir(path);
   return *this;
 }
 
-DetectorPtr DetectorBuilder::build() { return detector_; }
+void DetectorBuilder::Finalize() {
+
+  // use a POT to determine the max relative pick offset
+  detector::PickOffsetTable pot{arrival_picks_};
+
+  // initialization time
+  Core::TimeSpan po{pot.pick_offset().value_or(0)};
+  if (po) {
+    using pair_type = TemplateProcessorConfigs::value_type;
+    const auto max{std::max_element(
+        std::begin(processor_configs_), std::end(processor_configs_),
+        [](const pair_type &lhs, const pair_type &rhs) {
+          return lhs.second.processor->init_time() <
+                 rhs.second.processor->init_time();
+        })};
+
+    product_->init_time_ = (max->second.processor->init_time() > po
+                                ? max->second.processor->init_time()
+                                : po);
+
+  } else if (pot.size()) {
+    product_->init_time_ =
+        processor_configs_.cbegin()->second.processor->init_time();
+  } else {
+    product_->disable();
+  }
+
+  const auto &cfg{product_->config_};
+  product_->detector_.set_trigger_thresholds(cfg.trigger_on, cfg.trigger_off);
+  if (cfg.trigger_duration >= 0) {
+    product_->detector_.EnableTrigger(Core::TimeSpan{cfg.trigger_duration});
+  }
+  auto product{product_.get()};
+  product_->detector_.set_result_callback(
+      [product](const detector::Detector::Result &res) {
+        product->StoreDetection(res);
+      });
+  if (cfg.arrival_offset_threshold < 0) {
+    product_->detector_.set_arrival_offset_threshold(boost::none);
+  } else {
+    product_->detector_.set_arrival_offset_threshold(
+        cfg.arrival_offset_threshold);
+  }
+
+  for (auto &proc_config_pair : processor_configs_) {
+    const auto &stream_id{proc_config_pair.first};
+    auto &proc_config{proc_config_pair.second};
+
+    // initialize buffer
+    auto &buf{product_->stream_configs_[stream_id].stream_buffer};
+    buf = std::make_shared<RingBuffer>(
+        product_->init_time() * settings::kBufferMultiplicator, 0);
+
+    const auto &meta{proc_config.metadata};
+    boost::optional<std::string> phase_hint;
+    try {
+      phase_hint = meta.pick->phaseHint();
+    } catch (Core::ValueException &e) {
+    }
+    // initialize detection processing strategy
+    product_->detector_.Register(
+        std::move(proc_config.processor), buf, stream_id,
+        detector::Arrival{
+            {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
+             meta.pick->time().value() - product_->origin_->time().value()},
+            meta.arrival->phase(),
+            meta.arrival->weight(),
+        },
+        meta.pick_offset,
+        detector::Detector::SensorLocation{
+            meta.sensor_location->latitude(), meta.sensor_location->longitude(),
+            meta.sensor_location->station()->publicID()});
+  }
+}
 
 bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
                                      const DataModel::PickCPtr pick) {
@@ -885,20 +948,6 @@ bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
     }
   } catch (Core::ValueException &e) {
     return false;
-  }
-  return true;
-}
-
-bool DetectorBuilder::set_origin(const std::string &origin_id) {
-  if (!detector_->origin_) {
-
-    DataModel::OriginPtr origin{
-        EventStore::Instance().Get<DataModel::Origin>(origin_id)};
-    if (!origin) {
-      SCDETECT_LOG_WARNING("Origin %s not found.", origin_id.c_str());
-      return false;
-    }
-    detector_->origin_ = origin;
   }
   return true;
 }

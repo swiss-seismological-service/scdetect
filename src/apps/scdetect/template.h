@@ -103,6 +103,8 @@ private:
   Core::Time waveform_start_;
   // Template waveform endtime
   Core::Time waveform_end_;
+  // Template waveform
+  Core::TimeSpan waveform_length_;
   // Template waveform stream id
   std::string waveform_stream_id_;
   // Template waveform
@@ -119,13 +121,10 @@ private:
   const Processor *detector_{nullptr};
 };
 
-class TemplateBuilder : public Builder<TemplateBuilder> {
+class TemplateBuilder : public Builder<Template> {
 public:
   TemplateBuilder(const std::string &template_id, const Processor *p);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
-  TemplateBuilder &set_phase(const std::string &phase);
-  TemplateBuilder &set_pick(DataModel::PickCPtr pick);
-  TemplateBuilder &set_arrival_weight(const double weight);
   TemplateBuilder &
   // Set the template waveform of the `Template` waveform processor built.
   // While `wf_start` and `wf_end` refer to the target template waveform start
@@ -136,19 +135,12 @@ public:
                const Core::Time &wf_end,
                const WaveformHandlerIface::ProcessingConfig &config,
                Core::Time &wf_start_waveform, Core::Time &wf_end_waveform);
-  TemplateBuilder &
-  set_publish_callback(Processor::PublishResultCallback callback);
   TemplateBuilder &set_filter(Processor::Filter *filter,
                               const double init_time = 0);
   TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
 
   // Set the path to the debug info directory
   TemplateBuilder &set_debug_info_dir(const boost::filesystem::path &path);
-
-  ProcessorPtr build();
-
-private:
-  TemplatePtr template_;
 };
 
 namespace template_detail {
