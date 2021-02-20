@@ -78,6 +78,7 @@ public:
 
   bool Feed(const Record *rec) override;
   void Reset() override;
+  void Terminate() override;
 
   std::string DebugString() const override;
 

@@ -412,24 +412,17 @@ bool Application::run() {
 }
 
 void Application::done() {
-  if (ep_) {
-    IO::XMLArchive ar;
-    ar.create(config_.path_ep.empty() ? "-" : config_.path_ep.c_str());
-    ar.setFormattedOutput(true);
-    ar << ep_;
-    ar.close();
-    SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
-    ep_.reset();
-  }
+  std::unordered_set<std::string> detector_ids;
+  // terminate detectors
+  for (const auto &detector_pair : detectors_) {
+    auto &detector{detector_pair.second};
+    const auto detector_id{detector->id()};
+    if (detector_ids.find(detector_id) == detector_ids.end()) {
+      detector->Terminate();
 
-  // optionally, create debug info files
-  if (config_.dump_debug_info) {
-    std::unordered_set<std::string> detector_ids;
-    for (const auto &stream_detector_pair : detectors_) {
-      const auto &detector_id{stream_detector_pair.second->id()};
-      if (detector_ids.find(detector_id) == detector_ids.end()) {
-        const auto &path_debug_info{
-            stream_detector_pair.second->debug_info_dir()};
+      // optionally, create debug info files
+      if (config_.dump_debug_info) {
+        const auto path_debug_info{detector->debug_info_dir()};
         const auto fpath{path_debug_info / settings::kFnameDebugInfo};
 
         if (!Util::pathExists(path_debug_info.string())) {
@@ -442,15 +435,25 @@ void Application::done() {
 
         std::ofstream ofs{fpath.string()};
         if (ofs.is_open()) {
-          ofs << stream_detector_pair.second->DebugString();
+          ofs << detector->DebugString();
           ofs.close();
         } else {
           SCDETECT_LOG_WARNING("Failed to create file: %s", fpath.c_str());
         }
 
-        detector_ids.emplace(stream_detector_pair.second->id());
+        detector_ids.emplace(detector->id());
       }
     }
+  }
+
+  if (ep_) {
+    IO::XMLArchive ar;
+    ar.create(config_.path_ep.empty() ? "-" : config_.path_ep.c_str());
+    ar.setFormattedOutput(true);
+    ar << ep_;
+    ar.close();
+    SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
+    ep_.reset();
   }
 
   EventStore::Instance().Reset();

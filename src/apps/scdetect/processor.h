@@ -159,7 +159,7 @@ public:
   virtual void Reset();
 
   // Terminates the processor ignoring its current status
-  void Terminate();
+  virtual void Terminate();
 
   // Closes the processor meaning that no more records are going to be fed in.
   // The processing has been finished.

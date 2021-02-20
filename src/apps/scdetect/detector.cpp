@@ -77,6 +77,20 @@ void Detector::Reset() {
   Processor::Reset();
 }
 
+void Detector::Terminate() {
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Terminating ...");
+
+  detector_.Terminate();
+  if (detection_) {
+    auto detection{utils::make_smart<Detection>()};
+    PrepareDetection(detection, *detection_);
+    EmitResult(nullptr, detection);
+
+    detection_ = boost::none;
+  }
+  Processor::Terminate();
+}
+
 std::string Detector::DebugString() const {
 
   bool first_result{true};
