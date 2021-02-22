@@ -261,7 +261,7 @@ bool Detector::FillGap(StreamState &stream_state, const Record *record,
 
       auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
 
-      auto filled{utils::make_smart<GenericRecord>(
+      auto filled{utils::make_unique<GenericRecord>(
           record->networkCode(), record->stationCode(), record->locationCode(),
           record->channelCode(), buffer->timeWindow().endTime(),
           record->samplingFrequency())};
@@ -276,7 +276,7 @@ bool Detector::FillGap(StreamState &stream_state, const Record *record,
       }
 
       filled->setData(missing_samples, data_ptr->typedData(), Array::DOUBLE);
-      Fill(stream_state, /*record=*/filled.get(), data_ptr);
+      Fill(stream_state, /*record=*/filled.release(), data_ptr);
 
       return true;
     }
