@@ -116,6 +116,7 @@ private:
 
   struct StreamConfig {
     Processor::StreamState stream_state;
+    // Reference to the stream buffer
     std::shared_ptr<RecordSequence> stream_buffer;
   };
 
