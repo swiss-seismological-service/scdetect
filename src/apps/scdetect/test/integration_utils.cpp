@@ -88,6 +88,11 @@ const std::string FlagConsole::flag() const { return "--console"; }
 FlagOffline::FlagOffline() : ArgFlag{"1"} {}
 const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
+FlagPlayback::FlagPlayback() : ArgFlag{"1"} {}
+const std::string FlagPlayback::flag() const {
+  return std::string{"--playback"};
+}
+
 FlagTemplatesReload::FlagTemplatesReload() : ArgFlag{"1"} {}
 const std::string FlagTemplatesReload::flag() const {
   return "--templates-reload";

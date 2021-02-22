@@ -128,6 +128,7 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
       "scdetect",
       cli::to_string(cli::FlagDebug{}),
       cli::to_string(cli::FlagOffline{}),
+      cli::to_string(cli::FlagPlayback{}),
       cli::to_string(cli::FlagTemplatesReload{}),
       cli::to_string(cli::FlagPlugins{"dbsqlite3"}),
       cli::to_string(cli::FlagDB{path_db}),

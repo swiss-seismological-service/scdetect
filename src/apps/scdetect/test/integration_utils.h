@@ -63,6 +63,12 @@ public:
   const std::string flag() const override;
 };
 
+class FlagPlayback : public ArgFlag {
+public:
+  FlagPlayback();
+  const std::string flag() const override;
+};
+
 class FlagTemplatesReload : public ArgFlag {
 public:
   FlagTemplatesReload();
