@@ -152,7 +152,6 @@ protected:
 
 private:
   struct ProcessorState {
-    // TODO TODO TODO: Define move ctor using copy-swap idiom
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
     // Template processor

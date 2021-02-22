@@ -534,15 +534,6 @@ void Detector::StoreLinkerResult(const Linker::Result &res) {
   result_queue_.emplace_back(res);
 }
 
-/* Detector::ProcessorState::ProcessorState( */
-/*     std::unique_ptr<detect::Processor> &&proc, */
-/*     const std::shared_ptr<const RecordSequence> &buf, const SensorLocation
- * &loc, */
-/*     const Core::TimeWindow &processed) */
-/*     : buffer{buf}, processed{processed}, sensor_location{loc} { */
-/*   processor = std::move(proc); */
-/* } */
-
 } // namespace detector
 } // namespace detect
 } // namespace Seiscomp
