@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
+  <Inventory>
+    <sensor publicID="Sensor/20210119160107.080209.7" name="CH.GRIMS.HHZ.2015.303.10.50.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111047.146887.34">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20210119160107.081056.15" name="CH.HASLI.HHZ.1999.167.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111047.146887.34">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <datalogger publicID="Datalogger/20210119160107.080062.6" name="CH.GRIMS.HHZ.2015.303.10.50.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="100" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111047.144062.21 smi:ch.ethz.sed/ResponseFIR/20150105111047.144145.22</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20210119160107.081011.14" name="CH.HASLI.HHZ.1999.167.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111048.00915.30 smi:ch.ethz.sed/ResponseFIR/20150105111048.00915.30 smi:ch.ethz.sed/ResponseFIR/20150105111048.009549.32 smi:ch.ethz.sed/ResponseFIR/20150105111048.009809.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ/20150105111047.146887.34" name="GRIMS.2011.313.HZ">
+      <type>A</type>
+      <gain>1500</gain>
+      <gainFrequency>1</gainFrequency>
+      <normalizationFactor>3.4684e+17</normalizationFactor>
+      <normalizationFrequency>1</normalizationFrequency>
+      <numberOfZeros>6</numberOfZeros>
+      <numberOfPoles>11</numberOfPoles>
+      <zeros>(0,0) (0,0) (-15.15,0) (-176.6,0) (-463.1,-430.5) (-463.1,430.5)</zeros>
+      <poles>(-0.037,-0.037) (-0.037,0.037) (-15.64,0) (-97.34,-400.7) (-97.34,400.7) (-374.8,0) (-520.3,0) (-10530,-10050) (-10530,10050) (-13300,0) (-255.097,0)</poles>
+    </responsePAZ>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111047.144062.21" name="GRIMS..HHE.2011.313.stage_2">
+      <gain>1677720</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>1</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>1</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111047.144145.22" name="GRIMS..HHE.2011.313.stage_3">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>33</delay>
+      <correction>33</correction>
+      <numberOfCoefficients>65</numberOfCoefficients>
+      <symmetry>A</symmetry>
+      <coefficients>6.43711e-14 6.58258e-08 -7.53118e-07 6.26743e-07 2.47069e-06 -3.15256e-06 5.4824e-06 -7.78113e-06 5.10559e-06 3.31568e-05 -0.000268238 -0.000353056 0.000622489 -0.00101006 0.00127276 -0.00118431 0.000512697 0.000910091 -0.00309045 0.00581107 -0.00857787 0.0106344 -0.0110399 0.00881308 -0.00307778 -0.00464808 0.016017 -0.0372088 0.0536013 -0.0726163 0.0878551 -0.0979276 0.0946782 0.888891 0.138422 -0.115331 0.0951158 -0.0743198 0.0521264 -0.0339684 0.0122831 -0.00140239 -0.00585837 0.0107618 -0.0121488 0.0110276 -0.00845663 0.00539437 -0.00257072 0.000426728 0.000881093 -0.00141391 0.00137928 -0.00102993 0.000596299 -0.000303778 -0.000298773 3.41094e-05 5.26981e-06 -8.09269e-06 5.56459e-06 -2.95383e-06 2.26184e-06 7.69085e-07 -7.49759e-07</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111048.00915.30" name="HASLI..HHE.1999.167.stage_3">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>5</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>17</numberOfCoefficients>
+      <symmetry>C</symmetry>
+      <coefficients>3.78878e-05 0.000199727 0.000591277 0.00119834 0.0016772 0.00123444 -0.00115877 -0.00607173 -0.0126102 -0.0176668 -0.0161537 -0.00263181 0.0260166 0.0680539 0.115986 0.158234 0.18305</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111048.009549.32" name="HASLI..HHE.1999.167.stage_5">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>5</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>28</numberOfCoefficients>
+      <symmetry>C</symmetry>
+      <coefficients>1.27829e-05 4.86436e-05 0.000114412 0.000191012 0.000219187 0.000104308 -0.00024263 -0.000828811 -0.00149734 -0.00189428 -0.00154402 -5.73342e-05 0.00257422 0.00572408 0.00808691 0.00798133 0.00400912 -0.00410132 -0.0148003 -0.0245514 -0.0284513 -0.0216121 -0.000939619 0.0333076 0.0768324 0.121895 0.159156 0.180251</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111048.009809.33" name="HASLI..HHE.1999.167.stage_6">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>2</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>59</numberOfCoefficients>
+      <symmetry>C</symmetry>
+      <coefficients>-1.0469e-05 -2.37758e-05 -5.71898e-06 3.42359e-05 3.05109e-05 -4.39314e-05 -7.44501e-05 3.35697e-05 0.000136269 1.27756e-05 -0.000202509 -0.000112215 0.000248813 0.000273009 -0.000237879 -0.000488299 0.000125725 0.000727343 0.000129368 -0.000931762 -0.000552402 0.00101653 0.00113568 -0.000879633 -0.00182378 0.000420099 0.00250427 0.000436356 -0.00300832 -0.00170771 0.00312431 0.00332718 -0.00262574 -0.00512246 0.00131145 0.00680853 0.000946345 -0.00799837 -0.00415349 0.00823239 0.00815258 -0.00702311 -0.0125959 0.003906 0.0169353 0.00151894 -0.0204222 -0.00957991 0.0220943 0.0206082 -0.0206774 -0.0352195 0.0141705 0.0552558 0.00190459 -0.087902 -0.0450415 0.182297 0.410586</coefficients>
+    </responseFIR>
+    <network publicID="NET/CH/20210119160107.079007.425" code="CH">
+      <start>1980-01-01T00:00:00.0000Z</start>
+      <description>National Seismic Networks of Switzerland</description>
+      <restricted>false</restricted>
+      <shared>true</shared>
+      <station publicID="STA/CH/GRIMS/20210119160107.079533.426" code="GRIMS">
+        <start>2011-11-09T00:00:00.0000Z</start>
+        <description>Grimsel, Gerstenegg, BE</description>
+        <latitude>46.578146</latitude>
+        <longitude>8.318864</longitude>
+        <elevation>1746</elevation>
+        <country>Switzerland</country>
+        <restricted>false</restricted>
+        <shared>true</shared>
+        <sensorLocation publicID="LOC/CH/GRIMS//20210119160107.07974.427" code="">
+          <start>2015-10-30T10:50:00.0000Z</start>
+          <latitude>46.578146</latitude>
+          <longitude>8.318864</longitude>
+          <elevation>1746</elevation>
+          <stream publicID="Stream/20210119160107.079895.5" code="HHZ" datalogger="Datalogger/20210119160107.080062.6" sensor="Sensor/20210119160107.080209.7">
+            <start>2015-10-30T10:50:00.0000Z</start>
+            <dataloggerSerialNumber>5671</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>39905</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>100</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>2516580000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+        </sensorLocation>
+      </station>
+      <station publicID="STA/CH/HASLI/20210119160107.080753.440" code="HASLI">
+        <start>1999-01-19T00:00:00.0000Z</start>
+        <description>Hasliberg, BE</description>
+        <latitude>46.75681</latitude>
+        <longitude>8.15117</longitude>
+        <elevation>1280</elevation>
+        <country>Switzerland</country>
+        <restricted>false</restricted>
+        <shared>true</shared>
+        <sensorLocation publicID="LOC/CH/HASLI//20210119160107.080857.441" code="">
+          <start>1999-06-16T00:00:00.0000Z</start>
+          <latitude>46.75681</latitude>
+          <longitude>8.15117</longitude>
+          <elevation>1280</elevation>
+          <stream publicID="Stream/20210119160107.080916.13" code="HHZ" datalogger="Datalogger/20210119160107.081011.14" sensor="Sensor/20210119160107.081056.15">
+            <start>1999-06-16T00:00:00.0000Z</start>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>627615000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+        </sensorLocation>
+      </station>
+    </network>
+  </Inventory>
+</seiscomp>
