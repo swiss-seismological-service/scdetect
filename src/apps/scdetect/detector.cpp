@@ -572,7 +572,7 @@ void DetectorBuilder::Finalize() {
       phase_hint = meta.pick->phaseHint();
     } catch (Core::ValueException &e) {
     }
-    // initialize detection processing strategy
+    // initialize detection processing
     product_->detector_.Register(
         std::move(proc_config.processor), buf, stream_id,
         detector::Arrival{
