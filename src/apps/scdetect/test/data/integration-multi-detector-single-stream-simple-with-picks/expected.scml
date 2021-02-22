@@ -3,7 +3,7 @@
   <EventParameters>
     <pick publicID="Pick/20210119164429.603554.5959">
       <time>
-        <value>2020-10-25T19:35:54.328393Z</value>
+        <value>2020-10-25T19:35:55.825641Z</value>
       </time>
       <waveformID networkCode="" stationCode="">
         <resourceURI>CH.GRIMS..HHZ</resourceURI>
@@ -13,7 +13,7 @@
     </pick>
     <pick publicID="Pick/20210119164429.607174.5962">
       <time>
-        <value>2020-10-25T19:35:56.096666Z</value>
+        <value>2020-10-25T19:35:56.458294Z</value>
       </time>
       <waveformID networkCode="" stationCode="">
         <resourceURI>CH.HASLI..HHZ</resourceURI>
