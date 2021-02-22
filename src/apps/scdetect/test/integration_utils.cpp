@@ -79,21 +79,22 @@ std::ostream &operator<<(std::ostream &os, const Flag &flag) {
 
 ArgFlag::ArgFlag(const std::string &arg) : arg_{arg} {}
 void ArgFlag::to_string(std::ostream &os) const { os << flag() << "=" << arg_; }
+void ArgFlag::set_arg(const std::string &arg) { arg_ = arg; }
+
+BooleanFlag::BooleanFlag() : ArgFlag{"1"} {}
+void BooleanFlag::Enable() { set_arg("1"); }
+void BooleanFlag::Disable() { set_arg("0"); }
 
 const std::string FlagDebug::flag() const { return "--debug"; }
 
-FlagConsole::FlagConsole() : ArgFlag{"1"} {}
 const std::string FlagConsole::flag() const { return "--console"; }
 
-FlagOffline::FlagOffline() : ArgFlag{"1"} {}
 const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
-FlagPlayback::FlagPlayback() : ArgFlag{"1"} {}
 const std::string FlagPlayback::flag() const {
   return std::string{"--playback"};
 }
 
-FlagTemplatesReload::FlagTemplatesReload() : ArgFlag{"1"} {}
 const std::string FlagTemplatesReload::flag() const {
   return "--templates-reload";
 }

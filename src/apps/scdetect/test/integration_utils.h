@@ -42,8 +42,17 @@ public:
 protected:
   void to_string(std::ostream &os) const override;
 
+  void set_arg(const std::string &arg);
+
 private:
   std::string arg_;
+};
+
+class BooleanFlag : public ArgFlag {
+public:
+  BooleanFlag();
+  void Enable();
+  void Disable();
 };
 
 class FlagDebug : public Flag {
@@ -51,27 +60,23 @@ public:
   const std::string flag() const override;
 };
 
-class FlagConsole : public ArgFlag {
+class FlagConsole : public BooleanFlag {
 public:
-  FlagConsole();
   const std::string flag() const override;
 };
 
-class FlagOffline : public ArgFlag {
+class FlagOffline : public BooleanFlag {
 public:
-  FlagOffline();
   const std::string flag() const override;
 };
 
-class FlagPlayback : public ArgFlag {
+class FlagPlayback : public BooleanFlag {
 public:
-  FlagPlayback();
   const std::string flag() const override;
 };
 
-class FlagTemplatesReload : public ArgFlag {
+class FlagTemplatesReload : public BooleanFlag {
 public:
-  FlagTemplatesReload();
   const std::string flag() const override;
 };
 
