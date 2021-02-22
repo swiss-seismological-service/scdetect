@@ -10,9 +10,11 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/sensorlocation.h>
 
 #include <boost/optional.hpp>
