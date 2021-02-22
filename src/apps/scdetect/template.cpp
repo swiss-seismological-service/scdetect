@@ -27,32 +27,6 @@
 namespace Seiscomp {
 namespace detect {
 
-Template::MatchResult::MatchResult(const double sum_template,
-                                   const double squared_sum_template,
-                                   const int num_samples_template,
-                                   const Core::TimeWindow &tw,
-                                   MatchResult::MetaData metadata)
-    : num_samples_template{num_samples_template}, sum_template{sum_template},
-      squared_sum_template{squared_sum_template}, time_window{tw},
-      metadata(metadata) {}
-
-std::ostream &operator<<(std::ostream &os,
-                         const Template::MatchResult &result) {
-  os << "\"startTime\": \"" << result.time_window.startTime().iso()
-     << "\", \"endTime\": \"" << result.time_window.endTime().iso()
-     << "\", \"fit\": " << std::fixed << std::setprecision(6)
-     << result.coefficient << ", \"lag\": " << result.lag;
-
-  if (!result.debug_info.path_template.empty()) {
-    os << ", \"pathTemplate\": \"" << result.debug_info.path_template << "\"";
-  }
-  if (!result.debug_info.path_trace.empty()) {
-    os << ", \"pathTrace\": \"" << result.debug_info.path_trace << "\"";
-  }
-
-  return os;
-}
-
 Template::Template(const std::string &template_id, const Processor *p)
     : Processor{template_id}, detector_{p} {}
 
@@ -219,8 +193,28 @@ void Template::InitStream(StreamState &stream_state, const Record *record) {
 }
 
 /* ------------------------------------------------------------------------- */
+Template::MatchResult::MatchResult(const double sum_template,
+                                   const double squared_sum_template,
+                                   const int num_samples_template,
+                                   const Core::TimeWindow &tw)
+    : num_samples_template{num_samples_template}, sum_template{sum_template},
+      squared_sum_template{squared_sum_template}, time_window{tw} {}
 
+std::ostream &operator<<(std::ostream &os,
+                         const Template::MatchResult &result) {
+  os << "\"startTime\": \"" << result.time_window.startTime().iso()
+     << "\", \"endTime\": \"" << result.time_window.endTime().iso()
+     << "\", \"fit\": " << std::fixed << std::setprecision(6)
+     << result.coefficient << ", \"lag\": " << result.lag;
 
+  if (!result.debug_info.path_template.empty()) {
+    os << ", \"pathTemplate\": \"" << result.debug_info.path_template << "\"";
+  }
+  if (!result.debug_info.path_trace.empty()) {
+    os << ", \"pathTrace\": \"" << result.debug_info.path_trace << "\"";
+  }
+
+  return os;
 }
 
 /* ------------------------------------------------------------------------- */
