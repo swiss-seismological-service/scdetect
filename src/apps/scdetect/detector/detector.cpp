@@ -525,9 +525,10 @@ void Detector::StoreTemplateResult(const detect::Processor *proc,
         boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
     const auto &tw{proc->processed()};
     SCDETECT_LOG_DEBUG_PROCESSOR(
-        proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%f", rec->streamID().c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str(),
-        match_result->coefficient, match_result->lag);
+        proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f",
+        rec->streamID().c_str(), tw.startTime().iso().c_str(),
+        tw.endTime().iso().c_str(), match_result->coefficient,
+        match_result->lag);
 #endif
 
     linker_.Feed(proc, res);
