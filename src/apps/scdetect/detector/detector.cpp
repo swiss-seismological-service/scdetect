@@ -68,6 +68,15 @@ boost::optional<double> Detector::arrival_offset_threshold() const {
   return linker_.thres_arrival_offset();
 }
 
+void Detector::set_maximum_latency(
+    const boost::optional<Core::TimeSpan> &latency) {
+  max_latency_ = latency;
+}
+
+boost::optional<Core::TimeSpan> Detector::maximum_latency() const {
+  return max_latency_;
+}
+
 size_t Detector::GetProcessorCount() const { return processors_.size(); }
 
 void Detector::Register(std::unique_ptr<detect::Processor> &&proc,
@@ -311,9 +320,11 @@ void Detector::set_result_callback(const PublishResultCallback &cb) {
 
 bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
                                  const std::string &waveform_id_hint) {
-  // TODO TODO TODO
-  // - skip data with too high latency
-  // -
+  Core::Time latency_endtime;
+  if (max_latency_) {
+    latency_endtime = Core::Time::GMT() - *max_latency_;
+  }
+
   const auto range{processor_idx_.equal_range(waveform_id_hint)};
   for (auto rit = range.first; rit != range.second; ++rit) {
     const auto &proc_id{rit->second};
@@ -331,6 +342,11 @@ bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
 
       // validate if enough data is available for the *next processing run*
       if (tw.length() < static_cast<double>(proc.processor->init_time())) {
+        continue;
+      }
+
+      // skip data with too high latency
+      if (latency_endtime && (tw.endTime() < latency_endtime)) {
         continue;
       }
 

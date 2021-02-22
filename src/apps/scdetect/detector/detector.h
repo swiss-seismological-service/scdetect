@@ -97,6 +97,11 @@ public:
   void set_arrival_offset_threshold(const boost::optional<double> &thres);
   // Returns the arrival offset threshold configured
   boost::optional<double> arrival_offset_threshold() const;
+  // Sets the maximum data latency w.r.t. `NOW`. If configured with
+  // `boost::none` latency is not taken into account and thus not validated
+  void set_maximum_latency(const boost::optional<Core::TimeSpan> &latency);
+  // Returns the maximum allowed data latency configured
+  boost::optional<Core::TimeSpan> maximum_latency() const;
   // Returns the number of registered processors
   size_t GetProcessorCount() const;
 

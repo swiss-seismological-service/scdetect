@@ -96,7 +96,7 @@ struct DetectorConfig {
   double gap_threshold{0.1};
   // Maximum gap length in seconds to tolerate and to be handled
   double gap_tolerance{4.5};
-  // Maximum data latency a in seconds tolerated
+  // Maximum data latency in seconds tolerated with regards to `NOW`
   double maximum_latency{10};
 
   // Flag indicating whether to compute and associate picks

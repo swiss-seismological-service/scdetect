@@ -303,10 +303,21 @@ DetectorBuilder::DetectorBuilder(const std::string &detector_id,
   product_ = std::unique_ptr<Detector>(new Detector{detector_id, origin});
 }
 
-DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config) {
+DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config,
+                                             bool playback) {
   product_->config_ = config;
 
   product_->enabled_ = config.enabled;
+
+  // configure playback related facilities
+  if (playback) {
+    product_->detector_.set_maximum_latency(boost::none);
+  } else {
+    if (config.maximum_latency > 0) {
+      product_->detector_.set_maximum_latency(
+          Core::TimeSpan{config.maximum_latency});
+    }
+  }
 
   return *this;
 }

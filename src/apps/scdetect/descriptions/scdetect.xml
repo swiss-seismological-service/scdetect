@@ -178,15 +178,15 @@
         <option flag="" long-flag="record-starttime" argument="">
           <description>
             Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
-            records from the configured archive recordstream. Useful for
-            reprocessing.
+            records from the configured archive recordstream. Implicitly
+            enables reprocessing/playback mode.
           </description>
         </option>
         <option flag="" long-flag="record-endtime" argument="">
           <description>
             Defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
-            records from the configured archive recordstream. Useful for
-            reprocessing.
+            records from the configured archive recordstream. Implicitly
+            enables reprocessing/playback mode.
           </description>
         </option>
       </group>
@@ -196,6 +196,12 @@
           <description>
             Dump additional debug information (e.g. waveforms, stats etc.)
             while processing.
+          </description>
+        </option>
+        <option flag="" long-flag="playback" default="false">
+          <description>
+            Use playback mode that does not restrict the maximum allowed
+            data latency.
           </description>
         </option>
         <option flag="" long-flag="load-templates">

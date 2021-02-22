@@ -98,6 +98,9 @@ public:
 
       Core::Time start_time;
       Core::Time end_time;
+
+      // Indicates if playback mode is enabled/disabled
+      bool enabled;
     } playback_config;
 
     // Messaging

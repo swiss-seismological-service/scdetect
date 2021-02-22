@@ -139,7 +139,7 @@ class DetectorBuilder : public Builder<Detector> {
 public:
   DetectorBuilder(const std::string &detector_id, const std::string &origin_id);
 
-  DetectorBuilder &set_config(const DetectorConfig &config);
+  DetectorBuilder &set_config(const DetectorConfig &config, bool playback);
 
   DetectorBuilder &set_eventparameters();
   // Set stream related template configuration

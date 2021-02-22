@@ -358,6 +358,10 @@ bool Application::init() {
   if (!StreamApplication::init())
     return false;
 
+  if (config_.playback_config.enabled) {
+    SCDETECT_LOG_INFO("Playback mode enabled");
+  }
+
   // TODO(damb): Check if std::unique_ptr wouldn't be sufficient, here.
   WaveformHandlerIfacePtr waveform_handler{
       utils::make_smart<WaveformHandler>(recordStreamURL())};
@@ -403,9 +407,11 @@ bool Application::run() {
 
   if (!config_.playback_config.start_time_str.empty()) {
     recordStream()->setStartTime(config_.playback_config.start_time);
+    config_.playback_config.enabled = true;
   }
   if (!config_.playback_config.end_time_str.empty()) {
     recordStream()->setEndTime(config_.playback_config.end_time);
+    config_.playback_config.enabled = true;
   }
 
   return StreamApplication::run();
@@ -752,18 +758,21 @@ void Application::SetupConfigurationOptions() {
       "formatted; specifying the output path as '-' (a single dash) will "
       "force the output to be redirected to stdout");
 
-  NEW_OPT_CLI(
-      config_.playback_config.start_time_str, "Records", "record-starttime",
-      "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
-      "requesting records from the configured archive recordstream; useful for "
-      "reprocessing");
+  NEW_OPT_CLI(config_.playback_config.start_time_str, "Records",
+              "record-starttime",
+              "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
+              "requesting records from the configured archive recordstream; "
+              "implicitly enables reprocessing/playback mode");
   NEW_OPT_CLI(config_.playback_config.end_time_str, "Records", "record-endtime",
               "defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for "
               "requesting records from the configured archive recordstream; "
-              "useful for reprocessing");
+              "implicitly enables reprocessing/playback mode");
 
   NEW_OPT_CLI(config_.dump_debug_info, "Mode", "debug-info",
               "dump additional debug information (e.g. waveforms, stats etc.)");
+  NEW_OPT_CLI(config_.playback_config.enabled, "Mode", "playback",
+              "Use playback mode that does not restrict the maximum allowed "
+              "data latency");
   NEW_OPT_CLI(config_.load_templates_only, "Mode", "templates-load-only",
               "load templates and exit");
   NEW_OPT_CLI(config_.templates_no_cache, "Mode", "templates-reload",
@@ -836,7 +845,8 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 
         auto detector_builder{
             std::move(Detector::Create(tc.detector_id(), tc.origin_id())
-                          .set_config(tc.detector_config())
+                          .set_config(tc.detector_config(),
+                                      config_.playback_config.enabled)
                           .set_eventparameters())};
 
         boost::filesystem::path path_debug_info;
