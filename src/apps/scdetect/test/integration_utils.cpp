@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <ostream>
 #include <sstream>
+#include <vector>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -12,10 +13,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include <seiscomp/core/exceptions.h>
-#include <seiscomp/datamodel/arrival.h>
-#include <seiscomp/datamodel/magnitude.h>
-#include <seiscomp/datamodel/origin.h>
-#include <seiscomp/datamodel/pick.h>
+
+#include "../utils.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -39,6 +38,26 @@ auto GetOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
 template <typename T, typename TFunc>
 bool EqualOptional(const T &lhs, const T &rhs, TFunc f) {
   return GetOptional(lhs, f) == GetOptional(rhs, f);
+}
+
+template <typename TPtr, typename TFunc, typename TPred>
+std::vector<TPtr> SortByPredicate(const TFunc &f, size_t n, const TPred &pred) {
+
+  std::vector<TPtr> ret;
+  for (size_t i = 0; i < n; ++i) {
+    ret.push_back(f(i));
+  }
+
+  std::sort(std::begin(ret), std::end(ret), pred);
+  return ret;
+}
+
+// TODO(damb): Define function return value with regards to `SortByPredicate()`
+template <typename TPtr, typename TFunc>
+std::vector<TPtr> SortByTime(const TFunc &f, size_t n) {
+  return SortByPredicate<TPtr>(f, n, [](const TPtr &lhs, const TPtr &rhs) {
+    return lhs->time().value() < rhs->time().value();
+  });
 }
 
 } // namespace
@@ -129,8 +148,8 @@ const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 } // namespace cli
 
 /* ------------------------------------------------------------------------- */
-void EventParametersCmp(DataModel::EventParametersCPtr lhs,
-                        DataModel::EventParametersCPtr rhs) {
+void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
+                        const DataModel::EventParametersCPtr &rhs) {
 
   BOOST_TEST_CHECK(lhs->pickCount() == rhs->pickCount());
   BOOST_TEST_CHECK(lhs->originCount() == rhs->originCount());
@@ -141,183 +160,257 @@ void EventParametersCmp(DataModel::EventParametersCPtr lhs,
   BOOST_TEST_CHECK(lhs->focalMechanismCount() == rhs->focalMechanismCount());
 
   // compare picks
-  for (size_t i = 0; i < lhs->pickCount(); ++i) {
-    DataModel::PickCPtr pick_result{lhs->pick(i)};
-    DataModel::PickCPtr pick_expected{rhs->pick(i)};
+  const auto lhs_picks{SortByTime<DataModel::PickCPtr>(
+      [&lhs](size_t i) { return lhs->pick(i); }, lhs->pickCount())};
+  const auto rhs_picks{SortByTime<DataModel::PickCPtr>(
+      [&rhs](size_t i) { return rhs->pick(i); }, rhs->pickCount())};
+  for (size_t i = 0; i < lhs_picks.size(); ++i) {
+    DataModel::PickCPtr pick_result{lhs_picks.at(i)};
+    DataModel::PickCPtr pick_expected{rhs_picks.at(i)};
 
-    // compare attributes since the `creationInfo` attribute differs, anyway
-
-    BOOST_TEST_CHECK(pick_result->time().value().iso() ==
-                     pick_expected->time().value().iso());
-    BOOST_TEST_CHECK(std::string{pick_result->waveformID()} ==
-                     std::string{pick_expected->waveformID()});
-    BOOST_TEST_CHECK(pick_result->filterID() == pick_expected->filterID());
-    BOOST_TEST_CHECK(pick_result->methodID() == pick_expected->methodID());
-
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
-          return p->horizontalSlowness();
-        }));
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected,
-                      [](DataModel::PickCPtr p) { return p->backazimuth(); }));
-
-    BOOST_TEST_CHECK(pick_result->slownessMethodID() ==
-                     pick_expected->slownessMethodID());
-
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected,
-                      [](DataModel::PickCPtr p) { return p->onset(); }));
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected,
-                      [](DataModel::PickCPtr p) { return p->phaseHint(); }));
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected,
-                      [](DataModel::PickCPtr p) { return p->polarity(); }));
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
-          return p->evaluationMode();
-        }));
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
-          return p->evaluationStatus();
-        }));
-
-    BOOST_TEST_CHECK(
-        EqualOptional(pick_result, pick_expected, [](DataModel::PickCPtr p) {
-          return p->creationInfo().agencyID();
-        }));
+    PickCmp(pick_result, pick_expected);
   }
 
   // compare origins
-  for (size_t i = 0; i < lhs->originCount(); ++i) {
-    DataModel::OriginCPtr origin_result{lhs->origin(i)};
-    DataModel::OriginCPtr origin_expected{rhs->origin(i)};
+  const auto OriginPredicate = [](const DataModel::OriginCPtr &lhs,
+                                  const DataModel::OriginCPtr &rhs) {
+    // XXX(damb): Used to generate a pseudo total order
+    const auto MinimumDistancePredicate = [](const DataModel::OriginCPtr &o) {
+      return o->quality().minimumDistance();
+    };
+    return MinimumDistancePredicate(lhs) < MinimumDistancePredicate(rhs);
+  };
 
-    BOOST_TEST_CHECK(origin_result->time().value().iso() ==
-                     origin_expected->time().value().iso());
-    BOOST_TEST_CHECK(origin_result->latitude() == origin_expected->latitude());
-    BOOST_TEST_CHECK(origin_result->longitude() ==
-                     origin_expected->longitude());
+  const auto lhs_origins{SortByPredicate<DataModel::OriginCPtr>(
+      [&lhs](size_t i) { return lhs->origin(i); }, lhs->originCount(),
+      OriginPredicate)};
+  const auto rhs_origins{SortByPredicate<DataModel::OriginCPtr>(
+      [&rhs](size_t i) { return rhs->origin(i); }, rhs->originCount(),
+      OriginPredicate)};
+  for (size_t i = 0; i < lhs_origins.size(); ++i) {
+    DataModel::OriginCPtr origin_result{lhs_origins.at(i)};
+    DataModel::OriginCPtr origin_expected{rhs_origins.at(i)};
 
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->depth(); }));
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->depthType(); }));
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->timeFixed(); }));
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->epicenterFixed(); }));
-
-    BOOST_TEST_CHECK(origin_result->referenceSystemID() ==
-                     origin_expected->referenceSystemID());
-    BOOST_TEST_CHECK(origin_result->methodID() == origin_expected->methodID());
-    BOOST_TEST_CHECK(origin_result->earthModelID() ==
-                     origin_expected->earthModelID());
-
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->quality(); }));
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->uncertainty(); }));
-    BOOST_TEST_CHECK(
-        EqualOptional(origin_result, origin_expected,
-                      [](DataModel::OriginCPtr orig) { return orig->type(); }));
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->evaluationMode(); }));
-    BOOST_TEST_CHECK(EqualOptional(
-        origin_result, origin_expected,
-        [](DataModel::OriginCPtr orig) { return orig->evaluationStatus(); }));
-
-    BOOST_TEST_CHECK(EqualOptional(origin_result, origin_expected,
-                                   [](DataModel::OriginCPtr orig) {
-                                     return orig->creationInfo().agencyID();
-                                   }));
-
-    // compare arrivals
-    for (size_t j = 0; j < origin_result->arrivalCount(); ++j) {
-      DataModel::ArrivalCPtr arrival_result{origin_result->arrival(j)};
-      DataModel::ArrivalCPtr arrival_expected{origin_expected->arrival(j)};
-
-      BOOST_TEST_CHECK(arrival_result->phase().code() ==
-                       arrival_expected->phase().code());
-
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->timeCorrection(); }));
-      BOOST_TEST_CHECK(
-          EqualOptional(arrival_result, arrival_expected,
-                        [](DataModel::ArrivalCPtr a) { return a->azimuth(); }));
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->distance(); }));
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->takeOffAngle(); }));
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->timeResidual(); }));
-      BOOST_TEST_CHECK(EqualOptional(arrival_result, arrival_expected,
-                                     [](DataModel::ArrivalCPtr a) {
-                                       return a->horizontalSlownessResidual();
-                                     }));
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->timeUsed(); }));
-      BOOST_TEST_CHECK(EqualOptional(arrival_result, arrival_expected,
-                                     [](DataModel::ArrivalCPtr a) {
-                                       return a->horizontalSlownessUsed();
-                                     }));
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->backazimuthUsed(); }));
-      BOOST_TEST_CHECK(
-          EqualOptional(arrival_result, arrival_expected,
-                        [](DataModel::ArrivalCPtr a) { return a->weight(); }));
-      BOOST_TEST_CHECK(arrival_result->earthModelID() ==
-                       arrival_expected->earthModelID());
-      BOOST_TEST_CHECK(EqualOptional(
-          arrival_result, arrival_expected,
-          [](DataModel::ArrivalCPtr a) { return a->preliminary(); }));
-
-      BOOST_TEST_CHECK(EqualOptional(arrival_result, arrival_expected,
-                                     [](DataModel::ArrivalCPtr a) {
-                                       return a->creationInfo().agencyID();
-                                     }));
-    }
-
-    // compare magnitudes
-    for (size_t j = 0; j < origin_result->magnitudeCount(); ++j) {
-      DataModel::MagnitudeCPtr mag_result{origin_result->magnitude(j)};
-      DataModel::MagnitudeCPtr mag_expected{origin_result->magnitude(j)};
-
-      BOOST_TEST_CHECK(mag_result->magnitude() == mag_expected->magnitude());
-      BOOST_TEST_CHECK(mag_result->type() == mag_expected->type());
-      BOOST_TEST_CHECK(mag_result->originID() == mag_expected->originID());
-      BOOST_TEST_CHECK(mag_result->methodID() == mag_expected->methodID());
-
-      BOOST_TEST_CHECK(EqualOptional(
-          mag_result, mag_expected,
-          [](DataModel::MagnitudeCPtr m) { return m->stationCount(); }));
-      BOOST_TEST_CHECK(EqualOptional(
-          mag_result, mag_expected,
-          [](DataModel::MagnitudeCPtr m) { return m->azimuthalGap(); }));
-      BOOST_TEST_CHECK(EqualOptional(
-          mag_result, mag_expected,
-          [](DataModel::MagnitudeCPtr m) { return m->evaluationStatus(); }));
-
-      BOOST_TEST_CHECK(EqualOptional(mag_result, mag_expected,
-                                     [](DataModel::MagnitudeCPtr m) {
-                                       return m->creationInfo().agencyID();
-                                     }));
-    }
+    OriginCmp(origin_result, origin_expected);
   }
+}
+
+void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
+  // compare attributes since the `creationInfo` attribute differs, anyway
+  BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
+                   static_cast<double>(rhs->time().value()));
+  BOOST_TEST_CHECK(std::string{lhs->waveformID()} ==
+                   std::string{rhs->waveformID()});
+  BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->horizontalSlowness(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->backazimuth(); }));
+
+  BOOST_TEST_CHECK(lhs->slownessMethodID() == rhs->slownessMethodID());
+
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->onset(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->phaseHint(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->polarity(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->evaluationMode(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::PickCPtr p) { return p->evaluationStatus(); }));
+
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::PickCPtr p) {
+    return p->creationInfo().agencyID();
+  }));
+}
+
+void OriginCmp(const DataModel::OriginCPtr &lhs,
+               const DataModel::OriginCPtr &rhs) {
+  BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
+                   static_cast<double>(rhs->time().value()));
+  BOOST_TEST_CHECK(lhs->latitude() == rhs->latitude());
+  BOOST_TEST_CHECK(lhs->longitude() == rhs->longitude());
+
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->depth(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->depthType(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->timeFixed(); }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+    return orig->epicenterFixed();
+  }));
+
+  BOOST_TEST_CHECK(lhs->referenceSystemID() == rhs->referenceSystemID());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+  BOOST_TEST_CHECK(lhs->earthModelID() == rhs->earthModelID());
+
+  auto lhs_q{utils::make_smart<DataModel::OriginQuality>(lhs->quality())};
+  auto rhs_q{utils::make_smart<DataModel::OriginQuality>(rhs->quality())};
+  OriginQualityCmp(lhs_q, rhs_q);
+
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+    return orig->uncertainty();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->type(); }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+    return orig->evaluationMode();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+    return orig->evaluationStatus();
+  }));
+
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+    return orig->creationInfo().agencyID();
+  }));
+
+  // compare arrivals
+  BOOST_TEST_CHECK(lhs->arrivalCount() == rhs->arrivalCount());
+  const auto PhaseCodePredicate = [](const DataModel::ArrivalCPtr &lhs,
+                                     const DataModel::ArrivalCPtr &rhs) {
+    return lhs->phase().code() < rhs->phase().code();
+  };
+  const auto lhs_arrivals{SortByPredicate<DataModel::ArrivalCPtr>(
+      [&lhs](size_t i) { return lhs->arrival(i); }, lhs->arrivalCount(),
+      PhaseCodePredicate)};
+  const auto rhs_arrivals{SortByPredicate<DataModel::ArrivalCPtr>(
+      [&rhs](size_t i) { return rhs->arrival(i); }, rhs->arrivalCount(),
+      PhaseCodePredicate)};
+  for (size_t j = 0; j < lhs_arrivals.size(); ++j) {
+    DataModel::ArrivalCPtr arrival_result{lhs_arrivals.at(j)};
+    DataModel::ArrivalCPtr arrival_expected{rhs_arrivals.at(j)};
+
+    ArrivalCmp(arrival_result, arrival_expected);
+  }
+
+  // compare magnitudes
+  BOOST_TEST_CHECK(lhs->magnitudeCount() == rhs->magnitudeCount());
+  const auto MagnitudePredicate = [](const DataModel::MagnitudeCPtr &lhs,
+                                     const DataModel::MagnitudeCPtr &rhs) {
+    return lhs->magnitude().value() < rhs->magnitude().value() &&
+           lhs->type() < rhs->type();
+  };
+  const auto lhs_mags{SortByPredicate<DataModel::MagnitudeCPtr>(
+      [&lhs](size_t i) { return lhs->magnitude(i); }, lhs->magnitudeCount(),
+      MagnitudePredicate)};
+  const auto rhs_mags{SortByPredicate<DataModel::MagnitudeCPtr>(
+      [&rhs](size_t i) { return rhs->magnitude(i); }, rhs->magnitudeCount(),
+      MagnitudePredicate)};
+  for (size_t j = 0; j < lhs_mags.size(); ++j) {
+    DataModel::MagnitudeCPtr mag_result{lhs_mags.at(j)};
+    DataModel::MagnitudeCPtr mag_expected{rhs_mags.at(j)};
+
+    MagnitudeCmp(mag_result, mag_expected);
+  }
+}
+
+void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
+                      const DataModel::OriginQualityCPtr &rhs) {
+
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+    return q->associatedPhaseCount();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+    return q->usedPhaseCount();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+    return q->associatedStationCount();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+    return q->usedStationCount();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+    return q->depthPhaseCount();
+  }));
+  const auto StandardErrorPredicate = [](DataModel::OriginQualityCPtr q) {
+    return q->standardError();
+  };
+  BOOST_TEST_CHECK(*GetOptional(lhs, StandardErrorPredicate) ==
+                   *GetOptional(rhs, StandardErrorPredicate));
+  const auto AzimuthalGapPredicate = [](DataModel::OriginQualityCPtr q) {
+    return q->azimuthalGap();
+  };
+  BOOST_TEST_CHECK(GetOptional(lhs, AzimuthalGapPredicate).value_or(-1) ==
+                   GetOptional(rhs, AzimuthalGapPredicate).value_or(-1));
+  const auto SecondaryAzimuthalGapPredicate =
+      [](DataModel::OriginQualityCPtr q) { return q->secondaryAzimuthalGap(); };
+  BOOST_TEST_CHECK(
+      GetOptional(lhs, SecondaryAzimuthalGapPredicate).value_or(-1) ==
+      GetOptional(rhs, SecondaryAzimuthalGapPredicate).value_or(-1));
+  BOOST_TEST_CHECK(lhs->groundTruthLevel() == rhs->groundTruthLevel());
+  const auto MaximumDistancePredicate = [](DataModel::OriginQualityCPtr q) {
+    return q->maximumDistance();
+  };
+  BOOST_TEST_CHECK(GetOptional(lhs, MaximumDistancePredicate).value_or(-1) ==
+                   GetOptional(rhs, MaximumDistancePredicate).value_or(-1));
+  const auto MinimumDistancePredicate = [](DataModel::OriginQualityCPtr q) {
+    return q->minimumDistance();
+  };
+  BOOST_TEST_CHECK(GetOptional(lhs, MinimumDistancePredicate).value_or(-1) ==
+                   GetOptional(rhs, MinimumDistancePredicate).value_or(-1));
+  const auto MedianDistancePredicate = [](DataModel::OriginQualityCPtr q) {
+    return q->medianDistance();
+  };
+  BOOST_TEST_CHECK(GetOptional(lhs, MedianDistancePredicate).value_or(-1) ==
+                   GetOptional(rhs, MedianDistancePredicate).value_or(-1));
+}
+
+void ArrivalCmp(const DataModel::ArrivalCPtr &lhs,
+                const DataModel::ArrivalCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->phase().code() == rhs->phase().code());
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->timeCorrection(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->azimuth(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->distance(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->takeOffAngle(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->timeResidual(); }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
+    return a->horizontalSlownessResidual();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->timeUsed(); }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
+    return a->horizontalSlownessUsed();
+  }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->backazimuthUsed(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->weight(); }));
+  BOOST_TEST_CHECK(lhs->earthModelID() == rhs->earthModelID());
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->preliminary(); }));
+
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
+    return a->creationInfo().agencyID();
+  }));
+}
+
+void MagnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
+                  const DataModel::MagnitudeCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->magnitude() == rhs->magnitude());
+  BOOST_TEST_CHECK(lhs->type() == rhs->type());
+  BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::MagnitudeCPtr m) { return m->stationCount(); }));
+  BOOST_TEST_CHECK(EqualOptional(
+      lhs, rhs, [](DataModel::MagnitudeCPtr m) { return m->azimuthalGap(); }));
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
+    return m->evaluationStatus();
+  }));
+
+  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
+    return m->creationInfo().agencyID();
+  }));
 }
 
 /* -------------------------------------------------------------------------- */

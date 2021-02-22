@@ -8,7 +8,12 @@
 
 #include <boost/filesystem.hpp>
 
+#include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/datamodel/magnitude.h>
+#include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/originquality.h>
+#include <seiscomp/datamodel/pick.h>
 
 namespace fs = boost::filesystem;
 
@@ -141,8 +146,27 @@ public:
 
 /* -------------------------------------------------------------------------- */
 // Compare `DataModel::EventParameters element-wise
-void EventParametersCmp(DataModel::EventParametersCPtr lhs,
-                        DataModel::EventParametersCPtr rhs);
+void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
+                        const DataModel::EventParametersCPtr &rhs);
+
+// Compare `DataModel::Pick` element-wise
+void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
+
+// Compare `DataModel::Origin` element-wise
+void OriginCmp(const DataModel::OriginCPtr &lhs,
+               const DataModel::OriginCPtr &rhs);
+
+// Compare `DataModel::OriginQuality` element-wise
+void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
+                      const DataModel::OriginQualityCPtr &rhs);
+
+// Compare `DataModel::Arrival` element-wise
+void ArrivalCmp(const DataModel::ArrivalCPtr &lhs,
+                const DataModel::ArrivalCPtr &rhs);
+
+// Compare `DataModel::Magnitude` element-wise
+void MagnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
+                  const DataModel::MagnitudeCPtr &rhs);
 
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {
