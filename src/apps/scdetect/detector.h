@@ -116,10 +116,6 @@ private:
 
   struct StreamConfig {
     Processor::StreamState stream_state;
-    // TODO(damb): Is a stream_config required at this level?
-    // - The detector does no filtering -> no gain is applied.
-    // -
-    // Processing::Stream stream_config;
     std::shared_ptr<RecordSequence> stream_buffer;
   };
 
