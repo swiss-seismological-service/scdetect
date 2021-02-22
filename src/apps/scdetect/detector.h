@@ -162,7 +162,7 @@ private:
     std::unique_ptr<Processor> processor;
 
     struct MetaData {
-      // TODO(damb): Sensor location is not required, anymore
+      // The template's sensor location associated
       DataModel::SensorLocationCPtr sensor_location;
       // The template related pick
       DataModel::PickCPtr pick;
