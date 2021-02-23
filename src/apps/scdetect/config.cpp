@@ -35,7 +35,6 @@ StreamConfig::StreamConfig(const std::string &wf_stream_id,
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
                            const StreamConfig &defaults)
-    // concat ids
     : template_id{pt.get<std::string>("templateId", utils::CreateUUID())
 
       },
