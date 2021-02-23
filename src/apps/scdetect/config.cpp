@@ -78,7 +78,8 @@ bool DetectorConfig::IsValid() const {
           utils::ValidateXCorrThreshold(trigger_off) &&
           (!gap_interpolation ||
            (gap_interpolation && utils::IsGeZero(gap_threshold) &&
-            utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)));
+            utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
+          (arrival_offset_threshold < 0 || arrival_offset_threshold >= 2.0e-6));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
@@ -106,6 +107,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("maximumLatency", detector_defaults.maximum_latency);
   detector_config_.create_picks =
       pt.get<bool>("createPicks", detector_defaults.create_picks);
+  detector_config_.arrival_offset_threshold = pt.get<double>(
+      "arrivalOffsetThreshold", detector_defaults.arrival_offset_threshold);
 
   if (!detector_config_.IsValid()) {
     throw config::ParserException{

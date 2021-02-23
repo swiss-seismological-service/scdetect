@@ -103,10 +103,11 @@ struct DetectorConfig {
   bool create_picks{false};
 
   // Maximum inter arrival offset threshold in seconds to tolerate when
-  // associating an arrival to an event; the default value corresponds to twice
-  // the maximum accuracy `scdetect` is reaching with regards to trimming
-  // waveform data; setting a negative value disables the arrival offset
-  // validation
+  // associating an arrival to an event
+  // - the threshold is only validated for multi-stream detectors
+  // - the default value corresponds to twice the maximum accuracy `scdetect`
+  // is reaching with regards to trimming waveform data
+  // - setting a negative value disables the arrival offset validation
   double arrival_offset_threshold{2.0e-6};
 
   // Processing interval in seconds
