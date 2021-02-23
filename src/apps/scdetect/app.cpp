@@ -424,6 +424,7 @@ void Application::done() {
     auto &detector{detector_pair.second};
     const auto detector_id{detector->id()};
     if (detector_ids.find(detector_id) == detector_ids.end()) {
+      detector_ids.emplace(detector->id());
       detector->Terminate();
 
       // optionally, create debug info files
@@ -446,8 +447,6 @@ void Application::done() {
         } else {
           SCDETECT_LOG_WARNING("Failed to create file: %s", fpath.c_str());
         }
-
-        detector_ids.emplace(detector->id());
       }
     }
   }
