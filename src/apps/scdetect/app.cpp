@@ -306,6 +306,13 @@ bool Application::validateParameters() {
     return false;
   }
 
+  if (!utils::ValidateMinArrivals(config_.detector_config.min_arrivals)) {
+    SCDETECT_LOG_ERROR("Invalid configuration: 'minimumArrivals': %d. "
+                       "Must be < 0 or >= 1",
+                       config_.detector_config.min_arrivals);
+    return false;
+  }
+
   if (config_.stream_config.template_config.wf_start >=
       config_.stream_config.template_config.wf_end) {
     SCDETECT_LOG_ERROR(
@@ -752,6 +759,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.create_picks, "detector.createPicks");
   NEW_OPT(config_.detector_config.arrival_offset_threshold,
           "detector.arrivalOffsetThreshold");
+  NEW_OPT(config_.detector_config.min_arrivals, "detector.minimumArrivals");
 
   NEW_OPT_CLI(config_.url_event_db, "Database", "event-db",
               "load events from the given database or file, format: "

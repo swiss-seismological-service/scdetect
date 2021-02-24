@@ -79,9 +79,8 @@ bool DetectorConfig::IsValid(size_t num_stream_configs) const {
            (gap_interpolation && utils::IsGeZero(gap_threshold) &&
             utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
           utils::ValidateArrivalOffsetThreshold(arrival_offset_threshold) &&
-          (min_arrivals < 0 ||
-           (min_arrivals >= 1 &&
-            min_arrivals <= static_cast<int>(num_stream_configs))));
+          utils::ValidateMinArrivals(min_arrivals,
+                                     static_cast<int>(num_stream_configs)));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,

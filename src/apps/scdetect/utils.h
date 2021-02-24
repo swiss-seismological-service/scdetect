@@ -21,6 +21,7 @@ const std::string CreateUUID();
 template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
 bool ValidateXCorrThreshold(const double &thres);
 bool ValidateArrivalOffsetThreshold(double thres);
+bool ValidateMinArrivals(int n, int num_stream_configs = 0);
 
 template <typename TMap>
 auto map_keys(const TMap &map) -> std::vector<typename TMap::key_type> {

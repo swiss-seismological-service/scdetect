@@ -29,6 +29,14 @@ bool ValidateArrivalOffsetThreshold(double thres) {
   return thres < 0 || (thres >= 2.0e-6);
 }
 
+bool ValidateMinArrivals(int n, int num_stream_configs) {
+  if (n < 0) {
+    return true;
+  }
+
+  return num_stream_configs > 0 ? n >= 1 : n >= 1 && n <= num_stream_configs;
+}
+
 /* ------------------------------------------------------------------------- */
 WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
   std::vector<std::string> tokens;
