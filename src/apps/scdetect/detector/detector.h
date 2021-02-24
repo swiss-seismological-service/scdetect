@@ -85,11 +85,11 @@ public:
   Status status() const;
   // Returns the overall time window processed
   const Core::TimeWindow &processed() const;
-  // Returns `true` if the processor is currently triggered, else `false`
+  // Returns `true` if the detector is currently triggered, else `false`
   bool triggered() const;
-  // Set the trigger duration w.r.t. `proc`
+  // Enables trigger duration facilities with `duration`
   void EnableTrigger(const Core::TimeSpan &duration);
-  // Disables the trigger
+  // Disables trigger duration facilities
   void DisableTrigger();
   // Set the trigger thresholds
   void set_trigger_thresholds(double trigger_on, double trigger_off = 1);
@@ -102,7 +102,7 @@ public:
   void set_maximum_latency(const boost::optional<Core::TimeSpan> &latency);
   // Returns the maximum allowed data latency configured
   boost::optional<Core::TimeSpan> maximum_latency() const;
-  // Returns the number of registered processors
+  // Returns the number of registered template processors
   size_t GetProcessorCount() const;
 
   // Register the processor `proc` for processing buffered data from `buf`

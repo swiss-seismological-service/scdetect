@@ -291,9 +291,9 @@ void Detector::Reset() {
 }
 
 void Detector::Terminate() {
-  if (triggered()) {
-    linker_.Terminate();
+  linker_.Terminate();
 
+  if (triggered()) {
     while (!result_queue_.empty()) {
       const auto &result{result_queue_.front()};
 
@@ -309,6 +309,19 @@ void Detector::Terminate() {
     Result prepared;
     PrepareResult(*current_result_, prepared);
     EmitResult(prepared);
+
+  } else if (!trigger_duration_) {
+    while (!result_queue_.empty()) {
+      const auto &result{result_queue_.front()};
+      current_result_ = result;
+      result_queue_.pop_front();
+
+      Result prepared;
+      PrepareResult(*current_result_, prepared);
+      EmitResult(prepared);
+
+      current_result_ = boost::none;
+    }
   }
 
   status_ = Status::kTerminated;
