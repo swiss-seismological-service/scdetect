@@ -27,13 +27,12 @@ DEBUG_INFO_FNAME = "debug_info.json"
 _DEBUG_INFO_CC_SCHEMA = {
     "type": "object",
     "properties": {
-        "streamId": {"type": "string"},
         "pathTrace": {"type": "string"},
         "pathTemplate": {"type": "string"},
         "fit": {"type": "number", "minimum": -1, "maximum": 1},
         "lag": {"type": "number"},
     },
-    "required": ["streamId", "pathTrace", "pathTemplate", "fit", "lag"],
+    "required": ["pathTrace", "pathTemplate", "fit", "lag"],
 }
 
 
@@ -82,14 +81,6 @@ def main(argv=None):
         nargs="+",
         help="Restrict stream identifiers to detectors specified by ID",
     )
-    parser.add_argument(
-        "--stream-ids",
-        metavar="STREAM_ID",
-        dest="stream_ids",
-        nargs="+",
-        type=str,
-        help="Stream identifiers to be tested.",
-    )
 
     args = parser.parse_args(args=argv)
 
@@ -132,11 +123,6 @@ def main(argv=None):
                 validate(instance=obj, schema=_DEBUG_INFO_CC_SCHEMA)
             except ValidationError as err:
                 print(err)
-                continue
-
-            if not (
-                args.stream_ids is None or obj["streamId"] in args.stream_ids
-            ):
                 continue
 
             path_template = obj["pathTemplate"]

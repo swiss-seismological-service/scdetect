@@ -53,8 +53,7 @@ public:
       std::string path_trace;
     } debug_info;
 
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const MatchResult &result);
+    std::string DebugString() const;
   };
 
   const std::string id() const override;

@@ -4,7 +4,6 @@
 #include <cmath>
 #include <memory>
 #include <numeric>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -91,24 +90,7 @@ void Detector::Terminate() {
   Processor::Terminate();
 }
 
-std::string Detector::DebugString() const {
-
-  bool first_result{true};
-  std::ostringstream oss;
-  oss << "{\"detectorId\": \"" << id() << "\", \"ccDebugInfo\": [" << std::endl;
-  for (const auto &debug_result_pair : debug_cc_results_) {
-    if (first_result) {
-      first_result = false;
-    } else {
-      oss << ",";
-    }
-
-    oss << "{\"streamId\": \"" << debug_result_pair.first << "\", "
-        << *debug_result_pair.second << "}" << std::endl;
-  }
-  oss << "]}";
-  return oss.str();
-}
+std::string Detector::DebugString() const { return detector_.DebugString(); }
 
 bool Detector::WithPicks() const { return config_.create_picks; }
 
@@ -521,6 +503,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 DetectorBuilder &
 DetectorBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
   product_->set_debug_info_dir(path);
+  product_->detector_.set_debug_mode(!path.empty());
   return *this;
 }
 

@@ -135,8 +135,13 @@ public:
   using PublishResultCallback = std::function<void(const Result &result)>;
   void set_result_callback(const PublishResultCallback &cb);
 
-  // TODO TODO TODO
-  /* void set_debug_info_dir(const boost::filesystem::path &path); */
+  // Enables/disables the debug mode
+  void set_debug_mode(bool debug_mode);
+  // Returns if the debug mode is enabled `true` or disabled `false`,
+  // respectively
+  bool debug_mode() const;
+  // Returns a string with debugging information
+  std::string DebugString() const;
 
 protected:
   using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
@@ -214,9 +219,9 @@ private:
   // Reference to the detector
   const detect::Processor *detector_{nullptr};
 
-  /* boost::optional<boost::filesystem::path> debug_info_dir_; */
-  // TODO TODO TODO
-  /* std::multimap<std::string, Template::MatchResultCPtr> debug_cc_results_; */
+  // Flag indicating if debug mode is enabled/disabled
+  bool debug_mode_{false};
+  std::multimap<std::string, Template::MatchResultCPtr> debug_cc_results_;
 };
 
 } // namespace detector
