@@ -110,16 +110,14 @@ private:
                const Core::TimeSpan &duration, double next_sample,
                size_t missing_samples);
 
-  struct StreamConfig;
-  using WaveformStreamID = std::string;
-  using StreamConfigs = std::unordered_map<WaveformStreamID, StreamConfig>;
-
   struct StreamConfig {
     Processor::StreamState stream_state;
     // Reference to the stream buffer
     std::shared_ptr<RecordSequence> stream_buffer;
   };
 
+  using WaveformStreamID = std::string;
+  using StreamConfigs = std::unordered_map<WaveformStreamID, StreamConfig>;
   StreamConfigs stream_configs_;
 
   DetectorConfig config_;
