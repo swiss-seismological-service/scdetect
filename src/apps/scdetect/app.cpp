@@ -921,9 +921,15 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         continue;
       }
     }
+  } catch (boost::property_tree::json_parser::json_parser_error &e) {
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template configuration file (%s): %s",
+        config_.path_template_json.c_str(), e.what());
+    return false;
   } catch (std::ifstream::failure &e) {
-    SCDETECT_LOG_ERROR("Failed to parse JSON template configuration file: %s",
-                       config_.path_template_json.c_str());
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template configuration file (%s): %s",
+        config_.path_template_json.c_str(), e.what());
     return false;
   }
   return true;
