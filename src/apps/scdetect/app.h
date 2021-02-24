@@ -98,6 +98,9 @@ public:
 
       Core::Time start_time;
       Core::Time end_time;
+
+      // Indicates if playback mode is enabled/disabled
+      bool enabled;
     } playback_config;
 
     // Messaging
@@ -179,8 +182,8 @@ protected:
 
   void handleRecord(Record *rec) override;
 
-  void EmitDetection(ProcessorCPtr processor, RecordCPtr record,
-                     Processor::ResultCPtr result);
+  void EmitDetection(const Processor *processor, const Record *record,
+                     const Processor::ResultCPtr &result);
 
 protected:
   // Load events either from `event_db` or `db`.
@@ -197,8 +200,9 @@ private:
 
   DataModel::EventParametersPtr ep_;
 
-  using StreamDetectorMap = std::unordered_multimap<std::string, ProcessorPtr>;
-  StreamDetectorMap detectors_;
+  using DetectorMap =
+      std::unordered_multimap<std::string, std::shared_ptr<Processor>>;
+  DetectorMap detectors_;
 };
 
 } // namespace detect

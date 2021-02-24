@@ -3,7 +3,7 @@
   <EventParameters>
     <pick publicID="Pick/20210112163056.225983.3964">
       <time>
-        <value>2020-10-25T19:35:54.328393Z</value>
+        <value>2020-10-25T19:35:55.825641Z</value>
       </time>
       <waveformID networkCode="" stationCode="">
         <resourceURI>CH.GRIMS..HHZ</resourceURI>
@@ -13,7 +13,7 @@
     </pick>
     <origin publicID="Origin/20210112163056.225948.3963">
       <time>
-        <value>2020-10-25T19:35:54.328393Z</value>
+        <value>2020-10-25T19:35:43.383892Z</value>
       </time>
       <latitude>
         <value>46.90474746</value>
@@ -31,7 +31,7 @@
         <usedPhaseCount>1</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>4.440892099e-16</standardError>
+        <standardError>0.0</standardError>
         <maximumDistance>0.6415833155</maximumDistance>
         <minimumDistance>0.6415833155</minimumDistance>
         <medianDistance>0.6415833155</medianDistance>

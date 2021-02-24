@@ -8,7 +8,12 @@
 
 #include <boost/filesystem.hpp>
 
+#include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/datamodel/magnitude.h>
+#include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/originquality.h>
+#include <seiscomp/datamodel/pick.h>
 
 namespace fs = boost::filesystem;
 
@@ -37,8 +42,17 @@ public:
 protected:
   void to_string(std::ostream &os) const override;
 
+  void set_arg(const std::string &arg);
+
 private:
   std::string arg_;
+};
+
+class BooleanFlag : public ArgFlag {
+public:
+  BooleanFlag();
+  void Enable();
+  void Disable();
 };
 
 class FlagDebug : public Flag {
@@ -46,21 +60,23 @@ public:
   const std::string flag() const override;
 };
 
-class FlagConsole : public ArgFlag {
+class FlagConsole : public BooleanFlag {
 public:
-  FlagConsole();
   const std::string flag() const override;
 };
 
-class FlagOffline : public ArgFlag {
+class FlagOffline : public BooleanFlag {
 public:
-  FlagOffline();
   const std::string flag() const override;
 };
 
-class FlagTemplatesReload : public ArgFlag {
+class FlagPlayback : public BooleanFlag {
 public:
-  FlagTemplatesReload();
+  const std::string flag() const override;
+};
+
+class FlagTemplatesReload : public BooleanFlag {
+public:
   const std::string flag() const override;
 };
 
@@ -141,8 +157,27 @@ public:
 
 /* -------------------------------------------------------------------------- */
 // Compare `DataModel::EventParameters element-wise
-void EventParametersCmp(DataModel::EventParametersCPtr lhs,
-                        DataModel::EventParametersCPtr rhs);
+void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
+                        const DataModel::EventParametersCPtr &rhs);
+
+// Compare `DataModel::Pick` element-wise
+void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
+
+// Compare `DataModel::Origin` element-wise
+void OriginCmp(const DataModel::OriginCPtr &lhs,
+               const DataModel::OriginCPtr &rhs);
+
+// Compare `DataModel::OriginQuality` element-wise
+void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
+                      const DataModel::OriginQualityCPtr &rhs);
+
+// Compare `DataModel::Arrival` element-wise
+void ArrivalCmp(const DataModel::ArrivalCPtr &lhs,
+                const DataModel::ArrivalCPtr &rhs);
+
+// Compare `DataModel::Magnitude` element-wise
+void MagnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
+                  const DataModel::MagnitudeCPtr &rhs);
 
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {

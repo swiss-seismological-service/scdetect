@@ -52,7 +52,7 @@ public:
   };
 
   using PublishResultCallback = std::function<void(
-      ProcessorCPtr processor, RecordCPtr record, ResultCPtr result)>;
+      const Processor *, const Record *, const ResultCPtr &)>;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
@@ -123,8 +123,8 @@ public:
 
   // Returns the processor's identifier
   virtual const std::string id() const;
-
-  virtual void set_result_callback(PublishResultCallback callback);
+  // Sets the result callback in order to publish processing results
+  void set_result_callback(const PublishResultCallback &callback);
 
   // Returns the current status of the processor
   Status status() const;
@@ -159,7 +159,7 @@ public:
   virtual void Reset();
 
   // Terminates the processor ignoring its current status
-  void Terminate();
+  virtual void Terminate();
 
   // Closes the processor meaning that no more records are going to be fed in.
   // The processing has been finished.
@@ -198,26 +198,26 @@ protected:
 
   // Virtual method that must be used in derived classes to analyse a
   // datastream. Both the raw record and the filtered data array is passed.
-  virtual void Process(StreamState &stream_state, RecordCPtr record,
+  virtual void Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) = 0;
   // Store the record
-  virtual bool Store(StreamState &stream_state, RecordCPtr record);
+  virtual bool Store(StreamState &stream_state, const Record *record);
 
   // Handles gaps. Returns whether the gap has been handled or not.
-  virtual bool HandleGap(StreamState &stream_state, RecordCPtr record,
-                         DoubleArrayPtr data);
+  virtual bool HandleGap(StreamState &stream_state, const Record *record,
+                         DoubleArrayPtr &data);
 
   // Fill data and perform filtering (if required)
-  virtual void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-                    double *samples);
+  virtual void Fill(StreamState &stream_state, const Record *record,
+                    DoubleArrayPtr &data);
 
   // Initially check if the Processor received enough data in order to execute
   // the `Process` method.
   virtual bool EnoughDataReceived(const StreamState &stream_state) const;
 
-  virtual void EmitResult(RecordCPtr record, ResultCPtr result);
+  virtual void EmitResult(const Record *record, const ResultCPtr &result);
   // Initialize the stream
-  virtual void InitStream(StreamState &stream_state, RecordCPtr record);
+  virtual void InitStream(StreamState &stream_state, const Record *record);
 
   void set_status(Status status, double value);
 

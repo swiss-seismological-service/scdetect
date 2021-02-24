@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
+  <EventParameters>
+    <pick publicID="Pick/20210224124657.913005.1988">
+      <time>
+        <value>2020-10-25T20:35:57.458294Z</value>
+      </time>
+      <waveformID networkCode="" stationCode="">
+        <resourceURI>CH.HASLI..HHZ</resourceURI>
+      </waveformID>
+      <phaseHint>Pg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+    </pick>
+    <origin publicID="Origin/20210224124657.9129.1987">
+      <time>
+        <value>2020-10-25T20:35:44.383892Z</value>
+      </time>
+      <latitude>
+        <value>46.90474746</value>
+      </latitude>
+      <longitude>
+        <value>9.124707839</value>
+      </longitude>
+      <depth>
+        <value>1.436523438</value>
+      </depth>
+      <epicenterFixed>true</epicenterFixed>
+      <methodID>SCDETECT</methodID>
+      <quality>
+        <associatedPhaseCount>2</associatedPhaseCount>
+        <usedPhaseCount>1</usedPhaseCount>
+        <associatedStationCount>2</associatedStationCount>
+        <usedStationCount>1</usedStationCount>
+        <standardError>0</standardError>
+        <maximumDistance>0.6822777327</maximumDistance>
+        <minimumDistance>0.6822777327</minimumDistance>
+        <medianDistance>0.6822777327</medianDistance>
+      </quality>
+      <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora32</author>
+        <creationTime>2021-02-24T12:46:57.9128Z</creationTime>
+      </creationInfo>
+      <arrival>
+        <pickID>Pick/20210224124657.913005.1988</pickID>
+        <phase>Pg</phase>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora32</author>
+          <creationTime>2021-02-24T12:46:57.9128Z</creationTime>
+        </creationInfo>
+      </arrival>
+      <magnitude publicID="Magnitude/20210224124657.912833.1986">
+        <magnitude>
+          <value>4.324859837</value>
+        </magnitude>
+        <type>SCDETECT</type>
+        <stationCount>1</stationCount>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora32</author>
+          <creationTime>2021-02-24T12:46:57.9128Z</creationTime>
+        </creationInfo>
+      </magnitude>
+    </origin>
+  </EventParameters>
+</seiscomp>

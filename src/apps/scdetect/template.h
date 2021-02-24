@@ -33,10 +33,8 @@ public:
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
 
-    struct MetaData;
     MatchResult(const double sum_template, const double squared_sum_template,
-                const int num_samples_template, const Core::TimeWindow &tw,
-                MetaData metadata);
+                const int num_samples_template, const Core::TimeWindow &tw);
 
     double coefficient{std::nan("")};
     int num_samples_template;
@@ -50,22 +48,12 @@ public:
     // Time window for w.r.t. the match result
     Core::TimeWindow time_window;
 
-    struct MetaData {
-      // Original template pick
-      DataModel::PickCPtr pick;
-      // Template phase
-      std::string phase;
-      // Template arrival weight
-      double arrival_weight;
-    } metadata;
-
     struct DebugInfo {
       std::string path_template;
       std::string path_trace;
     } debug_info;
 
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const MatchResult &result);
+    std::string DebugString() const;
   };
 
   const std::string id() const override;
@@ -78,31 +66,24 @@ public:
   void Reset() override;
 
 protected:
-  void Process(StreamState &stream_state, RecordCPtr record,
+  void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
-  void Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-            double *samples) override;
+  void Fill(StreamState &stream_state, const Record *record,
+            DoubleArrayPtr &data) override;
 
-  void InitStream(StreamState &stream_state, RecordCPtr record) override;
-
-  DoubleArray data_;
+  void InitStream(StreamState &stream_state, const Record *record) override;
 
 private:
   StreamState stream_state_;
   Processing::Stream stream_config_;
 
-  // Template related pick
-  DataModel::PickCPtr pick_{nullptr};
-  // Template related phase code
-  std::string phase_{""};
-  // Template related arrival weight
-  double arrival_weight_{0};
-
   // Template waveform starttime
   Core::Time waveform_start_;
   // Template waveform endtime
   Core::Time waveform_end_;
+  // Template waveform
+  Core::TimeSpan waveform_length_;
   // Template waveform stream id
   std::string waveform_stream_id_;
   // Template waveform
@@ -119,31 +100,26 @@ private:
   const Processor *detector_{nullptr};
 };
 
-class TemplateBuilder : public Builder<TemplateBuilder> {
+class TemplateBuilder : public Builder<Template> {
 public:
   TemplateBuilder(const std::string &template_id, const Processor *p);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
-  TemplateBuilder &set_phase(const std::string &phase);
-  TemplateBuilder &set_pick(DataModel::PickCPtr pick);
-  TemplateBuilder &set_arrival_weight(const double weight);
   TemplateBuilder &
+  // Set the template waveform of the `Template` waveform processor built.
+  // While `wf_start` and `wf_end` refer to the target template waveform start
+  // and end times, `wf_start_waveform` and `wf_end_waveform` refer to the
+  // actual times of the resulting waveform.
   set_waveform(WaveformHandlerIfacePtr waveform_handler,
                const std::string &stream_id, const Core::Time &wf_start,
                const Core::Time &wf_end,
-               const WaveformHandlerIface::ProcessingConfig &config);
-  TemplateBuilder &
-  set_publish_callback(Processor::PublishResultCallback callback);
+               const WaveformHandlerIface::ProcessingConfig &config,
+               Core::Time &wf_start_waveform, Core::Time &wf_end_waveform);
   TemplateBuilder &set_filter(Processor::Filter *filter,
                               const double init_time = 0);
   TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
 
   // Set the path to the debug info directory
   TemplateBuilder &set_debug_info_dir(const boost::filesystem::path &path);
-
-  ProcessorPtr build();
-
-private:
-  TemplatePtr template_;
 };
 
 namespace template_detail {
@@ -154,7 +130,8 @@ namespace template_detail {
  */
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           Template::MatchResultPtr result, ProcessorCPtr processor = nullptr);
+           Template::MatchResultPtr &result,
+           const Processor *processor = nullptr);
 
 } // namespace template_detail
 

@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_CONFIG_H_
 #define SCDETECT_APPS_SCDETECT_CONFIG_H_
 
-#include <boost/property_tree/ptree_fwd.hpp>
 #include <initializer_list>
 #include <string>
 #include <unordered_map>
@@ -73,12 +72,16 @@ struct StreamConfig {
 };
 
 struct DetectorConfig {
-  // The default threshold to trigger - xcorr trigger thresholds [0,1]
+  // The default threshold to trigger the detector
+  // - xcorr trigger thresholds [-1,1]
   double trigger_on{0.85L};
-  // The default threshold to enabling triggering, again - xcorr trigger
-  // thresholds [0,1]
+  // The default threshold to emit a detection once the detector is triggered
+  // - Only has an effect if trigger duration is enabled, i.e. if
+  // `trigger_duration` > 0
+  // - xcorr trigger thresholds [-1,1]
   double trigger_off{0.65L};
-  // The duration of a trigger, negative value = disabled
+  // The duration of a trigger
+  // - setting a negative value disables the detector's trigger facilities
   double trigger_duration{-1};
 
   // The time correction in seconds to apply when an origin is going to be
@@ -96,16 +99,29 @@ struct DetectorConfig {
   double gap_threshold{0.1};
   // Maximum gap length in seconds to tolerate and to be handled
   double gap_tolerance{4.5};
-  // Maximum data latency a in seconds tolerated
+  // Maximum data latency in seconds tolerated with regards to `NOW`
   double maximum_latency{10};
 
   // Flag indicating whether to compute and associate picks
   bool create_picks{false};
 
+  // Maximum inter arrival offset threshold in seconds to tolerate when
+  // associating an arrival to an event
+  // - the threshold is only validated for multi-stream detectors
+  // - the default value corresponds to twice the maximum accuracy `scdetect`
+  // is reaching with regards to trimming waveform data
+  // - setting a negative value disables the arrival offset validation
+  double arrival_offset_threshold{2.0e-6};
+  // Defines the minimum number of arrivals which must be part of an event to be
+  // declared as a detection
+  // - setting a negative value disables the validation i.e. all arrivals must
+  // be available (default)
+  int min_arrivals{-1};
+
   // Processing interval in seconds
   /* double processing_interval = settings::kDefaultProcessingInterval; */
 
-  bool IsValid() const;
+  bool IsValid(size_t num_stream_configs) const;
 };
 
 // Container for StreamConfig

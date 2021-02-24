@@ -8,6 +8,7 @@
 #include <functional>
 #include <iomanip>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -26,32 +27,6 @@
 
 namespace Seiscomp {
 namespace detect {
-
-Template::MatchResult::MatchResult(const double sum_template,
-                                   const double squared_sum_template,
-                                   const int num_samples_template,
-                                   const Core::TimeWindow &tw,
-                                   MatchResult::MetaData metadata)
-    : num_samples_template{num_samples_template}, sum_template{sum_template},
-      squared_sum_template{squared_sum_template}, time_window{tw},
-      metadata(metadata) {}
-
-std::ostream &operator<<(std::ostream &os,
-                         const Template::MatchResult &result) {
-  os << "\"startTime\": \"" << result.time_window.startTime().iso()
-     << "\", \"endTime\": \"" << result.time_window.endTime().iso()
-     << "\", \"fit\": " << std::fixed << std::setprecision(6)
-     << result.coefficient << ", \"lag\": " << result.lag;
-
-  if (!result.debug_info.path_template.empty()) {
-    os << ", \"pathTemplate\": \"" << result.debug_info.path_template << "\"";
-  }
-  if (!result.debug_info.path_trace.empty()) {
-    os << ", \"pathTrace\": \"" << result.debug_info.path_trace << "\"";
-  }
-
-  return os;
-}
 
 Template::Template(const std::string &template_id, const Processor *p)
     : Processor{template_id}, detector_{p} {}
@@ -95,21 +70,19 @@ void Template::Reset() {
   }
 
   Processor::Reset();
-
-  data_ = DoubleArray();
 }
 
-void Template::Process(StreamState &stream_state, RecordCPtr record,
+void Template::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
   const double *samples_template{
       DoubleArray::ConstCast(waveform_->data())->typedData()};
-  const double *samples_trace{data_.typedData()};
+  const double *samples_trace{filtered_data.typedData()};
   const int num_samples_template{waveform_->data()->size()};
-  const int num_samples_trace{data_.size()};
+  const int num_samples_trace{filtered_data.size()};
 
   MatchResultPtr result{utils::make_smart<MatchResult>(
       waveform_sum_, waveform_squared_sum_, num_samples_template,
-      record->timeWindow(), MatchResult::MetaData{pick_, phase_})};
+      record->timeWindow())};
 
   if (num_samples_template > num_samples_trace) {
     set_status(Status::kWaitingForData,
@@ -150,8 +123,9 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
 
     // dump real-time trace (filtered)
     {
-      auto dump_me{utils::make_smart<GenericRecord>(*record.get())};
-      dump_me->setData(&data_);
+      auto dump_me{utils::make_smart<GenericRecord>(*record)};
+      dump_me->setData(filtered_data.size(), filtered_data.typedData(),
+                       Array::DOUBLE);
       dump_me->setSamplingFrequency(waveform_sampling_frequency_);
       dump_me->dataUpdated();
 
@@ -169,13 +143,6 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
   if (template_detail::XCorr(samples_template, num_samples_template,
                              samples_trace, num_samples_trace,
                              waveform_sampling_frequency_, result, this)) {
-#ifdef SCDETECT_DEBUG
-    SCDETECT_LOG_DEBUG_PROCESSOR(
-        this, "[%s - %s]: fit=%f, lag=%f", record->startTime().iso().c_str(),
-        record->endTime().iso().c_str(), result->coefficient, result->lag);
-#endif
-
-    EmitResult(record, result);
     merge_processed(Core::TimeWindow{
         record->startTime(),
         Core::Time{
@@ -184,41 +151,41 @@ void Template::Process(StreamState &stream_state, RecordCPtr record,
                 (num_samples_trace - num_samples_template) /
                 waveform_sampling_frequency_ /* samples to seconds */}}});
     set_status(Processor::Status::kFinished, 100);
+
+    EmitResult(record, result.get());
     return;
   }
   set_status(Processor::Status::kError, 0);
 }
 
-void Template::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-                    double *samples) {
-  Processor::Fill(stream_state, record, n, samples);
+void Template::Fill(StreamState &stream_state, const Record *record,
+                    DoubleArrayPtr &data) {
 
-  // demean
-  const auto mean{utils::CMA(samples, n)};
-  for (size_t i = 0; i < n; ++i) {
-    samples[i] -= mean;
-  }
+  Processor::Fill(stream_state, record, data);
+
+  waveform::Demean(*data);
 
   // resample (i.e. always downsample)
   if (waveform_sampling_frequency_ != stream_state_.sampling_frequency) {
     if (waveform_sampling_frequency_ < stream_state.sampling_frequency) {
-      auto tmp{utils::make_smart<DoubleArray>(static_cast<int>(n), samples)};
-      waveform::Resample(tmp, stream_state.sampling_frequency,
+      // resample trace (real-time data)
+      auto tmp{
+          utils::make_unique<DoubleArray>(data->size(), data->typedData())};
+      waveform::Resample(*tmp, stream_state.sampling_frequency,
                          waveform_sampling_frequency_, true);
 
-      n = tmp->size();
-      samples = tmp->typedData();
+      data.reset(tmp.release());
     } else {
+      // resample template waveform
       auto resampled{utils::make_smart<GenericRecord>(*waveform_)};
       waveform::Resample(*resampled, stream_state.sampling_frequency, true);
       waveform_ = resampled;
       waveform_sampling_frequency_ = stream_state.sampling_frequency;
     }
   }
-  data_.append(n, samples);
 }
 
-void Template::InitStream(StreamState &stream_state, RecordCPtr record) {
+void Template::InitStream(StreamState &stream_state, const Record *record) {
   Processor::InitStream(stream_state, record);
 
   stream_state.needed_samples =
@@ -227,49 +194,65 @@ void Template::InitStream(StreamState &stream_state, RecordCPtr record) {
 }
 
 /* ------------------------------------------------------------------------- */
-// XXX(damb): Using `new` to access a non-public ctor; see also
-// https://abseil.io/tips/134
+Template::MatchResult::MatchResult(const double sum_template,
+                                   const double squared_sum_template,
+                                   const int num_samples_template,
+                                   const Core::TimeWindow &tw)
+    : num_samples_template{num_samples_template}, sum_template{sum_template},
+      squared_sum_template{squared_sum_template}, time_window{tw} {}
+
+std::string Template::MatchResult::DebugString() const {
+  std::ostringstream oss;
+  oss << "\"startTime\": \"" << time_window.startTime().iso()
+      << "\", \"endTime\": \"" << time_window.endTime().iso()
+      << "\", \"fit\": " << std::fixed << std::setprecision(6) << coefficient
+      << ", \"lag\": " << lag;
+
+  if (!debug_info.path_template.empty()) {
+    oss << ", \"pathTemplate\": \"" << debug_info.path_template << "\"";
+  }
+  if (!debug_info.path_trace.empty()) {
+    oss << ", \"pathTrace\": \"" << debug_info.path_trace << "\"";
+  }
+
+  return oss.str();
+}
+
+/* ------------------------------------------------------------------------- */
 TemplateBuilder::TemplateBuilder(const std::string &template_id,
-                                 const Processor *p)
-    : template_(new Template{template_id, p}) {}
+                                 const Processor *p) {
+  // XXX(damb): Using `new` to access a non-public ctor; see also
+  // https://abseil.io/tips/134
+  product_ = std::unique_ptr<Template>(new Template{template_id, p});
+}
 
 TemplateBuilder &
 TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
-  template_->stream_config_.init(&stream_config);
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_phase(const std::string &phase) {
-  template_->phase_ = phase;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_pick(DataModel::PickCPtr pick) {
-  template_->pick_ = pick;
-  return *this;
-}
-
-TemplateBuilder &TemplateBuilder::set_arrival_weight(const double weight) {
-  template_->arrival_weight_ = weight;
+  product_->stream_config_.init(&stream_config);
   return *this;
 }
 
 TemplateBuilder &TemplateBuilder::set_waveform(
     WaveformHandlerIfacePtr waveform_handler, const std::string &stream_id,
     const Core::Time &wf_start, const Core::Time &wf_end,
-    const WaveformHandlerIface::ProcessingConfig &config) {
+    const WaveformHandlerIface::ProcessingConfig &config,
+    Core::Time &wf_start_waveform, Core::Time &wf_end_waveform) {
 
-  template_->waveform_start_ = wf_start;
-  template_->waveform_end_ = wf_end;
-  template_->waveform_stream_id_ = stream_id;
+  product_->waveform_start_ = wf_start;
+  product_->waveform_end_ = wf_end;
+  product_->waveform_length_ = wf_end - wf_start;
+  product_->waveform_stream_id_ = stream_id;
 
   // prepare waveform stream id
   std::vector<std::string> wf_tokens;
   Core::split(wf_tokens, stream_id, ".", false);
   try {
-    template_->waveform_ =
+    product_->waveform_ =
         waveform_handler->Get(wf_tokens[0], wf_tokens[1], wf_tokens[2],
                               wf_tokens[3], wf_start, wf_end, config);
+
+    wf_start_waveform = product_->waveform_->startTime();
+    wf_end_waveform = product_->waveform_->endTime();
   } catch (WaveformHandler::NoData &e) {
     throw builder::NoWaveformData{
         std::string{"Failed to load template waveform: "} + e.what()};
@@ -277,54 +260,46 @@ TemplateBuilder &TemplateBuilder::set_waveform(
     throw builder::BaseException{
         std::string{"Failed to load template waveform: "} + e.what()};
   }
-  template_->waveform_sampling_frequency_ =
-      template_->waveform_->samplingFrequency();
-  template_->waveform_filter_ = config.filter_string;
+  product_->waveform_sampling_frequency_ =
+      product_->waveform_->samplingFrequency();
+  product_->waveform_filter_ = config.filter_string;
 
   const double *samples_template{
-      DoubleArray::ConstCast(template_->waveform_->data())->typedData()};
-  for (int i = 0; i < template_->waveform_->data()->size(); ++i) {
-    template_->waveform_sum_ += samples_template[i];
-    template_->waveform_squared_sum_ +=
+      DoubleArray::ConstCast(product_->waveform_->data())->typedData()};
+  for (int i = 0; i < product_->waveform_->data()->size(); ++i) {
+    product_->waveform_sum_ += samples_template[i];
+    product_->waveform_squared_sum_ +=
         samples_template[i] * samples_template[i];
   }
   return *this;
 }
 
-TemplateBuilder &TemplateBuilder::set_publish_callback(
-    Processor::PublishResultCallback callback) {
-  template_->set_result_callback(callback);
-  return *this;
-}
-
 TemplateBuilder &TemplateBuilder::set_filter(Processor::Filter *filter,
                                              const double init_time) {
-  template_->set_filter(filter);
-  template_->init_time_ = Core::TimeSpan{init_time};
+  product_->set_filter(filter);
+  product_->init_time_ = Core::TimeSpan{init_time};
   return *this;
 }
 
 TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
                                                              double thres) {
-  template_->set_saturation_check(enabled);
-  template_->set_saturation_threshold(thres);
+  product_->set_saturation_check(enabled);
+  product_->set_saturation_threshold(thres);
   return *this;
 }
 
 TemplateBuilder &
 TemplateBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
-  template_->set_debug_info_dir(path);
+  product_->set_debug_info_dir(path);
   return *this;
 }
-
-ProcessorPtr TemplateBuilder::build() { return template_; }
 
 /* ------------------------------------------------------------------------- */
 namespace template_detail {
 
 bool XCorr(const double *tr1, const int size_tr1, const double *tr2,
            const int size_tr2, const double sampling_freq,
-           Template::MatchResultPtr result, ProcessorCPtr processor) {
+           Template::MatchResultPtr &result, const Processor *processor) {
 
   /*
    * Pearson correlation coefficient for time series X and Y of length n

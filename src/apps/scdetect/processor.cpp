@@ -28,7 +28,7 @@ bool Processor::enabled() const { return enabled_; }
 
 const std::string Processor::id() const { return id_; }
 
-void Processor::set_result_callback(PublishResultCallback callback) {
+void Processor::set_result_callback(const PublishResultCallback &callback) {
   result_callback_ = callback;
 }
 
@@ -71,7 +71,7 @@ Processor::StreamState::~StreamState() {
   }
 }
 
-bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
+bool Processor::Store(StreamState &stream_state, const Record *record) {
   if (Processor::Status::kInProgress < status() || !record->data())
     return false;
 
@@ -87,7 +87,7 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
     stream_state.data_time_window.setEndTime(record->endTime());
   }
 
-  Fill(stream_state, record, data->size(), data->typedData());
+  Fill(stream_state, record, data);
   if (Status::kInProgress < status())
     return false;
 
@@ -111,15 +111,18 @@ bool Processor::Store(StreamState &stream_state, RecordCPtr record) {
   return true;
 }
 
-bool Processor::HandleGap(StreamState &stream_state, RecordCPtr record,
-                          DoubleArrayPtr data) {
+bool Processor::HandleGap(StreamState &stream_state, const Record *record,
+                          DoubleArrayPtr &data) {
   return true;
 }
 
-void Processor::Fill(StreamState &stream_state, RecordCPtr record, size_t n,
-                     double *samples) {
+void Processor::Fill(StreamState &stream_state, const Record *record,
+                     DoubleArrayPtr &data) {
+
+  const auto n{static_cast<size_t>(data->size())};
   stream_state.received_samples += n;
 
+  auto samples{data->typedData()};
   if (saturation_check_) {
     for (size_t i = 0; i < n; ++i) {
       if (fabs(samples[i]) >= saturation_threshold_) {
@@ -136,12 +139,12 @@ bool Processor::EnoughDataReceived(const StreamState &stream_state) const {
   return stream_state.received_samples > stream_state.needed_samples;
 }
 
-void Processor::EmitResult(RecordCPtr record, ResultCPtr result) {
+void Processor::EmitResult(const Record *record, const ResultCPtr &result) {
   if (enabled() && result_callback_)
     result_callback_(this, record, result);
 }
 
-void Processor::InitStream(StreamState &stream_state, RecordCPtr record) {
+void Processor::InitStream(StreamState &stream_state, const Record *record) {
   const auto &f{record->samplingFrequency()};
   stream_state.sampling_frequency = f;
   stream_state.needed_samples = static_cast<size_t>(init_time_ * f + 0.5);

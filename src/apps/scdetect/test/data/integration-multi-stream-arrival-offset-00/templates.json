@@ -1,0 +1,39 @@
+[
+    {
+        "detectorId": "detector-01",
+        "createPicks": true,
+        "gapInterpolation": true,
+        "gapThreshold": 0.1,
+        "gapTolerance": 1.5,
+        "sensitivityCorrection": false,
+        "triggerDuration": -1,
+        "triggerOnThreshold": 0.98,
+        "triggerOffThreshold": 0,
+        "arrivalOffsetThreshold": 1.1,
+        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+        "streams": [
+            [
+                {
+                    "templateId": "template-01",
+                    "initTime": 10,
+                    "templateWaveformStart": -2,
+                    "templateWaveformEnd": 2,
+                    "waveformId": "CH.GRIMS..HHZ",
+                    "templateWaveformId": "CH.GRIMS..HHZ",
+                    "templateFilter": "",
+                    "templatePhase": "Pg"
+                },
+                {
+                    "templateId": "template-02",
+                    "initTime": 10,
+                    "templateWaveformStart": -2,
+                    "templateWaveformEnd": 2,
+                    "waveformId": "CH.HASLI..HHZ",
+                    "templateWaveformId": "CH.HASLI..HHZ",
+                    "templateFilter": "",
+                    "templatePhase": "Pg"
+                }
+            ]
+        ]
+    }
+]

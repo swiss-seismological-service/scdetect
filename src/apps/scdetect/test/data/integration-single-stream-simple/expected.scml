@@ -3,7 +3,7 @@
   <EventParameters>
     <origin publicID="Origin/20210105104407.725748.1979">
       <time>
-        <value>2020-10-25T19:35:54.328393Z</value>
+        <value>2020-10-25T19:35:43.383892Z</value>
       </time>
       <latitude>
         <value>46.90474746</value>
@@ -21,7 +21,7 @@
         <usedPhaseCount>1</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>4.440892099e-16</standardError>
+        <standardError>0.0</standardError>
         <maximumDistance>0.6415833155</maximumDistance>
         <minimumDistance>0.6415833155</minimumDistance>
         <medianDistance>0.6415833155</medianDistance>

@@ -1,6 +1,8 @@
 #ifndef SCDETECT_APPS_SCDETECT_BUILDER_H_
 #define SCDETECT_APPS_SCDETECT_BUILDER_H_
 
+#include <memory>
+
 #include "exception.h"
 
 namespace Seiscomp {
@@ -33,7 +35,23 @@ public:
 
 } // namespace builder
 
-template <typename T> class Builder {};
+template <typename TProduct> class Builder {
+
+public:
+  Builder() = default;
+  Builder(Builder &&other) = default;
+  Builder &operator=(Builder &&other) = default;
+
+  virtual std::unique_ptr<TProduct> Build();
+
+protected:
+  // Finalize the product
+  virtual void Finalize();
+
+  std::unique_ptr<TProduct> product_{nullptr};
+};
+
+#include "builder.ipp"
 
 } // namespace detect
 } // namespace Seiscomp

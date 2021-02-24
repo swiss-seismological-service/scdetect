@@ -99,6 +99,24 @@
             *theoretical picks* with created origins i.e. detections.
           </description>
         </parameter>
+        <parameter name="arrivalOffsetThreshold" type="double" default="2.0e-6" unit="s">
+          <description>
+            Maximum defalt inter arrival offset threshold to tolerate when
+            associating an arrival to an event. The threshold is only validated
+            in a multi-stream detector setup. The default value corresponds to
+            twice the maximum accuracy `scdetect` is reaching with regards to
+            trimming waveform data. Configuring a negative value disables the
+            arrival offset validation.
+          </description>
+        </parameter>
+        <parameter name="minimumArrivals" type="int" default="-1">
+          <description>
+            Defins the default minimum number of arrivals which must be part of
+            an event to be declared as a detection. Configuring a negative
+            value disables the validation i.e. arrivals for all streams
+            configured must be available.
+          </description>
+        </parameter>
       </group>
     </configuration>
 
@@ -178,15 +196,15 @@
         <option flag="" long-flag="record-starttime" argument="">
           <description>
             Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
-            records from the configured archive recordstream. Useful for
-            reprocessing.
+            records from the configured archive recordstream. Implicitly
+            enables reprocessing/playback mode.
           </description>
         </option>
         <option flag="" long-flag="record-endtime" argument="">
           <description>
             Defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
-            records from the configured archive recordstream. Useful for
-            reprocessing.
+            records from the configured archive recordstream. Implicitly
+            enables reprocessing/playback mode.
           </description>
         </option>
       </group>
@@ -196,6 +214,12 @@
           <description>
             Dump additional debug information (e.g. waveforms, stats etc.)
             while processing.
+          </description>
+        </option>
+        <option flag="" long-flag="playback" default="false">
+          <description>
+            Use playback mode that does not restrict the maximum allowed
+            data latency.
           </description>
         </option>
         <option flag="" long-flag="load-templates">

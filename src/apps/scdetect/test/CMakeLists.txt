@@ -22,6 +22,10 @@ set(SOURCES_integration
   ../builder.cpp
   ../config.cpp
   ../detector.cpp
+  ../detector/arrival.cpp
+  ../detector/detector.cpp
+  ../detector/linker.cpp
+  ../detector/pot.cpp
   ../eventstore.cpp
   ../exception.cpp
   ../processor.cpp
