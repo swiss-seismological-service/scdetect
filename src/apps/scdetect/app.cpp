@@ -271,14 +271,14 @@ bool Application::validateParameters() {
   if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_on)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'triggerOnThreshold': %f. Not in "
-        "interval [0,1].",
+        "interval [-1,1].",
         config_.detector_config.trigger_on);
     return false;
   }
   if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_off)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'triggerOffThreshold': %f. Not in "
-        "interval [0,1].",
+        "interval [-1,1].",
         config_.detector_config.trigger_off);
     return false;
   }
