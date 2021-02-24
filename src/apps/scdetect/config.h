@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_CONFIG_H_
 #define SCDETECT_APPS_SCDETECT_CONFIG_H_
 
-#include <boost/property_tree/ptree_fwd.hpp>
 #include <initializer_list>
 #include <string>
 #include <unordered_map>
