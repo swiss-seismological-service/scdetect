@@ -40,6 +40,8 @@ struct Sample {
   std::string path_catalog;
   std::string path_records;
 
+  std::string starttime;
+
   std::string path_expected;
 
   fs::path path_sample;
@@ -50,12 +52,12 @@ struct Sample {
                                               path_template_config}),
         cli::to_string(
             cli::FlagInventoryDB{path_data / path_sample / path_inventory}),
-
+        cli::to_string(cli::FlagRecordStartTime{starttime}),
         cli::to_string(cli::FlagRecordURL{
             "file://" + (path_data / path_sample / path_records).string()}),
-
         cli::to_string(
-            cli::FlagEventDB{path_data / path_sample / path_catalog})};
+            cli::FlagEventDB{path_data / path_sample / path_catalog}),
+    };
 
     return flags;
   }
@@ -69,9 +71,9 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
   };
 
   return os << "template_config: " << SamplePath(sample.path_template_config)
-
             << ", inventory: " << SamplePath(sample.path_inventory)
             << ", catalog: " << SamplePath(sample.path_catalog)
+            << ", starttime: " << sample.starttime
             << ", records: " << SamplePath(sample.path_records)
             << ", expected: " << SamplePath(sample.path_expected);
 }
@@ -82,25 +84,25 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
 using Samples = std::vector<ds::Sample>;
 Samples dataset{
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/"integration-single-stream-simple"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/"integration-single-stream-simple-with-picks"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-detector-single-stream-simple-with-picks"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-stream-simple-with-picks"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-stream-templ-wf-diff-00"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     "expected.scml",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-stream-templ-wf-diff-01"},
 };
