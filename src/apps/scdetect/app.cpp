@@ -548,8 +548,7 @@ void Application::EmitDetection(const Processor *processor,
   std::sort(azimuths.begin(), azimuths.end());
   std::sort(distances.begin(), distances.end());
 
-  DataModel::OriginQuality origin_quality{};
-
+  DataModel::OriginQuality origin_quality;
   if (azimuths.size() > 2) {
     double az_gap{};
     for (size_t i = 0; i < azimuths.size() - 1; ++i)
