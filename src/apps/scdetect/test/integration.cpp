@@ -105,6 +105,14 @@ Samples dataset{
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-stream-templ-wf-diff-01"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
+     /*path_sample=*/
+     "integration-multi-stream-arrival-offset-00"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
+     /*path_sample=*/
+     "integration-multi-stream-arrival-offset-01"},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
