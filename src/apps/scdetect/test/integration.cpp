@@ -113,6 +113,10 @@ Samples dataset{
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-stream-arrival-offset-01"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
+     /*path_sample=*/
+     "integration-multi-stream-min-arrivals"},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
