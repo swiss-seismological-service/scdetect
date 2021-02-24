@@ -73,16 +73,15 @@ bool StreamConfig::IsValid() const {
 }
 
 bool DetectorConfig::IsValid(size_t num_stream_configs) const {
-  return (
-      utils::ValidateXCorrThreshold(trigger_on) &&
-      utils::ValidateXCorrThreshold(trigger_off) &&
-      (!gap_interpolation ||
-       (gap_interpolation && utils::IsGeZero(gap_threshold) &&
-        utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
-      (arrival_offset_threshold < 0 || arrival_offset_threshold >= 2.0e-6) &&
-      (min_arrivals < 0 ||
-       (min_arrivals >= 1 &&
-        min_arrivals <= static_cast<int>(num_stream_configs))));
+  return (utils::ValidateXCorrThreshold(trigger_on) &&
+          utils::ValidateXCorrThreshold(trigger_off) &&
+          (!gap_interpolation ||
+           (gap_interpolation && utils::IsGeZero(gap_threshold) &&
+            utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
+          utils::ValidateArrivalOffsetThreshold(arrival_offset_threshold) &&
+          (min_arrivals < 0 ||
+           (min_arrivals >= 1 &&
+            min_arrivals <= static_cast<int>(num_stream_configs))));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,

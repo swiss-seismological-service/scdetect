@@ -298,6 +298,14 @@ bool Application::validateParameters() {
     }
   }
 
+  if (!utils::ValidateArrivalOffsetThreshold(
+          config_.detector_config.arrival_offset_threshold)) {
+    SCDETECT_LOG_ERROR("Invalid configuration: 'arrivalOffsetThreshold': %f. "
+                       "Must be < 0 or >= 2.0e-6",
+                       config_.detector_config.arrival_offset_threshold);
+    return false;
+  }
+
   if (config_.stream_config.template_config.wf_start >=
       config_.stream_config.template_config.wf_end) {
     SCDETECT_LOG_ERROR(
@@ -306,6 +314,7 @@ bool Application::validateParameters() {
         config_.stream_config.template_config.wf_end);
     return false;
   }
+
   if (!config_.stream_config.template_config.filter.empty()) {
     std::string err;
     if (!utils::IsValidFilter(config_.stream_config.template_config.filter,
@@ -741,6 +750,8 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
   NEW_OPT(config_.detector_config.create_picks, "detector.createPicks");
+  NEW_OPT(config_.detector_config.arrival_offset_threshold,
+          "detector.arrivalOffsetThreshold");
 
   NEW_OPT_CLI(config_.url_event_db, "Database", "event-db",
               "load events from the given database or file, format: "
