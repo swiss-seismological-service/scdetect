@@ -73,12 +73,16 @@ struct StreamConfig {
 };
 
 struct DetectorConfig {
-  // The default threshold to trigger - xcorr trigger thresholds [0,1]
+  // The default threshold to trigger the detector
+  // - xcorr trigger thresholds [-1,1]
   double trigger_on{0.85L};
-  // The default threshold to enabling triggering, again - xcorr trigger
-  // thresholds [0,1]
+  // The default threshold to emit a detection once the detector is triggered
+  // - Only has an effect if trigger duration is enabled, i.e. if
+  // `trigger_duration` > 0
+  // - xcorr trigger thresholds [-1,1]
   double trigger_off{0.65L};
-  // The duration of a trigger, negative value = disabled
+  // The duration of a trigger
+  // - setting a negative value disables the detector's trigger facilities
   double trigger_duration{-1};
 
   // The time correction in seconds to apply when an origin is going to be
