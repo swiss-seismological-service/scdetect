@@ -68,6 +68,14 @@ boost::optional<double> Detector::arrival_offset_threshold() const {
   return linker_.thres_arrival_offset();
 }
 
+void Detector::set_min_arrivals(const boost::optional<size_t> &n) {
+  linker_.set_min_arrivals(n);
+}
+
+boost::optional<size_t> Detector::min_arrivals() const {
+  return linker_.min_arrivals();
+}
+
 void Detector::set_maximum_latency(
     const boost::optional<Core::TimeSpan> &latency) {
   max_latency_ = latency;

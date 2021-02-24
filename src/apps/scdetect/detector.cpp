@@ -561,11 +561,18 @@ void DetectorBuilder::Finalize() {
       [product](const detector::Detector::Result &res) {
         product->StoreDetection(res);
       });
+
   if (cfg.arrival_offset_threshold < 0) {
     product_->detector_.set_arrival_offset_threshold(boost::none);
   } else {
     product_->detector_.set_arrival_offset_threshold(
         cfg.arrival_offset_threshold);
+  }
+
+  if (cfg.min_arrivals < 0) {
+    product_->detector_.set_min_arrivals(boost::none);
+  } else {
+    product_->detector_.set_min_arrivals(cfg.min_arrivals);
   }
 
   for (auto &proc_config_pair : processor_configs_) {

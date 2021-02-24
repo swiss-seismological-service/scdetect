@@ -97,6 +97,12 @@ public:
   void set_arrival_offset_threshold(const boost::optional<double> &thres);
   // Returns the arrival offset threshold configured
   boost::optional<double> arrival_offset_threshold() const;
+  // Configures the detector with a minimum number of arrivals required to
+  // declare an event as a detection
+  void set_min_arrivals(const boost::optional<size_t> &n);
+  // Returns the minimum number of arrivals required in order to declare an
+  // event as a detection
+  boost::optional<size_t> min_arrivals() const;
   // Sets the maximum data latency w.r.t. `NOW`. If configured with
   // `boost::none` latency is not taken into account and thus not validated
   void set_maximum_latency(const boost::optional<Core::TimeSpan> &latency);

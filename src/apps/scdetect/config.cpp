@@ -72,13 +72,17 @@ bool StreamConfig::IsValid() const {
           !template_config.phase.empty() && utils::IsGeZero(init_time));
 }
 
-bool DetectorConfig::IsValid() const {
-  return (utils::ValidateXCorrThreshold(trigger_on) &&
-          utils::ValidateXCorrThreshold(trigger_off) &&
-          (!gap_interpolation ||
-           (gap_interpolation && utils::IsGeZero(gap_threshold) &&
-            utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
-          (arrival_offset_threshold < 0 || arrival_offset_threshold >= 2.0e-6));
+bool DetectorConfig::IsValid(size_t num_stream_configs) const {
+  return (
+      utils::ValidateXCorrThreshold(trigger_on) &&
+      utils::ValidateXCorrThreshold(trigger_off) &&
+      (!gap_interpolation ||
+       (gap_interpolation && utils::IsGeZero(gap_threshold) &&
+        utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
+      (arrival_offset_threshold < 0 || arrival_offset_threshold >= 2.0e-6) &&
+      (min_arrivals < 0 ||
+       (min_arrivals >= 1 &&
+        min_arrivals <= static_cast<int>(num_stream_configs))));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
@@ -108,11 +112,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<bool>("createPicks", detector_defaults.create_picks);
   detector_config_.arrival_offset_threshold = pt.get<double>(
       "arrivalOffsetThreshold", detector_defaults.arrival_offset_threshold);
-
-  if (!detector_config_.IsValid()) {
-    throw config::ParserException{
-        "Invalid template specific detector configuration"};
-  }
+  detector_config_.min_arrivals =
+      pt.get<int>("minimumArrivals", detector_defaults.min_arrivals);
 
   // patch stream defaults with detector config globals
   auto patched_stream_defaults{stream_defaults};
@@ -155,6 +156,21 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       }
     }
     stream_sets_.push_back(stream_configs);
+  }
+
+  const auto max_arrivals{stream_sets_.at(0).size()};
+  if (detector_config_.min_arrivals > static_cast<int>(max_arrivals)) {
+    SCDETECT_LOG_WARNING_TAGGED(
+        detector_id_,
+        "Configured number of minimum arrivals exceets number of configured "
+        "streams (%d > %d). Resetting.",
+        detector_config_.min_arrivals, max_arrivals);
+    detector_config_.min_arrivals = max_arrivals;
+  }
+
+  if (!detector_config_.IsValid(max_arrivals)) {
+    throw config::ParserException{
+        "Invalid template specific detector configuration"};
   }
 }
 
