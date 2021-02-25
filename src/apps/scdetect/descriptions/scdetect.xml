@@ -93,10 +93,17 @@
             streams.
           </description>
         </parameter>
-        <parameter name="createPicks" type="boolean" default="false">
+        <parameter name="createArrivals" type="boolean" default="false">
           <description>
             Defines the default value for computing and associating
-            *theoretical picks* with created origins i.e. detections.
+            *detected arrivals* with created origins i.e. detections.
+          </description>
+        </parameter>
+        <parameter name="createTemplateArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value for computing and associating
+            *theoretical template arrivals* with created origins i.e.
+            detections.
           </description>
         </parameter>
         <parameter name="arrivalOffsetThreshold" type="double" default="2.0e-6" unit="s">

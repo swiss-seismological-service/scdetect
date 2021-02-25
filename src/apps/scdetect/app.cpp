@@ -18,6 +18,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/phase.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/timequantity.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
@@ -26,6 +27,7 @@
 #include "builder.h"
 #include "config.h"
 #include "detector.h"
+#include "detector/arrival.h"
 #include "eventstore.h"
 #include "log.h"
 #include "settings.h"
@@ -595,31 +597,52 @@ void Application::EmitDetection(const Processor *processor,
   origin->setQuality(origin_quality);
   origin->setMethodID(settings::kOriginMethod);
 
+  const auto CreatePick = [](const detector::Arrival &a) {
+    DataModel::PickPtr ret{DataModel::Pick::Create()};
+
+    ret->setTime(DataModel::TimeQuantity{a.pick.time, boost::none,
+                                         a.pick.lower_uncertainty,
+                                         a.pick.upper_uncertainty});
+    utils::WaveformStreamID wf_id{a.pick.waveform_id};
+    ret->setWaveformID(
+        DataModel::WaveformStreamID{wf_id.net_code(), wf_id.sta_code(),
+                                    wf_id.loc_code(), wf_id.cha_code(), ""});
+    ret->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
+
+    if (a.pick.phase_hint) {
+      ret->setPhaseHint(DataModel::Phase{*a.pick.phase_hint});
+    }
+    return ret;
+  };
+
+  const auto CreateArrival = [&ci](const detector::Arrival &a,
+                                   const DataModel::PickCPtr &pick) {
+    auto ret{utils::make_smart<DataModel::Arrival>()};
+    ret->setCreationInfo(ci);
+    ret->setPickID(pick->publicID());
+    ret->setPhase(a.phase);
+    if (a.weight) {
+      ret->setWeight(a.weight);
+    }
+    return ret;
+  };
+
   std::vector<ArrivalPick> arrival_picks;
-  auto with_picks{processor->WithPicks()};
-  if (with_picks) {
+  if (detection->with_arrivals) {
     for (const auto &result_pair : detection->template_results) {
       const auto &res{result_pair.second};
-      DataModel::PickPtr pick{DataModel::Pick::Create()};
 
-      pick->setTime(res.arrival.pick.time);
-      pick->setWaveformID(res.arrival.pick.waveform_id);
-      pick->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
-
-      if (res.arrival.pick.phase_hint) {
-        pick->setPhaseHint(DataModel::Phase{*res.arrival.pick.phase_hint});
-      }
-
-      // create arrival
-      auto arrival{utils::make_smart<DataModel::Arrival>()};
-      arrival->setCreationInfo(ci);
-      arrival->setPickID(pick->publicID());
-      arrival->setPhase(res.arrival.phase);
-      if (res.arrival.weight)
-        arrival->setWeight(res.arrival.weight);
-
+      const auto pick{CreatePick(res.arrival)};
+      const auto arrival{CreateArrival(res.arrival, pick)};
       arrival_picks.push_back({arrival, pick});
     }
+  }
+
+  // create theoretical template arrivals
+  for (const auto &a : detection->theoretical_template_arrivals) {
+    const auto pick{CreatePick(a)};
+    const auto arrival{CreateArrival(a, pick)};
+    arrival_picks.push_back({arrival, pick});
   }
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
@@ -643,23 +666,20 @@ void Application::EmitDetection(const Processor *processor,
       notifier_msg->attach(notifier.get());
     }
 
-    if (with_picks) {
-      for (auto &arrival_pick : arrival_picks) {
-        // pick
-        {
-          auto notifier{utils::make_smart<DataModel::Notifier>(
-              "EventParameters", DataModel::OP_ADD, arrival_pick.pick.get())};
+    for (auto &arrival_pick : arrival_picks) {
+      // pick
+      {
+        auto notifier{utils::make_smart<DataModel::Notifier>(
+            "EventParameters", DataModel::OP_ADD, arrival_pick.pick.get())};
 
-          notifier_msg->attach(notifier.get());
-        }
-        // arrival
-        {
-          auto notifier{utils::make_smart<DataModel::Notifier>(
-              origin->publicID(), DataModel::OP_ADD,
-              arrival_pick.arrival.get())};
+        notifier_msg->attach(notifier.get());
+      }
+      // arrival
+      {
+        auto notifier{utils::make_smart<DataModel::Notifier>(
+            origin->publicID(), DataModel::OP_ADD, arrival_pick.arrival.get())};
 
-          notifier_msg->attach(notifier.get());
-        }
+        notifier_msg->attach(notifier.get());
       }
     }
 
@@ -674,12 +694,10 @@ void Application::EmitDetection(const Processor *processor,
 
     origin->add(magnitude.get());
 
-    if (with_picks) {
-      for (auto &arrival_pick : arrival_picks) {
-        origin->add(arrival_pick.arrival.get());
+    for (auto &arrival_pick : arrival_picks) {
+      origin->add(arrival_pick.arrival.get());
 
-        ep_->add(arrival_pick.pick.get());
-      }
+      ep_->add(arrival_pick.pick.get());
     }
   }
 }
@@ -757,7 +775,9 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
-  NEW_OPT(config_.detector_config.create_picks, "detector.createPicks");
+  NEW_OPT(config_.detector_config.create_arrivals, "detector.createArrivals");
+  NEW_OPT(config_.detector_config.create_template_arrivals,
+          "detector.createTemplateArrivals");
   NEW_OPT(config_.detector_config.arrival_offset_threshold,
           "detector.arrivalOffsetThreshold");
   NEW_OPT(config_.detector_config.min_arrivals, "detector.minimumArrivals");

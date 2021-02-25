@@ -25,6 +25,11 @@ struct Pick {
   // The pick offset w.r.t. origin time
   Core::TimeSpan offset;
 
+  // Lower uncertainty w.r.t. the pick time
+  boost::optional<double> lower_uncertainty;
+  // Upper uncertainty w.r.t. the pick time
+  boost::optional<double> upper_uncertainty;
+
   friend bool operator==(const Pick &lhs, const Pick &rhs);
   friend bool operator!=(const Pick &lhs, const Pick &rhs);
 };

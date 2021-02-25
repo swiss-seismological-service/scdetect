@@ -1,7 +1,7 @@
 [
     {
         "detectorId": "detector-01",
-        "createPicks": false,
+        "createArrivals": false,
         "sensitivityCorrection": false,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,

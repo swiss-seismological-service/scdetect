@@ -85,18 +85,21 @@ using Samples = std::vector<ds::Sample>;
 Samples dataset{
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple"},
+     /*path_sample=*/"integration-single-stream-simple-without-arrivals"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-with-picks"},
+     /*path_sample=*/"integration-single-stream-simple-with-arrivals"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
+     /*path_sample=*/"integration-single-stream-simple-with-templ-arrivals"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
-     "integration-multi-detector-single-stream-simple-with-picks"},
+     "integration-multi-detector-single-stream-simple"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
-     "integration-multi-stream-simple-with-picks"},
+     "integration-multi-stream-simple"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/

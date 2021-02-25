@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <seiscomp/core/datetime.h>
@@ -21,6 +22,7 @@
 
 #include "builder.h"
 #include "config.h"
+#include "detector/arrival.h"
 #include "detector/detector.h"
 #include "detector/pot.h"
 #include "processor.h"
@@ -57,11 +59,17 @@ public:
     size_t num_channels_associated{};
     size_t num_channels_used{};
 
+    // Indicates if arrivals should be appended to the detection
+    bool with_arrivals{false};
+
     using TemplateResult = detector::Detector::Result::TemplateResult;
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
     TemplateResults template_results;
+
+    // List of theoretical template arrivals
+    std::vector<detector::Arrival> theoretical_template_arrivals;
   };
 
   friend class DetectorBuilder;
@@ -85,8 +93,6 @@ public:
   void Terminate() override;
 
   std::string DebugString() const override;
-
-  bool WithPicks() const override;
 
 protected:
   void Process(StreamState &stream_state, const Record *record,
@@ -132,6 +138,8 @@ private:
   DataModel::MagnitudePtr magnitude_;
 
   std::multimap<WaveformStreamID, Template::MatchResultCPtr> debug_cc_results_;
+  // List of reference theoretical template arrivals
+  std::vector<detector::Arrival> ref_theoretical_template_arrivals_;
 };
 
 class DetectorBuilder : public Builder<Detector> {

@@ -8,7 +8,9 @@ namespace detector {
 
 bool operator==(const Pick &lhs, const Pick &rhs) {
   return (lhs.time == rhs.time && lhs.waveform_id == rhs.waveform_id &&
-          lhs.phase_hint == rhs.phase_hint && lhs.offset == rhs.offset);
+          lhs.phase_hint == rhs.phase_hint && lhs.offset == rhs.offset &&
+          lhs.lower_uncertainty == rhs.lower_uncertainty &&
+          lhs.upper_uncertainty == rhs.upper_uncertainty);
 }
 
 bool operator!=(const Pick &lhs, const Pick &rhs) { return !(lhs == rhs); }
