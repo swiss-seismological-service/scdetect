@@ -33,6 +33,9 @@ namespace detect {
 
 class DetectorBuilder;
 
+// Detector waveform processor implementation
+// - implements gap interpolation
+// - handles buffers
 class Detector : public Processor {
 
   Detector(const std::string &id, const DataModel::OriginCPtr &origin);
