@@ -92,8 +92,6 @@ void Detector::Terminate() {
 
 std::string Detector::DebugString() const { return detector_.DebugString(); }
 
-bool Detector::WithArrivals() const { return config_.create_arrivals; }
-
 void Detector::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
   try {
@@ -232,6 +230,7 @@ void Detector::PrepareDetection(DetectionPtr &detection,
   detection->num_stations_associated = res.num_stations_associated;
   detection->num_stations_used = res.num_stations_used;
 
+  detection->with_arrivals = config_.create_arrivals;
   detection->template_results = res.template_results;
 }
 

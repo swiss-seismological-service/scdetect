@@ -596,7 +596,7 @@ void Application::EmitDetection(const Processor *processor,
   origin->setMethodID(settings::kOriginMethod);
 
   std::vector<ArrivalPick> arrival_picks;
-  bool with_arrivals{processor->WithArrivals()};
+  bool with_arrivals{detection->with_arrivals};
   if (with_arrivals) {
     for (const auto &result_pair : detection->template_results) {
       const auto &res{result_pair.second};

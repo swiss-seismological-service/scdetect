@@ -57,6 +57,9 @@ public:
     size_t num_channels_associated{};
     size_t num_channels_used{};
 
+    // Indicates if arrivals should be appended to the detection
+    bool with_arrivals{false};
+
     using TemplateResult = detector::Detector::Result::TemplateResult;
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;
@@ -85,8 +88,6 @@ public:
   void Terminate() override;
 
   std::string DebugString() const override;
-
-  bool WithArrivals() const override;
 
 protected:
   void Process(StreamState &stream_state, const Record *record,

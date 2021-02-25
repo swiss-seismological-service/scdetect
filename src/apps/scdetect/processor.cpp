@@ -63,8 +63,6 @@ void Processor::Close() const {}
 
 std::string Processor::DebugString() const { return ""; }
 
-bool Processor::WithArrivals() const { return false; }
-
 Processor::StreamState::~StreamState() {
   if (filter) {
     delete filter;
