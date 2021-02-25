@@ -124,18 +124,16 @@ struct DetectorConfig {
   bool IsValid(size_t num_stream_configs) const;
 };
 
-// Container for StreamConfig
-using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
-
 class TemplateConfig {
-  using StreamSets = std::vector<StreamConfigs>;
+  // Container for StreamConfig
+  using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
 
 public:
-  using size_type = StreamSets::size_type;
-  using value_type = StreamSets::value_type;
-  using reference = value_type &;
-  using iterator = StreamSets::iterator;
-  using const_iterator = StreamSets::const_iterator;
+  using size_type = StreamConfigs::size_type;
+  using value_type = StreamConfigs::value_type;
+  using reference = StreamConfigs::mapped_type &;
+  using iterator = StreamConfigs::iterator;
+  using const_iterator = StreamConfigs::const_iterator;
 
   TemplateConfig(const boost::property_tree::ptree &pt,
                  const DetectorConfig &detector_defaults,
@@ -143,18 +141,17 @@ public:
 
   const std::string detector_id() const;
   const std::string origin_id() const;
-  const std::string phase(const size_t priority = 0) const;
   const DetectorConfig detector_config() const;
 
-  size_type size() const noexcept { return stream_sets_.size(); }
-  reference &at(size_t priority);
+  size_type size() const noexcept { return stream_configs_.size(); }
+  reference &at(const std::string &stream_id);
 
-  iterator begin() { return stream_sets_.begin(); }
-  iterator end() { return stream_sets_.end(); }
-  const_iterator begin() const { return stream_sets_.begin(); }
-  const_iterator end() const { return stream_sets_.end(); }
-  const_iterator cbegin() const { return stream_sets_.cbegin(); }
-  const_iterator cend() const { return stream_sets_.cend(); }
+  iterator begin() { return stream_configs_.begin(); }
+  iterator end() { return stream_configs_.end(); }
+  const_iterator begin() const { return stream_configs_.begin(); }
+  const_iterator end() const { return stream_configs_.end(); }
+  const_iterator cbegin() const { return stream_configs_.cbegin(); }
+  const_iterator cend() const { return stream_configs_.cend(); }
 
 private:
   std::string detector_id_{utils::CreateUUID()};
@@ -162,11 +159,7 @@ private:
   std::string origin_id_;
   DetectorConfig detector_config_;
 
-  StreamSets stream_sets_;
-
-  // TODO(damb): Allow additional stream sets to be allowed; most probably
-  // this requires adopting the underlying datastructure of StreamConfigs since
-  // the mapping between two StreamConfig objects must be unambiguous
+  StreamConfigs stream_configs_;
 };
 
 } // namespace detect

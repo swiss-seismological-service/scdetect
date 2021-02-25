@@ -841,8 +841,6 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
     return !id_exists;
   };
 
-  // TODO(damb): Stream sets not taken into consideration. Detectors
-  // aren't able to cope with this concept, anyway, yet.
   try {
     std::ifstream ifs{config_.path_template_json};
     boost::property_tree::ptree pt;
@@ -878,50 +876,47 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         }
 
         std::vector<std::string> stream_ids;
-        for (const auto &stream_set : tc) {
-          for (const auto &stream_config_pair : stream_set) {
-
-            IsUniqueProcessorId(stream_config_pair.second.template_id);
-            try {
-              detector_builder.set_stream(stream_config_pair.first,
-                                          stream_config_pair.second,
-                                          waveform_handler, path_debug_info);
-            } catch (builder::NoSensorLocation &e) {
-              if (config_.skip_template_if_no_sensor_location_data) {
-                SCDETECT_LOG_WARNING(
-                    "%s (%s): No sensor location data for template processor "
-                    "available. Skipping.",
-                    stream_config_pair.first.c_str(),
-                    stream_config_pair.second.template_config.wf_stream_id
-                        .c_str());
-                continue;
-              }
-              throw;
-            } catch (builder::NoStream &e) {
-              if (config_.skip_template_if_no_stream_data) {
-                SCDETECT_LOG_WARNING(
-                    "%s (%s): No stream data for template processor "
-                    "available. Skipping.",
-                    stream_config_pair.first.c_str(),
-                    stream_config_pair.second.template_config.wf_stream_id
-                        .c_str());
-                continue;
-              }
-              throw;
-            } catch (builder::NoWaveformData &e) {
-              if (config_.skip_template_if_no_waveform_data) {
-                SCDETECT_LOG_WARNING(
-                    "%s (%s): No waveform data for template processor "
-                    "available. Skipping.",
-                    stream_config_pair.first.c_str(),
-                    stream_config_pair.second.template_config.wf_stream_id
-                        .c_str());
-                continue;
-              }
-              throw;
+        for (const auto &stream_config_pair : tc) {
+          IsUniqueProcessorId(stream_config_pair.second.template_id);
+          try {
+            detector_builder.set_stream(stream_config_pair.first,
+                                        stream_config_pair.second,
+                                        waveform_handler, path_debug_info);
+          } catch (builder::NoSensorLocation &e) {
+            if (config_.skip_template_if_no_sensor_location_data) {
+              SCDETECT_LOG_WARNING(
+                  "%s (%s): No sensor location data for template processor "
+                  "available. Skipping.",
+                  stream_config_pair.first.c_str(),
+                  stream_config_pair.second.template_config.wf_stream_id
+                      .c_str());
+              continue;
             }
-            stream_ids.push_back(stream_config_pair.first);
+            throw;
+          } catch (builder::NoStream &e) {
+            if (config_.skip_template_if_no_stream_data) {
+              SCDETECT_LOG_WARNING(
+                  "%s (%s): No stream data for template processor "
+                  "available. Skipping.",
+                  stream_config_pair.first.c_str(),
+                  stream_config_pair.second.template_config.wf_stream_id
+                      .c_str());
+              continue;
+            }
+            throw;
+          } catch (builder::NoWaveformData &e) {
+            if (config_.skip_template_if_no_waveform_data) {
+              SCDETECT_LOG_WARNING(
+                  "%s (%s): No waveform data for template processor "
+                  "available. Skipping.",
+                  stream_config_pair.first.c_str(),
+                  stream_config_pair.second.template_config.wf_stream_id
+                      .c_str());
+              continue;
+            }
+            throw;
           }
+          stream_ids.push_back(stream_config_pair.first);
         }
 
         std::shared_ptr<detect::Detector> detector_ptr{
