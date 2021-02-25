@@ -1,7 +1,7 @@
 [
     {
         "detectorId": "detector-01",
-        "createPicks": true,
+        "createArrivals": true,
         "gapInterpolation": true,
         "gapThreshold": 0.1,
         "gapTolerance": 1.5,
