@@ -5,9 +5,7 @@
       <time>
         <value>2020-10-25T20:35:57.458294Z</value>
       </time>
-      <waveformID networkCode="" stationCode="">
-        <resourceURI>CH.HASLI..HHZ</resourceURI>
-      </waveformID>
+      <waveformID networkCode="CH" stationCode="HASLI" channelCode="HHZ"/>
       <phaseHint>Pg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
     </pick>
