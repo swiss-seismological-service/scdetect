@@ -143,7 +143,6 @@ public:
 
   const std::string detector_id() const;
   const std::string origin_id() const;
-  const std::string phase(const size_t priority = 0) const;
   const DetectorConfig detector_config() const;
 
   size_type size() const noexcept { return stream_sets_.size(); }

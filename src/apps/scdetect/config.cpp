@@ -176,20 +176,6 @@ const std::string TemplateConfig::detector_id() const { return detector_id_; }
 
 const std::string TemplateConfig::origin_id() const { return origin_id_; }
 
-const std::string TemplateConfig::phase(const size_t priority) const {
-  if (priority >= size()) {
-    return "";
-  }
-
-  std::string p{
-      std::begin(stream_sets_[priority])->second.template_config.phase};
-  for (const auto &stream_config_pair : stream_sets_[priority]) {
-    if (stream_config_pair.second.template_config.phase != p)
-      return "";
-  }
-  return p;
-}
-
 const DetectorConfig TemplateConfig::detector_config() const {
   return detector_config_;
 }
