@@ -67,23 +67,19 @@ def parse_catalog(catalog, exclude_pattern=None, phases=("Pg", "Sg")):
                 event.picks,
             )
 
-            # wrap streams into their dedicated stream-set; currently only a
-            # single stream-set is supported
             _dict["streams"] = [
-                [
-                    {
-                        "waveformId": p.waveform_id.get_seed_string(),
-                        "templateWaveformId": p.waveform_id.get_seed_string(),
-                        "templatePhase": _dict["phase"],
-                    }
-                    for p in picks
-                    if (
-                        exclude_pattern is None
-                        or not exclude_pattern.match(
-                            p.waveform_id.get_seed_string()
-                        )
+                {
+                    "waveformId": p.waveform_id.get_seed_string(),
+                    "templateWaveformId": p.waveform_id.get_seed_string(),
+                    "templatePhase": _dict["phase"],
+                }
+                for p in picks
+                if (
+                    exclude_pattern is None
+                    or not exclude_pattern.match(
+                        p.waveform_id.get_seed_string()
                     )
-                ]
+                )
             ]
 
             if not _dict["streams"][0]:
@@ -107,12 +103,9 @@ class TemplateConfig:
         config_dicts = []
         if self._stream_defaults:
             for _dict in self._config_dicts:
-                # consider stream-sets
                 _dict["streams"] = [
-                    [
-                        dict(ChainMap(stream_config, self._stream_defaults))
-                        for stream_config in _dict["streams"][0]
-                    ]
+                    dict(ChainMap(stream_config, self._stream_defaults))
+                    for stream_config in _dict["streams"]
                 ]
 
                 if self._detector_defaults:
