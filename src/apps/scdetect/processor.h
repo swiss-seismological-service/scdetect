@@ -33,8 +33,8 @@
 namespace Seiscomp {
 namespace detect {
 
-DEFINE_SMARTPOINTER(Processor);
-class Processor : public Core::BaseObject {
+// Abstract interface for waveform processors
+class Processor {
 
 public:
   using Filter = Math::Filtering::InPlaceFilter<double>;

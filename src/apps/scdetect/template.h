@@ -20,7 +20,9 @@ namespace detect {
 
 class TemplateBuilder;
 
-DEFINE_SMARTPOINTER(Template);
+// Template waveform processor implementation
+// - implements filtering and sensitivity correction
+// - implements the actual cross-correlation algorithm
 class Template : public Processor {
 
   Template(const std::string &template_id, const Processor *p = nullptr);
