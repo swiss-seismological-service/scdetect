@@ -99,6 +99,13 @@
             *detected arrivals* with created origins i.e. detections.
           </description>
         </parameter>
+        <parameter name="createTemplateArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value for computing and associating
+            *theoretical template arrivals* with created origins i.e.
+            detections.
+          </description>
+        </parameter>
         <parameter name="arrivalOffsetThreshold" type="double" default="2.0e-6" unit="s">
           <description>
             Maximum defalt inter arrival offset threshold to tolerate when

@@ -776,6 +776,8 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
   NEW_OPT(config_.detector_config.create_arrivals, "detector.createArrivals");
+  NEW_OPT(config_.detector_config.create_template_arrivals,
+          "detector.createTemplateArrivals");
   NEW_OPT(config_.detector_config.arrival_offset_threshold,
           "detector.arrivalOffsetThreshold");
   NEW_OPT(config_.detector_config.min_arrivals, "detector.minimumArrivals");
