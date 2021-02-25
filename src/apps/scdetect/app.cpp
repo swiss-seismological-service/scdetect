@@ -30,6 +30,7 @@
 #include "log.h"
 #include "settings.h"
 #include "utils.h"
+#include "validators.h"
 #include "version.h"
 
 namespace Seiscomp {
@@ -268,14 +269,14 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_on)) {
+  if (!config::ValidateXCorrThreshold(config_.detector_config.trigger_on)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'triggerOnThreshold': %f. Not in "
         "interval [-1,1].",
         config_.detector_config.trigger_on);
     return false;
   }
-  if (!utils::ValidateXCorrThreshold(config_.detector_config.trigger_off)) {
+  if (!config::ValidateXCorrThreshold(config_.detector_config.trigger_off)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'triggerOffThreshold': %f. Not in "
         "interval [-1,1].",
@@ -298,7 +299,7 @@ bool Application::validateParameters() {
     }
   }
 
-  if (!utils::ValidateArrivalOffsetThreshold(
+  if (!config::ValidateArrivalOffsetThreshold(
           config_.detector_config.arrival_offset_threshold)) {
     SCDETECT_LOG_ERROR("Invalid configuration: 'arrivalOffsetThreshold': %f. "
                        "Must be < 0 or >= 2.0e-6",
@@ -306,7 +307,7 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!utils::ValidateMinArrivals(config_.detector_config.min_arrivals)) {
+  if (!config::ValidateMinArrivals(config_.detector_config.min_arrivals)) {
     SCDETECT_LOG_ERROR("Invalid configuration: 'minimumArrivals': %d. "
                        "Must be < 0 or >= 1",
                        config_.detector_config.min_arrivals);

@@ -9,6 +9,7 @@
 #include "log.h"
 #include "settings.h"
 #include "utils.h"
+#include "validators.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -73,14 +74,14 @@ bool StreamConfig::IsValid() const {
 }
 
 bool DetectorConfig::IsValid(size_t num_stream_configs) const {
-  return (utils::ValidateXCorrThreshold(trigger_on) &&
-          utils::ValidateXCorrThreshold(trigger_off) &&
+  return (config::ValidateXCorrThreshold(trigger_on) &&
+          config::ValidateXCorrThreshold(trigger_off) &&
           (!gap_interpolation ||
            (gap_interpolation && utils::IsGeZero(gap_threshold) &&
             utils::IsGeZero(gap_tolerance) && gap_threshold < gap_tolerance)) &&
-          utils::ValidateArrivalOffsetThreshold(arrival_offset_threshold) &&
-          utils::ValidateMinArrivals(min_arrivals,
-                                     static_cast<int>(num_stream_configs)));
+          config::ValidateArrivalOffsetThreshold(arrival_offset_threshold) &&
+          config::ValidateMinArrivals(min_arrivals,
+                                      static_cast<int>(num_stream_configs)));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
