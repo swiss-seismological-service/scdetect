@@ -293,7 +293,7 @@ bool Application::validateParameters() {
 
   if (!config_.stream_config.filter.empty()) {
     std::string err;
-    if (!utils::IsValidFilter(config_.stream_config.filter, err)) {
+    if (!config::ValidateFilter(config_.stream_config.filter, err)) {
       SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
       return false;
     }
@@ -325,8 +325,8 @@ bool Application::validateParameters() {
 
   if (!config_.stream_config.template_config.filter.empty()) {
     std::string err;
-    if (!utils::IsValidFilter(config_.stream_config.template_config.filter,
-                              err)) {
+    if (!config::ValidateFilter(config_.stream_config.template_config.filter,
+                                err)) {
       SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
       return false;
     }

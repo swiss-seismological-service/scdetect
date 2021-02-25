@@ -195,17 +195,5 @@ void Processor::set_saturation_threshold(double thres) {
   saturation_threshold_ = thres;
 }
 
-namespace utils {
-
-bool IsValidFilter(const std::string &filter_string, std::string &err) {
-  auto filter{Processor::Filter::Create(filter_string, &err)};
-  if (!filter) {
-    return false;
-  }
-  delete filter;
-  return true;
-}
-} // namespace utils
-
 } // namespace detect
 } // namespace Seiscomp

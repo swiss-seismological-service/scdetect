@@ -258,10 +258,6 @@ private:
   boost::filesystem::path debug_info_dir_;
 };
 
-namespace utils {
-bool IsValidFilter(const std::string &filter_string, std::string &err);
-}
-
 } // namespace detect
 } // namespace Seiscomp
 
