@@ -33,7 +33,6 @@ namespace detect {
 
 class DetectorBuilder;
 
-DEFINE_SMARTPOINTER(Detector);
 class Detector : public Processor {
 
   Detector(const std::string &id, const DataModel::OriginCPtr &origin);

@@ -20,7 +20,6 @@ namespace detect {
 
 class TemplateBuilder;
 
-DEFINE_SMARTPOINTER(Template);
 class Template : public Processor {
 
   Template(const std::string &template_id, const Processor *p = nullptr);
