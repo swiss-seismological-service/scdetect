@@ -163,10 +163,6 @@ private:
   DetectorConfig detector_config_;
 
   StreamSets stream_sets_;
-
-  // TODO(damb): Allow additional stream sets to be allowed; most probably
-  // this requires adopting the underlying datastructure of StreamConfigs since
-  // the mapping between two StreamConfig objects must be unambiguous
 };
 
 } // namespace detect
