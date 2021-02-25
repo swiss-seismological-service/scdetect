@@ -135,17 +135,23 @@ public:
   WaveformStreamID(const std::string &net_code, const std::string &sta_code,
                    const std::string &loc_code, const std::string &cha_code);
 
+  // Returns the network code
   const std::string &net_code() const;
+  // Returns the station code
   const std::string &sta_code() const;
+  // Returns the location code
   const std::string &loc_code() const;
+  // Returns the channel code
   const std::string &cha_code() const;
 
+  // Returns `true` if the waveform stream identifier is valid, `false`
+  // otherwise.
   bool IsValid() const;
 
   friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
 
 protected:
-  const std::string delimiter_{"."};
+  static const std::string delimiter_;
 
 private:
   std::string net_code_;

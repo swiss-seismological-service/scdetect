@@ -22,6 +22,8 @@ const std::string CreateUUID() {
 }
 
 /* ------------------------------------------------------------------------- */
+const std::string WaveformStreamID::delimiter_{"."};
+
 WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
   std::vector<std::string> tokens;
   Core::split(tokens, net_sta_loc_cha, delimiter_.c_str(), false);
@@ -39,7 +41,7 @@ WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
 WaveformStreamID::WaveformStreamID(const DataModel::WaveformStreamID &id)
     : net_code_{id.networkCode()}, sta_code_{id.stationCode()},
       loc_code_{id.locationCode()}, cha_code_{id.channelCode()} {
-  if (net_code_.empty() || sta_code_.empty() || cha_code_.empty()) {
+  if (!IsValid()) {
     std::ostringstream oss;
     oss << *this;
     throw ValueException{std::string{"Invalid DataModel::WaveformStreamID: "} +
