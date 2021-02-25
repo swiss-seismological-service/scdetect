@@ -596,8 +596,8 @@ void Application::EmitDetection(const Processor *processor,
   origin->setMethodID(settings::kOriginMethod);
 
   std::vector<ArrivalPick> arrival_picks;
-  auto with_picks{processor->WithPicks()};
-  if (with_picks) {
+  bool with_arrivals{processor->WithArrivals()};
+  if (with_arrivals) {
     for (const auto &result_pair : detection->template_results) {
       const auto &res{result_pair.second};
       DataModel::PickPtr pick{DataModel::Pick::Create()};
@@ -643,7 +643,7 @@ void Application::EmitDetection(const Processor *processor,
       notifier_msg->attach(notifier.get());
     }
 
-    if (with_picks) {
+    if (with_arrivals) {
       for (auto &arrival_pick : arrival_picks) {
         // pick
         {
@@ -674,7 +674,7 @@ void Application::EmitDetection(const Processor *processor,
 
     origin->add(magnitude.get());
 
-    if (with_picks) {
+    if (with_arrivals) {
       for (auto &arrival_pick : arrival_picks) {
         origin->add(arrival_pick.arrival.get());
 
@@ -757,7 +757,7 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
   NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
   NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
-  NEW_OPT(config_.detector_config.create_picks, "detector.createPicks");
+  NEW_OPT(config_.detector_config.create_arrivals, "detector.createArrivals");
   NEW_OPT(config_.detector_config.arrival_offset_threshold,
           "detector.arrivalOffsetThreshold");
   NEW_OPT(config_.detector_config.min_arrivals, "detector.minimumArrivals");

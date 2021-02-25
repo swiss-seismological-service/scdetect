@@ -86,7 +86,7 @@ public:
 
   std::string DebugString() const override;
 
-  bool WithPicks() const override;
+  bool WithArrivals() const override;
 
 protected:
   void Process(StreamState &stream_state, const Record *record,

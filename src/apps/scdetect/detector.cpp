@@ -92,7 +92,7 @@ void Detector::Terminate() {
 
 std::string Detector::DebugString() const { return detector_.DebugString(); }
 
-bool Detector::WithPicks() const { return config_.create_picks; }
+bool Detector::WithArrivals() const { return config_.create_arrivals; }
 
 void Detector::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {

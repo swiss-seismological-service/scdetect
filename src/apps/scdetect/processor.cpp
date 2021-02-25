@@ -63,7 +63,7 @@ void Processor::Close() const {}
 
 std::string Processor::DebugString() const { return ""; }
 
-bool Processor::WithPicks() const { return false; }
+bool Processor::WithArrivals() const { return false; }
 
 Processor::StreamState::~StreamState() {
   if (filter) {

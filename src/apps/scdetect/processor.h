@@ -167,7 +167,7 @@ public:
 
   // Returns if picks should be created and associated w.r.t. the processing
   // result
-  virtual bool WithPicks() const;
+  virtual bool WithArrivals() const;
 
   // Returns a debug string for the corresponding processor
   virtual std::string DebugString() const;
