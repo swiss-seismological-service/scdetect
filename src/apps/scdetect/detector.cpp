@@ -4,6 +4,7 @@
 #include <cmath>
 #include <memory>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -232,6 +233,16 @@ void Detector::PrepareDetection(DetectionPtr &detection,
 
   detection->with_arrivals = config_.create_arrivals;
   detection->template_results = res.template_results;
+
+  if (config_.create_template_arrivals) {
+    for (const auto &arrival : ref_theoretical_template_arrivals_) {
+      auto theoretical_template_arrival{arrival};
+      theoretical_template_arrival.pick.time =
+          res.origin_time + arrival.pick.offset;
+      detection->theoretical_template_arrivals.push_back(
+          theoretical_template_arrival);
+    }
+  }
 }
 
 bool Detector::FillGap(StreamState &stream_state, const Record *record,
@@ -557,6 +568,7 @@ void DetectorBuilder::Finalize() {
     product_->detector_.set_min_arrivals(cfg.min_arrivals);
   }
 
+  std::unordered_set<std::string> used_picks;
   for (auto &proc_config_pair : processor_configs_) {
     const auto &stream_id{proc_config_pair.first};
     auto &proc_config{proc_config_pair.second};
@@ -585,6 +597,40 @@ void DetectorBuilder::Finalize() {
         detector::Detector::SensorLocation{
             meta.sensor_location->latitude(), meta.sensor_location->longitude(),
             meta.sensor_location->station()->publicID()});
+
+    used_picks.emplace(meta.pick->publicID());
+  }
+
+  // attach reference theoretical template arrivals to the product
+  if (cfg.create_template_arrivals) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < product_->origin_->arrivalCount(); ++i) {
+      const auto &arrival{product_->origin_->arrival(i)};
+      const auto &pick{
+          EventStore::Instance().Get<DataModel::Pick>(arrival->pickID())};
+
+      bool is_detector_arrival{used_picks.find(arrival->pickID()) !=
+                               used_picks.end()};
+      if (is_detector_arrival || arrival->phase().code().empty() ||
+          !IsValidArrival(arrival, pick)) {
+        continue;
+      }
+
+      boost::optional<std::string> phase_hint;
+      try {
+        phase_hint = pick->phaseHint();
+      } catch (Core::ValueException &e) {
+      }
+
+      const utils::WaveformStreamID wf_id{pick->waveformID()};
+      oss << wf_id;
+      product_->ref_theoretical_template_arrivals_.push_back(
+          {{pick->time().value(), oss.str(), phase_hint,
+            pick->time().value() - product_->origin_->time().value()},
+           arrival->phase(),
+           arrival->weight()});
+      oss.str("");
+    }
   }
 }
 

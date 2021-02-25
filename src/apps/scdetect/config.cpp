@@ -109,6 +109,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("maximumLatency", detector_defaults.maximum_latency);
   detector_config_.create_arrivals =
       pt.get<bool>("createArrivals", detector_defaults.create_arrivals);
+  detector_config_.create_template_arrivals = pt.get<bool>(
+      "createTemplateArrivals", detector_defaults.create_template_arrivals);
   detector_config_.arrival_offset_threshold = pt.get<double>(
       "arrivalOffsetThreshold", detector_defaults.arrival_offset_threshold);
   detector_config_.min_arrivals =

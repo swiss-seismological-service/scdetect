@@ -102,8 +102,10 @@ struct DetectorConfig {
   // Maximum data latency in seconds tolerated with regards to `NOW`
   double maximum_latency{10};
 
-  // Flag indicating whether to compute and associate arrivals
+  // Flag indicating whether to compute and associate detected arrivals
   bool create_arrivals{false};
+  // Flag indicating whether to associate template arrivals with a detection
+  bool create_template_arrivals{false};
 
   // Maximum inter arrival offset threshold in seconds to tolerate when
   // associating an arrival to an event
