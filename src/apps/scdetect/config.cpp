@@ -131,32 +131,28 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       "templateFilter", stream_defaults.template_config.filter);
 
   // initialize stream configs
-  for (const auto &stream_set_pair : pt.find("streams")->second) {
-    StreamConfigs stream_configs;
-    for (const auto &stream_config_pair : stream_set_pair.second) {
+  for (const auto &stream_config_pair : pt.find("streams")->second) {
+    const auto &sc{stream_config_pair.second};
 
-      std::string wf_id;
-      try {
-        StreamConfig stream_config{stream_config_pair.second,
-                                   patched_stream_defaults};
-        stream_configs.emplace(stream_config.wf_stream_id, stream_config);
-        wf_id = stream_config.wf_stream_id;
-      } catch (boost::property_tree::ptree_error &e) {
-        throw config::ParserException{
-            std::string{"Exception while parsing stream config: "} + e.what()};
-      }
-
-      if (!stream_configs[wf_id].IsValid()) {
-        throw config::ParserException{
-            std::string{"Exception while parsing stream_config: Invalid "
-                        "stream configuration for stream: "} +
-            wf_id};
-      }
+    std::string wf_id;
+    try {
+      StreamConfig stream_config{sc, patched_stream_defaults};
+      stream_configs_.emplace(stream_config.wf_stream_id, stream_config);
+      wf_id = stream_config.wf_stream_id;
+    } catch (boost::property_tree::ptree_error &e) {
+      throw config::ParserException{
+          std::string{"Exception while parsing stream config: "} + e.what()};
     }
-    stream_sets_.push_back(stream_configs);
+
+    if (!stream_configs_[wf_id].IsValid()) {
+      throw config::ParserException{
+          std::string{"Exception while parsing stream_config: Invalid "
+                      "stream configuration for stream: "} +
+          wf_id};
+    }
   }
 
-  const auto max_arrivals{stream_sets_.at(0).size()};
+  const auto max_arrivals{stream_configs_.size()};
   if (detector_config_.min_arrivals > static_cast<int>(max_arrivals)) {
     SCDETECT_LOG_WARNING_TAGGED(
         detector_id_,
@@ -180,8 +176,8 @@ const DetectorConfig TemplateConfig::detector_config() const {
   return detector_config_;
 }
 
-TemplateConfig::reference TemplateConfig::at(size_t priority) {
-  return stream_sets_.at(priority);
+TemplateConfig::reference TemplateConfig::at(const std::string &stream_id) {
+  return stream_configs_.at(stream_id);
 }
 
 } // namespace detect
