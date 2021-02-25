@@ -621,12 +621,23 @@ void DetectorBuilder::Finalize() {
         phase_hint = pick->phaseHint();
       } catch (Core::ValueException &e) {
       }
+      boost::optional<double> lower_uncertainty;
+      try {
+        lower_uncertainty = pick->time().lowerUncertainty();
+      } catch (Core::ValueException &e) {
+      }
+      boost::optional<double> upper_uncertainty;
+      try {
+        upper_uncertainty = pick->time().upperUncertainty();
+      } catch (Core::ValueException &e) {
+      }
 
       const utils::WaveformStreamID wf_id{pick->waveformID()};
       oss << wf_id;
       product_->ref_theoretical_template_arrivals_.push_back(
           {{pick->time().value(), oss.str(), phase_hint,
-            pick->time().value() - product_->origin_->time().value()},
+            pick->time().value() - product_->origin_->time().value(),
+            lower_uncertainty, upper_uncertainty},
            arrival->phase(),
            arrival->weight()});
       oss.str("");

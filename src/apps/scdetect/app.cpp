@@ -18,6 +18,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/phase.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/timequantity.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
@@ -599,7 +600,9 @@ void Application::EmitDetection(const Processor *processor,
   const auto CreatePick = [](const detector::Arrival &a) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
 
-    ret->setTime(a.pick.time);
+    ret->setTime(DataModel::TimeQuantity{a.pick.time, boost::none,
+                                         a.pick.lower_uncertainty,
+                                         a.pick.upper_uncertainty});
     utils::WaveformStreamID wf_id{a.pick.waveform_id};
     ret->setWaveformID(
         DataModel::WaveformStreamID{wf_id.net_code(), wf_id.sta_code(),
