@@ -11,18 +11,16 @@
         "triggerOffThreshold": 0.9,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
-            [
-                {
-                    "templateId": "template-01",
-                    "initTime": 10,
-                    "templateWaveformStart": -2,
-                    "templateWaveformEnd": 2,
-                    "waveformId": "CH.GRIMS..HHZ",
-                    "templateWaveformId": "CH.GRIMS..HHZ",
-                    "templateFilter": "",
-                    "templatePhase": "Pg"
-                }
-            ]
+              {
+                  "templateId": "template-01",
+                  "initTime": 10,
+                  "templateWaveformStart": -2,
+                  "templateWaveformEnd": 2,
+                  "waveformId": "CH.GRIMS..HHZ",
+                  "templateWaveformId": "CH.GRIMS..HHZ",
+                  "templateFilter": "",
+                  "templatePhase": "Pg"
+              }
         ]
     },
     {
@@ -37,18 +35,16 @@
         "triggerOffThreshold": 0.9,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
-            [
-                {
-                    "templateId": "template-01",
-                    "initTime": 10,
-                    "templateWaveformStart": -2,
-                    "templateWaveformEnd": 2,
-                    "waveformId": "CH.HASLI..HHZ",
-                    "templateWaveformId": "CH.HASLI..HHZ",
-                    "templateFilter": "",
-                    "templatePhase": "Pg"
-                }
-            ]
+              {
+                  "templateId": "template-01",
+                  "initTime": 10,
+                  "templateWaveformStart": -2,
+                  "templateWaveformEnd": 2,
+                  "waveformId": "CH.HASLI..HHZ",
+                  "templateWaveformId": "CH.HASLI..HHZ",
+                  "templateFilter": "",
+                  "templatePhase": "Pg"
+              }
         ]
     }
 ]
