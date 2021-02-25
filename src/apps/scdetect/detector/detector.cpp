@@ -15,6 +15,7 @@
 
 #include "../log.h"
 #include "../utils.h"
+#include "../validators.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -55,7 +56,7 @@ void Detector::set_trigger_thresholds(double trigger_on, double trigger_off) {
   thres_trigger_on_ = trigger_on;
   linker_.set_thres_result(thres_trigger_on_);
 
-  if (thres_trigger_on_ && utils::ValidateXCorrThreshold(trigger_off)) {
+  if (thres_trigger_on_ && config::ValidateXCorrThreshold(trigger_off)) {
     thres_trigger_off_ = trigger_off;
   }
 }

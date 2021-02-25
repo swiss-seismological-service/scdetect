@@ -31,6 +31,7 @@ set(SOURCES_integration
   ../processor.cpp
   ../utils.cpp
   ../template.cpp
+  ../validators.cpp
   ../waveform.cpp
   integration_utils.cpp
 )

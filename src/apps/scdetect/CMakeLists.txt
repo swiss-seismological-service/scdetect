@@ -15,6 +15,7 @@ set(
     processor.cpp
     template.cpp
     utils.cpp
+    validators.cpp
     waveform.cpp
 )
 
@@ -35,6 +36,7 @@ set(
     settings.h
     template.h
     utils.h
+    validators.h
     version.h
     waveform.h
 )
