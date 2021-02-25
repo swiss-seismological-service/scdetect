@@ -145,7 +145,7 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
 
 protected:
-  const std::string delimiter_{"."};
+  static const std::string delimiter_;
 
 private:
   std::string net_code_;

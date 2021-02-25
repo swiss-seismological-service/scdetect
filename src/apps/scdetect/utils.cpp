@@ -22,6 +22,8 @@ const std::string CreateUUID() {
 }
 
 /* ------------------------------------------------------------------------- */
+const std::string WaveformStreamID::delimiter_{"."};
+
 WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
   std::vector<std::string> tokens;
   Core::split(tokens, net_sta_loc_cha, delimiter_.c_str(), false);
