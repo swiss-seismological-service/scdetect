@@ -29,11 +29,11 @@ namespace Seiscomp {
 namespace detect {
 
 Detector::Detector(const std::string &id, const DataModel::OriginCPtr &origin)
-    : Processor{id}, detector_{this, origin}, origin_{origin} {}
+    : WaveformProcessor{id}, detector_{this, origin}, origin_{origin} {}
 
-DetectorBuilder Detector::Create(const std::string &detector_id,
+DetectorBuilder Detector::Create(const std::string &id,
                                  const std::string &origin_id) {
-  return DetectorBuilder(detector_id, origin_id);
+  return DetectorBuilder(id, origin_id);
 }
 
 void Detector::set_filter(Filter *filter) {
@@ -68,13 +68,13 @@ void Detector::Reset() {
 
   // reset template (child) related facilities
   for (auto &stream_config_pair : stream_configs_) {
-    stream_config_pair.second.stream_state = Processor::StreamState{};
+    stream_config_pair.second.stream_state = WaveformProcessor::StreamState{};
     stream_config_pair.second.stream_buffer->clear();
   }
 
   detector_.Reset();
 
-  Processor::Reset();
+  WaveformProcessor::Reset();
 }
 
 void Detector::Terminate() {
@@ -88,7 +88,7 @@ void Detector::Terminate() {
 
     detection_ = boost::none;
   }
-  Processor::Terminate();
+  WaveformProcessor::Terminate();
 }
 
 std::string Detector::DebugString() const { return detector_.DebugString(); }
@@ -105,12 +105,12 @@ void Detector::Process(StreamState &stream_state, const Record *record,
     SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unhandled exception: %s",
                                  record->streamID().c_str(), e.what());
 
-    set_status(Processor::Status::kError, 0);
+    set_status(WaveformProcessor::Status::kError, 0);
   } catch (...) {
     SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unknown exception",
                                  record->streamID().c_str());
 
-    set_status(Processor::Status::kError, 0);
+    set_status(WaveformProcessor::Status::kError, 0);
   }
 
   if (!finished()) {
@@ -153,7 +153,7 @@ bool Detector::HandleGap(StreamState &stream_state, const Record *record,
           // TODO(damb): Verify if this is the correct status
           // to be displayed
           static_cast<int>(status()));
-      if (status() > Processor::Status::kInProgress)
+      if (status() > WaveformProcessor::Status::kInProgress)
         return false;
     }
   } else if (gap_seconds < 0) {
@@ -183,7 +183,7 @@ void Detector::Fill(StreamState &stream_state, const Record *record,
 }
 
 void Detector::InitStream(StreamState &stream_state, const Record *record) {
-  Processor::InitStream(stream_state, record);
+  WaveformProcessor::InitStream(stream_state, record);
 
   const auto min_thres{2 * 1.0 / record->samplingFrequency()};
   if (min_thres > config_.gap_threshold) {
@@ -278,7 +278,7 @@ bool Detector::FillGap(StreamState &stream_state, const Record *record,
 }
 
 /* -------------------------------------------------------------------------- */
-DetectorBuilder::DetectorBuilder(const std::string &detector_id,
+DetectorBuilder::DetectorBuilder(const std::string &id,
                                  const std::string &origin_id)
     : origin_id_{origin_id} {
 
@@ -292,7 +292,7 @@ DetectorBuilder::DetectorBuilder(const std::string &detector_id,
 
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
-  product_ = std::unique_ptr<Detector>(new Detector{detector_id, origin});
+  product_ = std::unique_ptr<Detector>(new Detector{id, origin});
 }
 
 DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config,
@@ -472,11 +472,11 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // create template related filter (used during real-time stream
   // processing)
-  std::unique_ptr<Processor::Filter> rt_template_filter{nullptr};
+  std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
   if (!stream_config.filter.empty()) {
     std::string err;
     rt_template_filter.reset(
-        Processor::Filter::Create(stream_config.filter, &err));
+        WaveformProcessor::Filter::Create(stream_config.filter, &err));
 
     if (!rt_template_filter) {
       auto msg{log_prefix + std::string{"Compiling filter ("} +

@@ -10,6 +10,7 @@ set(SOURCES_template_xcorr
   ../utils.cpp
   ../template.cpp
   ../waveform.cpp
+  ../waveformprocessor.cpp
 )
 
 set(SOURCES_utils_cma
@@ -33,6 +34,7 @@ set(SOURCES_integration
   ../template.cpp
   ../validators.cpp
   ../waveform.cpp
+  ../waveformprocessor.cpp
   integration_utils.cpp
 )
 

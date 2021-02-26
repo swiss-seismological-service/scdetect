@@ -25,10 +25,10 @@
 #include "detector/arrival.h"
 #include "detector/detector.h"
 #include "detector/pot.h"
-#include "processor.h"
 #include "settings.h"
 #include "template.h"
 #include "waveform.h"
+#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -38,7 +38,7 @@ class DetectorBuilder;
 // Detector waveform processor implementation
 // - implements gap interpolation
 // - handles buffers
-class Detector : public Processor {
+class Detector : public WaveformProcessor {
 
   Detector(const std::string &id, const DataModel::OriginCPtr &origin);
 
@@ -119,7 +119,7 @@ private:
                size_t missing_samples);
 
   struct StreamConfig {
-    Processor::StreamState stream_state;
+    WaveformProcessor::StreamState stream_state;
     // Reference to the stream buffer
     std::shared_ptr<RecordSequence> stream_buffer;
   };
@@ -145,7 +145,7 @@ private:
 class DetectorBuilder : public Builder<Detector> {
 
 public:
-  DetectorBuilder(const std::string &detector_id, const std::string &origin_id);
+  DetectorBuilder(const std::string &id, const std::string &origin_id);
 
   DetectorBuilder &set_config(const DetectorConfig &config, bool playback);
 
@@ -167,7 +167,7 @@ protected:
 private:
   struct TemplateProcessorConfig {
     // Template matching processor
-    std::unique_ptr<Processor> processor;
+    std::unique_ptr<WaveformProcessor> processor;
 
     struct MetaData {
       // The template's sensor location associated

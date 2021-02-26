@@ -519,9 +519,9 @@ void Application::handleRecord(Record *rec) {
   }
 }
 
-void Application::EmitDetection(const Processor *processor,
+void Application::EmitDetection(const WaveformProcessor *processor,
                                 const Record *record,
-                                const Processor::ResultCPtr &result) {
+                                const WaveformProcessor::ResultCPtr &result) {
 
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};
@@ -943,8 +943,8 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         std::shared_ptr<detect::Detector> detector_ptr{
             detector_builder.Build()};
         detector_ptr->set_result_callback(
-            [this](const Processor *proc, const Record *rec,
-                   const Processor::ResultCPtr &res) {
+            [this](const WaveformProcessor *proc, const Record *rec,
+                   const WaveformProcessor::ResultCPtr &res) {
               EmitDetection(proc, rec, res);
             });
         for (const auto &stream_id : stream_ids)

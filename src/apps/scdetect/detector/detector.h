@@ -27,7 +27,7 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-class Detector {
+class Detector : public detect::Processor {
 public:
   Detector(const detect::Processor *detector,
            const DataModel::OriginCPtr &origin);
@@ -116,7 +116,7 @@ public:
   // `stream_id`. The processor `proc` is registered together with the template
   // arrival `arrival`, the template waveform pick offset `pick_offset` and the
   // sensor location `loc`.
-  void Register(std::unique_ptr<detect::Processor> &&proc,
+  void Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
                 const std::shared_ptr<const RecordSequence> &buf,
                 const std::string &stream_id, const Arrival &arrival,
                 const Core::TimeSpan &pick_offset,
@@ -160,8 +160,9 @@ protected:
   void EmitResult(const Result &res);
 
   // Callback storing results from `Template` processors
-  void StoreTemplateResult(const detect::Processor *proc, const Record *rec,
-                           const detect::Processor::ResultCPtr &res);
+  void StoreTemplateResult(const detect::WaveformProcessor *proc,
+                           const Record *rec,
+                           const detect::WaveformProcessor::ResultCPtr &res);
 
   // Callback storing results from the linker
   void StoreLinkerResult(const Linker::Result &res);
@@ -171,7 +172,7 @@ private:
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
     // Template processor
-    std::unique_ptr<detect::Processor> processor;
+    std::unique_ptr<detect::WaveformProcessor> processor;
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
@@ -215,9 +216,6 @@ private:
   boost::optional<Core::TimeSpan> max_latency_;
 
   DataModel::OriginCPtr origin_;
-
-  // Reference to the detector
-  const detect::Processor *detector_{nullptr};
 
   // Flag indicating if debug mode is enabled/disabled
   bool debug_mode_{false};

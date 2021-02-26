@@ -1,6 +1,6 @@
 #include "validators.h"
 
-#include "processor.h"
+#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -23,7 +23,7 @@ bool ValidateMinArrivals(int n, int num_stream_configs) {
 }
 
 bool ValidateFilter(const std::string &filter_string, std::string &err) {
-  auto filter{Processor::Filter::Create(filter_string, &err)};
+  auto filter{WaveformProcessor::Filter::Create(filter_string, &err)};
   if (!filter) {
     return false;
   }

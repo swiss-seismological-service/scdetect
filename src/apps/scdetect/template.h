@@ -12,8 +12,8 @@
 #include <seiscomp/datamodel/stream.h>
 
 #include "builder.h"
-#include "processor.h"
 #include "waveform.h"
+#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -23,13 +23,13 @@ class TemplateBuilder;
 // Template waveform processor implementation
 // - implements filtering and sensitivity correction
 // - implements the actual cross-correlation algorithm
-class Template : public Processor {
+class Template : public WaveformProcessor {
 
-  Template(const std::string &template_id, const Processor *p = nullptr);
+  Template(const std::string &id, const Processor *p = nullptr);
 
 public:
   friend class TemplateBuilder;
-  static TemplateBuilder Create(const std::string &template_id,
+  static TemplateBuilder Create(const std::string &id,
                                 const Processor *p = nullptr);
 
   DEFINE_SMARTPOINTER(MatchResult);
@@ -57,8 +57,6 @@ public:
 
     std::string DebugString() const;
   };
-
-  const std::string id() const override;
 
   void set_filter(Filter *filter) override;
 
@@ -98,13 +96,11 @@ private:
   double waveform_squared_sum_{0};
   // Template waveform samples summed
   double waveform_sum_{0};
-
-  const Processor *detector_{nullptr};
 };
 
 class TemplateBuilder : public Builder<Template> {
 public:
-  TemplateBuilder(const std::string &template_id, const Processor *p);
+  TemplateBuilder(const std::string &id, const Processor *p);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
   TemplateBuilder &
   // Set the template waveform of the `Template` waveform processor built.
@@ -116,7 +112,7 @@ public:
                const Core::Time &wf_end,
                const WaveformHandlerIface::ProcessingConfig &config,
                Core::Time &wf_start_waveform, Core::Time &wf_end_waveform);
-  TemplateBuilder &set_filter(Processor::Filter *filter,
+  TemplateBuilder &set_filter(WaveformProcessor::Filter *filter,
                               const double init_time = 0);
   TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
 

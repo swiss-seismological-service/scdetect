@@ -17,6 +17,7 @@ set(
     utils.cpp
     validators.cpp
     waveform.cpp
+    waveformprocessor.cpp
 )
 
 set(
@@ -39,6 +40,7 @@ set(
     validators.h
     version.h
     waveform.h
+    waveformprocessor.h
 )
 
 # add_definitions(

@@ -8,8 +8,8 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
-#include "../processor.h"
 #include "../template.h"
+#include "../waveformprocessor.h"
 #include "arrival.h"
 #include "pot.h"
 
@@ -29,7 +29,7 @@ public:
   struct Result {
     // The result's fit [-1,1]
     double fit;
-    // Reference processor id
+    // Reference waveform processor id
     std::string ref_proc_id;
 
     struct TemplateResult {
@@ -78,7 +78,7 @@ public:
   // Register the processor `proc` associated with the template arrival
   // `arrival` for linking. `pick_offset` refers to the template waveform
   // pick offset.
-  void Register(const detect::Processor *proc, const Arrival &arrival,
+  void Register(const detect::WaveformProcessor *proc, const Arrival &arrival,
                 const Core::TimeSpan &pick_offset);
   // Remove the processor identified by `proc_id`
   void Remove(const std::string &proc_id);
@@ -92,8 +92,8 @@ public:
   void Terminate();
 
   // Feeds the `proc`'s result `res` to the linker
-  void Feed(const detect::Processor *proc,
-            const detect::Processor::ResultCPtr &res);
+  void Feed(const detect::WaveformProcessor *proc,
+            const detect::WaveformProcessor::ResultCPtr &res);
 
   using PublishResultCallback = std::function<void(const Result &res)>;
   // Set the publish callback function
@@ -101,7 +101,7 @@ public:
 
 protected:
   // Processes the `res`
-  void Process(const detect::Processor *proc,
+  void Process(const detect::WaveformProcessor *proc,
                const Result::TemplateResult &res);
   // Emit a result
   void EmitResult(const Result &res);

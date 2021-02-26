@@ -14,8 +14,8 @@
 
 #include "config.h"
 #include "exception.h"
-#include "processor.h"
 #include "waveform.h"
+#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -182,8 +182,8 @@ protected:
 
   void handleRecord(Record *rec) override;
 
-  void EmitDetection(const Processor *processor, const Record *record,
-                     const Processor::ResultCPtr &result);
+  void EmitDetection(const WaveformProcessor *processor, const Record *record,
+                     const WaveformProcessor::ResultCPtr &result);
 
 protected:
   // Load events either from `event_db` or `db`.
@@ -201,7 +201,7 @@ private:
   DataModel::EventParametersPtr ep_;
 
   using DetectorMap =
-      std::unordered_multimap<std::string, std::shared_ptr<Processor>>;
+      std::unordered_multimap<std::string, std::shared_ptr<WaveformProcessor>>;
   DetectorMap detectors_;
 };
 
