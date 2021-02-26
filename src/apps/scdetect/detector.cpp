@@ -102,12 +102,12 @@ void Detector::Process(StreamState &stream_state, const Record *record,
                                    e.what());
     detector_.Reset();
   } catch (std::exception &e) {
-    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: Unhandled exception: %s",
+    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unhandled exception: %s",
                                  record->streamID().c_str(), e.what());
 
     set_status(Processor::Status::kError, 0);
   } catch (...) {
-    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: Unknown exception.",
+    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unknown exception",
                                  record->streamID().c_str());
 
     set_status(Processor::Status::kError, 0);
@@ -176,7 +176,7 @@ void Detector::Fill(StreamState &stream_state, const Record *record,
   // buffer record
   if (!buffer->feed(record)) {
     SCDETECT_LOG_WARNING_PROCESSOR(
-        this, "%s: Error while buffering data: start=%s, end=%s, samples=%d",
+        this, "%s: error while buffering data: start=%s, end=%s, samples=%d",
         record->streamID().c_str(), record->startTime().iso().c_str(),
         record->endTime().iso().c_str(), record->sampleCount());
   }

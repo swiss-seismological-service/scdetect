@@ -419,7 +419,7 @@ bool Detector::Feed(const TimeWindows &tws) {
       const auto &tw{tws_pair.second};
       SCDETECT_LOG_ERROR_TAGGED(
           proc.processor->id(),
-          "%s: Failed to feed data (tw.start=%s, "
+          "%s: failed to feed data (tw.start=%s, "
           "tw.end=%s) to processor. Reason: status=%d, "
           "status_value=%f",
           trace->streamID().c_str(), tw.startTime().iso().c_str(),
