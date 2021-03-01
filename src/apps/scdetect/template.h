@@ -21,7 +21,7 @@ namespace detect {
 class TemplateBuilder;
 
 // Template waveform processor implementation
-// - implements filtering and sensitivity correction
+// - implements filtering
 // - implements the actual cross-correlation algorithm
 class Template : public WaveformProcessor {
 
