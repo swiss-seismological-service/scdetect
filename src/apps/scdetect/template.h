@@ -102,11 +102,11 @@ class TemplateBuilder : public Builder<Template> {
 public:
   TemplateBuilder(const std::string &id, const Processor *p);
   TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
-  TemplateBuilder &
   // Set the template waveform of the `Template` waveform processor built.
   // While `wf_start` and `wf_end` refer to the target template waveform start
   // and end times, `wf_start_waveform` and `wf_end_waveform` refer to the
   // actual times of the resulting waveform.
+  TemplateBuilder &
   set_waveform(WaveformHandlerIfacePtr waveform_handler,
                const std::string &stream_id, const Core::Time &wf_start,
                const Core::Time &wf_end,
