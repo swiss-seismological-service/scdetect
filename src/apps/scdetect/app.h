@@ -67,7 +67,7 @@ public:
     std::string path_filesystem_cache;
     std::string url_event_db;
 
-    bool load_templates_only{false};
+    bool templates_prepare{false};
     bool templates_no_cache{false};
 
     // Defines if a detector should be initialized although template

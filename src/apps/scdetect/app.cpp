@@ -402,7 +402,7 @@ bool Application::init() {
 bool Application::run() {
   SCDETECT_LOG_DEBUG("Application initialized.");
 
-  if (config_.load_templates_only) {
+  if (config_.templates_prepare) {
     SCDETECT_LOG_DEBUG(
         "Requested application exit after template initialization.");
     return true;
@@ -437,7 +437,7 @@ bool Application::run() {
 }
 
 void Application::done() {
-  if (!config_.load_templates_only) {
+  if (!config_.templates_prepare) {
     std::unordered_set<std::string> detector_ids;
     // terminate detectors
     for (const auto &detector_pair : detectors_) {
@@ -812,10 +812,12 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT_CLI(config_.playback_config.enabled, "Mode", "playback",
               "Use playback mode that does not restrict the maximum allowed "
               "data latency");
-  NEW_OPT_CLI(config_.load_templates_only, "Mode", "templates-load-only",
-              "load templates and exit");
-  NEW_OPT_CLI(config_.templates_no_cache, "Mode", "templates-reload",
-              "force reloading templates and omit caching waveforms");
+  NEW_OPT_CLI(config_.templates_prepare, "Mode", "templates-prepare",
+              "load template waveform data from the configured recordstream "
+              "and save it in the module's caching directory, then exit");
+  NEW_OPT_CLI(
+      config_.templates_no_cache, "Mode", "templates-reload",
+      "force reloading template waveform data and omit cached waveform data");
 
   NEW_OPT_CLI(config_.path_template_json, "Input", "templates-json",
               "path to a template configuration file (json-formatted)");
