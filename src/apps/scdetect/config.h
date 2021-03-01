@@ -66,7 +66,7 @@ struct StreamConfig {
 
   // Defines whether sensitivity correction (gain) is applied or not in advance
   // to filter the data.
-  bool sensitivity_correction{true};
+  bool sensitivity_correction{false};
 
   TemplateStreamConfig template_config;
 };
