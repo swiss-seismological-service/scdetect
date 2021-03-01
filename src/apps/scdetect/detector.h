@@ -150,7 +150,8 @@ public:
   DetectorBuilder &set_config(const DetectorConfig &config, bool playback);
 
   DetectorBuilder &set_eventparameters();
-  // Set stream related template configuration
+  // Set stream related template configuration where `stream_id` refers to the
+  // waveform stream identifier of the stream to be processed.
   DetectorBuilder &
   set_stream(const std::string &stream_id, const StreamConfig &stream_config,
              WaveformHandlerIfacePtr wf_handler,
