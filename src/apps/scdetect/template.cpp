@@ -274,9 +274,9 @@ TemplateBuilder &TemplateBuilder::set_filter(WaveformProcessor::Filter *filter,
   return *this;
 }
 
-TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
-                                                             double thres) {
-  product_->set_saturation_check(enabled);
+TemplateBuilder &TemplateBuilder::set_saturation_check(bool saturation_check,
+                                                       double thres) {
+  product_->set_saturation_check(saturation_check);
   product_->set_saturation_threshold(thres);
   return *this;
 }

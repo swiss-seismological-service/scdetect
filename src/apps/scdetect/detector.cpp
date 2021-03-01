@@ -493,7 +493,6 @@ DetectorBuilder::set_stream(const std::string &stream_id,
       Template::Create(stream_config.template_id, product_.get())
           .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
-          .set_sensitivity_correction(stream_config.sensitivity_correction)
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config, start, end)
           .set_debug_info_dir(path_debug_info)

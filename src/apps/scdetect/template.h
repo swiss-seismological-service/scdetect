@@ -114,7 +114,8 @@ public:
                Core::Time &wf_start_waveform, Core::Time &wf_end_waveform);
   TemplateBuilder &set_filter(WaveformProcessor::Filter *filter,
                               const double init_time = 0);
-  TemplateBuilder &set_sensitivity_correction(bool enabled, double thres = -1);
+  TemplateBuilder &set_saturation_check(bool saturation_check,
+                                        double thres = -1);
 
   // Set the path to the debug info directory
   TemplateBuilder &set_debug_info_dir(const boost::filesystem::path &path);
