@@ -28,18 +28,12 @@
 namespace Seiscomp {
 namespace detect {
 
-Template::Template(const std::string &template_id, const Processor *p)
-    : Processor{template_id}, detector_{p} {}
+Template::Template(const std::string &id, const Processor *p)
+    : WaveformProcessor{
+          p ? std::string{p->id() + settings::kProcessorIdSep + id} : id} {}
 
-TemplateBuilder Template::Create(const std::string &template_id,
-                                 const Processor *p) {
-  return TemplateBuilder(template_id, p);
-}
-
-const std::string Template::id() const {
-  return detector_ ? std::string{detector_->id() + settings::kProcessorIdSep +
-                                 Processor::id()}
-                   : Processor::id();
+TemplateBuilder Template::Create(const std::string &id, const Processor *p) {
+  return TemplateBuilder(id, p);
 }
 
 void Template::set_filter(Filter *filter) {
@@ -69,7 +63,7 @@ void Template::Reset() {
     delete tmp;
   }
 
-  Processor::Reset();
+  WaveformProcessor::Reset();
 }
 
 void Template::Process(StreamState &stream_state, const Record *record,
@@ -150,18 +144,18 @@ void Template::Process(StreamState &stream_state, const Record *record,
             Core::TimeSpan{
                 (num_samples_trace - num_samples_template) /
                 waveform_sampling_frequency_ /* samples to seconds */}}});
-    set_status(Processor::Status::kFinished, 100);
+    set_status(WaveformProcessor::Status::kFinished, 100);
 
     EmitResult(record, result.get());
     return;
   }
-  set_status(Processor::Status::kError, 0);
+  set_status(WaveformProcessor::Status::kError, 0);
 }
 
 void Template::Fill(StreamState &stream_state, const Record *record,
                     DoubleArrayPtr &data) {
 
-  Processor::Fill(stream_state, record, data);
+  WaveformProcessor::Fill(stream_state, record, data);
 
   waveform::Demean(*data);
 
@@ -186,7 +180,7 @@ void Template::Fill(StreamState &stream_state, const Record *record,
 }
 
 void Template::InitStream(StreamState &stream_state, const Record *record) {
-  Processor::InitStream(stream_state, record);
+  WaveformProcessor::InitStream(stream_state, record);
 
   stream_state.needed_samples =
       std::max(static_cast<size_t>(waveform_->sampleCount()),
@@ -219,17 +213,10 @@ std::string Template::MatchResult::DebugString() const {
 }
 
 /* ------------------------------------------------------------------------- */
-TemplateBuilder::TemplateBuilder(const std::string &template_id,
-                                 const Processor *p) {
+TemplateBuilder::TemplateBuilder(const std::string &id, const Processor *p) {
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
-  product_ = std::unique_ptr<Template>(new Template{template_id, p});
-}
-
-TemplateBuilder &
-TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
-  product_->stream_config_.init(&stream_config);
-  return *this;
+  product_ = std::unique_ptr<Template>(new Template{id, p});
 }
 
 TemplateBuilder &TemplateBuilder::set_waveform(
@@ -266,6 +253,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
 
   const double *samples_template{
       DoubleArray::ConstCast(product_->waveform_->data())->typedData()};
+
   for (int i = 0; i < product_->waveform_->data()->size(); ++i) {
     product_->waveform_sum_ += samples_template[i];
     product_->waveform_squared_sum_ +=
@@ -274,16 +262,16 @@ TemplateBuilder &TemplateBuilder::set_waveform(
   return *this;
 }
 
-TemplateBuilder &TemplateBuilder::set_filter(Processor::Filter *filter,
+TemplateBuilder &TemplateBuilder::set_filter(WaveformProcessor::Filter *filter,
                                              const double init_time) {
   product_->set_filter(filter);
   product_->init_time_ = Core::TimeSpan{init_time};
   return *this;
 }
 
-TemplateBuilder &TemplateBuilder::set_sensitivity_correction(bool enabled,
-                                                             double thres) {
-  product_->set_saturation_check(enabled);
+TemplateBuilder &TemplateBuilder::set_saturation_check(bool saturation_check,
+                                                       double thres) {
+  product_->set_saturation_check(saturation_check);
   product_->set_saturation_threshold(thres);
   return *this;
 }

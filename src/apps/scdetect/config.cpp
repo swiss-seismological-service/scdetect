@@ -27,12 +27,10 @@ StreamConfig::StreamConfig() {}
 
 StreamConfig::StreamConfig(const std::string &wf_stream_id,
                            const std::string &filter, const double init_time,
-                           const bool sensitivity_correction,
                            const TemplateStreamConfig &template_config,
                            const std::string &template_id)
-    : wf_stream_id(wf_stream_id), init_time(init_time), filter(filter),
-      sensitivity_correction(sensitivity_correction),
-      template_config(template_config) {}
+    : wf_stream_id{wf_stream_id}, init_time{init_time}, filter{filter},
+      template_config{template_config} {}
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
                            const StreamConfig &defaults)
@@ -41,9 +39,7 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       },
       wf_stream_id(pt.get<std::string>("waveformId")),
       init_time(pt.get<double>("initTime", defaults.init_time)),
-      filter(pt.get<std::string>("filter", defaults.filter)),
-      sensitivity_correction(pt.get<bool>("sensitivityCorrection",
-                                          defaults.sensitivity_correction)) {
+      filter(pt.get<std::string>("filter", defaults.filter)) {
   template_config.phase =
       pt.get<std::string>("templatePhase", defaults.template_config.phase);
   template_config.wf_start = pt.get<double>("templateWaveformStart",
@@ -122,8 +118,6 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("initTime", stream_defaults.init_time);
   patched_stream_defaults.filter =
       pt.get<std::string>("filter", stream_defaults.filter);
-  patched_stream_defaults.sensitivity_correction = pt.get<bool>(
-      "sensitivityCorrection", stream_defaults.sensitivity_correction);
   patched_stream_defaults.template_config.phase = pt.get<std::string>(
       "templatePhase", stream_defaults.template_config.phase);
   patched_stream_defaults.template_config.wf_start = pt.get<double>(

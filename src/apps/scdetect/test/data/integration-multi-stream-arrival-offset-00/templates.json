@@ -5,7 +5,6 @@
         "gapInterpolation": true,
         "gapThreshold": 0.1,
         "gapTolerance": 1.5,
-        "sensitivityCorrection": false,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
         "triggerOffThreshold": 0,

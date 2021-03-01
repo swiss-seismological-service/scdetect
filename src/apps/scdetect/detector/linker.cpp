@@ -61,7 +61,8 @@ size_t Linker::GetAssociatedChannelCount() const {
 
 size_t Linker::GetProcessorCount() const { return processors_.size(); }
 
-void Linker::Register(const detect::Processor *proc, const Arrival &arrival,
+void Linker::Register(const detect::WaveformProcessor *proc,
+                      const Arrival &arrival,
                       const Core::TimeSpan &pick_offset) {
   if (proc) {
     processors_.emplace(proc->id(), Processor{arrival, pick_offset});
@@ -96,8 +97,8 @@ void Linker::Terminate() {
   status_ = Status::kTerminated;
 }
 
-void Linker::Feed(const detect::Processor *proc,
-                  const detect::Processor::ResultCPtr &res) {
+void Linker::Feed(const detect::WaveformProcessor *proc,
+                  const detect::WaveformProcessor::ResultCPtr &res) {
   if (!proc || !res) {
     return;
   }
@@ -126,7 +127,7 @@ void Linker::set_result_callback(const PublishResultCallback &cb) {
   result_callback_ = cb;
 }
 
-void Linker::Process(const detect::Processor *proc,
+void Linker::Process(const detect::WaveformProcessor *proc,
                      const Result::TemplateResult &res) {
   if (!processors_.empty()) {
     // update POT

@@ -23,7 +23,7 @@ namespace detector {
 
 Detector::Detector(const detect::Processor *detector,
                    const DataModel::OriginCPtr &origin)
-    : origin_{origin}, detector_{detector} {
+    : Processor{detector->id()}, origin_{origin} {
 
   linker_.set_result_callback(
       [this](const Linker::Result &res) { return StoreLinkerResult(res); });
@@ -89,16 +89,17 @@ boost::optional<Core::TimeSpan> Detector::maximum_latency() const {
 
 size_t Detector::GetProcessorCount() const { return processors_.size(); }
 
-void Detector::Register(std::unique_ptr<detect::Processor> &&proc,
+void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
                         const std::shared_ptr<const RecordSequence> &buf,
                         const std::string &stream_id, const Arrival &arrival,
                         const Core::TimeSpan &pick_offset,
                         const Detector::SensorLocation &loc) {
 
-  proc->set_result_callback([this](const Processor *p, const Record *rec,
-                                   const detect::Processor::ResultCPtr &res) {
-    StoreTemplateResult(p, rec, res);
-  });
+  proc->set_result_callback(
+      [this](const detect::WaveformProcessor *p, const Record *rec,
+             const detect::WaveformProcessor::ResultCPtr &res) {
+        StoreTemplateResult(p, rec, res);
+      });
 
   // XXX(damb): Replace the arrival with a *pseudo arrival* i.e. an arrival
   // which is associated with the stream to be processed
@@ -207,8 +208,7 @@ void Detector::Process(const std::string &waveform_id_hint) {
         if (!triggered() &&
             current_result_.value().fit >= thres_trigger_on_.value_or(-1)) {
           trigger_end_ = endtime + *trigger_duration_;
-          SCDETECT_LOG_DEBUG_PROCESSOR(detector_,
-                                       "Detector result (triggering) %s",
+          SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
                                        result.DebugString().c_str());
 
           // disable those processors not contributing to the triggering event
@@ -230,11 +230,11 @@ void Detector::Process(const std::string &waveform_id_hint) {
 
         } else if (triggered() && updated) {
           SCDETECT_LOG_DEBUG_PROCESSOR(
-              detector_, "Detector result (triggered, updating) %s",
+              this, "Detector result (triggered, updating) %s",
               result.DebugString().c_str());
         }
       } else {
-        SCDETECT_LOG_DEBUG_PROCESSOR(detector_, "Detector result %s",
+        SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result %s",
                                      result.DebugString().c_str());
       }
 
@@ -242,7 +242,7 @@ void Detector::Process(const std::string &waveform_id_hint) {
         if (!updated && result.fit <= current_result_.value().fit &&
             result.fit >= thres_trigger_off_.value_or(1)) {
           SCDETECT_LOG_DEBUG_PROCESSOR(
-              detector_, "Detector result (triggered, dropped) %s",
+              this, "Detector result (triggered, dropped) %s",
               result.DebugString().c_str());
         }
 
@@ -348,8 +348,7 @@ bool Detector::debug_mode() const { return debug_mode_; }
 std::string Detector::DebugString() const {
   bool first_result{true};
   std::ostringstream oss;
-  oss << "{\"detectorId\": \"" << detector_->id() << "\", \"ccDebugInfo\": ["
-      << std::endl;
+  oss << "{\"detectorId\": \"" << id() << "\", \"ccDebugInfo\": [" << std::endl;
   for (const auto &debug_result_pair : debug_cc_results_) {
     if (first_result) {
       first_result = false;
@@ -419,7 +418,7 @@ bool Detector::Feed(const TimeWindows &tws) {
       const auto &tw{tws_pair.second};
       SCDETECT_LOG_ERROR_TAGGED(
           proc.processor->id(),
-          "%s: Failed to feed data (tw.start=%s, "
+          "%s: failed to feed data (tw.start=%s, "
           "tw.end=%s) to processor. Reason: status=%d, "
           "status_value=%f",
           trace->streamID().c_str(), tw.startTime().iso().c_str(),
@@ -428,7 +427,7 @@ bool Detector::Feed(const TimeWindows &tws) {
       return false;
     }
 
-    if (detect::Processor::Status::kWaitingForData ==
+    if (detect::WaveformProcessor::Status::kWaitingForData ==
         proc.processor->status()) {
       return false;
     }
@@ -554,9 +553,9 @@ void Detector::EmitResult(const Detector::Result &res) {
   }
 }
 
-void Detector::StoreTemplateResult(const detect::Processor *proc,
-                                   const Record *rec,
-                                   const detect::Processor::ResultCPtr &res) {
+void Detector::StoreTemplateResult(
+    const detect::WaveformProcessor *proc, const Record *rec,
+    const detect::WaveformProcessor::ResultCPtr &res) {
   if (!proc || !rec || !res) {
     return;
   }
@@ -564,7 +563,8 @@ void Detector::StoreTemplateResult(const detect::Processor *proc,
   auto &p{processors_.at(proc->id())};
   const auto &status{p.processor->status()};
   const auto &status_value{p.processor->status_value()};
-  if (detect::Processor::Status::kFinished == status && 100 == status_value) {
+  if (detect::WaveformProcessor::Status::kFinished == status &&
+      100 == status_value) {
 
 #ifdef SCDETECT_DEBUG
     const auto &match_result{
@@ -586,7 +586,7 @@ void Detector::StoreTemplateResult(const detect::Processor *proc,
     linker_.Feed(proc, res);
   } else {
     SCDETECT_LOG_WARNING_PROCESSOR(
-        detector_,
+        this,
         "Failed to match template (proc_id=%s). Reason : status=%d, "
         "status_value=%f",
         p.processor->id().c_str(), utils::as_integer(status), status_value);
