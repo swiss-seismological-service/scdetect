@@ -3,7 +3,6 @@
         "detectorId": "detector-01",
         "createArrivals": true,
         "createTemplateArrivals": true,
-        "sensitivityCorrection": false,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
         "triggerOffThreshold": 0,
