@@ -76,7 +76,6 @@ protected:
 
 private:
   StreamState stream_state_;
-  Processing::Stream stream_config_;
 
   // Template waveform starttime
   Core::Time waveform_start_;
@@ -101,7 +100,6 @@ private:
 class TemplateBuilder : public Builder<Template> {
 public:
   TemplateBuilder(const std::string &id, const Processor *p);
-  TemplateBuilder &set_stream_config(const DataModel::Stream &stream_config);
   // Set the template waveform of the `Template` waveform processor built.
   // While `wf_start` and `wf_end` refer to the target template waveform start
   // and end times, `wf_start_waveform` and `wf_end_waveform` refer to the

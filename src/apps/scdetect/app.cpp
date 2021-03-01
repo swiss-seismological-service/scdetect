@@ -762,8 +762,6 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.stream_config.template_config.wf_end, "template.waveformEnd");
   NEW_OPT(config_.stream_config.template_config.filter, "template.filter");
 
-  NEW_OPT(config_.stream_config.sensitivity_correction,
-          "processing.sensitivityCorrection");
   NEW_OPT(config_.stream_config.init_time, "processing.initTime");
   NEW_OPT(config_.stream_config.filter, "processing.filter");
   NEW_OPT(config_.detector_config.gap_interpolation,

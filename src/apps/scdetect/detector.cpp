@@ -442,10 +442,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
               Core::TimeSpan{stream_config.template_config.wf_end}};
 
   // load stream metadata from inventory
+  utils::WaveformStreamID wf_stream_id{stream_id};
   auto stream{Client::Inventory::Instance()->getStream(
-      template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
-      template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
-      wf_start)};
+      wf_stream_id.net_code(), wf_stream_id.sta_code(), wf_stream_id.loc_code(),
+      wf_stream_id.cha_code(), wf_start)};
 
   if (!stream) {
     auto msg{log_prefix +
@@ -491,7 +491,6 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   // template processor
   auto template_proc{
       Template::Create(stream_config.template_id, product_.get())
-          .set_stream_config(*stream)
           .set_filter(rt_template_filter.release(), stream_config.init_time)
           .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
                         template_wf_config, start, end)

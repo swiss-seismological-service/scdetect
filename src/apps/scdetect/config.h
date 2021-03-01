@@ -48,7 +48,7 @@ struct StreamConfig {
   };
   StreamConfig();
   StreamConfig(const std::string &wf_stream_id, const std::string &filter,
-               const double init_time, const bool sensitivity_correction,
+               const double init_time,
                const TemplateStreamConfig &template_config,
                const std::string &template_id = "");
   StreamConfig(const boost::property_tree::ptree &pt,
@@ -63,10 +63,6 @@ struct StreamConfig {
 
   double init_time{60};
   std::string filter{""};
-
-  // Defines whether sensitivity correction (gain) is applied or not in advance
-  // to filter the data.
-  bool sensitivity_correction{false};
 
   TemplateStreamConfig template_config;
 };

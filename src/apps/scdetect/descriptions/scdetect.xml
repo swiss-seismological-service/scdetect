@@ -29,12 +29,6 @@
         </parameter>
       </group>
       <group name="processing">
-        <parameter name="sensitivityCorrection" type="boolean" default="false">
-          <description>
-            Defines whether processors apply sensitivity correction (applying
-            the gain) or not in advance to filter the data.
-          </description>
-        </parameter>
         <parameter name="filter" type="string">
           <description>
             Defines the default filter used for processing. 

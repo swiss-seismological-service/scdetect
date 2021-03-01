@@ -219,12 +219,6 @@ TemplateBuilder::TemplateBuilder(const std::string &id, const Processor *p) {
   product_ = std::unique_ptr<Template>(new Template{id, p});
 }
 
-TemplateBuilder &
-TemplateBuilder::set_stream_config(const DataModel::Stream &stream_config) {
-  product_->stream_config_.init(&stream_config);
-  return *this;
-}
-
 TemplateBuilder &TemplateBuilder::set_waveform(
     WaveformHandlerIfacePtr waveform_handler, const std::string &stream_id,
     const Core::Time &wf_start, const Core::Time &wf_end,
@@ -259,6 +253,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
 
   const double *samples_template{
       DoubleArray::ConstCast(product_->waveform_->data())->typedData()};
+
   for (int i = 0; i < product_->waveform_->data()->size(); ++i) {
     product_->waveform_sum_ += samples_template[i];
     product_->waveform_squared_sum_ +=
