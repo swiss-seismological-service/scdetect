@@ -437,47 +437,49 @@ bool Application::run() {
 }
 
 void Application::done() {
-  std::unordered_set<std::string> detector_ids;
-  // terminate detectors
-  for (const auto &detector_pair : detectors_) {
-    auto &detector{detector_pair.second};
-    const auto detector_id{detector->id()};
-    if (detector_ids.find(detector_id) == detector_ids.end()) {
-      detector_ids.emplace(detector->id());
-      detector->Terminate();
+  if (!config_.load_templates_only) {
+    std::unordered_set<std::string> detector_ids;
+    // terminate detectors
+    for (const auto &detector_pair : detectors_) {
+      auto &detector{detector_pair.second};
+      const auto detector_id{detector->id()};
+      if (detector_ids.find(detector_id) == detector_ids.end()) {
+        detector_ids.emplace(detector->id());
+        detector->Terminate();
 
-      // optionally, create debug info files
-      if (config_.dump_debug_info) {
-        const auto path_debug_info{detector->debug_info_dir()};
-        const auto fpath{path_debug_info / settings::kFnameDebugInfo};
+        // optionally, create debug info files
+        if (config_.dump_debug_info) {
+          const auto path_debug_info{detector->debug_info_dir()};
+          const auto fpath{path_debug_info / settings::kFnameDebugInfo};
 
-        if (!Util::pathExists(path_debug_info.string())) {
-          if (!Util::createPath(path_debug_info.string())) {
-            SCDETECT_LOG_WARNING("Failed to create directory: %s",
-                                 path_debug_info.c_str());
-            continue;
+          if (!Util::pathExists(path_debug_info.string())) {
+            if (!Util::createPath(path_debug_info.string())) {
+              SCDETECT_LOG_WARNING("Failed to create directory: %s",
+                                   path_debug_info.c_str());
+              continue;
+            }
           }
-        }
 
-        std::ofstream ofs{fpath.string()};
-        if (ofs.is_open()) {
-          ofs << detector->DebugString();
-          ofs.close();
-        } else {
-          SCDETECT_LOG_WARNING("Failed to create file: %s", fpath.c_str());
+          std::ofstream ofs{fpath.string()};
+          if (ofs.is_open()) {
+            ofs << detector->DebugString();
+            ofs.close();
+          } else {
+            SCDETECT_LOG_WARNING("Failed to create file: %s", fpath.c_str());
+          }
         }
       }
     }
-  }
 
-  if (ep_) {
-    IO::XMLArchive ar;
-    ar.create(config_.path_ep.empty() ? "-" : config_.path_ep.c_str());
-    ar.setFormattedOutput(true);
-    ar << ep_;
-    ar.close();
-    SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
-    ep_.reset();
+    if (ep_) {
+      IO::XMLArchive ar;
+      ar.create(config_.path_ep.empty() ? "-" : config_.path_ep.c_str());
+      ar.setFormattedOutput(true);
+      ar << ep_;
+      ar.close();
+      SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
+      ep_.reset();
+    }
   }
 
   EventStore::Instance().Reset();
