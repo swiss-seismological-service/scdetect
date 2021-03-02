@@ -263,7 +263,7 @@ TemplateBuilder &TemplateBuilder::set_waveform(
 }
 
 TemplateBuilder &TemplateBuilder::set_filter(WaveformProcessor::Filter *filter,
-                                             const double init_time) {
+                                             double init_time) {
   product_->set_filter(filter);
   product_->init_time_ = Core::TimeSpan{init_time};
   return *this;

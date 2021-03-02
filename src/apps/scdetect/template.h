@@ -111,7 +111,7 @@ public:
                const WaveformHandlerIface::ProcessingConfig &config,
                Core::Time &wf_start_waveform, Core::Time &wf_end_waveform);
   TemplateBuilder &set_filter(WaveformProcessor::Filter *filter,
-                              const double init_time = 0);
+                              double init_time = 0);
   TemplateBuilder &set_saturation_check(bool saturation_check,
                                         double thres = -1);
 
