@@ -44,7 +44,7 @@ public:
   };
 
   struct ProcessingConfig {
-    std::string filter_string{""};
+    std::string filter_string;
     double resample_frequency{0};
     bool demean{true};
   };
