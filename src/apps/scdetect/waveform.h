@@ -9,6 +9,7 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/recordsequence.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
@@ -71,6 +72,11 @@ public:
                                 const std::string &cha_code,
                                 const Core::Time &start, const Core::Time &end,
                                 const ProcessingConfig &config) = 0;
+
+protected:
+  // Process `trace` according to `config`
+  void Process(const GenericRecordPtr &trace, const ProcessingConfig &config,
+               const Core::TimeWindow &tw_trim = Core::TimeWindow{}) const;
 };
 
 DEFINE_SMARTPOINTER(WaveformHandler);

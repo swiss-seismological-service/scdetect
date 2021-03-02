@@ -270,6 +270,39 @@ WaveformHandlerIface::BaseException::BaseException()
 
 const double WaveformHandler::download_margin_{2};
 
+void WaveformHandlerIface::Process(const GenericRecordPtr &trace,
+                                   const ProcessingConfig &config,
+                                   const Core::TimeWindow &tw_trim) const {
+
+  if (config.demean) {
+    waveform::Demean(*trace);
+  }
+
+  if (config.resample_frequency) {
+    waveform::Resample(*trace, config.resample_frequency, true);
+  }
+
+  if (!config.filter_string.empty()) {
+    if (!waveform::Filter(*trace, config.filter_string)) {
+      throw BaseException{Core::stringify(
+          "%s: Filtering failed with filter: filter=%s,"
+          "start=%s, end=%s",
+          trace->streamID().c_str(), config.filter_string.c_str(),
+          trace->startTime().iso().c_str(), trace->endTime().iso().c_str())};
+    }
+  }
+
+  if (tw_trim) {
+    if (!waveform::Trim(*trace, tw_trim)) {
+      throw BaseException{Core::stringify(
+          "%s: Incomplete trace; not enough data for requested time:"
+          "start=%s, end=%s",
+          trace->streamID().c_str(), tw_trim.startTime().iso().c_str(),
+          tw_trim.endTime().iso().c_str())};
+    }
+  }
+}
+
 WaveformHandler::NoData::NoData() : BaseException{"no data avaiable"} {}
 
 WaveformHandler::WaveformHandler(const std::string &record_stream_url)
@@ -351,13 +384,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   }
 
   trace->setChannelCode(cha_code);
-  if (!waveform::Trim(*trace, tw)) {
-    throw BaseException{Core::stringify(
-        "%s.%s.%s.%s: Incomplete trace; not enough data for requested time:"
-        "start=%s, end=%s",
-        net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
-  }
+  Process(trace, config, tw);
 
   return trace;
 }
@@ -426,24 +453,10 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
 
   if (!cached && !CacheProcessed()) {
     SetCache(cache_key, trace);
+
   }
 
-  auto trace_ptr = const_cast<GenericRecord *>(trace.get());
-  if (config.demean)
-    waveform::Demean(*trace_ptr);
-
-  if (config.resample_frequency)
-    waveform::Resample(*trace_ptr, config.resample_frequency, true);
-
-  if (!config.filter_string.empty()) {
-    if (!waveform::Filter(*trace_ptr, config.filter_string)) {
-      throw BaseException{Core::stringify(
-          "%s.%s.%s.%s: Filtering failed with filter: filter=%s,"
-          "start=%s, end=%s",
-          net_code.c_str(), sta_code.c_str(), loc_code.c_str(),
-          cha_code.c_str(), config.filter_string.c_str())};
-    }
-  }
+  Process(const_cast<GenericRecord *>(trace.get()), config, tw);
 
   if (!cached && CacheProcessed()) {
     SetCache(cache_key, trace);
