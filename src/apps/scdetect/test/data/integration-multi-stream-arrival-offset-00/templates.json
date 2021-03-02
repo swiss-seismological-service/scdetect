@@ -10,6 +10,8 @@
         "triggerOffThreshold": 0,
         "arrivalOffsetThreshold": 1.1,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+        "filter": "",
+        "templateFilter": "",
         "streams": [
               {
                   "templateId": "template-01",
@@ -18,7 +20,6 @@
                   "templateWaveformEnd": 2,
                   "waveformId": "CH.GRIMS..HHZ",
                   "templateWaveformId": "CH.GRIMS..HHZ",
-                  "templateFilter": "",
                   "templatePhase": "Pg"
               },
               {
@@ -28,7 +29,6 @@
                   "templateWaveformEnd": 2,
                   "waveformId": "CH.HASLI..HHZ",
                   "templateWaveformId": "CH.HASLI..HHZ",
-                  "templateFilter": "",
                   "templatePhase": "Pg"
               }
         ]
