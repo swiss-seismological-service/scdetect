@@ -267,6 +267,8 @@ bool Read(GenericRecord &trace, std::istream &in) {
 WaveformHandlerIface::BaseException::BaseException()
     : Exception{"base waveform handler exception"} {}
 
+const double WaveformHandler::download_margin_{2};
+
 WaveformHandler::NoData::NoData() : BaseException{"no data avaiable"} {}
 
 WaveformHandler::WaveformHandler(const std::string &record_stream_url)
@@ -358,6 +360,8 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
 
   return trace;
 }
+
+const std::string Cached::cache_key_sep_{"."};
 
 Cached::Cached(WaveformHandlerIfacePtr waveform_handler, bool raw)
     : waveform_handler_(waveform_handler), raw_(raw) {}

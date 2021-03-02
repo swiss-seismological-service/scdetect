@@ -107,7 +107,7 @@ public:
 private:
   std::string record_stream_url_;
 
-  double download_margin_{2};
+  static const double download_margin_;
 };
 
 DEFINE_SMARTPOINTER(Cached);
@@ -158,7 +158,7 @@ private:
   // cached
   bool raw_;
 
-  const std::string cache_key_sep_{"."};
+  static const std::string cache_key_sep_;
 };
 
 DEFINE_SMARTPOINTER(FileSystemCache);
