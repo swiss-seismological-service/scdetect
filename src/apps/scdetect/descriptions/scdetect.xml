@@ -21,19 +21,8 @@
             the template pick.
           </description>
         </parameter>
-        <parameter name="filter" type="string">
-          <description>
-            Defines the default filter in place during the template waveform
-            creation.
-          </description>
-        </parameter>
       </group>
       <group name="processing">
-        <parameter name="filter" type="string">
-          <description>
-            Defines the default filter used for processing. 
-          </description>
-        </parameter>
         <parameter name="initTime" type="int" default="60" unit="s">
           <description>
             The default initTime defines a time span in seconds a detector is

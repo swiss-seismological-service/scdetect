@@ -293,14 +293,6 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!config_.stream_config.filter.empty()) {
-    std::string err;
-    if (!config::ValidateFilter(config_.stream_config.filter, err)) {
-      SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
-      return false;
-    }
-  }
-
   if (!config::ValidateArrivalOffsetThreshold(
           config_.detector_config.arrival_offset_threshold)) {
     SCDETECT_LOG_ERROR("Invalid configuration: 'arrivalOffsetThreshold': %f. "
@@ -323,15 +315,6 @@ bool Application::validateParameters() {
         config_.stream_config.template_config.wf_start,
         config_.stream_config.template_config.wf_end);
     return false;
-  }
-
-  if (!config_.stream_config.template_config.filter.empty()) {
-    std::string err;
-    if (!config::ValidateFilter(config_.stream_config.template_config.filter,
-                                err)) {
-      SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
-      return false;
-    }
   }
 
   return true;
@@ -762,10 +745,8 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.stream_config.template_config.wf_start,
           "template.waveformStart");
   NEW_OPT(config_.stream_config.template_config.wf_end, "template.waveformEnd");
-  NEW_OPT(config_.stream_config.template_config.filter, "template.filter");
 
   NEW_OPT(config_.stream_config.init_time, "processing.initTime");
-  NEW_OPT(config_.stream_config.filter, "processing.filter");
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.gapInterpolation");
 
