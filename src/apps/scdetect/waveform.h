@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_WAVEFORM_MANAGER_H_
 #define SCDETECT_APPS_SCDETECT_WAVEFORM_MANAGER_H_
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -192,5 +193,16 @@ private:
 
 } // namespace detect
 } // namespace Seiscomp
+
+namespace std {
+
+template <>
+struct hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig> {
+  std::size_t
+  operator()(const Seiscomp::detect::WaveformHandlerIface::ProcessingConfig &c)
+      const noexcept;
+};
+
+} // namespace std
 
 #endif // SCDETECT_APPS_SCDETECT_WAVEFORM_MANAGER_H_

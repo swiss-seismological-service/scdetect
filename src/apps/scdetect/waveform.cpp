@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <seiscomp/core/strings.h>
 #include <seiscomp/io/recordinput.h>
@@ -458,20 +459,14 @@ void Cached::MakeCacheKey(const std::string &net_code,
                           const Core::TimeWindow &tw,
                           const WaveformHandlerIface::ProcessingConfig &config,
                           std::string &result) const {
-  auto BoolToString = [](const bool b) -> std::string {
-    std::stringstream ss;
-    ss << std::boolalpha << b;
-    return ss.str();
-  };
 
   std::vector<std::string> key_components{
       net_code,          sta_code, loc_code, cha_code, tw.startTime().iso(),
       tw.endTime().iso()};
 
   if (CacheProcessed()) {
-    key_components.push_back(config.filter_string);
-    key_components.push_back(std::to_string(config.resample_frequency));
-    key_components.push_back(BoolToString(config.demean));
+    key_components.push_back(
+        std::to_string(std::hash<ProcessingConfig>{}(config)));
   }
 
   MakeCacheKey(key_components, result);
@@ -540,3 +535,18 @@ bool InMemoryCache::Exists(const std::string &key) {
 
 } // namespace detect
 } // namespace Seiscomp
+
+namespace std {
+
+inline std::size_t
+hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig>::operator()(
+    const Seiscomp::detect::WaveformHandlerIface::ProcessingConfig &c)
+    const noexcept {
+  std::size_t ret{0};
+  boost::hash_combine(ret, std::hash<std::string>{}(c.filter_string));
+  boost::hash_combine(ret, std::hash<double>{}(c.resample_frequency));
+  boost::hash_combine(ret, std::hash<bool>{}(c.demean));
+  return ret;
+}
+
+} // namespace std
