@@ -154,7 +154,7 @@ protected:
 private:
   WaveformHandlerIfacePtr waveform_handler_;
 
-  // Idicates if either the raw waveform or the processed waveform should be
+  // Indicates if either the raw waveform or the processed waveform should be
   // cached
   bool raw_;
 
