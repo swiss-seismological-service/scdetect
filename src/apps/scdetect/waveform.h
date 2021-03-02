@@ -113,26 +113,26 @@ private:
 DEFINE_SMARTPOINTER(Cached);
 class Cached : public WaveformHandlerIface {
 public:
-  GenericRecordCPtr Get(const DataModel::WaveformStreamID &id,
-                        const Core::TimeWindow &tw,
-                        const WaveformHandlerIface::ProcessingConfig &config);
+  GenericRecordCPtr
+  Get(const DataModel::WaveformStreamID &id, const Core::TimeWindow &tw,
+      const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(const std::string &net_code,
-                        const std::string &sta_code,
-                        const std::string &loc_code,
-                        const std::string &cha_code, const Core::TimeWindow &tw,
-                        const WaveformHandlerIface::ProcessingConfig &config);
+  GenericRecordCPtr
+  Get(const std::string &net_code, const std::string &sta_code,
+      const std::string &loc_code, const std::string &cha_code,
+      const Core::TimeWindow &tw,
+      const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(const DataModel::WaveformStreamID &id,
-                        const Core::Time &start, const Core::Time &end,
-                        const WaveformHandlerIface::ProcessingConfig &config);
+  GenericRecordCPtr
+  Get(const DataModel::WaveformStreamID &id, const Core::Time &start,
+      const Core::Time &end,
+      const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(const std::string &net_code,
-                        const std::string &sta_code,
-                        const std::string &loc_code,
-                        const std::string &cha_code, const Core::Time &start,
-                        const Core::Time &end,
-                        const WaveformHandlerIface::ProcessingConfig &config);
+  GenericRecordCPtr
+  Get(const std::string &net_code, const std::string &sta_code,
+      const std::string &loc_code, const std::string &cha_code,
+      const Core::Time &start, const Core::Time &end,
+      const WaveformHandlerIface::ProcessingConfig &config) override;
 
 protected:
   Cached(WaveformHandlerIfacePtr waveform_handler, bool raw = false);
