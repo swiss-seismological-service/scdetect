@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
@@ -42,9 +43,9 @@ struct StreamConfig {
     double wf_end{2};
 
     // Defines a template specific waveform stream id
-    std::string wf_stream_id{""};
+    std::string wf_stream_id;
     // Defines a template specific filter
-    std::string filter{""};
+    boost::optional<std::string> filter;
   };
   StreamConfig();
   StreamConfig(const std::string &wf_stream_id, const std::string &filter,
@@ -59,10 +60,11 @@ struct StreamConfig {
   // Template processor identifier
   std::string template_id{utils::CreateUUID()};
 
-  std::string wf_stream_id{""};
+  std::string wf_stream_id;
 
   double init_time{60};
-  std::string filter{""};
+  // Defines the processing specific filter
+  boost::optional<std::string> filter;
 
   TemplateStreamConfig template_config;
 };

@@ -468,19 +468,21 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // set template related filter (used for template waveform processing)
   WaveformHandlerIface::ProcessingConfig template_wf_config;
-  template_wf_config.filter_string = stream_config.template_config.filter;
+  template_wf_config.filter_string =
+      stream_config.template_config.filter.value_or(pick->filterID());
 
+  std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
+  std::string rt_filter_id{stream_config.filter.value_or(pick->filterID())};
   // create template related filter (used during real-time stream
   // processing)
-  std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
-  if (!stream_config.filter.empty()) {
+  if (!rt_filter_id.empty()) {
     std::string err;
     rt_template_filter.reset(
-        WaveformProcessor::Filter::Create(stream_config.filter, &err));
+        WaveformProcessor::Filter::Create(rt_filter_id, &err));
 
     if (!rt_template_filter) {
-      auto msg{log_prefix + std::string{"Compiling filter ("} +
-               stream_config.filter + std::string{") failed: "} + err};
+      auto msg{log_prefix + "Compiling filter (" + rt_filter_id +
+               ") failed: " + err};
 
       SCDETECT_LOG_WARNING("%s", msg.c_str());
       throw builder::BaseException{msg};
