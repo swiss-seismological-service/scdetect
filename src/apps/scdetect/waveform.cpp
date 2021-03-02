@@ -453,7 +453,7 @@ void Cached::MakeCacheKey(const std::string &net_code,
                           const std::string &cha_code,
                           const Core::TimeWindow &tw,
                           const WaveformHandlerIface::ProcessingConfig &config,
-                          std::string &result) {
+                          std::string &result) const {
   auto BoolToString = [](const bool b) -> std::string {
     std::stringstream ss;
     ss << std::boolalpha << b;
@@ -474,7 +474,7 @@ void Cached::MakeCacheKey(const std::string &net_code,
 }
 
 void Cached::MakeCacheKey(std::vector<std::string> key_components,
-                          std::string &result) {
+                          std::string &result) const {
   result = boost::algorithm::join(key_components, cache_key_sep_);
 }
 

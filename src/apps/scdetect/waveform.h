@@ -142,9 +142,9 @@ protected:
                const std::string &loc_code, const std::string &cha_code,
                const Core::TimeWindow &tw,
                const WaveformHandlerIface::ProcessingConfig &config,
-               std::string &result);
+               std::string &result) const;
   virtual void MakeCacheKey(std::vector<std::string> key_components,
-                            std::string &result);
+                            std::string &result) const;
   virtual GenericRecordCPtr Get(const std::string &key) = 0;
   virtual bool Set(const std::string &key, GenericRecordCPtr value) = 0;
   virtual bool Exists(const std::string &key) = 0;
