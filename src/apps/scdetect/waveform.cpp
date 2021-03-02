@@ -354,6 +354,11 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   Core::TimeSpan download_margin{download_margin_};
   Core::TimeWindow tw_with_margin{tw.startTime() - download_margin,
                                   tw.endTime() + download_margin};
+  if (!config.filter_string.empty()) {
+    Core::TimeSpan margin{config.filter_margin_time};
+    tw_with_margin.setStartTime(tw_with_margin.startTime() - margin);
+    tw_with_margin.setEndTime(tw_with_margin.endTime() + margin);
+  }
 
   rs->setTimeWindow(tw_with_margin);
   rs->addStream(net_code, sta_code, loc_code, cha_code);
@@ -447,17 +452,36 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
   GenericRecordCPtr trace{Get(cache_key)};
   if (!trace) {
     cached = false;
-    trace = waveform_handler_->Get(net_code, sta_code, loc_code, cha_code, tw,
-                                   config);
+
+    ProcessingConfig disabled{config};
+    disabled.filter_string = "";
+    disabled.resample_frequency = 0;
+    disabled.demean = false;
+
+    Core::TimeWindow corrected{tw};
+    if (!config.filter_string.empty()) {
+      const Core::TimeSpan margin{config.filter_margin_time};
+      corrected.setStartTime(tw.startTime() - margin);
+      corrected.setEndTime(tw.endTime() + margin);
+    }
+    trace = waveform_handler_->Get(net_code, sta_code, loc_code, cha_code,
+                                   corrected, disabled);
   }
 
+  // cache the raw data
   if (!cached && !CacheProcessed()) {
     SetCache(cache_key, trace);
+    // TODO (damb): Find a better solution! -> Ideally,
+    // `WaveformHandlerIface::Get()` would return a pointer of type
+    // `GenericRecordPtr` i.e. a non-const pointer.
 
+    // make sure we do not modified the data cached i.e. create a copy
+    trace = utils::make_smart<const GenericRecord>(*trace);
   }
 
   Process(const_cast<GenericRecord *>(trace.get()), config, tw);
 
+  // cache processed data
   if (!cached && CacheProcessed()) {
     SetCache(cache_key, trace);
   }
@@ -473,9 +497,21 @@ void Cached::MakeCacheKey(const std::string &net_code,
                           const WaveformHandlerIface::ProcessingConfig &config,
                           std::string &result) const {
 
-  std::vector<std::string> key_components{
-      net_code,          sta_code, loc_code, cha_code, tw.startTime().iso(),
-      tw.endTime().iso()};
+  Core::TimeWindow tw_with_margin{tw};
+  if (!CacheProcessed()) {
+    if (!config.filter_string.empty()) {
+      Core::TimeSpan margin{config.filter_margin_time};
+      tw_with_margin.setStartTime(tw.startTime() - margin);
+      tw_with_margin.setEndTime(tw.endTime() + margin);
+    }
+  }
+
+  std::vector<std::string> key_components{net_code,
+                                          sta_code,
+                                          loc_code,
+                                          cha_code,
+                                          tw_with_margin.startTime().iso(),
+                                          tw_with_margin.endTime().iso()};
 
   if (CacheProcessed()) {
     key_components.push_back(
@@ -557,6 +593,7 @@ hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig>::operator()(
     const noexcept {
   std::size_t ret{0};
   boost::hash_combine(ret, std::hash<std::string>{}(c.filter_string));
+  boost::hash_combine(ret, std::hash<double>{}(c.filter_margin_time));
   boost::hash_combine(ret, std::hash<double>{}(c.resample_frequency));
   boost::hash_combine(ret, std::hash<bool>{}(c.demean));
   return ret;

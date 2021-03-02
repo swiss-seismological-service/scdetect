@@ -46,7 +46,11 @@ public:
   };
 
   struct ProcessingConfig {
+    // The filter identifier
     std::string filter_string;
+    // Margin time in seconds used for filtering in order to prevent from
+    // filtering artifacts
+    double filter_margin_time{0};
     double resample_frequency{0};
     bool demean{true};
   };

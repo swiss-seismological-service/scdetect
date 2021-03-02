@@ -470,6 +470,9 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   WaveformHandlerIface::ProcessingConfig template_wf_config;
   template_wf_config.filter_string =
       stream_config.template_config.filter.value_or(pick->filterID());
+  if (!template_wf_config.filter_string.empty()) {
+    template_wf_config.filter_margin_time = stream_config.init_time;
+  }
 
   std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
   std::string rt_filter_id{stream_config.filter.value_or(pick->filterID())};
