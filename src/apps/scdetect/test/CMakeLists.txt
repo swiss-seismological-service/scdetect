@@ -1,7 +1,8 @@
 set(TESTS
+  filter_crosscorrelation.cpp
+  integration.cpp
   template_xcorr.cpp
   utils_cma.cpp
-  integration.cpp
 )
 
 set(SOURCES_template_xcorr
@@ -11,6 +12,13 @@ set(SOURCES_template_xcorr
   ../template.cpp
   ../waveform.cpp
   ../waveformprocessor.cpp
+)
+
+SET(SOURCES_filter_crosscorrelation
+  ../exception.cpp
+  ../filter/crosscorrelation.h
+  ../utils.cpp
+  ../waveform.cpp
 )
 
 set(SOURCES_utils_cma
