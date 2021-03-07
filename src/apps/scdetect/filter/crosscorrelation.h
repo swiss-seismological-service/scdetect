@@ -11,6 +11,7 @@ namespace detect {
 namespace filter {
 
 // Cross-Correlation filter implementation
+// - has a filter delay proportional to the length of the template waveform
 template <typename TData> class CrossCorrelation {
 public:
   // Create a cross-correlation filter from `template_wf`. It is a bug if
