@@ -38,6 +38,8 @@ public:
 
   // Returns the number of template samples
   size_t template_size() const;
+  // Returns the template duration in seconds
+  double template_length() const;
 
 protected:
   // Initialize template related data

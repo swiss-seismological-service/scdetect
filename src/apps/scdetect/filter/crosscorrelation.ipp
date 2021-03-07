@@ -168,6 +168,11 @@ size_t CrossCorrelation<TData>::template_size() const {
 }
 
 template <typename TData>
+double CrossCorrelation<TData>::template_length() const {
+  return template_wf_->timeWindow().length();
+}
+
+template <typename TData>
 void CrossCorrelation<TData>::SetupFilter(
     const GenericRecordCPtr &template_wf) {
 
