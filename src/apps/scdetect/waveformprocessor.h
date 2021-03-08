@@ -2,8 +2,6 @@
 #define SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
 
 #include <functional>
-#include <memory>
-#include <unordered_map>
 
 #include <boost/filesystem.hpp>
 
