@@ -57,8 +57,9 @@ bool Detector::Feed(const Record *record) {
     return false;
 
   auto it{stream_configs_.find(record->streamID())};
-  if (it == stream_configs_.end())
+  if (it == stream_configs_.end()) {
     return false;
+  }
 
   return Store(it->second.stream_state, record);
 }
@@ -493,14 +494,28 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   Core::Time start, end;
+  GenericRecordCPtr template_wf;
+  try {
+    template_wf = waveform_handler->Get(
+        template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
+        template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
+        wf_start, wf_end, template_wf_config);
+    start = template_wf->startTime();
+    end = template_wf->endTime();
+
+  } catch (WaveformHandler::NoData &e) {
+    throw builder::NoWaveformData{
+        std::string{"Failed to load template waveform: "} + e.what()};
+  } catch (std::exception &e) {
+    throw builder::BaseException{
+        std::string{"Failed to load template waveform: "} + e.what()};
+  }
+
   // template processor
-  auto template_proc{
-      Template::Create(stream_config.template_id, product_.get())
-          .set_filter(rt_template_filter.release(), stream_config.init_time)
-          .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
-                        template_wf_config, start, end)
-          .set_debug_info_dir(path_debug_info)
-          .Build()};
+  auto template_proc{utils::make_unique<Template>(
+      template_wf, stream_config.template_id, product_.get())};
+
+  template_proc->set_filter(rt_template_filter.release());
 
   TemplateProcessorConfig c{
       std::move(template_proc),
