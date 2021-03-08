@@ -22,7 +22,6 @@
 #include "log.h"
 #include "processor.h"
 #include "settings.h"
-#include "template.h"
 #include "utils.h"
 
 namespace Seiscomp {
@@ -512,7 +511,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   // template processor
-  auto template_proc{utils::make_unique<Template>(
+  auto template_proc{utils::make_unique<detector::Template>(
       template_wf, stream_config.template_id, product_.get())};
 
   template_proc->set_filter(rt_template_filter.release());

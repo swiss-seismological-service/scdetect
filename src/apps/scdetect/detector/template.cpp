@@ -5,14 +5,14 @@
 #include <stdexcept>
 #include <string>
 
-#include "log.h"
-#include "seiscomp/core/timewindow.h"
-#include "settings.h"
-#include "utils.h"
-#include "waveform.h"
+#include "../log.h"
+#include "../settings.h"
+#include "../utils.h"
+#include "../waveform.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace detector {
 
 Template::Template(const GenericRecordCPtr &template_wf, const std::string &id,
                    const Processor *p)
@@ -107,5 +107,6 @@ void Template::InitStream(StreamState &stream_state, const Record *record) {
   cross_correlation_.set_sampling_frequency(stream_state.sampling_frequency);
 }
 
+} // namespace detector
 } // namespace detect
 } // namespace Seiscomp

@@ -19,9 +19,9 @@
 
 #include "../exception.h"
 #include "../processor.h"
-#include "../template.h"
 #include "arrival.h"
 #include "linker.h"
+#include "template.h"
 
 namespace Seiscomp {
 namespace detect {

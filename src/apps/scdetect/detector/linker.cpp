@@ -5,7 +5,6 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "../template.h"
 #include "../utils.h"
 
 namespace Seiscomp {

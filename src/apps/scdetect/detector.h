@@ -25,8 +25,8 @@
 #include "detector/arrival.h"
 #include "detector/detector.h"
 #include "detector/pot.h"
+#include "detector/template.h"
 #include "settings.h"
-#include "template.h"
 #include "waveform.h"
 #include "waveformprocessor.h"
 
@@ -137,7 +137,8 @@ private:
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
 
-  std::multimap<WaveformStreamID, Template::MatchResultCPtr> debug_cc_results_;
+  std::multimap<WaveformStreamID, detector::Template::MatchResultCPtr>
+      debug_cc_results_;
   // List of reference theoretical template arrivals
   std::vector<detector::Arrival> ref_theoretical_template_arrivals_;
 };

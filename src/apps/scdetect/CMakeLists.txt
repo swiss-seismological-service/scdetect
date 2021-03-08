@@ -9,11 +9,11 @@ set(
     detector/detector.cpp
     detector/linker.cpp
     detector/pot.cpp
+    detector/template.cpp
     eventstore.cpp
     exception.cpp
     main.cpp
     processor.cpp
-    template.cpp
     utils.cpp
     validators.cpp
     waveform.cpp
@@ -30,12 +30,12 @@ set(
     detector/detector.h
     detector/linker.h
     detector/pot.h
+    detector/template.h
     eventstore.h
     exception.h
     log.h
     processor.h
     settings.h
-    template.h
     utils.h
     validators.h
     version.h

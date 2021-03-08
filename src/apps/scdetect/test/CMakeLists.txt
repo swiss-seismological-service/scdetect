@@ -25,11 +25,11 @@ set(SOURCES_integration
   ../detector/detector.cpp
   ../detector/linker.cpp
   ../detector/pot.cpp
+  ../detector/template.cpp
   ../eventstore.cpp
   ../exception.cpp
   ../processor.cpp
   ../utils.cpp
-  ../template.cpp
   ../validators.cpp
   ../waveform.cpp
   ../waveformprocessor.cpp

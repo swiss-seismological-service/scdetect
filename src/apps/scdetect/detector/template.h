@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEMPLATE_H_
-#define SCDETECT_APPS_SCDETECT_TEMPLATE_H_
+#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_
+#define SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_
 
 #include <cstdlib>
 #include <ostream>
@@ -11,12 +11,12 @@
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/stream.h>
 
-#include "filter/crosscorrelation.h"
-#include "waveform.h"
-#include "waveformprocessor.h"
+#include "../filter/crosscorrelation.h"
+#include "../waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace detector {
 
 // Template waveform processor implementation
 // - implements filtering
@@ -59,7 +59,8 @@ private:
   filter::CrossCorrelation<double> cross_correlation_;
 };
 
+} // namespace detector
 } // namespace detect
 } // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_TEMPLATE_H_
+#endif // SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_
