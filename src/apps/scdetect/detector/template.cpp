@@ -28,6 +28,10 @@ void Template::set_filter(Filter *filter) {
   stream_state_.filter = filter;
 }
 
+const Core::TimeWindow &Template::processed() const {
+  return stream_state_.data_time_window;
+}
+
 bool Template::Feed(const Record *record) {
   if (record->sampleCount() == 0)
     return false;

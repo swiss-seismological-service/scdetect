@@ -37,6 +37,9 @@ DetectorBuilder Detector::Create(const std::string &id,
 
 void Detector::set_filter(Filter *filter) {
   // XXX(damb): `Detector` does not implement filter facilities.
+
+const Core::TimeWindow &Detector::processed() const {
+  return detector_.processed();
 }
 
 void Detector::set_gap_tolerance(const Core::TimeSpan &duration) {
@@ -114,8 +117,6 @@ void Detector::Process(StreamState &stream_state, const Record *record,
   }
 
   if (!finished()) {
-    merge_processed(detector_.processed());
-
     if (detection_) {
       auto detection{utils::make_smart<Detection>()};
       PrepareDetection(detection, *detection_);
@@ -499,6 +500,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
         template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
         wf_start, wf_end, template_wf_config);
+
     start = template_wf->startTime();
     end = template_wf->endTime();
 

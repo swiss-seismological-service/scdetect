@@ -41,10 +41,6 @@ bool WaveformProcessor::finished() const {
   return Status::kInProgress < status_;
 }
 
-const Core::TimeWindow &WaveformProcessor::processed() const {
-  return processed_;
-}
-
 const boost::filesystem::path &WaveformProcessor::debug_info_dir() const {
   return debug_info_dir_;
 }
@@ -54,8 +50,6 @@ bool WaveformProcessor::debug_mode() const { return !debug_info_dir_.empty(); }
 void WaveformProcessor::Reset() {
   status_ = Status::kWaitingForData;
   status_value_ = 0;
-
-  processed_ = Core::TimeWindow{};
 }
 
 void WaveformProcessor::Terminate() {
@@ -185,13 +179,6 @@ void WaveformProcessor::set_status(Status status, double value) {
 void WaveformProcessor::set_debug_info_dir(
     const boost::filesystem::path &path) {
   debug_info_dir_ = path;
-}
-
-void WaveformProcessor::set_processed(const Core::TimeWindow &tw) {
-  processed_ = tw;
-}
-void WaveformProcessor::merge_processed(const Core::TimeWindow &tw) {
-  processed_ = processed_ | tw;
 }
 
 void WaveformProcessor::set_saturation_check(bool e) { saturation_check_ = e; }

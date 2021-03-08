@@ -40,6 +40,8 @@ public:
 
   void set_filter(Filter *filter) override;
 
+  const Core::TimeWindow &processed() const override;
+
   bool Feed(const Record *record) override;
   void Reset() override;
 

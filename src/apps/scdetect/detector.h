@@ -78,6 +78,7 @@ public:
 
   void set_filter(Filter *filter) override;
 
+  const Core::TimeWindow &processed() const override;
   // Sets the maximal gap length to be tolerated
   void set_gap_tolerance(const Core::TimeSpan &duration);
   // Returns the gap tolerance

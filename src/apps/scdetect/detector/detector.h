@@ -176,9 +176,6 @@ private:
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
-    // The template processor's time window processed
-    Core::TimeWindow processed;
-
     // The sensor location w.r.t. the template `processor`
     SensorLocation sensor_location;
   };

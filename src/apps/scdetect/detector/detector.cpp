@@ -114,8 +114,7 @@ void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
   }
 
   const auto proc_id{proc->id()};
-  const auto processed{proc->processed()};
-  ProcessorState p{std::move(proc), buf, processed, loc};
+  ProcessorState p{std::move(proc), buf, loc};
   processors_.emplace(proc_id, std::move(p));
 
   processor_idx_.emplace(stream_id, proc_id);
@@ -202,8 +201,9 @@ void Detector::Process(const std::string &waveform_id_hint) {
 
       // enable trigger
       if (with_trigger) {
-        const auto &endtime{
-            processors_.at(trigger_proc_id_.value()).processed.endTime()};
+        const auto &endtime{processors_.at(trigger_proc_id_.value())
+                                .processor->processed()
+                                .endTime()};
 
         if (!triggered() &&
             current_result_.value().fit >= thres_trigger_on_.value_or(-1)) {
@@ -247,7 +247,7 @@ void Detector::Process(const std::string &waveform_id_hint) {
         }
 
         const auto &endtime{
-            processors_.at(*trigger_proc_id_).processed.endTime()};
+            processors_.at(*trigger_proc_id_).processor->processed().endTime()};
         // disable trigger if required
         if (endtime > *trigger_end_ ||
             result.fit < thres_trigger_off_.value_or(1) ||
@@ -271,15 +271,15 @@ void Detector::Process(const std::string &waveform_id_hint) {
     // overall processed endtime
     Core::TimeWindow processed;
     for (const auto &proc_pair : processors_) {
-      if (!proc_pair.second.processed) {
+      const auto proc_processed{proc_pair.second.processor->processed()};
+      if (!proc_processed) {
         processed.setLength(0);
         break;
       } else {
-        if (processed_ &&
-            processed_.endTime() < proc_pair.second.processed.endTime()) {
-          processed = processed | proc_pair.second.processed;
+        if (processed_ && processed_.endTime() < proc_processed.endTime()) {
+          processed = processed | proc_processed;
         } else {
-          processed = proc_pair.second.processed;
+          processed = proc_processed;
         }
       }
     }
@@ -376,18 +376,13 @@ bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
     const auto &proc{processors_.at(proc_id)};
     if (proc.processor->enabled()) {
       Core::TimeWindow tw{proc.buffer->windows().back()};
-      if (!tw.endTime() || tw.endTime() <= proc.processed.endTime()) {
+      if (!tw.endTime() ||
+          tw.endTime() <= proc.processor->processed().endTime()) {
         continue;
       }
 
-      if (tw.startTime() < proc.processed.endTime()) {
-        // TODO(damb): Define margin?
-        tw.setStartTime(proc.processed.endTime());
-      }
-
-      // validate if enough data is available for the *next processing run*
-      if (tw.length() < static_cast<double>(proc.processor->init_time())) {
-        continue;
+      if (tw.startTime() < proc.processor->processed().endTime()) {
+        tw.setStartTime(proc.processor->processed().endTime());
       }
 
       // skip data with too high latency
@@ -590,12 +585,6 @@ void Detector::StoreTemplateResult(
         "Failed to match template (proc_id=%s). Reason : status=%d, "
         "status_value=%f",
         p.processor->id().c_str(), utils::as_integer(status), status_value);
-  }
-
-  if (!p.processed) {
-    p.processed = proc->processed();
-  } else {
-    p.processed = p.processed | proc->processed();
   }
 }
 
