@@ -3,6 +3,7 @@
 #include <sstream>
 #include <vector>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -19,6 +20,10 @@ namespace utils {
 const std::string CreateUUID() {
   auto uuid{boost::uuids::random_generator{}()};
   return boost::uuids::to_string(uuid);
+}
+
+void ReplaceEscapedXMLFilterIDChars(std::string &str) {
+  boost::replace_all(str, "&gt;", ">");
 }
 
 /* ------------------------------------------------------------------------- */

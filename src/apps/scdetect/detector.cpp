@@ -469,14 +469,17 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // set template related filter (used for template waveform processing)
   WaveformHandlerIface::ProcessingConfig template_wf_config;
+  auto pick_filter_id{pick->filterID()};
   template_wf_config.filter_string =
-      stream_config.template_config.filter.value_or(pick->filterID());
+      stream_config.template_config.filter.value_or(pick_filter_id);
+  utils::ReplaceEscapedXMLFilterIDChars(template_wf_config.filter_string);
   if (!template_wf_config.filter_string.empty()) {
     template_wf_config.filter_margin_time = stream_config.init_time;
   }
 
   std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
-  std::string rt_filter_id{stream_config.filter.value_or(pick->filterID())};
+  std::string rt_filter_id{stream_config.filter.value_or(pick_filter_id)};
+  utils::ReplaceEscapedXMLFilterIDChars(rt_filter_id);
   // create template related filter (used during real-time stream
   // processing)
   if (!rt_filter_id.empty()) {
