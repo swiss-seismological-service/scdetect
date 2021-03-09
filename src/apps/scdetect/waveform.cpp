@@ -389,9 +389,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
-  trace->setChannelCode(cha_code);
   Process(trace, config, tw);
-
   return trace;
 }
 
