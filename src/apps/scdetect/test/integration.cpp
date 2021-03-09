@@ -94,6 +94,9 @@ Samples dataset{
      /*path_sample=*/"integration-single-stream-simple-with-templ-arrivals"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
+     /*path_sample=*/"integration-single-stream-simple-filtered"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-detector-single-stream-simple"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
