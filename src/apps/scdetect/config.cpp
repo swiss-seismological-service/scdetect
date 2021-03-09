@@ -176,7 +176,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   if (detector_config_.min_arrivals > static_cast<int>(max_arrivals)) {
     SCDETECT_LOG_WARNING_TAGGED(
         detector_id_,
-        "Configured number of minimum arrivals exceets number of configured "
+        "Configured number of minimum arrivals exceeds number of configured "
         "streams (%d > %d). Resetting.",
         detector_config_.min_arrivals, max_arrivals);
     detector_config_.min_arrivals = max_arrivals;
