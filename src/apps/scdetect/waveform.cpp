@@ -367,7 +367,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   std::unique_ptr<RecordSequence> seq{
       utils::make_unique<TimeWindowBuffer>(tw_with_margin)};
   RecordPtr rec;
-  while (rec = inp.next()) {
+  while ((rec = inp.next())) {
     seq->feed(rec.get());
   }
   rs->close();
