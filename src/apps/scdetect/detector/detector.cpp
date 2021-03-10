@@ -341,28 +341,6 @@ void Detector::set_result_callback(const PublishResultCallback &cb) {
   result_callback_ = cb;
 }
 
-void Detector::set_debug_mode(bool debug_mode) { debug_mode_ = debug_mode; }
-
-bool Detector::debug_mode() const { return debug_mode_; }
-
-std::string Detector::DebugString() const {
-  bool first_result{true};
-  std::ostringstream oss;
-  oss << "{\"detectorId\": \"" << id() << "\", \"ccDebugInfo\": [" << std::endl;
-  for (const auto &debug_result_pair : debug_cc_results_) {
-    if (first_result) {
-      first_result = false;
-    } else {
-      oss << ",";
-    }
-
-    oss << "{\"templateId\": \"" << debug_result_pair.first << "\", "
-        << debug_result_pair.second->DebugString() << "}" << std::endl;
-  }
-  oss << "]}";
-  return oss.str();
-}
-
 bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
                                  const std::string &waveform_id_hint) {
   Core::Time latency_endtime;
@@ -571,12 +549,6 @@ void Detector::StoreTemplateResult(
         tw.endTime().iso().c_str(), match_result->coefficient,
         match_result->lag);
 #endif
-
-    if (debug_mode()) {
-      debug_cc_results_.emplace(
-          proc->id(),
-          boost::dynamic_pointer_cast<const Template::MatchResult>(res));
-    }
 
     linker_.Feed(proc, res);
   } else {

@@ -94,8 +94,6 @@ void Detector::Terminate() {
   WaveformProcessor::Terminate();
 }
 
-std::string Detector::DebugString() const { return detector_.DebugString(); }
-
 void Detector::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
   try {
@@ -535,7 +533,6 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 DetectorBuilder &
 DetectorBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
   product_->set_debug_info_dir(path);
-  product_->detector_.set_debug_mode(!path.empty());
   return *this;
 }
 

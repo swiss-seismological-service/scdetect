@@ -108,10 +108,6 @@ public:
     bool no_publish{false};
     std::string path_ep{"-"};
 
-    // Debugging
-    // Defines if debug information (e.g. waveforms, stats etc.) is dumped
-    bool dump_debug_info{false};
-
     DetectorConfig detector_config;
 
     StreamConfig stream_config;

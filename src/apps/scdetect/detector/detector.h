@@ -135,14 +135,6 @@ public:
   using PublishResultCallback = std::function<void(const Result &result)>;
   void set_result_callback(const PublishResultCallback &cb);
 
-  // Enables/disables the debug mode
-  void set_debug_mode(bool debug_mode);
-  // Returns if the debug mode is enabled `true` or disabled `false`,
-  // respectively
-  bool debug_mode() const;
-  // Returns a string with debugging information
-  std::string DebugString() const;
-
 protected:
   using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
   bool PrepareProcessing(TimeWindows &tws, const std::string &waveform_id_hint);
@@ -213,10 +205,6 @@ private:
   boost::optional<Core::TimeSpan> max_latency_;
 
   DataModel::OriginCPtr origin_;
-
-  // Flag indicating if debug mode is enabled/disabled
-  bool debug_mode_{false};
-  std::multimap<std::string, Template::MatchResultCPtr> debug_cc_results_;
 };
 
 } // namespace detector

@@ -200,12 +200,6 @@
       </group>
 
       <group name="Mode">
-        <option flag="" long-flag="debug-info">
-          <description>
-            Dump additional debug information (e.g. waveforms, stats etc.)
-            while processing.
-          </description>
-        </option>
         <option flag="" long-flag="playback" default="false">
           <description>
             Use playback mode that does not restrict the maximum allowed

@@ -93,8 +93,6 @@ public:
   void Reset() override;
   void Terminate() override;
 
-  std::string DebugString() const override;
-
 protected:
   void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
@@ -138,8 +136,6 @@ private:
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
 
-  std::multimap<WaveformStreamID, detector::Template::MatchResultCPtr>
-      debug_cc_results_;
   // List of reference theoretical template arrivals
   std::vector<detector::Arrival> ref_theoretical_template_arrivals_;
 };
