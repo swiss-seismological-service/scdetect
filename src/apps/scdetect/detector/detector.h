@@ -111,11 +111,11 @@ public:
   // Returns the number of registered template processors
   size_t GetProcessorCount() const;
 
-  // Register the processor `proc` for processing buffered data from `buf`
-  // where buffered records are identified by waveform stream identifier
-  // `stream_id`. The processor `proc` is registered together with the template
-  // arrival `arrival`, the template waveform pick offset `pick_offset` and the
-  // sensor location `loc`.
+  // Register the processor `proc` for processing buffered data from `buf` where
+  // records are identified by waveform stream identifier `stream_id`. The
+  // processor `proc` is registered together with the template arrival
+  // `arrival`, the template waveform pick offset `pick_offset` and the sensor
+  // location `loc`.
   void Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
                 const std::shared_ptr<const RecordSequence> &buf,
                 const std::string &stream_id, const Arrival &arrival,
@@ -163,7 +163,7 @@ private:
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
-    // Template processor
+    // The `Template` waveform processor
     std::unique_ptr<detect::WaveformProcessor> processor;
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
