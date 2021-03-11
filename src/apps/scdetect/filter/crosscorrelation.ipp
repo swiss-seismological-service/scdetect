@@ -80,8 +80,6 @@ void CrossCorrelation<TData>::Apply(size_t n_data, TData *data) {
    * loop inside the main cross-correlation loop
    */
 
-  // XXX(damb): This implementation introduces a delay of a single sample.
-
   const auto n{buffer_.capacity()};
   const TData *samples_template_wf{
       TypedArray<TData>::ConstCast(template_wf_->data())->typedData()};
