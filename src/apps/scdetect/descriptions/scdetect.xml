@@ -93,10 +93,8 @@
           <description>
             Maximum defalt inter arrival offset threshold to tolerate when
             associating an arrival to an event. The threshold is only validated
-            in a multi-stream detector setup. The default value corresponds to
-            twice the maximum accuracy `scdetect` is reaching with regards to
-            trimming waveform data. Configuring a negative value disables the
-            arrival offset validation.
+            in a multi-stream detector setup. Configuring a negative value
+            disables the arrival offset validation.
           </description>
         </parameter>
         <parameter name="minimumArrivals" type="int" default="-1">
