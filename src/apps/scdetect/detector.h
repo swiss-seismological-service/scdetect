@@ -76,7 +76,7 @@ public:
   static DetectorBuilder Create(const std::string &detector_id,
                                 const std::string &origin_id);
 
-  void set_filter(Filter *filter) override;
+  void set_filter(Filter *filter, const Core::TimeSpan &init_time) override;
 
   const Core::TimeWindow &processed() const override;
   // Sets the maximal gap length to be tolerated

@@ -21,11 +21,12 @@ Template::Template(const GenericRecordCPtr &template_wf, const std::string &id,
                           : id},
       cross_correlation_{template_wf} {}
 
-void Template::set_filter(Filter *filter) {
+void Template::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
   if (stream_state_.filter)
     delete stream_state_.filter;
 
   stream_state_.filter = filter;
+  init_time_ = init_time;
 }
 
 const Core::TimeWindow &Template::processed() const {

@@ -35,8 +35,10 @@ DetectorBuilder Detector::Create(const std::string &id,
   return DetectorBuilder(id, origin_id);
 }
 
-void Detector::set_filter(Filter *filter) {
-  // XXX(damb): `Detector` does not implement filter facilities.
+void Detector::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
+  // XXX(damb): Currently, `Detector` does neither implement filter nor
+  // init_time facilities.
+}
 
 const Core::TimeWindow &Detector::processed() const {
   return detector_.processed();
@@ -517,7 +519,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   auto template_proc{utils::make_unique<detector::Template>(
       template_wf, stream_config.template_id, product_.get())};
 
-  template_proc->set_filter(rt_template_filter.release());
+  template_proc->set_filter(rt_template_filter.release(),
+                            stream_config.init_time);
 
   TemplateProcessorConfig c{
       std::move(template_proc),

@@ -38,7 +38,8 @@ public:
     Core::TimeWindow time_window;
   };
 
-  void set_filter(Filter *filter) override;
+  void set_filter(Filter *filter,
+                  const Core::TimeSpan &init_time = 0.0) override;
 
   const Core::TimeWindow &processed() const override;
 
