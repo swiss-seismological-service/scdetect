@@ -103,7 +103,6 @@ void Template::Fill(StreamState &stream_state, const Record *record,
   // is in use.
   WaveformProcessor::Fill(stream_state, record, data);
 
-  waveform::Demean(*data);
   cross_correlation_.Apply(data->size(), data->typedData());
 }
 
