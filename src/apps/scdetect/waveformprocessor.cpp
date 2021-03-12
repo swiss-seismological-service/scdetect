@@ -81,6 +81,7 @@ bool WaveformProcessor::Store(StreamState &stream_state, const Record *record) {
 
     stream_state.data_time_window.setEndTime(record->endTime());
   }
+  stream_state.last_sample = (*data)[data->size() - 1];
 
   Fill(stream_state, record, data);
   if (Status::kInProgress < status())
@@ -101,7 +102,6 @@ bool WaveformProcessor::Store(StreamState &stream_state, const Record *record) {
   }
 
   stream_state.last_record = record;
-  stream_state.last_sample = (*data)[data->size() - 1];
 
   return true;
 }
