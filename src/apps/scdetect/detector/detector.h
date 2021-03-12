@@ -108,6 +108,11 @@ public:
   void set_maximum_latency(const boost::optional<Core::TimeSpan> &latency);
   // Returns the maximum allowed data latency configured
   boost::optional<Core::TimeSpan> maximum_latency() const;
+  // Sets the processing chunk size. If configured with `boost::none` as much
+  // data is processed as possible as a single chunk
+  void set_chunk_size(const boost::optional<Core::TimeSpan> &chunk_size);
+  // Returns the processing chunk size
+  boost::optional<Core::TimeSpan> chunk_size() const;
   // Returns the number of registered template processors
   size_t GetProcessorCount() const;
 
@@ -168,6 +173,10 @@ private:
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
+    // The processor dependent chunk size used to feed data to `Template`
+    // waveform processors
+    boost::optional<Core::TimeSpan> chunk_size;
+
     // The sensor location w.r.t. the template `processor`
     SensorLocation sensor_location;
   };
@@ -203,6 +212,8 @@ private:
 
   // Maximum data latency
   boost::optional<Core::TimeSpan> max_latency_;
+  // The configured processing chunk size
+  boost::optional<Core::TimeSpan> chunk_size_;
 
   DataModel::OriginCPtr origin_;
 };

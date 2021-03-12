@@ -9,9 +9,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "seiscomp/core/datetime.h"
-#include "seiscomp/core/timewindow.h"
-#include "seiscomp/datamodel/origin.h"
+#include <seiscomp/core/strings.h>
 
 #include "../log.h"
 #include "../utils.h"
@@ -87,6 +85,19 @@ boost::optional<Core::TimeSpan> Detector::maximum_latency() const {
   return max_latency_;
 }
 
+void Detector::set_chunk_size(
+    const boost::optional<Core::TimeSpan> &chunk_size) {
+  chunk_size_ = chunk_size;
+
+  for (auto &proc_pair : processors_) {
+    proc_pair.second.chunk_size = boost::none;
+  }
+}
+
+boost::optional<Core::TimeSpan> Detector::chunk_size() const {
+  return chunk_size_;
+}
+
 size_t Detector::GetProcessorCount() const { return processors_.size(); }
 
 void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
@@ -107,14 +118,16 @@ void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
   pseudo_arrival.pick.waveform_id = stream_id;
 
   linker_.Register(proc.get(), pseudo_arrival, pick_offset);
-  const auto on_hold_duration{max_latency_.value_or(0.0) + proc->init_time() +
+  const auto on_hold_duration{max_latency_.value_or(0.0) +
+                              chunk_size_.value_or(0.0) +
                               linker_safety_margin_};
+
   if (linker_.on_hold() < on_hold_duration) {
     linker_.set_on_hold(on_hold_duration);
   }
 
   const auto proc_id{proc->id()};
-  ProcessorState p{std::move(proc), buf, loc};
+  ProcessorState p{std::move(proc), buf, boost::none, loc};
   processors_.emplace(proc_id, std::move(p));
 
   processor_idx_.emplace(stream_id, proc_id);
@@ -287,14 +300,13 @@ void Detector::Process(const std::string &waveform_id_hint) {
 
     if (!triggered()) {
       ResetProcessing();
-    } else {
-      ResetProcessors();
     }
   }
 }
 
 void Detector::Reset() {
   linker_.Reset();
+  ResetProcessors();
   ResetProcessing();
 
   status_ = Status::kWaitingForData;
@@ -368,6 +380,10 @@ bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
         continue;
       }
 
+      if (proc.chunk_size && tw.length() < *proc.chunk_size) {
+        continue;
+      }
+
       tws.emplace(proc_id, tw);
     }
   }
@@ -382,27 +398,53 @@ bool Detector::Feed(const TimeWindows &tws) {
       continue;
     }
 
-    auto trace{proc.buffer->contiguousRecord<double>(&tws_pair.second)};
-    waveform::Trim(*trace, tws_pair.second);
-    if (!proc.processor->Feed(trace)) {
+    std::vector<GenericRecordPtr> chunks;
+    auto buffered{proc.buffer->contiguousRecord<double>(&tws_pair.second)};
+    if (!proc.chunk_size) {
+      const auto freq{buffered->samplingFrequency()};
+      // round chunk size to integral number of samples
+      proc.chunk_size =
+          static_cast<int>(chunk_size_.value_or(10.0) * freq) / freq;
 
-      const auto &status{proc.processor->status()};
-      const auto &status_value{proc.processor->status_value()};
-      const auto &tw{tws_pair.second};
-      SCDETECT_LOG_ERROR_TAGGED(
-          proc.processor->id(),
-          "%s: failed to feed data (tw.start=%s, "
-          "tw.end=%s) to processor. Reason: status=%d, "
-          "status_value=%f",
-          trace->streamID().c_str(), tw.startTime().iso().c_str(),
-          tw.endTime().iso().c_str(), utils::as_integer(status), status_value);
-
-      return false;
+      SCDETECT_LOG_DEBUG_PROCESSOR(
+          proc.processor, "[%s] Configured chunk size: %f",
+          buffered->streamID().c_str(), static_cast<double>(*proc.chunk_size));
     }
 
-    if (detect::WaveformProcessor::Status::kWaitingForData ==
-        proc.processor->status()) {
-      return false;
+    auto start{tws_pair.second.startTime() +
+               Core::TimeSpan{0.5 / buffered->samplingFrequency()}};
+    const auto &end{tws_pair.second.endTime()};
+    // chop data into chunks
+    while (start + *proc.chunk_size <= end) {
+      const Core::TimeWindow tw{start, start + *proc.chunk_size};
+      auto chunk{dynamic_cast<GenericRecord *>(buffered->copy())};
+      waveform::Trim(*chunk, tw);
+      start = chunk->endTime() +
+              Core::TimeSpan{0.5 / buffered->samplingFrequency()};
+      chunks.push_back(chunk);
+    }
+
+    // feed data chunk-wise
+    for (const auto &chunk : chunks) {
+      if (!proc.processor->Feed(chunk.get())) {
+        const auto &status{proc.processor->status()};
+        const auto &status_value{proc.processor->status_value()};
+        const auto &tw{tws_pair.second};
+        SCDETECT_LOG_ERROR_TAGGED(proc.processor->id(),
+                                  "%s: failed to feed data (tw.start=%s, "
+                                  "tw.end=%s) to processor. Reason: status=%d, "
+                                  "status_value=%f",
+                                  chunk->streamID().c_str(),
+                                  tw.startTime().iso().c_str(),
+                                  tw.endTime().iso().c_str(),
+                                  utils::as_integer(status), status_value);
+
+        return false;
+      }
+
+      if (proc.processor->finished()) {
+        return false;
+      }
     }
   }
 
@@ -499,8 +541,6 @@ void Detector::PrepareResult(const Linker::Result &linker_res,
 
 void Detector::ResetProcessing() {
   current_result_ = boost::none;
-
-  ResetProcessors();
   // enable processors
   for (auto &proc_pair : processors_) {
     proc_pair.second.processor->enable();
@@ -536,13 +576,11 @@ void Detector::StoreTemplateResult(
   auto &p{processors_.at(proc->id())};
   const auto &status{p.processor->status()};
   const auto &status_value{p.processor->status_value()};
-  if (detect::WaveformProcessor::Status::kFinished == status &&
-      100 == status_value) {
-
+  if (!p.processor->finished()) {
 #ifdef SCDETECT_DEBUG
     const auto &match_result{
         boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
-    const auto &tw{proc->processed()};
+    const auto &tw{match_result->time_window};
     SCDETECT_LOG_DEBUG_PROCESSOR(
         proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f",
         rec->streamID().c_str(), tw.startTime().iso().c_str(),
@@ -551,12 +589,15 @@ void Detector::StoreTemplateResult(
 #endif
 
     linker_.Feed(proc, res);
+
   } else {
-    SCDETECT_LOG_WARNING_PROCESSOR(
-        this,
+    auto msg{Core::stringify(
         "Failed to match template (proc_id=%s). Reason : status=%d, "
         "status_value=%f",
-        p.processor->id().c_str(), utils::as_integer(status), status_value);
+        p.processor->id().c_str(), utils::as_integer(status), status_value)};
+    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s", msg.c_str());
+
+    throw TemplateMatchingError{msg};
   }
 }
 

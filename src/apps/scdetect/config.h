@@ -115,6 +115,10 @@ struct DetectorConfig {
   // - setting a negative value disables the validation i.e. all arrivals must
   // be available (default)
   int min_arrivals{-1};
+  // Defines the chunk size in seconds which is used to feed data to template
+  // waveform processors
+  // - setting a negative value forces a default chunk size of 10s
+  double chunk_size{10};
 
   bool IsValid(size_t num_stream_configs) const;
 };

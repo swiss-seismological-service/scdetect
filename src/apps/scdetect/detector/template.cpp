@@ -73,7 +73,8 @@ void Template::Process(StreamState &stream_state, const Record *record,
         record->startTime() + Core::TimeSpan{record->timeWindow().length() * t};
   }
 
-  double coefficient{std::nan("")}, lag_idx{0};
+  double coefficient{std::nan("")};
+  size_t lag_idx{0};
   // determine the first maximum correlation coefficient
   for (size_t i{static_cast<size_t>(start_idx)}; i < n; ++i) {
     const double v{filtered_data[i]};
@@ -85,14 +86,17 @@ void Template::Process(StreamState &stream_state, const Record *record,
 
   // take cross-correlation filter delay into account i.e. the template
   // processor's result is referring to a time window shifted to the past
-  const auto t{
-      static_cast<double>(lag_idx - cross_correlation_.template_size()) /
-      (n + cross_correlation_.template_size())};
+  const auto match_idx{
+      static_cast<int>(lag_idx - cross_correlation_.template_size() + 1)};
+  const auto t{static_cast<double>(match_idx) / n};
   const Core::TimeSpan template_length{cross_correlation_.template_length()};
-  const Core::TimeWindow tw{start - template_length,
-                            record->endTime() - template_length};
+  const Core::TimeWindow tw{start, record->endTime()};
 
-  auto result{utils::make_smart<MatchResult>(coefficient, tw.length() * t, tw)};
+  auto result{utils::make_smart<MatchResult>()};
+  result->coefficient = coefficient;
+  result->lag = tw.length() * t;
+  result->time_window = tw;
+
   EmitResult(record, result.get());
 }
 
@@ -102,7 +106,7 @@ void Template::Fill(StreamState &stream_state, const Record *record,
   // TODO(damb): Allow target sampling frequency to be configurable if filter
   // is in use.
   WaveformProcessor::Fill(stream_state, record, data);
-
+  // cross-correlate filtered data
   cross_correlation_.Apply(data->size(), data->typedData());
 }
 

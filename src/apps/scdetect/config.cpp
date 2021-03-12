@@ -135,6 +135,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       "arrivalOffsetThreshold", detector_defaults.arrival_offset_threshold);
   detector_config_.min_arrivals =
       pt.get<int>("minimumArrivals", detector_defaults.min_arrivals);
+  detector_config_.chunk_size =
+      pt.get<double>("chunkSize", detector_defaults.chunk_size);
 
   // patch stream defaults with detector config globals
   auto patched_stream_defaults{stream_defaults};

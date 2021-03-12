@@ -590,6 +590,12 @@ void DetectorBuilder::Finalize() {
     product_->detector_.set_min_arrivals(cfg.min_arrivals);
   }
 
+  if (cfg.chunk_size < 0) {
+    product_->detector_.set_chunk_size(boost::none);
+  } else {
+    product_->detector_.set_chunk_size(Core::TimeSpan{cfg.chunk_size});
+  }
+
   std::unordered_set<std::string> used_picks;
   for (auto &proc_config_pair : processor_configs_) {
     const auto &stream_id{proc_config_pair.first};
