@@ -116,9 +116,6 @@ struct DetectorConfig {
   // be available (default)
   int min_arrivals{-1};
 
-  // Processing interval in seconds
-  /* double processing_interval = settings::kDefaultProcessingInterval; */
-
   bool IsValid(size_t num_stream_configs) const;
 };
 
