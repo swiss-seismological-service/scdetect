@@ -379,8 +379,7 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
-  auto trace{
-      utils::make_smart<GenericRecord>(*seq->contiguousRecord<double>())};
+  GenericRecordPtr trace{seq->contiguousRecord<double>()};
   if (!trace) {
     throw BaseException{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "

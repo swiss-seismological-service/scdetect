@@ -399,7 +399,8 @@ bool Detector::Feed(const TimeWindows &tws) {
     }
 
     std::vector<GenericRecordPtr> chunks;
-    auto buffered{proc.buffer->contiguousRecord<double>(&tws_pair.second)};
+    std::unique_ptr<const GenericRecord> buffered{
+        proc.buffer->contiguousRecord<double>(&tws_pair.second)};
     if (!proc.chunk_size) {
       const auto freq{buffered->samplingFrequency()};
       // round chunk size to integral number of samples
