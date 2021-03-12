@@ -597,8 +597,8 @@ void DetectorBuilder::Finalize() {
 
     // initialize buffer
     auto &buf{product_->stream_configs_[stream_id].stream_buffer};
-    buf = std::make_shared<RingBuffer>(
-        product_->init_time() * settings::kBufferMultiplicator, 0);
+    buf = std::make_shared<RingBuffer>(Core::TimeSpan{
+        std::max(30.0, cfg.chunk_size) * settings::kBufferMultiplicator});
 
     const auto &meta{proc_config.metadata};
     boost::optional<std::string> phase_hint;
