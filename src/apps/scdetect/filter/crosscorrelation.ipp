@@ -118,9 +118,13 @@ void CrossCorrelation<TData>::Apply(size_t n_data, TData *data) {
       if (fe & FE_UNDERFLOW)
         exceptions.push_back("FE_UNDERFLOW");
 
-      std::string msg{"Floating point exception during cross-correlation: "};
+      std::string msg{
+          "Floating point exception during cross-correlation (sample_idx=" +
+          std::to_string(i) + ", sample=" + std::to_string(new_sample) + "): "};
       msg += boost::algorithm::join(exceptions, ", ");
       SCDETECT_LOG_WARNING(msg.c_str());
+
+      std::feclearexcept(FE_ALL_EXCEPT);
     }
 
     data[i] =
