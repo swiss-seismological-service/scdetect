@@ -1,10 +1,20 @@
 # SCDetect - Computationally efficient earthquake detection
 
+## Content
+
+- [About](#about)
+- [Installation](#compiling-and-installation)
+- [Tests](#tests)
+- [Issues](#issues)
+- [Contributions](#contributions)
+- [License](#license)
+
+
 ## About
 
 TODO
 
-## Installation
+## Compiling and Installation
 
 Get a copy of
 [SeisComP/seiscomp](https://github.com/SeisComP/seiscomp):
