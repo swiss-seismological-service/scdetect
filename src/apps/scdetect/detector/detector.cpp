@@ -592,10 +592,10 @@ void Detector::StoreTemplateResult(
     linker_.Feed(proc, res);
 
   } else {
-    auto msg{Core::stringify(
-        "Failed to match template (proc_id=%s). Reason : status=%d, "
-        "status_value=%f",
-        p.processor->id().c_str(), utils::as_integer(status), status_value)};
+    auto msg{Core::stringify("Failed to match template (proc_id=%s). Reason: "
+                             "status=%d, status_value=%f",
+                             p.processor->id().c_str(),
+                             utils::as_integer(status), status_value)};
     SCDETECT_LOG_WARNING_PROCESSOR(this, "%s", msg.c_str());
 
     throw TemplateMatchingError{msg};
