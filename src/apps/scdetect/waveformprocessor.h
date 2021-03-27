@@ -11,7 +11,6 @@
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/math/filter.h>
-#include <seiscomp/processing/stream.h>
 
 #include "processor.h"
 
@@ -199,20 +198,8 @@ protected:
   void set_status(Status status, double value);
 
   void set_debug_info_dir(const boost::filesystem::path &path);
-  // Enables saturation check of absolute values of incoming samples and sets
-  // the status to DataClipped if checked positive. The data is checked in
-  // the Fill method. If derived classes reimplement this method without
-  // calling this implementation, the check is not performed.
-  void set_saturation_check(bool e);
-  // Returns whether saturation check is enabled
-  bool saturation_check() const;
-  // Sets the saturation threshold. The default is -1
-  void set_saturation_threshold(double t);
 
   bool enabled_{true};
-
-  bool saturation_check_{false};
-  double saturation_threshold_{-1};
 
   // WaveformProcessor initialization time
   Core::TimeSpan init_time_;

@@ -117,17 +117,10 @@ void WaveformProcessor::Fill(StreamState &stream_state, const Record *record,
   const auto n{static_cast<size_t>(data->size())};
   stream_state.received_samples += n;
 
-  auto samples{data->typedData()};
-  if (saturation_check_) {
-    for (size_t i = 0; i < n; ++i) {
-      if (fabs(samples[i]) >= saturation_threshold_) {
-        set_status(WaveformProcessor::Status::kDataClipped, samples[i]);
-        break;
-      }
-    }
-  }
-  if (stream_state.filter)
+  if (stream_state.filter) {
+    auto samples{data->typedData()};
     stream_state.filter->apply(n, samples);
+  }
 }
 
 bool WaveformProcessor::EnoughDataReceived(
@@ -179,14 +172,6 @@ void WaveformProcessor::set_status(Status status, double value) {
 void WaveformProcessor::set_debug_info_dir(
     const boost::filesystem::path &path) {
   debug_info_dir_ = path;
-}
-
-void WaveformProcessor::set_saturation_check(bool e) { saturation_check_ = e; }
-
-bool WaveformProcessor::saturation_check() const { return saturation_check_; }
-
-void WaveformProcessor::set_saturation_threshold(double thres) {
-  saturation_threshold_ = thres;
 }
 
 } // namespace detect
