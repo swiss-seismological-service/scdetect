@@ -596,7 +596,6 @@ void Detector::StoreTemplateResult(
                              "status=%d, status_value=%f",
                              p.processor->id().c_str(),
                              utils::as_integer(status), status_value)};
-    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s", msg.c_str());
 
     throw TemplateMatchingError{msg};
   }
