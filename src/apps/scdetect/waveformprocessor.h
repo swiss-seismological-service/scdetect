@@ -11,7 +11,6 @@
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/math/filter.h>
-#include <seiscomp/processing/stream.h>
 
 #include "processor.h"
 
