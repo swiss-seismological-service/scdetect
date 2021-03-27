@@ -26,7 +26,8 @@ void Template::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
     delete stream_state_.filter;
 
   stream_state_.filter = filter;
-  init_time_ = init_time;
+  init_time_ =
+      std::max(init_time, Core::TimeSpan{cross_correlation_.template_length()});
 }
 
 const Core::TimeWindow &Template::processed() const {
