@@ -101,8 +101,8 @@ void Detector::Process(StreamState &stream_state, const Record *record,
   try {
     detector_.Process(record->streamID());
   } catch (detector::Detector::ProcessingError &e) {
-    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s", record->streamID().c_str(),
-                                   e.what());
+    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
+                                   record->streamID().c_str(), e.what());
     detector_.Reset();
   } catch (std::exception &e) {
     SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unhandled exception: %s",
