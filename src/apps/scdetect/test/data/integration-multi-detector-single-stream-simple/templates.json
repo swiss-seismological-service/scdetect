@@ -17,6 +17,7 @@
                   "templateWaveformEnd": 2,
                   "waveformId": "CH.GRIMS..HHZ",
                   "templateWaveformId": "CH.GRIMS..HHZ",
+                  "filter": "",
                   "templateFilter": "",
                   "templatePhase": "Pg"
               }
@@ -40,6 +41,7 @@
                   "templateWaveformEnd": 2,
                   "waveformId": "CH.HASLI..HHZ",
                   "templateWaveformId": "CH.HASLI..HHZ",
+                  "filter": "",
                   "templateFilter": "",
                   "templatePhase": "Pg"
               }

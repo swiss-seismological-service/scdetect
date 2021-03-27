@@ -17,6 +17,7 @@ namespace detect {
 namespace utils {
 
 const std::string CreateUUID();
+void ReplaceEscapedXMLFilterIDChars(std::string &filter_id);
 
 template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
 

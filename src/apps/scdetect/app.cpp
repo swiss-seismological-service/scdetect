@@ -293,14 +293,6 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!config_.stream_config.filter.empty()) {
-    std::string err;
-    if (!config::ValidateFilter(config_.stream_config.filter, err)) {
-      SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
-      return false;
-    }
-  }
-
   if (!config::ValidateArrivalOffsetThreshold(
           config_.detector_config.arrival_offset_threshold)) {
     SCDETECT_LOG_ERROR("Invalid configuration: 'arrivalOffsetThreshold': %f. "
@@ -323,15 +315,6 @@ bool Application::validateParameters() {
         config_.stream_config.template_config.wf_start,
         config_.stream_config.template_config.wf_end);
     return false;
-  }
-
-  if (!config_.stream_config.template_config.filter.empty()) {
-    std::string err;
-    if (!config::ValidateFilter(config_.stream_config.template_config.filter,
-                                err)) {
-      SCDETECT_LOG_WARNING("Invalid configuration: 'filter': %s", err.c_str());
-      return false;
-    }
   }
 
   return true;
@@ -408,10 +391,6 @@ bool Application::run() {
     return true;
   }
 
-  if (config_.dump_debug_info) {
-    SCDETECT_LOG_DEBUG("Dumping debug info enabled.");
-  }
-
   if (commandline().hasOption("ep")) {
     ep_ = utils::make_smart<DataModel::EventParameters>();
   }
@@ -446,28 +425,6 @@ void Application::done() {
       if (detector_ids.find(detector_id) == detector_ids.end()) {
         detector_ids.emplace(detector->id());
         detector->Terminate();
-
-        // optionally, create debug info files
-        if (config_.dump_debug_info) {
-          const auto path_debug_info{detector->debug_info_dir()};
-          const auto fpath{path_debug_info / settings::kFnameDebugInfo};
-
-          if (!Util::pathExists(path_debug_info.string())) {
-            if (!Util::createPath(path_debug_info.string())) {
-              SCDETECT_LOG_WARNING("Failed to create directory: %s",
-                                   path_debug_info.c_str());
-              continue;
-            }
-          }
-
-          std::ofstream ofs{fpath.string()};
-          if (ofs.is_open()) {
-            ofs << detector->DebugString();
-            ofs.close();
-          } else {
-            SCDETECT_LOG_WARNING("Failed to create file: %s", fpath.c_str());
-          }
-        }
       }
     }
 
@@ -762,10 +719,8 @@ void Application::SetupConfigurationOptions() {
   NEW_OPT(config_.stream_config.template_config.wf_start,
           "template.waveformStart");
   NEW_OPT(config_.stream_config.template_config.wf_end, "template.waveformEnd");
-  NEW_OPT(config_.stream_config.template_config.filter, "template.filter");
 
   NEW_OPT(config_.stream_config.init_time, "processing.initTime");
-  NEW_OPT(config_.stream_config.filter, "processing.filter");
   NEW_OPT(config_.detector_config.gap_interpolation,
           "processing.gapInterpolation");
 
@@ -807,8 +762,6 @@ void Application::SetupConfigurationOptions() {
               "requesting records from the configured archive recordstream; "
               "implicitly enables reprocessing/playback mode");
 
-  NEW_OPT_CLI(config_.dump_debug_info, "Mode", "debug-info",
-              "dump additional debug information (e.g. waveforms, stats etc.)");
   NEW_OPT_CLI(config_.playback_config.enabled, "Mode", "playback",
               "Use playback mode that does not restrict the maximum allowed "
               "data latency");
@@ -877,26 +830,11 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
         SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
                            tc.detector_id().c_str());
 
-        if (!IsUniqueProcessorId(tc.detector_id()) && config_.dump_debug_info) {
-          throw ConfigError{"Non unique detector processor identifier: " +
-                            tc.detector_id()};
-        }
-
         auto detector_builder{
             std::move(Detector::Create(tc.detector_id(), tc.origin_id())
                           .set_config(tc.detector_config(),
                                       config_.playback_config.enabled)
                           .set_eventparameters())};
-
-        boost::filesystem::path path_debug_info;
-        if (config_.dump_debug_info) {
-          Environment *env{Environment::Instance()};
-          boost::filesystem::path sc_install_dir{env->installDir()};
-          path_debug_info =
-              sc_install_dir / settings::kPathTemp / tc.detector_id();
-
-          detector_builder.set_debug_info_dir(path_debug_info);
-        }
 
         std::vector<std::string> stream_ids;
         for (const auto &stream_config_pair : tc) {
@@ -904,7 +842,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           try {
             detector_builder.set_stream(stream_config_pair.first,
                                         stream_config_pair.second,
-                                        waveform_handler, path_debug_info);
+                                        waveform_handler);
           } catch (builder::NoSensorLocation &e) {
             if (config_.skip_template_if_no_sensor_location_data) {
               SCDETECT_LOG_WARNING(

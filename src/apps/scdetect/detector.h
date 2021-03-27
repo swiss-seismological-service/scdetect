@@ -25,8 +25,8 @@
 #include "detector/arrival.h"
 #include "detector/detector.h"
 #include "detector/pot.h"
+#include "detector/template.h"
 #include "settings.h"
-#include "template.h"
 #include "waveform.h"
 #include "waveformprocessor.h"
 
@@ -76,8 +76,9 @@ public:
   static DetectorBuilder Create(const std::string &detector_id,
                                 const std::string &origin_id);
 
-  void set_filter(Filter *filter) override;
+  void set_filter(Filter *filter, const Core::TimeSpan &init_time) override;
 
+  const Core::TimeWindow &processed() const override;
   // Sets the maximal gap length to be tolerated
   void set_gap_tolerance(const Core::TimeSpan &duration);
   // Returns the gap tolerance
@@ -91,8 +92,6 @@ public:
   bool Feed(const Record *rec) override;
   void Reset() override;
   void Terminate() override;
-
-  std::string DebugString() const override;
 
 protected:
   void Process(StreamState &stream_state, const Record *record,
@@ -137,7 +136,6 @@ private:
   DataModel::EventPtr event_;
   DataModel::MagnitudePtr magnitude_;
 
-  std::multimap<WaveformStreamID, Template::MatchResultCPtr> debug_cc_results_;
   // List of reference theoretical template arrivals
   std::vector<detector::Arrival> ref_theoretical_template_arrivals_;
 };

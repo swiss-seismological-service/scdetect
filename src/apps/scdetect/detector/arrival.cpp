@@ -1,6 +1,6 @@
 #include "arrival.h"
 
-#include <boost/container_hash/hash_fwd.hpp>
+#include <boost/functional/hash.hpp>
 
 namespace Seiscomp {
 namespace detect {

@@ -22,7 +22,6 @@
 #include "log.h"
 #include "processor.h"
 #include "settings.h"
-#include "template.h"
 #include "utils.h"
 
 namespace Seiscomp {
@@ -36,8 +35,13 @@ DetectorBuilder Detector::Create(const std::string &id,
   return DetectorBuilder(id, origin_id);
 }
 
-void Detector::set_filter(Filter *filter) {
-  // XXX(damb): `Detector` does not implement filter facilities.
+void Detector::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
+  // XXX(damb): Currently, `Detector` does neither implement filter nor
+  // init_time facilities.
+}
+
+const Core::TimeWindow &Detector::processed() const {
+  return detector_.processed();
 }
 
 void Detector::set_gap_tolerance(const Core::TimeSpan &duration) {
@@ -57,8 +61,9 @@ bool Detector::Feed(const Record *record) {
     return false;
 
   auto it{stream_configs_.find(record->streamID())};
-  if (it == stream_configs_.end())
+  if (it == stream_configs_.end()) {
     return false;
+  }
 
   return Store(it->second.stream_state, record);
 }
@@ -91,15 +96,13 @@ void Detector::Terminate() {
   WaveformProcessor::Terminate();
 }
 
-std::string Detector::DebugString() const { return detector_.DebugString(); }
-
 void Detector::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
   try {
     detector_.Process(record->streamID());
   } catch (detector::Detector::ProcessingError &e) {
-    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s", record->streamID().c_str(),
-                                   e.what());
+    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
+                                   record->streamID().c_str(), e.what());
     detector_.Reset();
   } catch (std::exception &e) {
     SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unhandled exception: %s",
@@ -114,8 +117,6 @@ void Detector::Process(StreamState &stream_state, const Record *record,
   }
 
   if (!finished()) {
-    merge_processed(detector_.processed());
-
     if (detection_) {
       auto detection{utils::make_smart<Detection>()};
       PrepareDetection(detection, *detection_);
@@ -468,19 +469,27 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // set template related filter (used for template waveform processing)
   WaveformHandlerIface::ProcessingConfig template_wf_config;
-  template_wf_config.filter_string = stream_config.template_config.filter;
+  auto pick_filter_id{pick->filterID()};
+  template_wf_config.filter_string =
+      stream_config.template_config.filter.value_or(pick_filter_id);
+  utils::ReplaceEscapedXMLFilterIDChars(template_wf_config.filter_string);
+  if (!template_wf_config.filter_string.empty()) {
+    template_wf_config.filter_margin_time = stream_config.init_time;
+  }
 
+  std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
+  std::string rt_filter_id{stream_config.filter.value_or(pick_filter_id)};
+  utils::ReplaceEscapedXMLFilterIDChars(rt_filter_id);
   // create template related filter (used during real-time stream
   // processing)
-  std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
-  if (!stream_config.filter.empty()) {
+  if (!rt_filter_id.empty()) {
     std::string err;
     rt_template_filter.reset(
-        WaveformProcessor::Filter::Create(stream_config.filter, &err));
+        WaveformProcessor::Filter::Create(rt_filter_id, &err));
 
     if (!rt_template_filter) {
-      auto msg{log_prefix + std::string{"Compiling filter ("} +
-               stream_config.filter + std::string{") failed: "} + err};
+      auto msg{log_prefix + "Compiling filter (" + rt_filter_id +
+               ") failed: " + err};
 
       SCDETECT_LOG_WARNING("%s", msg.c_str());
       throw builder::BaseException{msg};
@@ -488,14 +497,30 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   }
 
   Core::Time start, end;
+  GenericRecordCPtr template_wf;
+  try {
+    template_wf = waveform_handler->Get(
+        template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
+        template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
+        wf_start, wf_end, template_wf_config);
+
+    start = template_wf->startTime();
+    end = template_wf->endTime();
+
+  } catch (WaveformHandler::NoData &e) {
+    throw builder::NoWaveformData{
+        std::string{"Failed to load template waveform: "} + e.what()};
+  } catch (std::exception &e) {
+    throw builder::BaseException{
+        std::string{"Failed to load template waveform: "} + e.what()};
+  }
+
   // template processor
-  auto template_proc{
-      Template::Create(stream_config.template_id, product_.get())
-          .set_filter(rt_template_filter.release(), stream_config.init_time)
-          .set_waveform(waveform_handler, template_stream_id, wf_start, wf_end,
-                        template_wf_config, start, end)
-          .set_debug_info_dir(path_debug_info)
-          .Build()};
+  auto template_proc{utils::make_unique<detector::Template>(
+      template_wf, stream_config.template_id, product_.get())};
+
+  template_proc->set_filter(rt_template_filter.release(),
+                            stream_config.init_time);
 
   TemplateProcessorConfig c{
       std::move(template_proc),
@@ -511,7 +536,6 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 DetectorBuilder &
 DetectorBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
   product_->set_debug_info_dir(path);
-  product_->detector_.set_debug_mode(!path.empty());
   return *this;
 }
 
@@ -566,6 +590,12 @@ void DetectorBuilder::Finalize() {
     product_->detector_.set_min_arrivals(cfg.min_arrivals);
   }
 
+  if (cfg.chunk_size < 0) {
+    product_->detector_.set_chunk_size(boost::none);
+  } else {
+    product_->detector_.set_chunk_size(Core::TimeSpan{cfg.chunk_size});
+  }
+
   std::unordered_set<std::string> used_picks;
   for (auto &proc_config_pair : processor_configs_) {
     const auto &stream_id{proc_config_pair.first};
@@ -573,8 +603,8 @@ void DetectorBuilder::Finalize() {
 
     // initialize buffer
     auto &buf{product_->stream_configs_[stream_id].stream_buffer};
-    buf = std::make_shared<RingBuffer>(
-        product_->init_time() * settings::kBufferMultiplicator, 0);
+    buf = std::make_shared<RingBuffer>(Core::TimeSpan{
+        std::max(30.0, cfg.chunk_size) * settings::kBufferMultiplicator});
 
     const auto &meta{proc_config.metadata};
     boost::optional<std::string> phase_hint;

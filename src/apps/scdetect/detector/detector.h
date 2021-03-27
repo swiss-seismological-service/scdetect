@@ -19,9 +19,9 @@
 
 #include "../exception.h"
 #include "../processor.h"
-#include "../template.h"
 #include "arrival.h"
 #include "linker.h"
+#include "template.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -108,14 +108,19 @@ public:
   void set_maximum_latency(const boost::optional<Core::TimeSpan> &latency);
   // Returns the maximum allowed data latency configured
   boost::optional<Core::TimeSpan> maximum_latency() const;
+  // Sets the processing chunk size. If configured with `boost::none` as much
+  // data is processed as possible as a single chunk
+  void set_chunk_size(const boost::optional<Core::TimeSpan> &chunk_size);
+  // Returns the processing chunk size
+  boost::optional<Core::TimeSpan> chunk_size() const;
   // Returns the number of registered template processors
   size_t GetProcessorCount() const;
 
-  // Register the processor `proc` for processing buffered data from `buf`
-  // where buffered records are identified by waveform stream identifier
-  // `stream_id`. The processor `proc` is registered together with the template
-  // arrival `arrival`, the template waveform pick offset `pick_offset` and the
-  // sensor location `loc`.
+  // Register the processor `proc` for processing buffered data from `buf` where
+  // records are identified by waveform stream identifier `stream_id`. The
+  // processor `proc` is registered together with the template arrival
+  // `arrival`, the template waveform pick offset `pick_offset` and the sensor
+  // location `loc`.
   void Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
                 const std::shared_ptr<const RecordSequence> &buf,
                 const std::string &stream_id, const Arrival &arrival,
@@ -134,14 +139,6 @@ public:
 
   using PublishResultCallback = std::function<void(const Result &result)>;
   void set_result_callback(const PublishResultCallback &cb);
-
-  // Enables/disables the debug mode
-  void set_debug_mode(bool debug_mode);
-  // Returns if the debug mode is enabled `true` or disabled `false`,
-  // respectively
-  bool debug_mode() const;
-  // Returns a string with debugging information
-  std::string DebugString() const;
 
 protected:
   using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
@@ -171,13 +168,14 @@ private:
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
-    // Template processor
+    // The `Template` waveform processor
     std::unique_ptr<detect::WaveformProcessor> processor;
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
-    // The template processor's time window processed
-    Core::TimeWindow processed;
+    // The processor dependent chunk size used to feed data to `Template`
+    // waveform processors
+    boost::optional<Core::TimeSpan> chunk_size;
 
     // The sensor location w.r.t. the template `processor`
     SensorLocation sensor_location;
@@ -214,12 +212,10 @@ private:
 
   // Maximum data latency
   boost::optional<Core::TimeSpan> max_latency_;
+  // The configured processing chunk size
+  boost::optional<Core::TimeSpan> chunk_size_;
 
   DataModel::OriginCPtr origin_;
-
-  // Flag indicating if debug mode is enabled/disabled
-  bool debug_mode_{false};
-  std::multimap<std::string, Template::MatchResultCPtr> debug_cc_results_;
 };
 
 } // namespace detector

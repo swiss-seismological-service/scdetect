@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
@@ -42,9 +43,9 @@ struct StreamConfig {
     double wf_end{2};
 
     // Defines a template specific waveform stream id
-    std::string wf_stream_id{""};
+    std::string wf_stream_id;
     // Defines a template specific filter
-    std::string filter{""};
+    boost::optional<std::string> filter;
   };
   StreamConfig();
   StreamConfig(const std::string &wf_stream_id, const std::string &filter,
@@ -59,10 +60,11 @@ struct StreamConfig {
   // Template processor identifier
   std::string template_id{utils::CreateUUID()};
 
-  std::string wf_stream_id{""};
+  std::string wf_stream_id;
 
   double init_time{60};
-  std::string filter{""};
+  // Defines the processing specific filter
+  boost::optional<std::string> filter;
 
   TemplateStreamConfig template_config;
 };
@@ -106,8 +108,6 @@ struct DetectorConfig {
   // Maximum inter arrival offset threshold in seconds to tolerate when
   // associating an arrival to an event
   // - the threshold is only validated for multi-stream detectors
-  // - the default value corresponds to twice the maximum accuracy `scdetect`
-  // is reaching with regards to trimming waveform data
   // - setting a negative value disables the arrival offset validation
   double arrival_offset_threshold{2.0e-6};
   // Defines the minimum number of arrivals which must be part of an event to be
@@ -115,9 +115,10 @@ struct DetectorConfig {
   // - setting a negative value disables the validation i.e. all arrivals must
   // be available (default)
   int min_arrivals{-1};
-
-  // Processing interval in seconds
-  /* double processing_interval = settings::kDefaultProcessingInterval; */
+  // Defines the chunk size in seconds which is used to feed data to template
+  // waveform processors
+  // - setting a negative value forces a default chunk size of 10s
+  double chunk_size{10};
 
   bool IsValid(size_t num_stream_configs) const;
 };

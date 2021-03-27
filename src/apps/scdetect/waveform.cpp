@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <seiscomp/core/strings.h>
 #include <seiscomp/io/recordinput.h>
@@ -267,6 +268,41 @@ bool Read(GenericRecord &trace, std::istream &in) {
 WaveformHandlerIface::BaseException::BaseException()
     : Exception{"base waveform handler exception"} {}
 
+const double WaveformHandler::download_margin_{2};
+
+void WaveformHandlerIface::Process(const GenericRecordPtr &trace,
+                                   const ProcessingConfig &config,
+                                   const Core::TimeWindow &tw_trim) const {
+
+  if (config.demean) {
+    waveform::Demean(*trace);
+  }
+
+  if (config.resample_frequency) {
+    waveform::Resample(*trace, config.resample_frequency, true);
+  }
+
+  if (!config.filter_string.empty()) {
+    if (!waveform::Filter(*trace, config.filter_string)) {
+      throw BaseException{Core::stringify(
+          "%s: Filtering failed with filter: filter=%s,"
+          "start=%s, end=%s",
+          trace->streamID().c_str(), config.filter_string.c_str(),
+          trace->startTime().iso().c_str(), trace->endTime().iso().c_str())};
+    }
+  }
+
+  if (tw_trim) {
+    if (!waveform::Trim(*trace, tw_trim)) {
+      throw BaseException{Core::stringify(
+          "%s: Incomplete trace; not enough data for requested time:"
+          "start=%s, end=%s",
+          trace->streamID().c_str(), tw_trim.startTime().iso().c_str(),
+          tw_trim.endTime().iso().c_str())};
+    }
+  }
+}
+
 WaveformHandler::NoData::NoData() : BaseException{"no data avaiable"} {}
 
 WaveformHandler::WaveformHandler(const std::string &record_stream_url)
@@ -318,14 +354,20 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
   Core::TimeSpan download_margin{download_margin_};
   Core::TimeWindow tw_with_margin{tw.startTime() - download_margin,
                                   tw.endTime() + download_margin};
+  if (!config.filter_string.empty()) {
+    Core::TimeSpan margin{config.filter_margin_time};
+    tw_with_margin.setStartTime(tw_with_margin.startTime() - margin);
+    tw_with_margin.setEndTime(tw_with_margin.endTime() + margin);
+  }
 
   rs->setTimeWindow(tw_with_margin);
   rs->addStream(net_code, sta_code, loc_code, cha_code);
 
   IO::RecordInput inp{rs.get(), Array::DOUBLE, Record::DATA_ONLY};
-  std::unique_ptr<RecordSequence> seq{utils::make_unique<TimeWindowBuffer>(tw)};
+  std::unique_ptr<RecordSequence> seq{
+      utils::make_unique<TimeWindowBuffer>(tw_with_margin)};
   RecordPtr rec;
-  while (rec = inp.next()) {
+  while ((rec = inp.next())) {
     seq->feed(rec.get());
   }
   rs->close();
@@ -337,9 +379,8 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
-  // merge RecordSequence into GenericRecord
-  auto trace{utils::make_smart<GenericRecord>()};
-  if (!waveform::Merge(*trace, *seq)) {
+  GenericRecordPtr trace{seq->contiguousRecord<double>()};
+  if (!trace) {
     throw BaseException{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "
         "end=%s",
@@ -347,17 +388,11 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
-  trace->setChannelCode(cha_code);
-  if (!waveform::Trim(*trace, tw)) {
-    throw BaseException{Core::stringify(
-        "%s.%s.%s.%s: Incomplete trace; not enough data for requested time:"
-        "start=%s, end=%s",
-        net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
-        tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
-  }
-
+  Process(trace, config, tw);
   return trace;
 }
+
+const std::string Cached::cache_key_sep_{"."};
 
 Cached::Cached(WaveformHandlerIfacePtr waveform_handler, bool raw)
     : waveform_handler_(waveform_handler), raw_(raw) {}
@@ -415,31 +450,36 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
   GenericRecordCPtr trace{Get(cache_key)};
   if (!trace) {
     cached = false;
-    trace = waveform_handler_->Get(net_code, sta_code, loc_code, cha_code, tw,
-                                   config);
+
+    ProcessingConfig disabled{config};
+    disabled.filter_string = "";
+    disabled.resample_frequency = 0;
+    disabled.demean = false;
+
+    Core::TimeWindow corrected{tw};
+    if (!config.filter_string.empty()) {
+      const Core::TimeSpan margin{config.filter_margin_time};
+      corrected.setStartTime(tw.startTime() - margin);
+      corrected.setEndTime(tw.endTime() + margin);
+    }
+    trace = waveform_handler_->Get(net_code, sta_code, loc_code, cha_code,
+                                   corrected, disabled);
   }
 
+  // cache the raw data
   if (!cached && !CacheProcessed()) {
     SetCache(cache_key, trace);
+    // TODO (damb): Find a better solution! -> Ideally,
+    // `WaveformHandlerIface::Get()` would return a pointer of type
+    // `GenericRecordPtr` i.e. a non-const pointer.
+
+    // make sure we do not modified the data cached i.e. create a copy
+    trace = utils::make_smart<const GenericRecord>(*trace);
   }
 
-  auto trace_ptr = const_cast<GenericRecord *>(trace.get());
-  if (config.demean)
-    waveform::Demean(*trace_ptr);
+  Process(const_cast<GenericRecord *>(trace.get()), config, tw);
 
-  if (config.resample_frequency)
-    waveform::Resample(*trace_ptr, config.resample_frequency, true);
-
-  if (!config.filter_string.empty()) {
-    if (!waveform::Filter(*trace_ptr, config.filter_string)) {
-      throw BaseException{Core::stringify(
-          "%s.%s.%s.%s: Filtering failed with filter: filter=%s,"
-          "start=%s, end=%s",
-          net_code.c_str(), sta_code.c_str(), loc_code.c_str(),
-          cha_code.c_str(), config.filter_string.c_str())};
-    }
-  }
-
+  // cache processed data
   if (!cached && CacheProcessed()) {
     SetCache(cache_key, trace);
   }
@@ -453,28 +493,34 @@ void Cached::MakeCacheKey(const std::string &net_code,
                           const std::string &cha_code,
                           const Core::TimeWindow &tw,
                           const WaveformHandlerIface::ProcessingConfig &config,
-                          std::string &result) {
-  auto BoolToString = [](const bool b) -> std::string {
-    std::stringstream ss;
-    ss << std::boolalpha << b;
-    return ss.str();
-  };
+                          std::string &result) const {
 
-  std::vector<std::string> key_components{
-      net_code,          sta_code, loc_code, cha_code, tw.startTime().iso(),
-      tw.endTime().iso()};
+  Core::TimeWindow tw_with_margin{tw};
+  if (!CacheProcessed()) {
+    if (!config.filter_string.empty()) {
+      Core::TimeSpan margin{config.filter_margin_time};
+      tw_with_margin.setStartTime(tw.startTime() - margin);
+      tw_with_margin.setEndTime(tw.endTime() + margin);
+    }
+  }
+
+  std::vector<std::string> key_components{net_code,
+                                          sta_code,
+                                          loc_code,
+                                          cha_code,
+                                          tw_with_margin.startTime().iso(),
+                                          tw_with_margin.endTime().iso()};
 
   if (CacheProcessed()) {
-    key_components.push_back(config.filter_string);
-    key_components.push_back(std::to_string(config.resample_frequency));
-    key_components.push_back(BoolToString(config.demean));
+    key_components.push_back(
+        std::to_string(std::hash<ProcessingConfig>{}(config)));
   }
 
   MakeCacheKey(key_components, result);
 }
 
 void Cached::MakeCacheKey(std::vector<std::string> key_components,
-                          std::string &result) {
+                          std::string &result) const {
   result = boost::algorithm::join(key_components, cache_key_sep_);
 }
 
@@ -536,3 +582,19 @@ bool InMemoryCache::Exists(const std::string &key) {
 
 } // namespace detect
 } // namespace Seiscomp
+
+namespace std {
+
+inline std::size_t
+hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig>::operator()(
+    const Seiscomp::detect::WaveformHandlerIface::ProcessingConfig &c)
+    const noexcept {
+  std::size_t ret{0};
+  boost::hash_combine(ret, std::hash<std::string>{}(c.filter_string));
+  boost::hash_combine(ret, std::hash<double>{}(c.filter_margin_time));
+  boost::hash_combine(ret, std::hash<double>{}(c.resample_frequency));
+  boost::hash_combine(ret, std::hash<bool>{}(c.demean));
+  return ret;
+}
+
+} // namespace std

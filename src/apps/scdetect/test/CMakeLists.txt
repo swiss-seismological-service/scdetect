@@ -1,16 +1,14 @@
 set(TESTS
-  template_xcorr.cpp
-  utils_cma.cpp
+  filter_crosscorrelation.cpp
   integration.cpp
+  utils_cma.cpp
 )
 
-set(SOURCES_template_xcorr
+SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
-  ../processor.cpp
+  ../filter/crosscorrelation.h
   ../utils.cpp
-  ../template.cpp
   ../waveform.cpp
-  ../waveformprocessor.cpp
 )
 
 set(SOURCES_utils_cma
@@ -27,11 +25,11 @@ set(SOURCES_integration
   ../detector/detector.cpp
   ../detector/linker.cpp
   ../detector/pot.cpp
+  ../detector/template.cpp
   ../eventstore.cpp
   ../exception.cpp
   ../processor.cpp
   ../utils.cpp
-  ../template.cpp
   ../validators.cpp
   ../waveform.cpp
   ../waveformprocessor.cpp

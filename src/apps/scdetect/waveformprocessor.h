@@ -2,8 +2,6 @@
 #define SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
 
 #include <functional>
-#include <memory>
-#include <unordered_map>
 
 #include <boost/filesystem.hpp>
 
@@ -117,7 +115,7 @@ public:
 
   // Sets the filter to apply; the filter pointer passed is owned by the
   // `WaveformProcessor`
-  virtual void set_filter(Filter *filter) = 0;
+  virtual void set_filter(Filter *filter, const Core::TimeSpan &init_time) = 0;
   // Returns the processor's initialization time
   virtual const Core::TimeSpan init_time() const;
 
@@ -126,7 +124,7 @@ public:
   virtual bool finished() const;
 
   // Returns the time window processed and correlated
-  const Core::TimeWindow &processed() const;
+  virtual const Core::TimeWindow &processed() const = 0;
 
   // Returns the file system path to the processor's debug info directory
   const boost::filesystem::path &debug_info_dir() const;
@@ -166,7 +164,7 @@ protected:
 
     // The last received record of the stream
     RecordCPtr last_record;
-    // The complete pre-processed data time window so far
+    // The complete processed data time window so far
     Core::TimeWindow data_time_window;
 
     // The sampling frequency of the stream
@@ -201,11 +199,6 @@ protected:
   void set_status(Status status, double value);
 
   void set_debug_info_dir(const boost::filesystem::path &path);
-
-  void set_processed(const Core::TimeWindow &tw);
-  // Merges `tw` with the time window already processed
-  void merge_processed(const Core::TimeWindow &tw);
-
   // Enables saturation check of absolute values of incoming samples and sets
   // the status to DataClipped if checked positive. The data is checked in
   // the Fill method. If derived classes reimplement this method without
@@ -229,8 +222,6 @@ protected:
 private:
   Status status_{Status::kWaitingForData};
   double status_value_{0};
-
-  Core::TimeWindow processed_{};
 
   boost::filesystem::path debug_info_dir_;
 };

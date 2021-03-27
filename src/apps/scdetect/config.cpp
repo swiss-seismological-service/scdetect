@@ -37,9 +37,10 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
     : template_id{pt.get<std::string>("templateId", utils::CreateUUID())
 
       },
-      wf_stream_id(pt.get<std::string>("waveformId")),
-      init_time(pt.get<double>("initTime", defaults.init_time)),
-      filter(pt.get<std::string>("filter", defaults.filter)) {
+      wf_stream_id{pt.get<std::string>("waveformId")}, init_time{pt.get<double>(
+                                                           "initTime",
+                                                           defaults.init_time)},
+      filter{pt.get_optional<std::string>("filter")} {
   template_config.phase =
       pt.get<std::string>("templatePhase", defaults.template_config.phase);
   template_config.wf_start = pt.get<double>("templateWaveformStart",
@@ -48,8 +49,15 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("templateWaveformEnd", defaults.template_config.wf_end);
   template_config.wf_stream_id =
       pt.get<std::string>("templateWaveformId", wf_stream_id);
-  template_config.filter =
-      pt.get<std::string>("templateFilter", defaults.template_config.filter);
+
+  if (!filter && defaults.filter) {
+    filter = defaults.filter;
+  }
+
+  template_config.filter = pt.get_optional<std::string>("templateFilter");
+  if (!template_config.filter && defaults.template_config.filter) {
+    template_config.filter = defaults.template_config.filter;
+  }
 }
 
 bool StreamConfig::IsValid() const {
@@ -63,6 +71,22 @@ bool StreamConfig::IsValid() const {
     retval = utils::WaveformStreamID{template_config.wf_stream_id}.IsValid();
   } catch (ValueException &e) {
     return false;
+  }
+
+  const auto ValidateFilter = [](const std::string &filter_id) {
+    if (filter_id.empty()) {
+      return true;
+    }
+    std::string err;
+    return config::ValidateFilter(filter_id, err);
+  };
+
+  if (filter) {
+    return ValidateFilter(*filter);
+  }
+
+  if (template_config.filter) {
+    return ValidateFilter(*template_config.filter);
   }
 
   return (retval && template_config.wf_start < template_config.wf_end &&
@@ -111,21 +135,22 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       "arrivalOffsetThreshold", detector_defaults.arrival_offset_threshold);
   detector_config_.min_arrivals =
       pt.get<int>("minimumArrivals", detector_defaults.min_arrivals);
+  detector_config_.chunk_size =
+      pt.get<double>("chunkSize", detector_defaults.chunk_size);
 
   // patch stream defaults with detector config globals
   auto patched_stream_defaults{stream_defaults};
   patched_stream_defaults.init_time =
       pt.get<double>("initTime", stream_defaults.init_time);
-  patched_stream_defaults.filter =
-      pt.get<std::string>("filter", stream_defaults.filter);
+  patched_stream_defaults.filter = pt.get_optional<std::string>("filter");
   patched_stream_defaults.template_config.phase = pt.get<std::string>(
       "templatePhase", stream_defaults.template_config.phase);
   patched_stream_defaults.template_config.wf_start = pt.get<double>(
       "templateWaveformStart", stream_defaults.template_config.wf_start);
   patched_stream_defaults.template_config.wf_end = pt.get<double>(
       "templateWaveformEnd", stream_defaults.template_config.wf_end);
-  patched_stream_defaults.template_config.filter = pt.get<std::string>(
-      "templateFilter", stream_defaults.template_config.filter);
+  patched_stream_defaults.template_config.filter =
+      pt.get_optional<std::string>("templateFilter");
 
   // initialize stream configs
   for (const auto &stream_config_pair : pt.find("streams")->second) {
@@ -153,7 +178,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   if (detector_config_.min_arrivals > static_cast<int>(max_arrivals)) {
     SCDETECT_LOG_WARNING_TAGGED(
         detector_id_,
-        "Configured number of minimum arrivals exceets number of configured "
+        "Configured number of minimum arrivals exceeds number of configured "
         "streams (%d > %d). Resetting.",
         detector_config_.min_arrivals, max_arrivals);
     detector_config_.min_arrivals = max_arrivals;

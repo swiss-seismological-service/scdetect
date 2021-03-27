@@ -26,9 +26,6 @@ const std::string kStationMagnitudeType{kMagnitudeType};
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};
 
-// The processing interval in seconds
-/* constexpr double kDefaultProcessingInterval{0}; */
-
 } // namespace settings
 } // namespace detect
 } // namespace Seiscomp

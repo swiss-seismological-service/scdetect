@@ -3,9 +3,8 @@
 #include <iterator>
 #include <unordered_set>
 
-#include <boost/container_hash/hash_fwd.hpp>
+#include <boost/functional/hash.hpp>
 
-#include "../template.h"
 #include "../utils.h"
 
 namespace Seiscomp {

@@ -21,19 +21,8 @@
             the template pick.
           </description>
         </parameter>
-        <parameter name="filter" type="string">
-          <description>
-            Defines the default filter in place during the template waveform
-            creation.
-          </description>
-        </parameter>
       </group>
       <group name="processing">
-        <parameter name="filter" type="string">
-          <description>
-            Defines the default filter used for processing. 
-          </description>
-        </parameter>
         <parameter name="initTime" type="int" default="60" unit="s">
           <description>
             The default initTime defines a time span in seconds a detector is
@@ -104,10 +93,8 @@
           <description>
             Maximum defalt inter arrival offset threshold to tolerate when
             associating an arrival to an event. The threshold is only validated
-            in a multi-stream detector setup. The default value corresponds to
-            twice the maximum accuracy `scdetect` is reaching with regards to
-            trimming waveform data. Configuring a negative value disables the
-            arrival offset validation.
+            in a multi-stream detector setup. Configuring a negative value
+            disables the arrival offset validation.
           </description>
         </parameter>
         <parameter name="minimumArrivals" type="int" default="-1">
@@ -211,12 +198,6 @@
       </group>
 
       <group name="Mode">
-        <option flag="" long-flag="debug-info">
-          <description>
-            Dump additional debug information (e.g. waveforms, stats etc.)
-            while processing.
-          </description>
-        </option>
         <option flag="" long-flag="playback" default="false">
           <description>
             Use playback mode that does not restrict the maximum allowed

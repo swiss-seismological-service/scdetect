@@ -19,6 +19,7 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 namespace utf = boost::unit_test;
+namespace utf_tt = boost::test_tools;
 
 namespace Seiscomp {
 namespace detect {
@@ -336,7 +337,8 @@ void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
     return q->standardError();
   };
   BOOST_TEST_CHECK(*GetOptional(lhs, StandardErrorPredicate) ==
-                   *GetOptional(rhs, StandardErrorPredicate));
+                       *GetOptional(rhs, StandardErrorPredicate),
+                   utf_tt::tolerance(5.0e-3));
   const auto AzimuthalGapPredicate = [](DataModel::OriginQualityCPtr q) {
     return q->azimuthalGap();
   };

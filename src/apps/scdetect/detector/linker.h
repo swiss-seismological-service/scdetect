@@ -8,10 +8,10 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
-#include "../template.h"
 #include "../waveformprocessor.h"
 #include "arrival.h"
 #include "pot.h"
+#include "template.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -35,7 +35,7 @@ public:
     struct TemplateResult {
       Arrival arrival;
       // Reference to the original template result
-      detect::Template::MatchResultCPtr match_result;
+      Template::MatchResultCPtr match_result;
     };
 
     // Associates `TemplateResult` with a processor (i.e. using the `proc_id`)
