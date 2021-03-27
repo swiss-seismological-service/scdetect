@@ -69,7 +69,7 @@ void Template::Process(StreamState &stream_state, const Record *record,
         std::max(0, static_cast<int>(n) -
                         static_cast<int>(stream_state_.received_samples -
                                          stream_state_.needed_samples));
-    double t = start_idx / n;
+    const auto t{static_cast<double>(start_idx) / n};
     start =
         record->startTime() + Core::TimeSpan{record->timeWindow().length() * t};
   }
