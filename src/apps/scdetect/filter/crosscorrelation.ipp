@@ -28,7 +28,7 @@ CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &template_wf,
     template_wf_ = resampled;
   }
 
-  SetupFilter(template_wf_);
+  Reset();
 }
 
 template <typename TData> CrossCorrelation<TData>::~CrossCorrelation() {}
@@ -146,41 +146,6 @@ template <typename TData> void CrossCorrelation<TData>::Reset() {
   buffer_.clear();
   sum_squared_data_ = 0;
   sum_data_ = 0;
-}
-
-template <typename TData>
-void CrossCorrelation<TData>::set_sampling_frequency(double sampling_freq) {
-  if (sampling_freq != sampling_frequency_) {
-    sampling_frequency_ = sampling_freq;
-
-    auto resampled{utils::make_smart<GenericRecord>(*template_wf_)};
-    Resample(resampled, sampling_frequency_);
-    template_wf_ = resampled;
-
-    SetupFilter(template_wf_);
-  }
-}
-
-template <typename TData>
-double CrossCorrelation<TData>::sampling_frequency() const {
-  return sampling_frequency_;
-}
-
-template <typename TData>
-size_t CrossCorrelation<TData>::template_size() const {
-  return template_wf_->sampleCount();
-}
-
-template <typename TData>
-double CrossCorrelation<TData>::template_length() const {
-  return template_wf_->timeWindow().length();
-}
-
-template <typename TData>
-void CrossCorrelation<TData>::SetupFilter(
-    const GenericRecordCPtr &template_wf) {
-
-  Reset();
 
   const double *samples_template_wf{
       TypedArray<TData>::ConstCast(template_wf_->data())->typedData()};
@@ -197,6 +162,34 @@ void CrossCorrelation<TData>::SetupFilter(
   while (!buffer_.full()) {
     buffer_.push_back(0);
   }
+}
+
+template <typename TData>
+void CrossCorrelation<TData>::set_sampling_frequency(double sampling_freq) {
+  if (sampling_freq != sampling_frequency_) {
+    sampling_frequency_ = sampling_freq;
+
+    auto resampled{utils::make_smart<GenericRecord>(*template_wf_)};
+    Resample(resampled, sampling_frequency_);
+    template_wf_ = resampled;
+
+    Reset();
+  }
+}
+
+template <typename TData>
+double CrossCorrelation<TData>::sampling_frequency() const {
+  return sampling_frequency_;
+}
+
+template <typename TData>
+size_t CrossCorrelation<TData>::template_size() const {
+  return template_wf_->sampleCount();
+}
+
+template <typename TData>
+double CrossCorrelation<TData>::template_length() const {
+  return template_wf_->timeWindow().length();
 }
 
 template <typename TData>

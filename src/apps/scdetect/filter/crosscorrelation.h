@@ -42,8 +42,6 @@ public:
   double template_length() const;
 
 protected:
-  // Initialize template related data
-  void SetupFilter(const GenericRecordCPtr &template_wf);
   // Resample `wf` to `sampling_freq`
   void Resample(const GenericRecordPtr &wf, double sampling_freq);
 
