@@ -575,23 +575,9 @@ void Detector::StoreTemplateResult(
   }
 
   auto &p{processors_.at(proc->id())};
-  const auto &status{p.processor->status()};
-  const auto &status_value{p.processor->status_value()};
-  if (!p.processor->finished()) {
-#ifdef SCDETECT_DEBUG
-    const auto &match_result{
-        boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
-    const auto &tw{match_result->time_window};
-    SCDETECT_LOG_DEBUG_PROCESSOR(
-        proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f",
-        rec->streamID().c_str(), tw.startTime().iso().c_str(),
-        tw.endTime().iso().c_str(), match_result->coefficient,
-        match_result->lag);
-#endif
-
-    linker_.Feed(proc, res);
-
-  } else {
+  if (p.processor->finished()) {
+    const auto &status{p.processor->status()};
+    const auto &status_value{p.processor->status_value()};
     auto msg{Core::stringify("Failed to match template (proc_id=%s). Reason: "
                              "status=%d, status_value=%f",
                              p.processor->id().c_str(),
@@ -599,6 +585,18 @@ void Detector::StoreTemplateResult(
 
     throw TemplateMatchingError{msg};
   }
+
+#ifdef SCDETECT_DEBUG
+  const auto &match_result{
+      boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
+  const auto &tw{match_result->time_window};
+  SCDETECT_LOG_DEBUG_PROCESSOR(
+      proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f", rec->streamID().c_str(),
+      tw.startTime().iso().c_str(), tw.endTime().iso().c_str(),
+      match_result->coefficient, match_result->lag);
+#endif
+
+  linker_.Feed(proc, res);
 }
 
 void Detector::StoreLinkerResult(const Linker::Result &res) {
