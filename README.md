@@ -4,6 +4,10 @@
 
 - [About](#about)
 - [Getting started](#getting-started)
+  + [General](#general)
+  + [Template configuration](#template-configuration)
+  + [Waveform data and RecordStream
+    configuration](#waveform-data-and-recordstream-configuration)
 - [Installation](#compiling-and-installation)
 - [Tests](#tests)
 - [Issues](#issues)
