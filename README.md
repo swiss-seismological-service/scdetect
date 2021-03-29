@@ -238,6 +238,84 @@ scope of a detector configuration:
 That is, if not explictly overridden by stream configurations the corresponding
 fallback values will be used.
 
+### Waveform data and RecordStream configuration
+
+[SeisComP](https://www.seiscomp.de/) applications access waveform data through
+the [RecordStream](https://www.seiscomp.de/doc/base/concepts/recordstream.html)
+interface. It is usually configured in
+[global.cfg](https://www.seiscomp.de/doc/base/concepts/configuration.html#global-modules-config),
+where the user is able to define the backend services in order to access either
+real-time and/or historical waveform data. A technical documentation including
+exemplary RecordStream configurations can be found
+[here](https://www.seiscomp.de/doc/apps/global_recordstream.html#global-recordstream).
+
+Alternatively, the RecordStream can be defined making use of `scdetect`'s `-I [
+--record-url ] URI` CLI flag (Note that this is the standard CLI flag used for
+all SeisComP modules implementing SeisComP's `StreamApplication` interface.).
+
+In general, with regards to waveform data `scdetect` implements the following
+approach:
+
+1. **Initialization**: Download template waveform data from the *archive*
+   RecordStream specified.  Cache the raw waveform data (see [Caching waveform
+   data](#caching-waveform-data)) and filter the template waveforms according
+   to the configuration.
+
+2. **Processing**: Start processing the waveform data from either the
+   *real-time* or the *archive* RecordStream configured.
+
+#### Caching waveform data
+
+Unless the RecordStream points to a local disk storage, downloading waveforms
+might require a lot of time. For this reason `scdetect` stores raw template
+waveform data on disk after downloading them. The cache is located under
+`${SEISCOMP_ROOT}/var/cache/scdetect`. If omitting cached waveform data is
+desired, make use of `scdetect`'s `--templates-reload` CLI flag.
+
+In order to remove cached waveform data, simply invoke
+
+```bash
+rm -rvf ${SEISCOMP_ROOT}/var/cache/scdetect
+```
+
+#### Prepare template waveform data
+
+Although, SeisComP allows configuring a [combined
+RecordStream](https://www.seiscomp.de/doc/apps/global_recordstream.html#combined),
+sometimes it might be useful to fetch template waveform data from a different
+RecordStream than the RecordStream providing the data being processed. For this
+purpose, `scdetect` provides the `--templates-prepare` CLI flag. With that, an
+exemplary processing workflow might look like:
+
+```bash
+scdetect \
+  --templates-json path/to/templates.json \
+  --inventory-db file:///absolute/path/to/inventory.scml \
+  --event-db file:///absolute/path/to/catalog.scml \
+  --record-url fdsnws://eida-federator.ethz.ch/fdsnws/dataselect/1/query \
+  --offline=1 \
+  --templates-prepare=1
+```
+
+I.e. template waveform data is downloaded from the
+[FDSNWS](https://www.seiscomp.de/doc/apps/global_recordstream.html#fdsnws)
+RecordStream specified by
+`fdsnws://eida-federator.ethz.ch/fdsnws/dataselect/1/query`. After initializing
+the module returns.
+
+Next, run the module for processing, but now use the previously cached template
+waveform data when loading template waveforms, e.g.
+
+```bash
+scdetect \
+  --templates-json path/to/templates.json \
+  --inventory-db file:///absolute/path/to/inventory.scml \
+  --event-db file:///absolute/path/to/catalog.scml \
+  --record-url "slink://localhost:18000?timeout=60&retries=5" \
+  --offline=1 \
+  --ep=detections.scml
+```
+
 ## Compiling and Installation
 
 Get a copy of
