@@ -21,6 +21,19 @@ The module allows both single-stream and multi-stream earthquake detection.
 
 ## Getting started
 
+### General
+
+As `scdetect` is a standard SeisComP extension module a list of available
+commandline options can be obtained with
+
+```bash
+scdetect -h
+```
+
+For a more in-depth introduction on how to use SeisComP modules including their
+particular configuration, please refer to the [SeisComP
+documentation](https://www.seiscomp.de/doc/index.html).
+
 ### Template configuration
 
 In order to run `scdetect` a *template configuration* must be provided by means
