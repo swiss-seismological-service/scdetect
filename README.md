@@ -83,6 +83,10 @@ Note that global defaults may be configured following SeisComP's standard
 configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
 approach.
 
+In order to validate the template configuration, with
+[templates.schema.json](src/apps/scdetect/config/templates.schema.json) a
+rudimentary [JSON schema](https://json-schema.org/) is provided.
+
 #### Detector configuration parameters
 
 A detector configuration allows setting the following detector specific
