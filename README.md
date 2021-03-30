@@ -6,8 +6,8 @@
 - [Getting started](#getting-started)
   + [General](#general)
   + [Template configuration](#template-configuration)
-  + [Waveform data and RecordStream
-    configuration](#waveform-data-and-recordstream-configuration)
+  + [Inventory metadata, event metadata and configuration](#inventory-events-and-configuration)
+  + [Waveform data and RecordStream configuration](#waveform-data-and-recordstream-configuration)
 - [Installation](#compiling-and-installation)
 - [Tests](#tests)
 - [Issues](#issues)
@@ -42,10 +42,13 @@ The subsequent sections are intented to provide an introduction on how to use
 and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
-2. How is [waveform data
-   accessed](#waveform-data-and-recordstream-configuration) including both [waveform
-   data caching](#caching-waveform-data) and [template waveform data
-   preparation](#prepare-template-waveform-data)
+2. How to access [metadata and
+   configuration](#inventory-events-and-configuration) from the database or
+   from plain files
+3. How is [waveform data
+   accessed](#waveform-data-and-recordstream-configuration) including both
+   [template waveform data caching](#caching-waveform-data) and [template
+   waveform data preparation](#prepare-template-waveform-data)
 
 ### Template configuration
 
@@ -250,6 +253,63 @@ scope of a detector configuration:
 
 That is, if not explictly overridden by stream configurations the corresponding
 fallback values will be used.
+
+### Inventory, events and configuration
+
+SeisComP stores and reads certain data (e.g.
+[inventory](https://www.seiscomp.de/doc/base/concepts/inventory.html#concepts-inventory),
+eventparameters, etc.) in and from a database. In order to connect to the
+database a *database connection URL* is required. This URL is either configured
+in
+[global.cfg](https://www.seiscomp.de/doc/base/concepts/configuration.html#global-modules-config)
+or in `scmaster.cfg` (i.e. the configuration file of SeisComP's messaging
+mediator module, [scmaster](https://www.seiscomp.de/doc/apps/scmaster.html)).
+In the latter case, it is the `scmaster` module that passes the database
+connection URL to every module connecting to the messaging system (usually at
+module startup).
+
+However, when running `scdetect` in offline mode (using the CLI option
+`--offline`), and the database connection URL is specified in `scmaster.cfg`,
+`scdetect` does not connect to the messaging system and thus, the database
+connection URL never reaches `scdetect`. For this purpose `scdetect` provides
+the standard SeisComP CLI options:
+
+- `-d|--database URL`
+- `--inventory-db URI`
+- `--config-db URI`
+
+The non-standard `--event-db URI` option allows reading eventparameter related data
+from either a file or a database specified by `URI` (Note that the `--event-db
+URI` CLI option overrides the `-d|--database URL` CLI option.). With that, both
+inventory metadata and eventparameters might be read from plain files, making
+the database connection fully optional. E.g.
+
+```bash
+$ ls -1
+catalog.scml
+data.mseed
+inventory.scml
+templates.json
+$ scdetect \
+  --templates-json templates.json \
+  --inventory-db file://$(realpath inventory.scml) \
+  --event-db file://$(realpath catalog.scml) \
+  -I file://$(realpath data.mseed) \
+  --offline=1 \
+  --ep=detections.scml
+```
+
+In the example above even the [waveform
+data](#waveform-data-and-recordstream-configuration) is read from a file (i.e.
+`data.mseed`). Furthermore, the resulting detections are dumped
+[SCML](https://docs.gempa.de/seiscomp/4/current/base/glossary.html#term-scml)
+formatted to the `detections.scml` file.
+
+Note that as the `--config-db URI` CLI option is a standard SeisComP module CLI
+option it is mentioned for completeness, only. Since `scdetect` does not
+support [station
+bindings](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-and-bindings-configuration),
+anyway, this CLI can be neglected.
 
 ### Waveform data and RecordStream configuration
 
