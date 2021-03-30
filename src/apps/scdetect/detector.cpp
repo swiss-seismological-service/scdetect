@@ -218,8 +218,10 @@ void Detector::StoreDetection(const detector::Detector::Result &res) {
 
 void Detector::PrepareDetection(DetectionPtr &detection,
                                 const detector::Detector::Result &res) {
+  const Core::TimeSpan time_correction{config_.time_correction};
+
   detection->fit = detection_.value().fit;
-  detection->time = res.origin_time + Core::TimeSpan(config_.time_correction);
+  detection->time = res.origin_time + time_correction;
   detection->latitude = origin_->latitude().value();
   detection->longitude = origin_->longitude().value();
   detection->depth = origin_->depth().value();
@@ -235,11 +237,17 @@ void Detector::PrepareDetection(DetectionPtr &detection,
   detection->with_arrivals = config_.create_arrivals;
   detection->template_results = res.template_results;
 
+  if (time_correction) {
+    for (auto &template_result_pair : detection->template_results) {
+      template_result_pair.second.arrival.pick.time += time_correction;
+    }
+  }
+
   if (config_.create_template_arrivals) {
     for (const auto &arrival : ref_theoretical_template_arrivals_) {
       auto theoretical_template_arrival{arrival};
       theoretical_template_arrival.pick.time =
-          res.origin_time + arrival.pick.offset;
+          res.origin_time + arrival.pick.offset + time_correction;
       detection->theoretical_template_arrivals.push_back(
           theoretical_template_arrival);
     }
