@@ -31,7 +31,7 @@ As `scdetect` is a standard SeisComP extension module a list of available
 commandline options can be obtained with
 
 ```bash
-scdetect -h
+$ scdetect -h
 ```
 
 For a general more in-depth introduction on how to use SeisComP modules
@@ -288,7 +288,7 @@ desired, make use of `scdetect`'s `--templates-reload` CLI flag.
 In order to remove cached waveform data, simply invoke
 
 ```bash
-rm -rvf ${SEISCOMP_ROOT}/var/cache/scdetect
+$ rm -rvf ${SEISCOMP_ROOT}/var/cache/scdetect
 ```
 
 #### Prepare template waveform data
@@ -301,7 +301,7 @@ purpose, `scdetect` provides the `--templates-prepare` CLI flag. With that, an
 exemplary processing workflow might look like:
 
 ```bash
-scdetect \
+$ scdetect \
   --templates-json path/to/templates.json \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
@@ -320,7 +320,7 @@ Next, run the module for processing, but now use the previously cached template
 waveform data when loading template waveforms, e.g.
 
 ```bash
-scdetect \
+$ scdetect \
   --templates-json path/to/templates.json \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
@@ -335,13 +335,13 @@ Get a copy of
 [SeisComP/seiscomp](https://github.com/SeisComP/seiscomp):
 
 ```bash
-git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/extras/
+$ git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/extras/
 ```
 
 Next, clone `scdetect`:
 
 ```bash
-git clone https://github.com/damb/scdetect.git
+$ git clone https://github.com/damb/scdetect.git
 ```
 
 For compiling SeisComP (including `scdetect`), please refer to
@@ -353,7 +353,7 @@ In order to run all SeisComP tests (including those of `scdetect` and possibly
 additionally installed third party modules), either execute
 
 ```bash
-make test
+$ make test
 ```
 
 in the build directory, or use the
@@ -362,7 +362,7 @@ in the build directory, or use the
 run only `scdetect` related tests, invoke
 
 ```bash
-ctest -R "^test_scdetect.*"
+$ ctest -R "^test_scdetect.*"
 ```
 
 For additional information, please also refer to SeisComP's [unit testing
