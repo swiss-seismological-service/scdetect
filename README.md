@@ -34,9 +34,18 @@ commandline options can be obtained with
 scdetect -h
 ```
 
-For a more in-depth introduction on how to use SeisComP modules including their
-particular configuration, please refer to the [SeisComP
+For a general more in-depth introduction on how to use SeisComP modules
+including their particular configuration, please refer to the [SeisComP
 documentation](https://www.seiscomp.de/doc/index.html).
+
+The subsequent sections are intented to provide an introduction on how to use
+and configure `scdetect`. This includes:
+
+1. How to [configure templates](#template-configuration)
+2. How is [waveform data
+   accessed](#waveform-data-and-recordstream-configuration) including both [waveform
+   data caching](#caching-waveform-data) and [template waveform data
+   preparation](#prepare-template-waveform-data)
 
 ### Template configuration
 
