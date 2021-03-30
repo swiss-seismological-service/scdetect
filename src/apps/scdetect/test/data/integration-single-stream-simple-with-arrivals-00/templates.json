@@ -4,7 +4,7 @@
         "createArrivals": true,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0.9,
+        "triggerOffThreshold": 0.0,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
               {
