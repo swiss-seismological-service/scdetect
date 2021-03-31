@@ -42,8 +42,8 @@ public:
   double template_length() const;
 
 protected:
-  // Resample `wf` to `sampling_freq`
-  void Resample(const GenericRecordPtr &wf, double sampling_freq);
+  // Resample `wf` to `target_frequency`
+  void Resample(const GenericRecordPtr &wf, double target_frequency);
 
 private:
   // Filter sampling frequency_
