@@ -7,6 +7,7 @@ set(TESTS
 SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
   ../filter/crosscorrelation.h
+  ../resamplerstore.cpp
   ../utils.cpp
   ../waveform.cpp
 )
@@ -31,6 +32,7 @@ set(SOURCES_integration
   ../eventstore.cpp
   ../exception.cpp
   ../processor.cpp
+  ../resamplerstore.cpp
   ../utils.cpp
   ../validators.cpp
   ../waveform.cpp

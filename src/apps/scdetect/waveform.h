@@ -24,9 +24,7 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw);
 bool Filter(GenericRecord &trace, const std::string &filter_string);
 bool Filter(DoubleArray &data, const std::string &filter_string,
             double sampling_freq);
-void Resample(GenericRecord &trace, double sampling_frequency, bool average);
-void Resample(DoubleArray &data, double sampling_frequency_from,
-              double sampling_frequency_to, bool average);
+bool Resample(GenericRecord &trace, double target_frequency);
 void Demean(GenericRecord &trace);
 void Demean(DoubleArray &data);
 bool Write(const GenericRecord &trace, std::ostream &out);

@@ -195,7 +195,7 @@ double CrossCorrelation<TData>::template_length() const {
 template <typename TData>
 void CrossCorrelation<TData>::Resample(const GenericRecordPtr &wf,
                                        double target_frequency) {
-  waveform::Resample(*wf, target_frequency, true);
+  waveform::Resample(*wf, target_frequency);
 }
 
 } // namespace filter

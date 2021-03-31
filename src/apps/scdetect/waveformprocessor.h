@@ -115,6 +115,8 @@ public:
   // Sets the filter to apply; the filter pointer passed is owned by the
   // `WaveformProcessor`
   virtual void set_filter(Filter *filter, const Core::TimeSpan &init_time) = 0;
+  // Sets the processor's target sampling frequency
+  /* virtual void set_sampling_frequency(double sampling_frequency) = 0; */
   // Returns the processor's initialization time
   virtual const Core::TimeSpan init_time() const;
 

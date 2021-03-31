@@ -31,6 +31,7 @@
 #include "detector/arrival.h"
 #include "eventstore.h"
 #include "log.h"
+#include "resamplerstore.h"
 #include "settings.h"
 #include "utils.h"
 #include "validators.h"
@@ -328,6 +329,7 @@ void Application::done() {
   }
 
   EventStore::Instance().Reset();
+  RecordResamplerStore::Instance().Reset();
 
   StreamApplication::done();
 }

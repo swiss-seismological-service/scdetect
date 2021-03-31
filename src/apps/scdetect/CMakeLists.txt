@@ -16,6 +16,7 @@ set(
     exception.cpp
     main.cpp
     processor.cpp
+    resamplerstore.cpp
     utils.cpp
     validators.cpp
     waveform.cpp
