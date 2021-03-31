@@ -16,8 +16,6 @@
 #include <seiscomp/utils/files.h>
 
 #include "log.h"
-#include "seiscomp/core/datetime.h"
-#include "seiscomp/core/timewindow.h"
 #include "utils.h"
 
 namespace Seiscomp {
