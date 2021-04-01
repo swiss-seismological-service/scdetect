@@ -52,13 +52,18 @@ and configure `scdetect`. This includes:
 
 ### Template configuration
 
-In order to run `scdetect` a *template configuration* must be provided by means
-of using `scdetect`'s `--templates-json path/to/templates.json` CLI flag. The
-template configuration is a [JSON](https://www.json.org) configuration file and
-contains an array of *detector configuration* JSON objects (each detector
-refers to a template event identified by its `"originId"`). An exemplary
-multi-stream detector configuration (for the streams `CH.GRIMS..HHZ` and
-`CH.HASLI..HHZ`) may look like:
+In order to run `scdetect` a *template configuration* must be provided. That
+is, either by means of the `templatesJSON` configuration option in one of
+`scdetect`'s [module configuration
+files](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
+or by means of using `scdetect`'s `--templates-json path/to/templates.json` CLI
+flag.
+
+The template configuration itself is a [JSON](https://www.json.org)
+configuration file and contains an array of *detector configuration* JSON
+objects (each detector refers to a template event identified by its
+`"originId"`). An exemplary multi-stream detector configuration (for the
+streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
 
 ```json
     {
