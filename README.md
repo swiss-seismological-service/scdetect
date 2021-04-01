@@ -379,7 +379,7 @@ $ scdetect \
   --inventory-db file://$(realpath inventory.scml) \
   --event-db file://$(realpath catalog.scml) \
   -I file://$(realpath data.mseed) \
-  --offline=1 \
+  --offline \
   --ep=detections.scml
 ```
 
@@ -450,8 +450,8 @@ $ scdetect \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
   --record-url fdsnws://eida-federator.ethz.ch/fdsnws/dataselect/1/query \
-  --offline=1 \
-  --templates-prepare=1
+  --offline \
+  --templates-prepare
 ```
 
 I.e. template waveform data is downloaded from the
@@ -469,7 +469,7 @@ $ scdetect \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
   --record-url "slink://localhost:18000?timeout=60&retries=5" \
-  --offline=1 \
+  --offline \
   --ep=detections.scml
 ```
 
