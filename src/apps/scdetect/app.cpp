@@ -739,6 +739,11 @@ Application::Config::Config() {
 
 void Application::Config::Init(const Client::Application *app) {
   try {
+    path_template_json = app->configGetPath("templatesJSON");
+  } catch (...) {
+  }
+
+  try {
     stream_config.template_config.phase =
         app->configGetString("template.phase");
   } catch (...) {
@@ -819,6 +824,12 @@ void Application::Config::Init(const Client::Application *app) {
 void Application::Config::Init(const System::CommandLine &commandline) {
   templates_prepare = commandline.hasOption("templates-prepare");
   templates_no_cache = commandline.hasOption("templates-reload");
+
+  if (commandline.hasOption("templates-json")) {
+    Environment *env{Environment::Instance()};
+    path_template_json =
+        env->absolutePath(commandline.option<std::string>("templates-json"));
+  }
 
   playback_config.enabled = commandline.hasOption("playback");
 
