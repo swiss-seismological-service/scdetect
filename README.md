@@ -45,7 +45,7 @@ and configure `scdetect`. This includes:
 2. How to access [metadata and
    configuration](#inventory-events-and-configuration) from the database or
    from plain files
-3. How is [waveform data
+3. How [waveform data is
    accessed](#waveform-data-and-recordstream-configuration) including both
    [template waveform data caching](#caching-waveform-data) and [template
    waveform data preparation](#prepare-template-waveform-data)
@@ -55,7 +55,8 @@ and configure `scdetect`. This includes:
 In order to run `scdetect` a *template configuration* must be provided by means
 of using `scdetect`'s `--templates-json path/to/templates.json` CLI flag. The
 template configuration is a [JSON](https://www.json.org) configuration file and
-contains an array of *detector configuration* JSON objects. An exemplary
+contains an array of *detector configuration* JSON objects (each detector
+refers to a template event identified by its `"originId"`). An exemplary
 multi-stream detector configuration (for the streams `CH.GRIMS..HHZ` and
 `CH.HASLI..HHZ`) may look like:
 
@@ -96,19 +97,20 @@ multi-stream detector configuration (for the streams `CH.GRIMS..HHZ` and
     }
 ```
 
-That is, a detector configuration defines besides of detector specific
+That is, a detector configuration defines besides the detector specific
 configuration parameters a list of stream configurations and optionally some
 [stream configuration defaults](#stream-configuration-defaults).
 
-> **NOTE**: In contrast to other [SeisComP](https://github.com/SeisComP)
-> modules (e.g.
-> [scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html),
-> etc.), `scdetect` is operating strictly stream based. For this reason station
+> **NOTE**: `scdetect` is operating strictly stream based. For this reason station
 > [bindings](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
-> are not supported.
+> are not supported (in contrast to other
+> [SeisComP](https://github.com/SeisComP) modules such as e.g.
+> [scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html),
+> etc.)
 
-Note that global defaults may be configured following SeisComP's standard
-[module
+Note that if a configuration parameter is not explicitly defined a module
+specific global default is used instead. Global defaults may be configured
+following SeisComP's standard [module
 configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
 approach.
 
@@ -118,7 +120,7 @@ rudimentary [JSON schema](https://json-schema.org/) is provided.
 
 #### Detector configuration parameters
 
-A detector configuration allows setting the following detector specific
+A detector configuration allows to set the following detector specific
 configuration parameters:
 
 **General**:
@@ -129,8 +131,9 @@ configuration parameters:
   particular use while debugging.
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with
-  regards to `NOW`. Data latency is not validated if `scdetect` is run in
-  *playback mode*.
+  regards to `NOW`. If data arrive later than the value specified it is not
+  used, anymore. Note that data latency is not validated if `scdetect` is run
+  in *playback mode*.
 
 - `"originId"`: Required. The origin identifier of the template origin the
   detector is referring to. The origin identifier is used for extracting
@@ -140,12 +143,15 @@ configuration parameters:
   one-to-one.
 
 - `"streams"`: Required. An array of stream configuration JSON objects, also
-  called a *stream set*.
+  called a *stream set*. The stream set describes the streams to be covered by
+  a detector. In a single-stream detector configuration the stream set contains
+  just a single stream configuration, while a multi-stream detector
+  configuration requires multiple stream configurations.
 
 **Gap interpolation**:
 
 - `"gapInterpolation"`: A boolean value which enables/disables gap
-  interpolation.
+  interpolation which allows interpolating gaps linearly.
 
 - `"gapThreshold"`: Threshold in seconds to recognize a gap.
 
@@ -154,25 +160,48 @@ configuration parameters:
 
 **Detections and arrivals**:
 
-- `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds to tolerate
-  when associating an arrival with an event. Note that the threshold is only
-  relevant for a multi-stream detector setup.
+- `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds (i.e. with
+  regards to the template arrival) to tolerate when associating an arrival with
+  an event. Note that the threshold is only relevant for a multi-stream
+  detector setup.
 
 - `"createArrivals"`: A boolean value which defines if detections should
-  include arrivals with regards to the streams included within the stream set.
+  include *detected arrivals*, i.e. arrivals with regards to the streams
+  included within the stream set. If enabled, origins will be created with
+  detected arrivals being associated, else origins are created not containing
+  any reference to detected arrivals.
+  In a multi-stream detector configuration setup detections will include only
+  arrivals of those streams which contributed.
+  For further details, please refer to `"createTemplateArrivals"` and
+  `"minimumArrivals"` configuration parameters.
 
 - `"createTemplateArrivals"`: A boolean value which defines if detections
-  should include *template arrivals*. Template arrivals refer to streams which
-  are not part of the detector configuration's stream set, but contain valid
-  picks as part of the template origin.
+  should include so called *template arrivals*. Template arrivals refer to
+  streams which are not part of the detector configuration's stream set, but
+  contain valid picks as part of the template origin.
 
-- `"minimumArrivals"`: Defines the minimum number of arrivals which must be
-  part of an event to be declared as a detection.
+- `"minimumArrivals"`: Defines the minimum number of arrivals w.r.t. streams
+  within the stream set configured which must be part of an event to qualify
+  for a detection.
 
 - `"timeCorrection"`: Defines the time correction in seconds for both
-  detections and arrivals.
+  detections and arrivals. That is, this allows shifting a detection in time.
 
 **Trigger facilities**:
+
+An event is considered as a *detected event*, also called a *detection* if it
+surpasses the value specified by the `"triggerOnThreshold"` configuration
+parameter.
+
+In a multi-stream detector setup, `scdetect` uses the *mean* correlation
+coefficient of all streams within the stream set. In future, further methods
+may be provided in order to compute this *score*.
+
+Besides, `scdetect` implements trigger facilities, i.e. a detected event may not be
+published, immediately, but put *on-hold* for the duration defined by the value
+of the `"triggerDuration"` configuration parameter. If a *better* detected
+event arrives within this period, the previous one is not used, anymore.
+
 
 - `"triggerDuration"`: Defines the trigger duration in seconds. A negative
   value disables triggering facilities.
@@ -197,12 +226,10 @@ configuration parameters:
   implements hierarchical logging specifying the template identifier may be of
   particular use while debugging.
 
-- `"initTime"`: The initialization time in seconds for that the stream related
-  processor is blind after initialization.
-
 - `"waveformId"`: Required. A string defining the waveform stream identifier of
   the stream to be processed. Usually, this refers to a [FDSN Source
-  Identifier](http://docs.fdsn.org/projects/source-identifiers/).
+  Identifier](http://docs.fdsn.org/projects/source-identifiers/). Note that
+  the string is parsed and matched against `NET`, `STA`, `LOC`, `CHA` codes.
 
 **Template waveform**:
 
@@ -210,6 +237,10 @@ configuration parameters:
   identifier referring to the stream used for the template waveform creation.
   If not defined, the template waveform is created from the stream specified by
   the `"waveformId"` configuration parameter.
+  While for the phase code lookup the *sensor location* is used (i.e. the `CHA`
+  component of the waveform stream identifier is neglected) for template
+  waveform creation all waveform stream identifier components are taken into
+  account.
 
 - `"templatePhase"`: Required. A string defining the template phase code used
   for the template waveform creation. Note that for the template phase lookup,
@@ -227,6 +258,10 @@ configuration parameters:
   pick time.
 
 **Filtering**:
+
+- `"initTime"`: The initialization time in seconds for that the stream related
+  processor is blind after initialization. Setting this configuration parameter
+  allows taking filter related artifacts during initialization into account.
 
 - `"filter"`: A string defining the filter to be applied to the processed
   stream. The filter must be specified following the SeisComP's [filter
@@ -253,6 +288,53 @@ scope of a detector configuration:
 
 That is, if not explictly overridden by stream configurations the corresponding
 fallback values will be used.
+
+**Example**:
+
+```json
+    {
+        "detectorId": "detector-01",
+        "createArrivals": true,
+        "createTemplateArrivals": true,
+        "gapInterpolation": true,
+        "gapThreshold": 0.1,
+        "gapTolerance": 1.5,
+        "triggerDuration": -1,
+        "triggerOnThreshold": 0.98,
+        "triggerOffThreshold": 0,
+        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+        "templatePhase": "Pg",
+        "filter": "",
+        "templateFilter": "",
+        "initTime": 0,
+        "streams": [
+              {
+                  "templateId": "template-01",
+                  "templateWaveformStart": -2,
+                  "templateWaveformEnd": 2,
+                  "waveformId": "CH.GRIMS..HHZ",
+                  "templateWaveformId": "CH.GRIMS..HHZ",
+              },
+              {
+                  "templateId": "template-02",
+                  "templateWaveformStart": -3,
+                  "templateWaveformEnd": 1,
+                  "waveformId": "CH.HASLI..HHZ",
+                  "templateWaveformId": "CH.HASLI..HHZ",
+                  "templatePhase": "Sg"
+              }
+        ]
+    }
+```
+
+In the example above, the stream configuration default `"templatePhase"` is
+used indicating a default phase code `"Pg"`. While this stream configuration
+default value is used by the stream configuration object identified by the
+template identifier `"template-01"`, it is overridden by the stream
+configuration identified by `"template-02"` (i.e. it uses `"Sg"` instead).
+
+Besides, filtering is explicitly disabled for all stream configurations within
+the stream set.
 
 ### Inventory, events and configuration
 
