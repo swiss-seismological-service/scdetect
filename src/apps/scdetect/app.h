@@ -8,9 +8,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include <seiscomp/client/application.h>
 #include <seiscomp/client/streamapplication.h>
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/system/commandline.h>
 
 #include "config.h"
 #include "exception.h"
@@ -38,31 +40,12 @@ public:
     ConfigError();
   };
 
-  DEFINE_SMARTPOINTER(Option);
-  struct Option : public Core::BaseObject {
-    Option(const char *cfg_name, const char *cli_group = nullptr,
-           const char *cli_param = nullptr, const char *cli_desc = nullptr,
-           bool cli_default = false, bool cli_switch = false)
-        : cfg_name(cfg_name), cli_group(cli_group), cli_param(cli_param),
-          cli_desc(cli_desc), cli_default(cli_default), cli_switch(cli_switch) {
-    }
-
-    virtual void Bind(System::CommandLine *cli) = 0;
-    virtual bool Get(System::CommandLine *cli) = 0;
-    virtual bool Get(const Client::Application *app) = 0;
-    virtual void PrintStorage(std::ostream &os) = 0;
-
-    const char *cfg_name;
-    const char *cli_group;
-    const char *cli_param;
-    const char *cli_desc;
-    bool cli_default;
-    bool cli_switch;
-  };
-
-  using Options = std::list<OptionPtr>;
-
   struct Config {
+
+    Config();
+
+    void Init(const Client::Application *app);
+    void Init(const System::CommandLine &commandline);
 
     std::string path_filesystem_cache;
     std::string url_event_db;
@@ -100,13 +83,13 @@ public:
       Core::Time end_time;
 
       // Indicates if playback mode is enabled/disabled
-      bool enabled;
+      bool enabled{false};
     } playback_config;
 
     // Messaging
     bool offline_mode{false};
     bool no_publish{false};
-    std::string path_ep{"-"};
+    std::string path_ep;
 
     DetectorConfig detector_config;
 
@@ -119,58 +102,6 @@ protected:
   void createCommandLineDescription() override;
   bool validateParameters() override;
   bool initConfiguration() override;
-
-  void AddOption(OptionPtr);
-
-  void AddOption(int *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(double *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(bool *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(std::string *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(std::vector<int> *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(std::vector<double> *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(std::vector<bool> *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  void AddOption(std::vector<std::string> *var, const char *cfg_name,
-                 const char *cli_group = nullptr,
-                 const char *cli_param = nullptr,
-                 const char *cli_desc = nullptr, bool cli_default = false,
-                 bool cli_switch = false);
-
-  const Options &options() const;
 
   bool init() override;
   bool run() override;
@@ -187,10 +118,8 @@ protected:
                           DataModel::DatabaseQueryPtr db);
 
 private:
-  void SetupConfigurationOptions();
   bool InitDetectors(WaveformHandlerIfacePtr waveform_handler);
 
-  Options options_;
   Config config_;
   ObjectLog *output_origins_;
 
