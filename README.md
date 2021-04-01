@@ -112,7 +112,9 @@ Note that if a configuration parameter is not explicitly defined a module
 specific global default is used instead. Global defaults may be configured
 following SeisComP's standard [module
 configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
-approach.
+approach. That is, by means of either global or module specific configuration
+files (`global.cfg`, `scdetect.cfg` located at corresponding configuration
+directory paths).
 
 In order to validate the template configuration, with
 [templates.schema.json](src/apps/scdetect/config/templates.schema.json) a
