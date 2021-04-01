@@ -633,6 +633,9 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
   };
 
   try {
+    SCDETECT_LOG_INFO("Loading template configuration from %s",
+                      config_.path_template_json.c_str());
+
     std::ifstream ifs{config_.path_template_json};
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
