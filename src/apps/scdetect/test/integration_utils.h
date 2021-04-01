@@ -65,17 +65,17 @@ public:
   const std::string flag() const override;
 };
 
-class FlagOffline : public BooleanFlag {
+class FlagOffline : public Flag {
 public:
   const std::string flag() const override;
 };
 
-class FlagPlayback : public BooleanFlag {
+class FlagPlayback : public Flag {
 public:
   const std::string flag() const override;
 };
 
-class FlagTemplatesReload : public BooleanFlag {
+class FlagTemplatesReload : public Flag {
 public:
   const std::string flag() const override;
 };
