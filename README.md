@@ -52,13 +52,18 @@ and configure `scdetect`. This includes:
 
 ### Template configuration
 
-In order to run `scdetect` a *template configuration* must be provided by means
-of using `scdetect`'s `--templates-json path/to/templates.json` CLI flag. The
-template configuration is a [JSON](https://www.json.org) configuration file and
-contains an array of *detector configuration* JSON objects (each detector
-refers to a template event identified by its `"originId"`). An exemplary
-multi-stream detector configuration (for the streams `CH.GRIMS..HHZ` and
-`CH.HASLI..HHZ`) may look like:
+In order to run `scdetect` a *template configuration* must be provided. That
+is, either by means of the `templatesJSON` configuration option in one of
+`scdetect`'s [module configuration
+files](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
+or by means of using `scdetect`'s `--templates-json path/to/templates.json` CLI
+flag.
+
+The template configuration itself is a [JSON](https://www.json.org)
+configuration file and contains an array of *detector configuration* JSON
+objects (each detector refers to a template event identified by its
+`"originId"`). An exemplary multi-stream detector configuration (for the
+streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
 
 ```json
     {
@@ -379,7 +384,7 @@ $ scdetect \
   --inventory-db file://$(realpath inventory.scml) \
   --event-db file://$(realpath catalog.scml) \
   -I file://$(realpath data.mseed) \
-  --offline=1 \
+  --offline \
   --ep=detections.scml
 ```
 
@@ -450,8 +455,8 @@ $ scdetect \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
   --record-url fdsnws://eida-federator.ethz.ch/fdsnws/dataselect/1/query \
-  --offline=1 \
-  --templates-prepare=1
+  --offline \
+  --templates-prepare
 ```
 
 I.e. template waveform data is downloaded from the
@@ -469,7 +474,7 @@ $ scdetect \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
   --record-url "slink://localhost:18000?timeout=60&retries=5" \
-  --offline=1 \
+  --offline \
   --ep=detections.scml
 ```
 

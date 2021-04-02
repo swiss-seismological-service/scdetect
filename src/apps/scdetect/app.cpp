@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <ios>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -45,138 +46,6 @@ struct ArrivalPick {
   DataModel::PickPtr pick;
 };
 
-#define NEW_OPT(var, ...) AddOption(&var, __VA_ARGS__)
-#define NEW_OPT_CLI(var, ...) AddOption(&var, nullptr, __VA_ARGS__)
-
-template <typename T>
-void readConfig(const Client::Application *, T *storage, const char *name) {}
-
-template <typename T>
-void readCLI(const System::CommandLine *, T *storage, const char *name) {}
-
-#define IMPL_READ_CONFIG(T, method)                                            \
-  template <>                                                                  \
-  void readConfig<T>(const Client::Application *app, T *storage,               \
-                     const char *name) {                                       \
-    try {                                                                      \
-      *storage = app->method(name);                                            \
-    } catch (...) {                                                            \
-    }                                                                          \
-  }
-
-template <typename T> struct OptionImpl : Application::Option {
-  OptionImpl(T *var, const char *cfg_name, const char *cli_group = nullptr,
-             const char *cli_param = nullptr, const char *cli_desc = nullptr,
-             bool cli_default = false, bool cli_switch = false)
-      : Application::Option(cfg_name, cli_group, cli_param, cli_desc,
-                            cli_default, cli_switch),
-        storage(var) {}
-
-  void Bind(System::CommandLine *cli) {
-    if (cli_param == nullptr)
-      return;
-    if (cli_group != nullptr)
-      cli->addGroup(cli_group);
-    if (cli_switch)
-      cli->addOption(cli_group ? cli_group : "Generic", cli_param, cli_desc);
-    else
-      cli->addOption(cli_group ? cli_group : "Generic", cli_param, cli_desc,
-                     storage, cli_default);
-  }
-
-  bool Get(System::CommandLine *cli) {
-    if (cli_param == nullptr)
-      return true;
-    if (cli_switch)
-      readCLI(cli, storage, cli_param);
-    return true;
-  }
-
-  bool Get(const Client::Application *app) {
-    readConfig(app, storage, cfg_name);
-    return true;
-  }
-
-  void PrintStorage(std::ostream &os) { os << *storage; }
-
-  T *storage;
-};
-
-template <typename T> struct OptionVecImpl : Application::Option {
-  OptionVecImpl(std::vector<T> *var, const char *cfg_name,
-                const char *cli_group = nullptr,
-                const char *cli_param = nullptr, const char *cli_desc = nullptr,
-                bool cli_default = false, bool cli_switch = false)
-      : Application::Option(cfg_name, cli_group, cli_param, cli_desc,
-                            cli_default, cli_switch),
-        storage(var) {}
-
-  void Bind(System::CommandLine *cli) {
-    if (cli_param == nullptr)
-      return;
-
-    if (cli_group != nullptr)
-      cli->addGroup(cli_group);
-
-    cli->addOption(cli_group ? cli_group : "Generic", cli_param, cli_desc,
-                   storage);
-  }
-
-  bool Get(System::CommandLine *cli) {
-    if (cli_param == nullptr)
-      return true;
-    if (cli_switch)
-      readCLI(cli, storage, cli_param);
-    return true;
-  }
-
-  bool Get(const Client::Application *app) {
-    readConfig(app, storage, cfg_name);
-    return true;
-  }
-
-  void PrintStorage(std::ostream &os) {
-    bool first = true;
-    for (typename std::vector<T>::iterator it = storage->begin();
-         it != storage->end(); ++it) {
-      if (!first)
-        os << ",";
-      else
-        first = false;
-      os << *it;
-    }
-  }
-
-  std::vector<T> *storage;
-};
-
-template <typename T>
-Application::OptionPtr
-Bind(T *var, const char *cfg_name, const char *cli_group = nullptr,
-     const char *cli_param = nullptr, const char *cli_desc = nullptr,
-     bool cli_default = false, bool cli_switch = false) {
-  return utils::make_smart<OptionImpl<T>>(var, cfg_name, cli_group, cli_param,
-                                          cli_desc, cli_default, cli_switch);
-}
-
-template <typename T>
-Application::OptionPtr
-Bind(std::vector<T> *var, const char *cfg_name, const char *cli_group = nullptr,
-     const char *cli_param = nullptr, const char *cli_desc = nullptr,
-     bool cli_default = false, bool cli_switch = false) {
-  return utils::make_smart<OptionVecImpl<T>>(
-      var, cfg_name, cli_group, cli_param, cli_desc, cli_default, cli_switch);
-}
-
-IMPL_READ_CONFIG(int, configGetInt)
-IMPL_READ_CONFIG(std::vector<int>, configGetInts)
-IMPL_READ_CONFIG(double, configGetDouble)
-IMPL_READ_CONFIG(std::vector<double>, configGetDoubles)
-IMPL_READ_CONFIG(bool, configGetBool)
-IMPL_READ_CONFIG(std::vector<bool>, configGetBools)
-IMPL_READ_CONFIG(std::string, configGetString)
-IMPL_READ_CONFIG(std::vector<std::string>, configGetStrings)
-
 } // namespace
 
 Application::Application(int argc, char **argv)
@@ -188,8 +57,6 @@ Application::Application(int argc, char **argv)
   setMessagingEnabled(true);
 
   setPrimaryMessagingGroup("LOCATION");
-
-  SetupConfigurationOptions();
 }
 
 Application::~Application() {}
@@ -205,24 +72,61 @@ const char *Application::version() { return kVersion; }
 void Application::createCommandLineDescription() {
   StreamApplication::createCommandLineDescription();
 
-  for (auto it = options_.begin(); it != options_.end(); ++it)
-    (*it)->Bind(&commandline());
+  commandline().addOption(
+      "Database", "event-db",
+      "load events from the given database or file, format: "
+      "[service://]location",
+      &config_.url_event_db);
+
+  commandline().addOption(
+      "Records", "record-starttime",
+      "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
+      "requesting records from the configured archive recordstream; "
+      "implicitly enables reprocessing/playback mode",
+      &config_.playback_config.start_time_str);
+  commandline().addOption(
+      "Records", "record-endtime",
+      "defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for "
+      "requesting records from the configured archive recordstream; "
+      "implicitly enables reprocessing/playback mode",
+      &config_.playback_config.end_time_str);
+
+  commandline().addGroup("Mode");
+  commandline().addOption(
+      "Mode", "offline",
+      "offline mode, do not connect to the messaging system (implies "
+      "--no-publish i.e. no objects are sent)");
+  commandline().addOption("Mode", "no-publish", "do not send any objects");
+  commandline().addOption(
+      "Mode", "ep",
+      "same as --no-publish, but outputs all event parameters scml "
+      "formatted; specifying the output path as '-' (a single dash) will "
+      "force the output to be redirected to stdout",
+      &config_.path_ep);
+  commandline().addOption(
+      "Mode", "playback",
+      "Use playback mode that does not restrict the maximum allowed "
+      "data latency");
+  commandline().addOption(
+      "Mode", "templates-prepare",
+      "load template waveform data from the configured recordstream "
+      "and save it in the module's caching directory, then exit");
+  commandline().addOption(
+      "Mode", "templates-reload",
+      "force reloading template waveform data and omit cached waveform data");
+
+  commandline().addGroup("Input");
+  commandline().addOption(
+      "Input", "templates-json",
+      "path to a template configuration file (json-formatted)",
+      &config_.path_template_json);
 }
 
 bool Application::validateParameters() {
-  Environment *env{Environment::Instance()};
-
-  boost::filesystem::path sc_install_dir{env->installDir()};
-  boost::filesystem::path path_cache{sc_install_dir /
-                                     settings::kPathFilesystemCache};
-  config_.path_filesystem_cache = path_cache.string();
-
   if (!StreamApplication::validateParameters())
     return false;
 
-  for (auto it = options_.begin(); it != options_.end(); ++it)
-    if (!(*it)->Get(&commandline()))
-      return false;
+  config_.Init(commandline());
 
   // TODO(damb): Disable messaging (offline mode) with certain command line
   // options
@@ -325,35 +229,10 @@ bool Application::initConfiguration() {
   if (!StreamApplication::initConfiguration())
     return false;
 
-  for (auto it = options_.begin(); it != options_.end(); ++it)
-    if (!(*it)->Get(this))
-      return false;
+  config_.Init(this);
 
   return true;
 }
-
-void Application::AddOption(OptionPtr opt) { options_.push_back(opt); }
-
-const Application::Options &Application::options() const { return options_; }
-
-#define IMPL_ADD_OPTION(TYPE)                                                  \
-  void Application::AddOption(TYPE *var, const char *cfg_name,                 \
-                              const char *cli_group, const char *cli_param,    \
-                              const char *cli_desc, bool cli_default,          \
-                              bool cli_switch) {                               \
-    AddOption(Bind(var, cfg_name, cli_group, cli_param, cli_desc, cli_default, \
-                   cli_switch));                                               \
-  }
-
-IMPL_ADD_OPTION(int)
-IMPL_ADD_OPTION(double)
-IMPL_ADD_OPTION(bool)
-IMPL_ADD_OPTION(std::string)
-
-IMPL_ADD_OPTION(std::vector<int>)
-IMPL_ADD_OPTION(std::vector<double>)
-IMPL_ADD_OPTION(std::vector<bool>)
-IMPL_ADD_OPTION(std::vector<std::string>)
 
 bool Application::init() {
 
@@ -713,69 +592,6 @@ bool Application::LoadEvents(const std::string &event_db,
   return loaded;
 }
 
-void Application::SetupConfigurationOptions() {
-  // define application specific configuration
-  NEW_OPT(config_.stream_config.template_config.phase, "template.phase");
-  NEW_OPT(config_.stream_config.template_config.wf_start,
-          "template.waveformStart");
-  NEW_OPT(config_.stream_config.template_config.wf_end, "template.waveformEnd");
-
-  NEW_OPT(config_.stream_config.init_time, "processing.initTime");
-  NEW_OPT(config_.detector_config.gap_interpolation,
-          "processing.gapInterpolation");
-
-  NEW_OPT(config_.detector_config.gap_threshold, "processing.minGapLength");
-  NEW_OPT(config_.detector_config.gap_tolerance, "processing.maxGapLength");
-  NEW_OPT(config_.detector_config.trigger_on, "detector.triggerOnThreshold");
-  NEW_OPT(config_.detector_config.trigger_off, "detector.triggerOffThreshold");
-  NEW_OPT(config_.detector_config.trigger_duration, "detector.triggerDuration");
-  NEW_OPT(config_.detector_config.time_correction, "detector.timeCorrection");
-  NEW_OPT(config_.detector_config.create_arrivals, "detector.createArrivals");
-  NEW_OPT(config_.detector_config.create_template_arrivals,
-          "detector.createTemplateArrivals");
-  NEW_OPT(config_.detector_config.arrival_offset_threshold,
-          "detector.arrivalOffsetThreshold");
-  NEW_OPT(config_.detector_config.min_arrivals, "detector.minimumArrivals");
-
-  NEW_OPT_CLI(config_.url_event_db, "Database", "event-db",
-              "load events from the given database or file, format: "
-              "[service://]location");
-
-  NEW_OPT_CLI(config_.offline_mode, "Messaging", "offline",
-              "offline mode, do not connect to the messaging system (implies "
-              "--no-publish i.e. no objects are sent)");
-  NEW_OPT_CLI(config_.no_publish, "Messaging", "no-publish",
-              "do not send any objects");
-  NEW_OPT_CLI(
-      config_.path_ep, "Messaging", "ep",
-      "same as --no-publish, but outputs all event parameters scml "
-      "formatted; specifying the output path as '-' (a single dash) will "
-      "force the output to be redirected to stdout");
-
-  NEW_OPT_CLI(config_.playback_config.start_time_str, "Records",
-              "record-starttime",
-              "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
-              "requesting records from the configured archive recordstream; "
-              "implicitly enables reprocessing/playback mode");
-  NEW_OPT_CLI(config_.playback_config.end_time_str, "Records", "record-endtime",
-              "defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for "
-              "requesting records from the configured archive recordstream; "
-              "implicitly enables reprocessing/playback mode");
-
-  NEW_OPT_CLI(config_.playback_config.enabled, "Mode", "playback",
-              "Use playback mode that does not restrict the maximum allowed "
-              "data latency");
-  NEW_OPT_CLI(config_.templates_prepare, "Mode", "templates-prepare",
-              "load template waveform data from the configured recordstream "
-              "and save it in the module's caching directory, then exit");
-  NEW_OPT_CLI(
-      config_.templates_no_cache, "Mode", "templates-reload",
-      "force reloading template waveform data and omit cached waveform data");
-
-  NEW_OPT_CLI(config_.path_template_json, "Input", "templates-json",
-              "path to a template configuration file (json-formatted)");
-}
-
 bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 
   // load event related data
@@ -806,18 +622,45 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
   }
 
   // initialize detectors
-  std::unordered_set<std::string> processor_ids;
-  auto IsUniqueProcessorId = [&processor_ids](const std::string &id) {
-    bool id_exists{processor_ids.find(id) != processor_ids.end()};
-    if (id_exists) {
-      SCDETECT_LOG_WARNING("Processor id is be used by multiple processors: %s",
-                           id.c_str());
+  struct TemplateProcessorIds {
+    bool complete{false};
+    std::unordered_set<std::string> ids;
+  };
+  std::unordered_map<std::string, TemplateProcessorIds> processor_ids;
+  auto IsUniqueProcessorId = [&processor_ids](const std::string &detector_id,
+                                              const std::string &template_id) {
+    auto it{processor_ids.find(detector_id)};
+    bool detector_exists{it != processor_ids.end()};
+    if (detector_exists) {
+      if (it->second.complete) {
+        SCDETECT_LOG_WARNING("Processor id is be used by multiple "
+                             "processors: detector_id=%s",
+                             detector_id.c_str());
+        return false;
+      } else {
+        bool id_exists{it->second.ids.find(template_id) !=
+                       it->second.ids.end()};
+        if (id_exists) {
+          SCDETECT_LOG_WARNING(
+              "Processor id is be used by multiple processors: "
+              "detector_id=%s, template_id=%s",
+              detector_id.c_str(), template_id.c_str());
+        }
+        it->second.ids.emplace(template_id);
+        return !id_exists;
+      }
+    } else {
+      TemplateProcessorIds template_ids;
+      template_ids.ids.emplace(template_id);
+      processor_ids.emplace(detector_id, template_ids);
+      return !detector_exists;
     }
-    processor_ids.emplace(id);
-    return !id_exists;
   };
 
   try {
+    SCDETECT_LOG_INFO("Loading template configuration from %s",
+                      config_.path_template_json.c_str());
+
     std::ifstream ifs{config_.path_template_json};
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
@@ -838,7 +681,8 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 
         std::vector<std::string> stream_ids;
         for (const auto &stream_config_pair : tc) {
-          IsUniqueProcessorId(stream_config_pair.second.template_id);
+          IsUniqueProcessorId(tc.detector_id(),
+                              stream_config_pair.second.template_id);
           try {
             detector_builder.set_stream(stream_config_pair.first,
                                         stream_config_pair.second,
@@ -879,6 +723,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           }
           stream_ids.push_back(stream_config_pair.first);
         }
+        processor_ids.at(tc.detector_id()).complete = true;
 
         std::shared_ptr<detect::Detector> detector_ptr{
             detector_builder.Build()};
@@ -908,6 +753,115 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
     return false;
   }
   return true;
+}
+
+Application::Config::Config() {
+  Environment *env{Environment::Instance()};
+
+  boost::filesystem::path sc_install_dir{env->installDir()};
+  boost::filesystem::path path_cache{sc_install_dir /
+                                     settings::kPathFilesystemCache};
+  path_filesystem_cache = path_cache.string();
+}
+
+void Application::Config::Init(const Client::Application *app) {
+  try {
+    path_template_json = app->configGetPath("templatesJSON");
+  } catch (...) {
+  }
+
+  try {
+    stream_config.template_config.phase =
+        app->configGetString("template.phase");
+  } catch (...) {
+  }
+  try {
+    stream_config.template_config.wf_start =
+        app->configGetDouble("template.waveformStart");
+  } catch (...) {
+  }
+  try {
+    stream_config.template_config.wf_end =
+        app->configGetDouble("template.waveformEnd");
+  } catch (...) {
+  }
+
+  try {
+    stream_config.init_time = app->configGetDouble("processing.initTime");
+  } catch (...) {
+  }
+  try {
+    detector_config.gap_interpolation =
+        app->configGetBool("processing.gapInterpolation");
+  } catch (...) {
+  }
+  try {
+    detector_config.gap_threshold =
+        app->configGetDouble("processing.minGapLength");
+  } catch (...) {
+  }
+  try {
+    detector_config.gap_tolerance =
+        app->configGetDouble("processing.maxGapLength");
+  } catch (...) {
+  }
+
+  try {
+    detector_config.trigger_on =
+        app->configGetDouble("detector.triggerOnThreshold");
+  } catch (...) {
+  }
+  try {
+    detector_config.trigger_off =
+        app->configGetDouble("detector.triggerOffThreshold");
+  } catch (...) {
+  }
+  try {
+    detector_config.trigger_duration =
+        app->configGetDouble("detector.triggerDuration");
+  } catch (...) {
+  }
+  try {
+    detector_config.time_correction =
+        app->configGetDouble("detector.timeCorrection");
+  } catch (...) {
+  }
+  try {
+    detector_config.create_arrivals =
+        app->configGetBool("detector.createArrivals");
+  } catch (...) {
+  }
+  try {
+    detector_config.create_template_arrivals =
+        app->configGetBool("detector.createTemplateArrivals");
+  } catch (...) {
+  }
+  try {
+    detector_config.arrival_offset_threshold =
+        app->configGetDouble("detector.arrivalOffsetThreshold");
+  } catch (...) {
+  }
+  try {
+    detector_config.min_arrivals =
+        app->configGetInt("detector.minimumArrivals");
+  } catch (...) {
+  }
+}
+
+void Application::Config::Init(const System::CommandLine &commandline) {
+  templates_prepare = commandline.hasOption("templates-prepare");
+  templates_no_cache = commandline.hasOption("templates-reload");
+
+  if (commandline.hasOption("templates-json")) {
+    Environment *env{Environment::Instance()};
+    path_template_json =
+        env->absolutePath(commandline.option<std::string>("templates-json"));
+  }
+
+  playback_config.enabled = commandline.hasOption("playback");
+
+  offline_mode = commandline.hasOption("offline");
+  no_publish = commandline.hasOption("no-publish");
 }
 
 } // namespace detect

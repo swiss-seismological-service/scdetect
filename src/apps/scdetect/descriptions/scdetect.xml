@@ -3,6 +3,11 @@
   <module name="scdetect" category="Processing" inherit-global-bindings="true">
     <description>Template matching based earthquake detection</description>
     <configuration>
+      <parameter name="templatesJSON" type="path" default="@ROOTDIR@/etc/scdetect/templates.json">
+        <description>
+          Defines the default path for the template configuration file.
+        </description>
+      </parameter>
       <group name="template">
         <parameter name="phase" type="string" default="Pg">
           <description>
