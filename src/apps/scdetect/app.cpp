@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <ios>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -621,15 +622,39 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
   }
 
   // initialize detectors
-  std::unordered_set<std::string> processor_ids;
-  auto IsUniqueProcessorId = [&processor_ids](const std::string &id) {
-    bool id_exists{processor_ids.find(id) != processor_ids.end()};
-    if (id_exists) {
-      SCDETECT_LOG_WARNING("Processor id is be used by multiple processors: %s",
-                           id.c_str());
+  struct TemplateProcessorIds {
+    bool complete{false};
+    std::unordered_set<std::string> ids;
+  };
+  std::unordered_map<std::string, TemplateProcessorIds> processor_ids;
+  auto IsUniqueProcessorId = [&processor_ids](const std::string &detector_id,
+                                              const std::string &template_id) {
+    auto it{processor_ids.find(detector_id)};
+    bool detector_exists{it != processor_ids.end()};
+    if (detector_exists) {
+      if (it->second.complete) {
+        SCDETECT_LOG_WARNING("Processor id is be used by multiple "
+                             "processors: detector_id=%s",
+                             detector_id.c_str());
+        return false;
+      } else {
+        bool id_exists{it->second.ids.find(template_id) !=
+                       it->second.ids.end()};
+        if (id_exists) {
+          SCDETECT_LOG_WARNING(
+              "Processor id is be used by multiple processors: "
+              "detector_id=%s, template_id=%s",
+              detector_id.c_str(), template_id.c_str());
+        }
+        it->second.ids.emplace(template_id);
+        return !id_exists;
+      }
+    } else {
+      TemplateProcessorIds template_ids;
+      template_ids.ids.emplace(template_id);
+      processor_ids.emplace(detector_id, template_ids);
+      return !detector_exists;
     }
-    processor_ids.emplace(id);
-    return !id_exists;
   };
 
   try {
@@ -656,7 +681,8 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 
         std::vector<std::string> stream_ids;
         for (const auto &stream_config_pair : tc) {
-          IsUniqueProcessorId(stream_config_pair.second.template_id);
+          IsUniqueProcessorId(tc.detector_id(),
+                              stream_config_pair.second.template_id);
           try {
             detector_builder.set_stream(stream_config_pair.first,
                                         stream_config_pair.second,
@@ -697,6 +723,7 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
           }
           stream_ids.push_back(stream_config_pair.first);
         }
+        processor_ids.at(tc.detector_id()).complete = true;
 
         std::shared_ptr<detect::Detector> detector_ptr{
             detector_builder.Build()};
