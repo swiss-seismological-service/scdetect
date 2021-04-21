@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <seiscomp/core/datetime.h>
-#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/event.h>
@@ -28,6 +27,7 @@
 #include "detector/template.h"
 #include "settings.h"
 #include "waveform.h"
+#include "waveformoperator.h"
 #include "waveformprocessor.h"
 
 namespace Seiscomp {
@@ -36,8 +36,6 @@ namespace detect {
 class DetectorBuilder;
 
 // Detector waveform processor implementation
-// - implements gap interpolation
-// - handles buffers
 class Detector : public WaveformProcessor {
 
   Detector(const std::string &id, const DataModel::OriginCPtr &origin);
@@ -79,31 +77,18 @@ public:
   void set_filter(Filter *filter, const Core::TimeSpan &init_time) override;
 
   const Core::TimeWindow &processed() const override;
-  // Sets the maximal gap length to be tolerated
-  void set_gap_tolerance(const Core::TimeSpan &duration);
-  // Returns the gap tolerance
-  const Core::TimeSpan gap_tolerance() const;
-  // Enables/disables the linear interpolation of missing samples
-  // if the gap is smaller than the configured gap tolerance
-  void set_gap_interpolation(bool e);
-  // Returns if gap interpolation is enabled or disabled, respectively
-  bool gap_interpolation() const;
 
-  bool Feed(const Record *rec) override;
   void Reset() override;
   void Terminate() override;
 
 protected:
+  WaveformProcessor::StreamState &stream_state(const Record *record) override;
+
   void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
-  bool HandleGap(StreamState &stream_state, const Record *record,
-                 DoubleArrayPtr &data) override;
-
   void Fill(StreamState &stream_state, const Record *record,
             DoubleArrayPtr &data) override;
-
-  void InitStream(StreamState &stream_state, const Record *record) override;
 
   bool EnoughDataReceived(const StreamState &stream_state) const override;
   // Callback function storing `res`
@@ -112,20 +97,10 @@ protected:
   void PrepareDetection(DetectionPtr &d, const detector::Detector::Result &res);
 
 private:
-  // Fill gaps
-  bool FillGap(StreamState &stream_state, const Record *record,
-               const Core::TimeSpan &duration, double next_sample,
-               size_t missing_samples);
-
-  struct StreamConfig {
-    WaveformProcessor::StreamState stream_state;
-    // Reference to the stream buffer
-    std::shared_ptr<RecordSequence> stream_buffer;
-  };
-
   using WaveformStreamID = std::string;
-  using StreamConfigs = std::unordered_map<WaveformStreamID, StreamConfig>;
-  StreamConfigs stream_configs_;
+  using StreamStates =
+      std::unordered_map<WaveformStreamID, WaveformProcessor::StreamState>;
+  StreamStates stream_states_;
 
   DetectorConfig config_;
 

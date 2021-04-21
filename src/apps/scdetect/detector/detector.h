@@ -19,6 +19,8 @@
 
 #include "../exception.h"
 #include "../processor.h"
+#include "../waveformoperator.h"
+#include "../waveformprocessor.h"
 #include "arrival.h"
 #include "linker.h"
 #include "template.h"

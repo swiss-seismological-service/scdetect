@@ -15,11 +15,13 @@ set(
     eventstore.cpp
     exception.cpp
     main.cpp
+    operator/ringbuffer.cpp
     processor.cpp
     resamplerstore.cpp
     utils.cpp
     validators.cpp
     waveform.cpp
+    waveformoperator.cpp
     waveformprocessor.cpp
 )
 

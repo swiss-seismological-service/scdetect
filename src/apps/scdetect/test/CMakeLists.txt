@@ -31,11 +31,13 @@ set(SOURCES_integration
   ../detector/template.cpp
   ../eventstore.cpp
   ../exception.cpp
+  ../operator/ringbuffer.cpp
   ../processor.cpp
   ../resamplerstore.cpp
   ../utils.cpp
   ../validators.cpp
   ../waveform.cpp
+  ../waveformoperator.cpp
   ../waveformprocessor.cpp
   integration_utils.cpp
 )

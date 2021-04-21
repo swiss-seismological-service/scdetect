@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "utils.h"
+#include "waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -35,6 +36,18 @@ WaveformProcessor::Status WaveformProcessor::status() const { return status_; }
 
 double WaveformProcessor::status_value() const { return status_value_; }
 
+void WaveformProcessor::set_operator(WaveformOperator *op) {
+  if (waveform_operator_) {
+    waveform_operator_.reset();
+  }
+
+  waveform_operator_.reset(op);
+  if (waveform_operator_) {
+    waveform_operator_->set_store_callback(
+        [this](const Record *record) { return Store(record); });
+  }
+}
+
 const Core::TimeSpan WaveformProcessor::init_time() const { return init_time_; }
 
 bool WaveformProcessor::finished() const {
@@ -47,7 +60,27 @@ const boost::filesystem::path &WaveformProcessor::debug_info_dir() const {
 
 bool WaveformProcessor::debug_mode() const { return !debug_info_dir_.empty(); }
 
+bool WaveformProcessor::Feed(const Record *record) {
+  if (record->sampleCount() == 0)
+    return false;
+
+  if (!waveform_operator_) {
+    return Store(record);
+  }
+
+  WaveformProcessor::Status s{waveform_operator_->Feed(record)};
+  if (s > WaveformProcessor::Status::kTerminated) {
+    set_status(s, -1);
+    return false;
+  }
+  return true;
+}
+
 void WaveformProcessor::Reset() {
+  if (waveform_operator_) {
+    waveform_operator_->Reset();
+  }
+
   status_ = Status::kWaitingForData;
   status_value_ = 0;
 }
@@ -66,42 +99,49 @@ WaveformProcessor::StreamState::~StreamState() {
   }
 }
 
-bool WaveformProcessor::Store(StreamState &stream_state, const Record *record) {
+bool WaveformProcessor::Store(const Record *record) {
   if (WaveformProcessor::Status::kInProgress < status() || !record->data())
     return false;
 
-  DoubleArrayPtr data{
-      dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
+  try {
+    StreamState &current_stream_state{stream_state(record)};
 
-  if (!stream_state.last_record) {
-    InitStream(stream_state, record);
-  } else {
-    if (!HandleGap(stream_state, record, data))
+    DoubleArrayPtr data{
+        dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
+
+    if (!current_stream_state.last_record) {
+      InitStream(current_stream_state, record);
+    } else {
+      if (!HandleGap(current_stream_state, record, data))
+        return false;
+
+      current_stream_state.data_time_window.setEndTime(record->endTime());
+    }
+    current_stream_state.last_sample = (*data)[data->size() - 1];
+
+    Fill(current_stream_state, record, data);
+    if (Status::kInProgress < status())
       return false;
 
-    stream_state.data_time_window.setEndTime(record->endTime());
-  }
-  stream_state.last_sample = (*data)[data->size() - 1];
-
-  Fill(stream_state, record, data);
-  if (Status::kInProgress < status())
-    return false;
-
-  if (!stream_state.initialized) {
-    if (EnoughDataReceived(stream_state)) {
-      // stream_state.initialized = true;
-      Process(stream_state, record, *data);
-      // NOTE: To allow derived classes to notice modification of the variable
-      // stream_state.initialized, it is necessary to set this after calling
-      // process.
-      stream_state.initialized = true;
+    if (!current_stream_state.initialized) {
+      if (EnoughDataReceived(current_stream_state)) {
+        // stream_state.initialized = true;
+        Process(current_stream_state, record, *data);
+        // NOTE: To allow derived classes to notice modification of the variable
+        // stream_state.initialized, it is necessary to set this after calling
+        // process.
+        current_stream_state.initialized = true;
+      }
+    } else {
+      // Call process to cause a derived processor to work on the data.
+      Process(current_stream_state, record, *data);
     }
-  } else {
-    // Call process to cause a derived processor to work on the data.
-    Process(stream_state, record, *data);
-  }
 
-  stream_state.last_record = record;
+    current_stream_state.last_record = record;
+
+  } catch (...) {
+    return false;
+  }
 
   return true;
 }

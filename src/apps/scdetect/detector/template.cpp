@@ -9,6 +9,7 @@
 #include "../settings.h"
 #include "../utils.h"
 #include "../waveform.h"
+#include "../waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -34,13 +35,6 @@ const Core::TimeWindow &Template::processed() const {
   return stream_state_.data_time_window;
 }
 
-bool Template::Feed(const Record *record) {
-  if (record->sampleCount() == 0)
-    return false;
-
-  return Store(stream_state_, record);
-}
-
 void Template::Reset() {
   Filter *tmp{stream_state_.filter};
 
@@ -53,6 +47,10 @@ void Template::Reset() {
   cross_correlation_.Reset();
 
   WaveformProcessor::Reset();
+}
+
+WaveformProcessor::StreamState &Template::stream_state(const Record *record) {
+  return stream_state_;
 }
 
 void Template::Process(StreamState &stream_state, const Record *record,

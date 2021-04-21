@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
 
 #include <functional>
+#include <memory>
 
 #include <boost/filesystem.hpp>
 
@@ -16,6 +17,8 @@
 
 namespace Seiscomp {
 namespace detect {
+
+class WaveformOperator;
 
 // Abstract interface for waveform processors
 class WaveformProcessor : public Processor {
@@ -115,8 +118,10 @@ public:
   // Sets the filter to apply; the filter pointer passed is owned by the
   // `WaveformProcessor`
   virtual void set_filter(Filter *filter, const Core::TimeSpan &init_time) = 0;
-  // Sets the processor's target sampling frequency
-  /* virtual void set_sampling_frequency(double sampling_frequency) = 0; */
+  // Configures a `WaveformProcessor` with `op`. `op` is applied to all records
+  // fed. `op` sits between `Feed` and `Store`. The pointer ownership goes to
+  // the processor.
+  void set_operator(WaveformOperator *op);
   // Returns the processor's initialization time
   virtual const Core::TimeSpan init_time() const;
 
@@ -134,7 +139,7 @@ public:
   bool debug_mode() const;
 
   // Feed data to the processor (implies a call to the Process() method).
-  virtual bool Feed(const Record *record) = 0;
+  virtual bool Feed(const Record *record);
 
   // Resets the processor completely. The configured init time is going to be
   // processed again.
@@ -151,6 +156,7 @@ public:
   virtual std::string DebugString() const;
 
 protected:
+  // Describes the current state of a stream
   struct StreamState {
     ~StreamState();
     // Value of the last sample
@@ -174,12 +180,14 @@ protected:
     Filter *filter{nullptr};
   };
 
+  virtual StreamState &stream_state(const Record *record) = 0;
+
   // Virtual method that must be used in derived classes to analyse a
   // datastream. Both the raw record and the filtered data array is passed.
   virtual void Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) = 0;
   // Store the record
-  virtual bool Store(StreamState &stream_state, const Record *record);
+  virtual bool Store(const Record *record);
 
   // Handles gaps. Returns whether the gap has been handled or not.
   virtual bool HandleGap(StreamState &stream_state, const Record *record,
@@ -207,6 +215,8 @@ protected:
   Core::TimeSpan init_time_;
 
   PublishResultCallback result_callback_;
+
+  std::unique_ptr<WaveformOperator> waveform_operator_;
 
 private:
   Status status_{Status::kWaitingForData};

@@ -43,10 +43,11 @@ public:
 
   const Core::TimeWindow &processed() const override;
 
-  bool Feed(const Record *record) override;
   void Reset() override;
 
 protected:
+  WaveformProcessor::StreamState &stream_state(const Record *record) override;
+
   void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
