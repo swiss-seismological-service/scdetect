@@ -3,6 +3,7 @@
 ## Content
 
 - [About](#about)
+- [Overview](#overview)
 - [Getting started](#getting-started)
   + [General](#general)
   + [Template configuration](#template-configuration)
@@ -22,6 +23,35 @@ implements both real-time and classical offline earthquake detection based on
 waveform cross-correlation, also called matched filtering or template matching.
 
 The module allows both single-stream and multi-stream earthquake detection.
+
+
+## Overview
+
+<p align="center">
+  <img border="0" src="doc/diagrams/sc-system-scdetect.svg" width="400"
+  title="SCDetect and SeisComP" />
+</p>
+
+Above, the modular organization of SeisComP with [messaging
+system](https://docs.gempa.de/seiscomp/current/base/concepts/messaging.html)
+(mediator),
+[RecordStream](https://docs.gempa.de/seiscomp/current/base/concepts/recordstream.html)
+interface (waveform server) and
+[database](https://docs.gempa.de/seiscomp/current/base/concepts/database.html)
+including `scdetect`'s role in the SeisComP overall architecture. In SeisComP
+language `scdetect` is a representative for a [trunk
+module](https://www.seiscomp.de/doc/base/glossary.html#term-trunk).
+
+From an architectural point of view `scdetect` is positioned somewhere between
+[scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html) and
+[scautoloc](https://docs.gempa.de/seiscomp/current/apps/scautoloc.html). That
+is, `scdetect` fetches waveform data by means of the RecordStream interface,
+but it also uses data products for template generation.
+
+For further information with regards to the SeisComP architecture please refer
+to the [SeisComP
+documentation](https://docs.gempa.de/seiscomp/current/base/overview.html).
+
 
 ## Getting started
 
