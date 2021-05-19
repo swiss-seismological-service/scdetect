@@ -65,6 +65,9 @@ struct StreamConfig {
   double init_time{60};
   // Defines the processing specific filter
   boost::optional<std::string> filter;
+  // Defines the processing specific target sampling frequency, which might
+  // force resampling the data to be processed
+  boost::optional<double> target_sampling_frequency;
 
   TemplateStreamConfig template_config;
 };

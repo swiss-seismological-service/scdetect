@@ -389,6 +389,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   template_proc->set_filter(rt_template_filter.release(),
                             stream_config.init_time);
+  if (stream_config.target_sampling_frequency) {
+    template_proc->set_target_sampling_frequency(
+        *stream_config.target_sampling_frequency);
+  }
 
   TemplateProcessorConfig c{
       std::move(template_proc),

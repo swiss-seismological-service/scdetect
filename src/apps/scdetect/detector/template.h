@@ -5,6 +5,8 @@
 #include <ostream>
 #include <string>
 
+#include <boost/optional.hpp>
+
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/eventparameters.h>
@@ -45,6 +47,9 @@ public:
 
   void Reset() override;
 
+  void set_target_sampling_frequency(double f);
+  boost::optional<double> target_sampling_frequency() const;
+
 protected:
   WaveformProcessor::StreamState &stream_state(const Record *record) override;
 
@@ -58,6 +63,8 @@ protected:
 
 private:
   StreamState stream_state_;
+  // The optional target sampling frequency (used for on-the-fly resampling)
+  boost::optional<double> target_sampling_frequency_;
 
   // The in-place cross-correlation filter
   filter::CrossCorrelation<double> cross_correlation_;

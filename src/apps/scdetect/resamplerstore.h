@@ -39,9 +39,8 @@ namespace detect {
 // A global store for resamplers
 // - implements the Singleton Design Pattern
 class RecordResamplerStore {
-  using RecordResampler = IO::RecordResampler<double>;
-
 public:
+  using RecordResampler = IO::RecordResampler<double>;
   static RecordResamplerStore &Instance();
 
   RecordResamplerStore(const RecordResamplerStore &) = delete;

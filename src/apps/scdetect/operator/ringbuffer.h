@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
 #define SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
 
-#include <ios>
 #include <memory>
 #include <string>
 #include <unordered_map>

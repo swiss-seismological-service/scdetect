@@ -31,6 +31,7 @@ set(SOURCES_integration
   ../detector/template.cpp
   ../eventstore.cpp
   ../exception.cpp
+  ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processor.cpp
   ../resamplerstore.cpp

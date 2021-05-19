@@ -15,6 +15,7 @@ set(
     eventstore.cpp
     exception.cpp
     main.cpp
+    operator/resample.cpp
     operator/ringbuffer.cpp
     processor.cpp
     resamplerstore.cpp

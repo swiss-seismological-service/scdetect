@@ -6,6 +6,8 @@
 #include <string>
 
 #include "../log.h"
+#include "../operator/resample.h"
+#include "../resamplerstore.h"
 #include "../settings.h"
 #include "../utils.h"
 #include "../waveform.h"
@@ -47,6 +49,16 @@ void Template::Reset() {
   cross_correlation_.Reset();
 
   WaveformProcessor::Reset();
+}
+
+void Template::set_target_sampling_frequency(double f) {
+  if (f > 0) {
+    target_sampling_frequency_ = f;
+  }
+}
+
+boost::optional<double> Template::target_sampling_frequency() const {
+  return target_sampling_frequency_;
 }
 
 WaveformProcessor::StreamState &Template::stream_state(const Record *record) {
@@ -102,8 +114,6 @@ void Template::Process(StreamState &stream_state, const Record *record,
 void Template::Fill(StreamState &stream_state, const Record *record,
                     DoubleArrayPtr &data) {
 
-  // TODO(damb): Allow target sampling frequency to be configurable if filter
-  // is in use.
   WaveformProcessor::Fill(stream_state, record, data);
   // cross-correlate filtered data
   cross_correlation_.Apply(data->size(), data->typedData());
@@ -111,7 +121,27 @@ void Template::Fill(StreamState &stream_state, const Record *record,
 
 void Template::InitStream(StreamState &stream_state, const Record *record) {
   WaveformProcessor::InitStream(stream_state, record);
-  cross_correlation_.set_sampling_frequency(stream_state.sampling_frequency);
+  const auto f{stream_state.sampling_frequency};
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: sampling_frequency=%f",
+                               f);
+  if (target_sampling_frequency_ && target_sampling_frequency_ != f) {
+
+    SCDETECT_LOG_DEBUG_PROCESSOR(this,
+                                 "Reinitialize stream: sampling_frequency=%f",
+                                 target_sampling_frequency_);
+    auto resampling_operator{
+        utils::make_unique<waveform_operator::ResamplingOperator>(
+            RecordResamplerStore::Instance().Get(record,
+                                                 *target_sampling_frequency_))};
+    set_operator(resampling_operator.release());
+
+    if (stream_state.filter) {
+      stream_state.filter->setSamplingFrequency(*target_sampling_frequency_);
+    }
+  }
+
+  cross_correlation_.set_sampling_frequency(
+      target_sampling_frequency_.value_or(f));
 }
 
 } // namespace detector

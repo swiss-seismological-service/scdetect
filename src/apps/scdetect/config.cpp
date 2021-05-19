@@ -40,7 +40,9 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       wf_stream_id{pt.get<std::string>("waveformId")}, init_time{pt.get<double>(
                                                            "initTime",
                                                            defaults.init_time)},
-      filter{pt.get_optional<std::string>("filter")} {
+      filter{pt.get_optional<std::string>("filter")},
+      target_sampling_frequency{
+          pt.get_optional<double>("targetSamplingFrequency")} {
   template_config.phase =
       pt.get<std::string>("templatePhase", defaults.template_config.phase);
   template_config.wf_start = pt.get<double>("templateWaveformStart",
