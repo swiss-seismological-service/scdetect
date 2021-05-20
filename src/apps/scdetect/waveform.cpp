@@ -7,6 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/functional/hash.hpp>
 
+#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/strings.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/io/records/mseedrecord.h>
@@ -36,62 +37,6 @@ template <class T> T NextPowerOfTwo(T a, T min = 1, T max = 1 << 31) {
 }
 
 } // namespace
-
-bool Merge(GenericRecord &trace, const RecordSequence &seq) {
-  RecordCPtr first = seq.front();
-  RecordCPtr last;
-  double sampling_freq = first->samplingFrequency();
-  Core::TimeSpan max_allowed_gap{static_cast<double>(0.5 / sampling_freq)};
-  Core::TimeSpan max_allowed_overlap{static_cast<double>(-0.5 / sampling_freq)};
-
-  trace.setNetworkCode(first->networkCode());
-  trace.setStationCode(first->stationCode());
-  trace.setLocationCode(first->locationCode());
-  trace.setChannelCode(first->channelCode());
-
-  trace.setStartTime(first->startTime());
-  trace.setSamplingFrequency(sampling_freq);
-
-  Array::DataType datatype{first->data()->dataType()};
-  ArrayPtr arr{ArrayFactory::Create(datatype, datatype, 0, nullptr)};
-
-  std::string stream_id{trace.streamID()};
-
-  for (const RecordCPtr &rec : seq) {
-    if (rec->samplingFrequency() != sampling_freq) {
-      SCDETECT_LOG_WARNING(
-          "%s: Inconsistent record sampling frequencies: %f != %f",
-          std::string{stream_id}.c_str(), sampling_freq,
-          rec->samplingFrequency());
-      return false;
-    }
-
-    // Check for gaps and overlaps
-    if (last) {
-      Core::TimeSpan diff{rec->startTime() - last->endTime()};
-      if (diff > max_allowed_gap) {
-        SCDETECT_LOG_WARNING("%s: Gap detected: %d.%06ds",
-                             std::string{stream_id}.c_str(),
-                             static_cast<int>(diff.seconds()),
-                             static_cast<int>(diff.microseconds()));
-        return false;
-      }
-
-      if (diff < max_allowed_overlap) {
-        SCDETECT_LOG_WARNING("%s: Overlap detected: %fs",
-                             std::string{stream_id}.c_str(),
-                             static_cast<double>(diff));
-        return false;
-      }
-    }
-
-    arr->append((Array *)(rec->data()));
-    last = rec;
-  }
-
-  trace.setData(arr.get());
-  return true;
-}
 
 bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
   auto offset{

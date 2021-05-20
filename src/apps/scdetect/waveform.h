@@ -8,7 +8,6 @@
 #include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
-#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
@@ -21,8 +20,6 @@ namespace detect {
 
 namespace waveform {
 
-// Merges multiple records from `seq` into a single record returned as `trace`
-bool Merge(GenericRecord &trace, const RecordSequence &seq);
 bool Trim(GenericRecord &trace, const Core::TimeWindow &tw);
 bool Filter(GenericRecord &trace, const std::string &filter_string);
 bool Filter(DoubleArray &data, const std::string &filter_string,
