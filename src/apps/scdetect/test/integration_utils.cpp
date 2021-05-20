@@ -118,6 +118,11 @@ FlagEp::FlagEp(const std::string &fpath) : ArgFlag{fpath} {}
 FlagEp ::FlagEp(const fs::path &fpath) : FlagEp{fpath.string()} {}
 const std::string FlagEp::flag() const { return "--ep"; }
 
+FlagConfigFile::FlagConfigFile(const std::string &fpath) : ArgFlag{fpath} {}
+FlagConfigFile::FlagConfigFile(const fs::path &fpath)
+    : ArgFlag{fpath.string()} {}
+const std::string FlagConfigFile::flag() const { return "--config-file"; }
+
 FlagDB::FlagDB(const std::string &uri) : ArgFlag{uri} {}
 FlagDB ::FlagDB(const fs::path &fpath)
     : FlagDB{std::string{"sqlite3://" + fpath.string()}} {}

@@ -107,6 +107,13 @@ public:
   const std::string flag() const override;
 };
 
+class FlagConfigFile : public ArgFlag {
+public:
+  explicit FlagConfigFile(const std::string &fpath);
+  explicit FlagConfigFile(const fs::path &fpath);
+  const std::string flag() const override;
+};
+
 class FlagDB : public ArgFlag {
 public:
   explicit FlagDB(const std::string &uri);

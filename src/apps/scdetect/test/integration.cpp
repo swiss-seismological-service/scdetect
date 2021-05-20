@@ -8,6 +8,7 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/test/data/dataset.hpp>
 #include <boost/test/data/monomorphic.hpp>
@@ -150,11 +151,20 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
     BOOST_FAIL("Failed to prepare database:" << e.what());
   }
 
+  // prepare empty config file
+  fs::path path_config{fx.path_tempdir / "scdetect.cfg"};
+  try {
+    fs::ofstream{path_config};
+  } catch (fs::filesystem_error &e) {
+    BOOST_FAIL("Failed to prepare dummy config file:" << e.what());
+  }
+
   fs::path path_ep_result_scml{fx.path_tempdir / "ep.scml"};
 
   // prepare CLI flags
   std::vector<std::string> flags_str{
       "scdetect",
+      cli::to_string(cli::FlagConfigFile{path_config}),
       cli::to_string(cli::FlagDebug{}),
       cli::to_string(cli::FlagOffline{}),
       cli::to_string(cli::FlagPlayback{}),
