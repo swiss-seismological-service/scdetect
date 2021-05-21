@@ -141,22 +141,12 @@ BOOST_TEST_DECORATOR(*utf::tolerance(test_unit_tolerance))
 BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
 
   TempDirFixture fx{CLIParserFixture::keep_tempdir};
-
-  // prepare empty SQLite DB from template DB
-  const std::string db{"seiscomp_db.sqlite"};
-  fs::path path_db{fx.path_tempdir / db};
-  try {
-    fs::copy_file(CLIParserFixture::path_data / db, path_db);
-  } catch (fs::filesystem_error &e) {
-    BOOST_FAIL("Failed to prepare database:" << e.what());
-  }
-
   // prepare empty config file
   fs::path path_config{fx.path_tempdir / "scdetect.cfg"};
   try {
     fs::ofstream{path_config};
   } catch (fs::filesystem_error &e) {
-    BOOST_FAIL("Failed to prepare dummy config file:" << e.what());
+    BOOST_FAIL("Failed to prepare dummy config file: " << e.what());
   }
 
   fs::path path_ep_result_scml{fx.path_tempdir / "ep.scml"};
@@ -169,8 +159,6 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
       cli::to_string(cli::FlagOffline{}),
       cli::to_string(cli::FlagPlayback{}),
       cli::to_string(cli::FlagTemplatesReload{}),
-      cli::to_string(cli::FlagPlugins{"dbsqlite3"}),
-      cli::to_string(cli::FlagDB{path_db}),
       cli::to_string(cli::FlagEp{path_ep_result_scml}),
       cli::to_string(cli::FlagAgencyId{"TEST"})};
   auto flags_sample{sample.AsFlags(CLIParserFixture::path_data)};
