@@ -20,6 +20,7 @@ set(SOURCES_integration
   ../app.cpp
   ../builder.cpp
   ../config.cpp
+  ../datamodel/ddl.cpp
   ../detector.cpp
   ../detector/arrival.cpp
   ../detector/detector.cpp

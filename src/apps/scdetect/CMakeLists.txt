@@ -4,6 +4,7 @@ set(
   DETECT_SOURCES
     app.cpp
     config.cpp
+    datamodel/ddl.cpp
     detector.cpp
     detector/arrival.cpp
     detector/detector.cpp
@@ -25,6 +26,7 @@ set(
     app.h
     builder.h
     config.h
+    datamodel/ddl.h
     detector.h
     detector/arrival.h
     detector/detector.h
