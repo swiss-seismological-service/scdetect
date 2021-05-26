@@ -113,7 +113,7 @@ protected:
                      const WaveformProcessor::ResultCPtr &result);
 
 protected:
-  // Load events either from `event_db` or `db`.
+  // Load events either from `event_db` or `db`
   virtual bool LoadEvents(const std::string &event_db,
                           DataModel::DatabaseQueryPtr db);
 

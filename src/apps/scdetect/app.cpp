@@ -253,8 +253,17 @@ bool Application::init() {
         settings::kCacheRawWaveforms);
   }
 
+  // load event related data
+  if (!LoadEvents(config_.url_event_db, query())) {
+    SCDETECT_LOG_ERROR("Failed to load events");
+    return false;
+  }
+
   if (!InitDetectors(waveform_handler))
     return false;
+
+  // free memory after initialization
+  EventStore::Instance().Reset();
 
   output_origins_ = addOutputObjectLog("origin", primaryMessagingGroup());
 
@@ -262,11 +271,11 @@ bool Application::init() {
 }
 
 bool Application::run() {
-  SCDETECT_LOG_DEBUG("Application initialized.");
+  SCDETECT_LOG_DEBUG("Application initialized");
 
   if (config_.templates_prepare) {
     SCDETECT_LOG_DEBUG(
-        "Requested application exit after template initialization.");
+        "Requested application exit after template initialization");
     return true;
   }
 
@@ -593,17 +602,6 @@ bool Application::LoadEvents(const std::string &event_db,
 }
 
 bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
-
-  // load event related data
-  if (!LoadEvents(config_.url_event_db, query())) {
-    SCDETECT_LOG_ERROR("Failed to load events.");
-    return false;
-  }
-
-  if (!EventStore::Instance().event_parameters()) {
-    SCDETECT_LOG_ERROR("No event parameters found.");
-    return false;
-  }
 
   config_.path_filesystem_cache =
       boost::filesystem::path(config_.path_filesystem_cache).string();
