@@ -1,18 +1,61 @@
 #include "eventstore.h"
 
+#include <vector>
+
 #include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/datamodel/databasearchive.h>
+#include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/publicobject.h>
 #include <seiscomp/io/archive/xmlarchive.h>
+#include <seiscomp/io/database.h>
 
+#include "datamodel/ddl.h"
 #include "log.h"
-#include "seiscomp/datamodel/amplitude.h"
-#include "seiscomp/datamodel/publicobject.h"
+#include "seiscomp/datamodel/databasequery.h"
+#include "utils.h"
 
 namespace Seiscomp {
 namespace detect {
+
+namespace detail {
+
+PublicObjectBuffer::PublicObjectBuffer() {}
+PublicObjectBuffer::PublicObjectBuffer(
+    DataModel::DatabaseArchive *archive,
+    const boost::optional<size_t> &buffer_size)
+    : PublicObjectCache{archive}, buffer_size_{buffer_size} {}
+
+void PublicObjectBuffer::set_buffer_size(
+    const boost::optional<size_t> &buffer_size) {
+  buffer_size_ = buffer_size;
+}
+
+boost::optional<size_t> PublicObjectBuffer::buffer_size() const {
+  return buffer_size_;
+}
+
+bool PublicObjectBuffer::feed(DataModel::PublicObject *po) {
+  push(po);
+  if (buffer_size_) {
+    while (size() > buffer_size_)
+      pop();
+  }
+  return true;
+}
+
+} // namespace detail
+
+const int EventStore::buffer_size_{25000};
+
+EventStore::BaseException::BaseException()
+    : Exception{"base EventStore exception"} {}
+EventStore::SCMLException::SCMLException() : BaseException{"SCML exception"} {}
+EventStore::DatabaseException::DatabaseException()
+    : BaseException{"database exception"} {}
 
 EventStore &EventStore::Instance() {
   // guaranteed to be destroyed; instantiated on first use
@@ -21,127 +64,88 @@ EventStore &EventStore::Instance() {
 }
 
 void EventStore::Load(const std::string &path) {
+  DataModel::EventParametersPtr ep;
+  LoadXMLArchive(path, ep);
+  Load(ep);
+}
+void EventStore::Load(const boost::filesystem::path &path) {
+  Instance().Load(path.string());
+}
+
+void EventStore::Load(DataModel::EventParametersPtr &ep) {
+  auto db_query{CreateInMemoryDB(ep)};
+  Load(db_query);
+}
+
+void EventStore::Load(DataModel::DatabaseQueryPtr db) {
+  Reset();
+  cache_.setDatabaseArchive(db.get());
+  db_ = db;
+}
+
+void EventStore::Reset() {
+  cache_.clear();
+  cache_.setDatabaseArchive(nullptr);
+  db_.reset();
+}
+
+DataModel::EventPtr EventStore::GetEvent(const std::string &origin_id) const {
+  auto event{db_->getEvent(origin_id)};
+  if (event) {
+    cache_.feed(event);
+    return event;
+  }
+  return nullptr;
+}
+
+DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
+                                         const std::string &public_id) const {
+  auto retval{cache_.find(class_type, public_id)};
+  if (retval) {
+    return retval;
+  }
+  return nullptr;
+}
+
+DataModel::PublicObject *
+EventStore::GetWithChildren(const Core::RTTI &class_type,
+                            const std::string &public_id) const {
+  auto retval{db_->loadObject(class_type, public_id)};
+  if (retval) {
+    // XXX(damb): Currently, the requested object is cached, only. That is,
+    // children are not fed.
+    cache_.feed(retval);
+    return retval;
+  }
+  return nullptr;
+}
+
+void EventStore::LoadXMLArchive(const std::string &path,
+                                DataModel::EventParametersPtr &ep) {
   if (!path.empty()) {
     IO::XMLArchive ar;
     if (!ar.open(path.c_str())) {
       throw SCMLException{std::string("Failed to open file: ") + path};
     }
-    ar >> event_parameters_;
+    ar >> ep;
     ar.close();
   }
-
-  cache_.clear();
-  // populate cache
-  if (!set_cache(event_parameters_)) {
-    cache_.clear();
-  }
 }
 
-void EventStore::Load(const boost::filesystem::path &path) {
-  Load(path.string());
-}
-
-void EventStore::Load(DataModel::EventParametersPtr ep) {
-  event_parameters_ = ep;
-
-  cache_.clear();
-  // populate cache
-  if (!set_cache(event_parameters_)) {
-    cache_.clear();
+DataModel::DatabaseQueryPtr
+EventStore::CreateInMemoryDB(DataModel::EventParametersPtr &ep) {
+  IO::DatabaseInterfacePtr db_engine{
+      IO::DatabaseInterface::Open("sqlite3://:memory:")};
+  if (!db_engine) {
+    throw EventStore::DatabaseException{
+        "Failed to initialize SQLite in-memory DB"};
   }
-}
+  DataModel::createAll(db_engine.get());
+  DataModel::DatabaseArchive db_archive{db_engine.get()};
+  DataModel::DatabaseObjectWriter writer{db_archive};
 
-void EventStore::Load(DataModel::DatabaseReaderPtr db) {
-
-  if (db) {
-    event_parameters_ = db->loadEventParameters();
-  }
-
-  cache_.clear();
-  // populate cache
-  if (!set_cache(event_parameters_)) {
-    cache_.clear();
-  }
-}
-
-void EventStore::Reset() {
-  event_parameters_.reset();
-  cache_.clear();
-}
-
-EventStore::SCMLException::SCMLException() : Exception{"SCML exception"} {}
-
-DataModel::EventParametersCPtr EventStore::event_parameters() const {
-  return event_parameters_;
-}
-
-bool EventStore::set_cache(DataModel::EventParametersPtr ep) {
-  if (!ep || !cache_.feed(ep.get()))
-    return false;
-
-  // load events
-  for (size_t i = 0; i < ep->eventCount(); ++i) {
-    if (!cache_.feed(ep->event(i))) {
-      return false;
-    }
-  }
-
-  // load origins
-  for (size_t i = 0; i < ep->originCount(); ++i) {
-
-    DataModel::Origin *origin{ep->origin(i)};
-    if (!cache_.feed(origin)) {
-      return false;
-    }
-
-    // load magnitudes
-    for (size_t j = 0; j < origin->magnitudeCount(); ++j) {
-      if (!cache_.feed(origin->magnitude(j))) {
-        return false;
-      }
-    }
-  }
-
-  // load picks
-  for (size_t i = 0; i < ep->pickCount(); ++i) {
-    if (!cache_.feed(ep->pick(i))) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
-                                         const std::string &public_id) {
-
-  auto retval = cache_.find(class_type, public_id);
-  if (retval) {
-    return retval;
-  }
-
-  if (event_parameters_) {
-    if (DataModel::Pick::TypeInfo() == class_type) {
-      return event_parameters_->findPick(public_id);
-    } else if (DataModel::Event::TypeInfo() == class_type) {
-      return event_parameters_->findEvent(public_id);
-    } else if (DataModel::Origin::TypeInfo() == class_type) {
-      return event_parameters_->findOrigin(public_id);
-    } else if (DataModel::Amplitude::TypeInfo() == class_type) {
-      return event_parameters_->findAmplitude(public_id);
-    } else if (DataModel::Magnitude::TypeInfo() == class_type) {
-      // linear search
-      for (size_t i = 0; i < event_parameters_->originCount(); ++i) {
-        auto origin = event_parameters_->origin(i);
-        for (size_t j = 0; j < origin->magnitudeCount(); ++j) {
-          if (origin->magnitude(j)->publicID() == public_id) {
-            return origin->magnitude(j);
-          }
-        }
-      }
-    }
-  }
-  return nullptr;
+  writer(ep.get());
+  return utils::make_smart<DataModel::DatabaseQuery>(db_engine.get());
 }
 
 } // namespace detect
