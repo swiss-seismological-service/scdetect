@@ -21,30 +21,6 @@ set(
     waveformprocessor.cpp
 )
 
-set(
-  DETECT_HEADERS
-    app.h
-    builder.h
-    config.h
-    datamodel/ddl.h
-    detector.h
-    detector/arrival.h
-    detector/detector.h
-    detector/linker.h
-    detector/pot.h
-    detector/template.h
-    eventstore.h
-    exception.h
-    log.h
-    processor.h
-    settings.h
-    utils.h
-    validators.h
-    version.h
-    waveform.h
-    waveformprocessor.h
-)
-
 # add_definitions(
 #   -DSCDETECT_DEBUG
 # )
