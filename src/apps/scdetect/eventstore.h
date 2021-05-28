@@ -9,8 +9,10 @@
 
 #include <seiscomp/core/defs.h>
 #include <seiscomp/datamodel/databasequery.h>
+#include <seiscomp/datamodel/databasereader.h>
 #include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/datamodel/publicobject.h>
 #include <seiscomp/datamodel/publicobjectcache.h>
 
 #include "exception.h"
@@ -22,13 +24,16 @@ namespace detail {
 class PublicObjectBuffer : public DataModel::PublicObjectCache {
 public:
   PublicObjectBuffer();
-  PublicObjectBuffer(DataModel::DatabaseArchive *archive,
+  PublicObjectBuffer(DataModel::DatabaseReader *archive,
                      const boost::optional<size_t> &buffer_size);
 
   void set_buffer_size(const boost::optional<size_t> &buffer_size);
   boost::optional<size_t> buffer_size() const;
 
   bool feed(DataModel::PublicObject *po) override;
+
+  DataModel::PublicObject *find(const Core::RTTI &classType,
+                                const std::string &publicID, bool loadChildren);
 
 private:
   boost::optional<size_t> buffer_size_;
@@ -83,7 +88,7 @@ public:
   // descendants)
   template <typename T>
   SmartPointer<T> GetWithChildren(const std::string &public_id) const {
-    return T::Cast(GetWithChildren(T::TypeInfo(), public_id));
+    return T::Cast(Get(T::TypeInfo(), public_id, true));
   }
 
   // Returns the event for a given `origin_id` if any
@@ -91,9 +96,8 @@ public:
 
 protected:
   DataModel::PublicObject *Get(const Core::RTTI &class_type,
-                               const std::string &public_id) const;
-  DataModel::PublicObject *GetWithChildren(const Core::RTTI &class_type,
-                                           const std::string &public_id) const;
+                               const std::string &public_id,
+                               bool loadChildren = false) const;
 
   void LoadXMLArchive(const std::string &path,
                       DataModel::EventParametersPtr &ep);

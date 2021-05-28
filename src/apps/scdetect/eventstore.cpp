@@ -3,8 +3,8 @@
 #include <vector>
 
 #include <seiscomp/datamodel/amplitude.h>
-#include <seiscomp/datamodel/databasearchive.h>
 #include <seiscomp/datamodel/databasequery.h>
+#include <seiscomp/datamodel/databasereader.h>
 #include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
@@ -25,7 +25,7 @@ namespace detail {
 
 PublicObjectBuffer::PublicObjectBuffer() {}
 PublicObjectBuffer::PublicObjectBuffer(
-    DataModel::DatabaseArchive *archive,
+    DataModel::DatabaseReader *archive,
     const boost::optional<size_t> &buffer_size)
     : PublicObjectCache{archive}, buffer_size_{buffer_size} {}
 
@@ -45,6 +45,30 @@ bool PublicObjectBuffer::feed(DataModel::PublicObject *po) {
       pop();
   }
   return true;
+}
+
+DataModel::PublicObject *PublicObjectBuffer::find(const Core::RTTI &classType,
+                                                  const std::string &publicID,
+                                                  bool loadChildren) {
+  if (loadChildren) {
+    bool cached{true};
+    auto po{DataModel::PublicObject::Find(publicID)};
+    if (!po) {
+      cached = false;
+      po = databaseArchive()
+               ? dynamic_cast<DataModel::DatabaseReader *>(databaseArchive())
+                     ->loadObject(classType, publicID)
+               : nullptr;
+    }
+    setCached(cached);
+    if (po) {
+      // XXX(damb): Currently, the requested object is cached, only. That is,
+      // children are not fed.
+      feed(po);
+    }
+    return po;
+  }
+  return PublicObjectCache::find(classType, publicID);
 }
 
 } // namespace detail
@@ -99,22 +123,10 @@ DataModel::EventPtr EventStore::GetEvent(const std::string &origin_id) const {
 }
 
 DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
-                                         const std::string &public_id) const {
-  auto retval{cache_.find(class_type, public_id)};
+                                         const std::string &public_id,
+                                         bool loadChildren) const {
+  auto retval{cache_.find(class_type, public_id, loadChildren)};
   if (retval) {
-    return retval;
-  }
-  return nullptr;
-}
-
-DataModel::PublicObject *
-EventStore::GetWithChildren(const Core::RTTI &class_type,
-                            const std::string &public_id) const {
-  auto retval{db_->loadObject(class_type, public_id)};
-  if (retval) {
-    // XXX(damb): Currently, the requested object is cached, only. That is,
-    // children are not fed.
-    cache_.feed(retval);
     return retval;
   }
   return nullptr;
