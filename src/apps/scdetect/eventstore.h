@@ -14,6 +14,7 @@
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/publicobject.h>
 #include <seiscomp/datamodel/publicobjectcache.h>
+#include <seiscomp/io/database.h>
 
 #include "exception.h"
 
@@ -71,8 +72,8 @@ public:
 
   void Load(const std::string &path);
   void Load(const boost::filesystem::path &path);
-  void Load(DataModel::EventParametersPtr &ep);
-  void Load(DataModel::DatabaseQueryPtr db);
+  void Load(DataModel::EventParameters *ep);
+  void Load(DataModel::DatabaseQuery *db);
 
   // Reset the store
   void Reset();
@@ -99,17 +100,16 @@ protected:
                                const std::string &public_id,
                                bool loadChildren = false) const;
 
-  void LoadXMLArchive(const std::string &path,
-                      DataModel::EventParametersPtr &ep);
+  DataModel::EventParametersPtr LoadXMLArchive(const std::string &path);
 
-  // Create an in-memory DB populated with `ep`
-  DataModel::DatabaseQueryPtr
-  CreateInMemoryDB(DataModel::EventParametersPtr &ep);
+  // Create an in-memory SQLite DB populated with `ep` and return the
+  // corresponding pointer to the database engine created
+  IO::DatabaseInterfacePtr CreateInMemoryDB(DataModel::EventParameters *ep);
 
 private:
   EventStore() {}
 
-  DataModel::DatabaseQueryPtr db_;
+  DataModel::DatabaseQueryPtr db_query_;
   mutable detail::PublicObjectBuffer cache_;
 
   static const int buffer_size_;

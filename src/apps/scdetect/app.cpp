@@ -575,7 +575,7 @@ bool Application::LoadEvents(const std::string &event_db,
       if (db) {
         SCDETECT_LOG_INFO("Connected successfully");
         auto query{utils::make_smart<DataModel::DatabaseQuery>(db.get())};
-        EventStore::Instance().Load(query);
+        EventStore::Instance().Load(query.get());
         loaded = true;
       } else {
         SCDETECT_LOG_WARNING("Database connection to %s failed",

@@ -2,20 +2,16 @@
 
 #include <vector>
 
-#include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/databasereader.h>
 #include <seiscomp/datamodel/event.h>
-#include <seiscomp/datamodel/magnitude.h>
-#include <seiscomp/datamodel/origin.h>
-#include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/publicobject.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/database.h>
 
 #include "datamodel/ddl.h"
 #include "log.h"
-#include "seiscomp/datamodel/databasequery.h"
 #include "utils.h"
 
 namespace Seiscomp {
@@ -88,33 +84,32 @@ EventStore &EventStore::Instance() {
 }
 
 void EventStore::Load(const std::string &path) {
-  DataModel::EventParametersPtr ep;
-  LoadXMLArchive(path, ep);
-  Load(ep);
+  Load(LoadXMLArchive(path).get());
 }
 void EventStore::Load(const boost::filesystem::path &path) {
-  Instance().Load(path.string());
+  Load(path.string());
 }
 
-void EventStore::Load(DataModel::EventParametersPtr &ep) {
-  auto db_query{CreateInMemoryDB(ep)};
-  Load(db_query);
+void EventStore::Load(DataModel::EventParameters *ep) {
+  auto db_query{
+      utils::make_smart<DataModel::DatabaseQuery>(CreateInMemoryDB(ep).get())};
+  Load(db_query.get());
 }
 
-void EventStore::Load(DataModel::DatabaseQueryPtr db) {
+void EventStore::Load(DataModel::DatabaseQuery *db_query) {
   Reset();
-  cache_.setDatabaseArchive(db.get());
-  db_ = db;
+  cache_.setDatabaseArchive(db_query);
+  db_query_ = db_query;
 }
 
 void EventStore::Reset() {
   cache_.clear();
   cache_.setDatabaseArchive(nullptr);
-  db_.reset();
+  db_query_.reset();
 }
 
 DataModel::EventPtr EventStore::GetEvent(const std::string &origin_id) const {
-  auto event{db_->getEvent(origin_id)};
+  auto event{db_query_->getEvent(origin_id)};
   if (event) {
     cache_.feed(event);
     return event;
@@ -132,8 +127,9 @@ DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
   return nullptr;
 }
 
-void EventStore::LoadXMLArchive(const std::string &path,
-                                DataModel::EventParametersPtr &ep) {
+DataModel::EventParametersPtr
+EventStore::LoadXMLArchive(const std::string &path) {
+  DataModel::EventParametersPtr ep;
   if (!path.empty()) {
     IO::XMLArchive ar;
     if (!ar.open(path.c_str())) {
@@ -142,22 +138,26 @@ void EventStore::LoadXMLArchive(const std::string &path,
     ar >> ep;
     ar.close();
   }
+  return ep;
 }
 
-DataModel::DatabaseQueryPtr
-EventStore::CreateInMemoryDB(DataModel::EventParametersPtr &ep) {
-  IO::DatabaseInterfacePtr db_engine{
+IO::DatabaseInterfacePtr
+EventStore::CreateInMemoryDB(DataModel::EventParameters *ep) {
+  IO::DatabaseInterfacePtr db_engine_write{
       IO::DatabaseInterface::Open("sqlite3://:memory:")};
-  if (!db_engine) {
+  if (!db_engine_write) {
     throw EventStore::DatabaseException{
         "Failed to initialize SQLite in-memory DB"};
   }
-  DataModel::createAll(db_engine.get());
-  DataModel::DatabaseArchive db_archive{db_engine.get()};
+  DataModel::createAll(db_engine_write.get());
+  DataModel::DatabaseArchive db_archive{db_engine_write.get()};
   DataModel::DatabaseObjectWriter writer{db_archive};
+  writer(ep);
 
-  writer(ep.get());
-  return utils::make_smart<DataModel::DatabaseQuery>(db_engine.get());
+  // XXX(damb): Create a separate interface - `db_engine_write` is going to be
+  // closed by the `db_archive` instance when going out of scope.
+  IO::DatabaseInterfacePtr db_engine_read{db_engine_write};
+  return db_engine_read;
 }
 
 } // namespace detect
