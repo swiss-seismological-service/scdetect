@@ -59,7 +59,7 @@ protected:
   void Fill(StreamState &stream_state, const Record *record,
             DoubleArrayPtr &data) override;
 
-  void InitStream(StreamState &stream_state, const Record *record) override;
+  void SetupStream(StreamState &stream_state, const Record *record) override;
 
 private:
   StreamState stream_state_;

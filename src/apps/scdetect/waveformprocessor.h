@@ -202,8 +202,8 @@ protected:
   virtual bool EnoughDataReceived(const StreamState &stream_state) const;
 
   virtual void EmitResult(const Record *record, const ResultCPtr &result);
-  // Initialize the stream
-  virtual void InitStream(StreamState &stream_state, const Record *record);
+  // Setup and initialize the stream
+  virtual void SetupStream(StreamState &stream_state, const Record *record);
 
   void set_status(Status status, double value);
 

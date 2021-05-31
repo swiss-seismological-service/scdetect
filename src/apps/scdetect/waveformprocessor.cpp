@@ -1,5 +1,7 @@
 #include "waveformprocessor.h"
 
+#include <exception>
+
 #include "log.h"
 #include "utils.h"
 #include "waveformoperator.h"
@@ -109,13 +111,31 @@ bool WaveformProcessor::Store(const Record *record) {
     DoubleArrayPtr data{
         dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-    if (!current_stream_state.last_record) {
-      InitStream(current_stream_state, record);
-    } else {
-      if (!HandleGap(current_stream_state, record, data))
+    if (current_stream_state.last_record) {
+      if (record == current_stream_state.last_record) {
         return false;
+      } else if (record->samplingFrequency() !=
+                 current_stream_state.sampling_frequency) {
+        SCDETECT_LOG_WARNING_PROCESSOR(
+            this, "%s: sampling frequency changed, resetting stream: %f != %f",
+            record->streamID().c_str(), record->samplingFrequency(),
+            current_stream_state.sampling_frequency);
+        current_stream_state.last_record.reset();
+      } else if (!HandleGap(current_stream_state, record, data)) {
+        return false;
+      }
 
       current_stream_state.data_time_window.setEndTime(record->endTime());
+    }
+
+    if (!current_stream_state.last_record) {
+      try {
+        SetupStream(current_stream_state, record);
+      } catch (std::exception &e) {
+        SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: Failed to setup stream: %s",
+                                       record->streamID().c_str(), e.what());
+        return false;
+      }
     }
     current_stream_state.last_sample = (*data)[data->size() - 1];
 
@@ -142,7 +162,6 @@ bool WaveformProcessor::Store(const Record *record) {
   } catch (...) {
     return false;
   }
-
   return true;
 }
 
@@ -174,8 +193,8 @@ void WaveformProcessor::EmitResult(const Record *record,
     result_callback_(this, record, result);
 }
 
-void WaveformProcessor::InitStream(StreamState &stream_state,
-                                   const Record *record) {
+void WaveformProcessor::SetupStream(StreamState &stream_state,
+                                    const Record *record) {
   const auto &f{record->samplingFrequency()};
   stream_state.sampling_frequency = f;
   stream_state.needed_samples = static_cast<size_t>(init_time_ * f + 0.5);

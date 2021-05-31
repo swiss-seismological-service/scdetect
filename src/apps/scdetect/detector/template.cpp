@@ -119,8 +119,8 @@ void Template::Fill(StreamState &stream_state, const Record *record,
   cross_correlation_.Apply(data->size(), data->typedData());
 }
 
-void Template::InitStream(StreamState &stream_state, const Record *record) {
-  WaveformProcessor::InitStream(stream_state, record);
+void Template::SetupStream(StreamState &stream_state, const Record *record) {
+  WaveformProcessor::SetupStream(stream_state, record);
   const auto f{stream_state.sampling_frequency};
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: sampling_frequency=%f",
                                f);

@@ -1,5 +1,6 @@
 #include "ringbuffer.h"
 
+#include <exception>
 #include <memory>
 
 #include <seiscomp/core/datetime.h>
@@ -110,13 +111,32 @@ bool RingBufferOperator::Store(RingBufferOperator::StreamState &stream_state,
   DoubleArrayPtr data{
       dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-  if (!stream_state.last_record) {
-    SetupStream(stream_state, record);
-  } else {
-    if (!HandleGap(stream_state, record, data))
+  if (stream_state.last_record) {
+    if (record == stream_state.last_record) {
       return false;
+    } else if (record->samplingFrequency() != stream_state.sampling_frequency) {
+      SCDETECT_LOG_WARNING_PROCESSOR(
+          waveform_processor_,
+          "%s: sampling frequency changed, resetting stream: %f != %f",
+          record->streamID().c_str(), record->samplingFrequency(),
+          stream_state.sampling_frequency);
+      stream_state.last_record.reset();
+    } else if (!HandleGap(stream_state, record, data)) {
+      return false;
+    }
 
     stream_state.data_time_window.setEndTime(record->endTime());
+  }
+
+  if (!stream_state.last_record) {
+    try {
+      SetupStream(stream_state, record);
+    } catch (std::exception &e) {
+      SCDETECT_LOG_WARNING_PROCESSOR(waveform_processor_,
+                                     "%s: Failed to setup stream: %s",
+                                     record->streamID().c_str(), e.what());
+      return false;
+    }
   }
 
   stream_state.last_sample = (*data)[data->size() - 1];
