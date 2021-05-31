@@ -192,16 +192,6 @@ void WaveformProcessor::InitStream(StreamState &stream_state,
         record->networkCode(), record->stationCode(), record->locationCode(),
         record->channelCode());
   }
-
-  // update the received data timewindow
-  stream_state.data_time_window = record->timeWindow();
-
-  if (stream_state.filter) {
-    stream_state.filter->setStartTime(record->startTime());
-    stream_state.filter->setStreamID(
-        record->networkCode(), record->stationCode(), record->locationCode(),
-        record->channelCode());
-  }
 }
 
 void WaveformProcessor::set_status(Status status, double value) {
