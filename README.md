@@ -523,6 +523,16 @@ Next, clone `scdetect`:
 $ git clone https://github.com/damb/scdetect.git
 ```
 
+**Dependencies**:
+
+Besides of the [SeisComP core
+dependencies](https://github.com/SeisComP/seiscomp#prerequisites) the following
+packages must be installed to compile `scdetect`:
+
+- `libsqlite3-dev` (Debian, Ubuntu), `sqlite-devel` (RedHat, Fedora, CentOS),
+  `dev-db/sqlite` (Gentoo)
+
+
 For compiling SeisComP (including `scdetect`), please refer to
 https://github.com/SeisComP/seiscomp#build.
 
