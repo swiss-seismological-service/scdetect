@@ -144,7 +144,7 @@ EventStore::LoadXMLArchive(const std::string &path) {
 IO::DatabaseInterfacePtr
 EventStore::CreateInMemoryDB(DataModel::EventParameters *ep) {
   IO::DatabaseInterfacePtr db_engine_write{
-      IO::DatabaseInterface::Open("sqlite3://:memory:")};
+      IO::DatabaseInterface::Open("sqlite3_://:memory:")};
   if (!db_engine_write) {
     throw EventStore::DatabaseException{
         "Failed to initialize SQLite in-memory DB"};

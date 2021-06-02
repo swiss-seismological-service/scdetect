@@ -5,6 +5,7 @@ set(
     app.cpp
     config.cpp
     datamodel/ddl.cpp
+    detail/sqlite.cpp
     detector.cpp
     detector/arrival.cpp
     detector/detector.cpp
@@ -32,6 +33,8 @@ endif()
 
 
 sc_add_executable(DETECT ${DETECT_TARGET})
+find_package(SQLite3 REQUIRED)
+target_link_libraries(${DETECT_TARGET} ${SQLITE3_LIBRARIES})
 sc_link_libraries_internal(${DETECT_TARGET} client)
 sc_install_init(${DETECT_TARGET}
   "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py")

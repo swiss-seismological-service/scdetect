@@ -24,12 +24,13 @@ void createAll(IO::DatabaseInterface *dbDriver) {
 
   boost::filesystem::path pathDDL{"db"};
   const std::string className{dbDriver->className()};
-  if ("postgresql_database_interface" == className) {
+  if ("sqlite3_database_interface_" == className ||
+      "sqlite3_database_interface" == className) {
+    pathDDL /= "sqlite3.sql";
+  } else if ("postgresql_database_interface" == className) {
     pathDDL /= "postgresql.sql";
   } else if ("mysql_database_interface" == className) {
     pathDDL /= "mysql.sql";
-  } else if ("sqlite3_database_interface" == className) {
-    pathDDL /= "sqlite3.sql";
   } else {
     throw Core::ValueException("Unknown DB driver class name: " + className);
   }

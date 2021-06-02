@@ -21,6 +21,7 @@ set(SOURCES_integration
   ../builder.cpp
   ../config.cpp
   ../datamodel/ddl.cpp
+  ../detail/sqlite.cpp
   ../detector.cpp
   ../detector/arrival.cpp
   ../detector/detector.cpp
@@ -48,6 +49,7 @@ foreach(TEST_SRC ${TESTS})
   add_executable(${TEST_TARGET} ${TEST_SRC} ${SOURCES_${TEST_FNAME}})
 	sc_link_libraries_internal(${TEST_TARGET} unittest core client)
 	sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
+  target_link_libraries(${TEST_TARGET} ${SQLITE3_LIBRARIES})
 
 	add_test(
 		NAME ${TEST_TARGET}
