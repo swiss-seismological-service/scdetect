@@ -394,6 +394,14 @@ DetectorBuilder::set_stream(const std::string &stream_id,
         *stream_config.target_sampling_frequency);
   }
 
+  auto filter_msg{log_prefix + "Filters configured: filter=\"" + rt_filter_id +
+                  "\""};
+  if (rt_filter_id != template_wf_config.filter_string) {
+    filter_msg +=
+        " (template_filter=\"" + template_wf_config.filter_string + "\")";
+  }
+  SCDETECT_LOG_DEBUG_PROCESSOR(template_proc, "%s", filter_msg.c_str());
+
   TemplateProcessorConfig c{
       std::move(template_proc),
       {stream->sensorLocation(), pick, arrival, pick->time().value() - start}};
