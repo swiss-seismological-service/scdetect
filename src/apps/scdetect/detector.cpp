@@ -16,7 +16,6 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/eventparameters.h>
 
 #include "eventstore.h"
 #include "log.h"
@@ -292,7 +291,7 @@ DetectorBuilder::DetectorBuilder(const std::string &id,
     : origin_id_{origin_id} {
 
   DataModel::OriginCPtr origin{
-      EventStore::Instance().Get<DataModel::Origin>(origin_id)};
+      EventStore::Instance().GetWithChildren<DataModel::Origin>(origin_id)};
   if (!origin) {
     SCDETECT_LOG_WARNING("Origin %s not found.", origin_id.c_str());
     throw builder::BaseException{std::string{"Error while assigning origin: "} +
@@ -324,26 +323,9 @@ DetectorBuilder &DetectorBuilder::set_config(const DetectorConfig &config,
 }
 
 DetectorBuilder &DetectorBuilder::set_eventparameters() {
-
-  DataModel::EventParametersPtr event_parameters{
-      product_->origin_->eventParameters()};
-  // find the origin's associated event
-  bool found{false};
-  for (size_t i = 0; i < event_parameters->eventCount(); ++i) {
-    DataModel::EventPtr event = event_parameters->event(i);
-    for (size_t j = 0; j < event->originReferenceCount(); ++j) {
-      DataModel::OriginReferencePtr origin_ref = event->originReference(j);
-      if (origin_ref->originID() == origin_id_) {
-        product_->event_ = event;
-        found = true;
-        break;
-      }
-    }
-    if (found)
-      break;
-  }
-
-  if (!found) {
+  product_->event_ =
+      EventStore::Instance().GetEvent(product_->origin_->publicID());
+  if (!product_->event_) {
     auto msg{std::string{"No event associated with origin: "} + origin_id_};
 
     SCDETECT_LOG_WARNING("%s", msg.c_str());
@@ -352,7 +334,6 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
 
   product_->magnitude_ = EventStore::Instance().Get<DataModel::Magnitude>(
       product_->event_->preferredMagnitudeID());
-
   if (!product_->magnitude_) {
     auto msg{std::string{"No magnitude associated with event: "} +
              product_->event_->publicID() + std::string{" (origin="} +
