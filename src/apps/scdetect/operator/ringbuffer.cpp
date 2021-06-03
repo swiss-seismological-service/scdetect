@@ -138,6 +138,9 @@ bool RingBufferOperator::Store(RingBufferOperator::StreamState &stream_state,
                                      record->streamID().c_str(), e.what());
       return false;
     }
+
+    auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
+    buffer->clear();
   }
 
   stream_state.last_sample = (*data)[data->size() - 1];
