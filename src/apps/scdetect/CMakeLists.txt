@@ -14,6 +14,7 @@ set(
     detector/template.cpp
     eventstore.cpp
     exception.cpp
+    filter.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp

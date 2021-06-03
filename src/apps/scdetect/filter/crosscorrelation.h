@@ -42,14 +42,16 @@ public:
   double template_length() const;
 
 protected:
-  // Resample `wf` to `target_frequency`
-  void Resample(const GenericRecordPtr &wf, double target_frequency);
+  // Resample data to `target_frequency`
+  void Resample(double target_frequency);
 
 private:
   // Filter sampling frequency_
   double sampling_frequency_{0};
 
-  // The template waveform
+  // The original template waveform
+  GenericRecordCPtr template_wf_original_;
+  // The template waveform to be correlated
   GenericRecordCPtr template_wf_;
 
   // Template waveform samples squared summed

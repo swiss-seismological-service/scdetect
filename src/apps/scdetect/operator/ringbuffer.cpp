@@ -117,7 +117,8 @@ bool RingBufferOperator::Store(RingBufferOperator::StreamState &stream_state,
     } else if (record->samplingFrequency() != stream_state.sampling_frequency) {
       SCDETECT_LOG_WARNING_PROCESSOR(
           waveform_processor_,
-          "%s: sampling frequency changed, resetting stream: %f != %f",
+          "%s: buffering operator: sampling frequency changed, resetting "
+          "stream: %f != %f",
           record->streamID().c_str(), record->samplingFrequency(),
           stream_state.sampling_frequency);
       stream_state.last_record.reset();

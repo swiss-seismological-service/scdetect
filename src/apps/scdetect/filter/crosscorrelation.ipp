@@ -7,6 +7,7 @@
 
 #include <boost/algorithm/string/join.hpp>
 
+#include "../filter.h"
 #include "../log.h"
 #include "../utils.h"
 #include "../waveform.h"
@@ -20,12 +21,10 @@ CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &template_wf,
                                           double sampling_freq)
     : sampling_frequency_{sampling_freq > 0 ? sampling_freq
                                             : template_wf->samplingFrequency()},
-      template_wf_{template_wf} {
+      template_wf_original_{template_wf}, template_wf_{template_wf} {
 
   if (sampling_frequency_ != template_wf->samplingFrequency()) {
-    auto resampled{utils::make_smart<GenericRecord>(*template_wf_)};
-    Resample(resampled, sampling_frequency_);
-    template_wf_ = resampled;
+    Resample(sampling_frequency_);
   }
 
   Reset();
@@ -168,11 +167,7 @@ template <typename TData>
 void CrossCorrelation<TData>::set_sampling_frequency(double sampling_freq) {
   if (sampling_freq != sampling_frequency_) {
     sampling_frequency_ = sampling_freq;
-
-    auto resampled{utils::make_smart<GenericRecord>(*template_wf_)};
-    Resample(resampled, sampling_frequency_);
-    template_wf_ = resampled;
-
+    Resample(sampling_frequency_);
     Reset();
   }
 }
@@ -193,11 +188,17 @@ double CrossCorrelation<TData>::template_length() const {
 }
 
 template <typename TData>
-void CrossCorrelation<TData>::Resample(const GenericRecordPtr &wf,
-                                       double target_frequency) {
-  if (waveform::Resample(*wf, target_frequency)) {
-    SCDETECT_LOG_DEBUG("Resampled template waveform to %fHz", target_frequency);
+void CrossCorrelation<TData>::Resample(double target_frequency) {
+  auto resampled{utils::make_smart<GenericRecord>(*template_wf_original_)};
+  if (!waveform::Resample(*resampled, target_frequency)) {
+    throw BaseException{
+        "failed to resample template waveform (sampling_frequency=" +
+        std::to_string(template_wf_original_->samplingFrequency()) +
+        "Hz): target_frequency=" + std::to_string(target_frequency) + "Hz"};
   }
+  SCDETECT_LOG_DEBUG("Resampled template waveform: target_frequency=%fHz",
+                     target_frequency);
+  template_wf_ = resampled;
 }
 
 } // namespace filter

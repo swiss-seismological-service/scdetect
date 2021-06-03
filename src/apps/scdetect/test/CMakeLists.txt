@@ -6,6 +6,7 @@ set(TESTS
 
 SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
+  ../filter.cpp
   ../filter/crosscorrelation.h
   ../resamplerstore.cpp
   ../utils.cpp
@@ -31,6 +32,7 @@ set(SOURCES_integration
   ../detector/template.cpp
   ../eventstore.cpp
   ../exception.cpp
+  ../filter.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processor.cpp
