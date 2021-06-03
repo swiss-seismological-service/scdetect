@@ -419,7 +419,9 @@ bool Detector::Feed(const TimeWindows &tws) {
     while (start + *proc.chunk_size <= end) {
       const Core::TimeWindow tw{start, start + *proc.chunk_size};
       auto chunk{dynamic_cast<GenericRecord *>(buffered->copy())};
-      waveform::Trim(*chunk, tw);
+      if (!waveform::Trim(*chunk, tw)) {
+        break;
+      }
       start = chunk->endTime() +
               Core::TimeSpan{0.5 / buffered->samplingFrequency()};
       chunks.push_back(chunk);
