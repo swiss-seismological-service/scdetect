@@ -178,8 +178,8 @@ void WaveformHandlerIface::Process(const GenericRecordPtr &trace,
     waveform::Demean(*trace);
   }
 
-  if (config.resample_frequency) {
-    waveform::Resample(*trace, config.resample_frequency);
+  if (config.target_frequency) {
+    waveform::Resample(*trace, config.target_frequency);
   }
 
   if (!config.filter_string.empty()) {
@@ -353,7 +353,7 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
 
     ProcessingConfig disabled{config};
     disabled.filter_string = "";
-    disabled.resample_frequency = 0;
+    disabled.target_frequency = 0;
     disabled.demean = false;
 
     Core::TimeWindow corrected{tw};
@@ -492,7 +492,7 @@ hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig>::operator()(
   std::size_t ret{0};
   boost::hash_combine(ret, std::hash<std::string>{}(c.filter_string));
   boost::hash_combine(ret, std::hash<double>{}(c.filter_margin_time));
-  boost::hash_combine(ret, std::hash<double>{}(c.resample_frequency));
+  boost::hash_combine(ret, std::hash<double>{}(c.target_frequency));
   boost::hash_combine(ret, std::hash<bool>{}(c.demean));
   return ret;
 }

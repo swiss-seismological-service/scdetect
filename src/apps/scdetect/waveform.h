@@ -47,7 +47,9 @@ public:
     // Margin time in seconds used for filtering in order to prevent from
     // filtering artifacts
     double filter_margin_time{0};
-    double resample_frequency{0};
+    // Target frequency for resampling
+    double target_frequency{0};
+    // Indicates if the data should be demeaned
     bool demean{true};
   };
 
