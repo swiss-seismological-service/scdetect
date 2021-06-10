@@ -100,16 +100,17 @@ boost::optional<Core::TimeSpan> Detector::chunk_size() const {
 
 size_t Detector::GetProcessorCount() const { return processors_.size(); }
 
-void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
+void Detector::Register(std::unique_ptr<Template> &&proc,
                         const std::shared_ptr<const RecordSequence> &buf,
                         const std::string &stream_id, const Arrival &arrival,
-                        const Core::TimeSpan &pick_offset,
                         const Detector::SensorLocation &loc) {
 
   proc->set_result_callback(
-      [this](const detect::WaveformProcessor *p, const Record *rec,
+      [this](const detect::WaveformProcessor *proc, const Record *rec,
              const detect::WaveformProcessor::ResultCPtr &res) {
-        StoreTemplateResult(p, rec, res);
+        StoreTemplateResult(
+            dynamic_cast<const Template *>(proc), rec,
+            boost::dynamic_pointer_cast<const Template::MatchResult>(res));
       });
 
   // XXX(damb): Replace the arrival with a *pseudo arrival* i.e. an arrival
@@ -117,7 +118,7 @@ void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
   Arrival pseudo_arrival{arrival};
   pseudo_arrival.pick.waveform_id = stream_id;
 
-  linker_.Register(proc.get(), pseudo_arrival, pick_offset);
+  linker_.Register(proc.get(), pseudo_arrival);
   const auto on_hold_duration{max_latency_.value_or(0.0) +
                               chunk_size_.value_or(0.0) +
                               linker_safety_margin_};
@@ -569,9 +570,8 @@ void Detector::EmitResult(const Detector::Result &res) {
   }
 }
 
-void Detector::StoreTemplateResult(
-    const detect::WaveformProcessor *proc, const Record *rec,
-    const detect::WaveformProcessor::ResultCPtr &res) {
+void Detector::StoreTemplateResult(const Template *proc, const Record *rec,
+                                   const Template::MatchResultCPtr &res) {
   if (!proc || !rec || !res) {
     return;
   }
@@ -589,13 +589,11 @@ void Detector::StoreTemplateResult(
   }
 
 #ifdef SCDETECT_DEBUG
-  const auto &match_result{
-      boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
-  const auto &tw{match_result->time_window};
+  const auto &tw{res->time_window};
   SCDETECT_LOG_DEBUG_PROCESSOR(
       proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f", rec->streamID().c_str(),
       tw.startTime().iso().c_str(), tw.endTime().iso().c_str(),
-      match_result->coefficient, match_result->lag);
+      res->coefficient, res->lag);
 #endif
 
   linker_.Feed(proc, res);

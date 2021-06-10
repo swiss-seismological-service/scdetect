@@ -17,12 +17,16 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-Template::Template(const GenericRecordCPtr &template_wf, const std::string &id,
-                   const Processor *p)
+Template::Template(const GenericRecordCPtr &waveform,
+                   const std::string filter_id,
+                   const Core::Time &template_starttime,
+                   const Core::Time &template_endtime,
+                   const std::string &processor_id, const Processor *p)
     : WaveformProcessor{p ? std::string{p->id() + settings::kProcessorIdSep +
-                                        id}
-                          : id},
-      cross_correlation_{template_wf} {}
+                                        processor_id}
+                          : processor_id},
+      cross_correlation_{waveform, filter_id, template_starttime,
+                         template_endtime} {}
 
 void Template::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
   if (stream_state_.filter)
@@ -59,6 +63,14 @@ void Template::set_target_sampling_frequency(double f) {
 
 boost::optional<double> Template::target_sampling_frequency() const {
   return target_sampling_frequency_;
+}
+
+boost::optional<const Core::Time> Template::template_starttime() const {
+  return cross_correlation_.template_starttime();
+}
+
+boost::optional<const Core::Time> Template::template_endtime() const {
+  return cross_correlation_.template_endtime();
 }
 
 WaveformProcessor::StreamState &Template::stream_state(const Record *record) {

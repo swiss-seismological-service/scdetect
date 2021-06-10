@@ -25,6 +25,7 @@ const std::string kStationMagnitudeType{kMagnitudeType};
 
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};
+constexpr double kTemplateWaveformResampleMargin{2};
 
 } // namespace settings
 } // namespace detect

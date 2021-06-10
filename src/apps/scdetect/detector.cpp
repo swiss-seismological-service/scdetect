@@ -228,10 +228,8 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
 DetectorBuilder &
 DetectorBuilder::set_stream(const std::string &stream_id,
                             const StreamConfig &stream_config,
-                            WaveformHandlerIfacePtr waveform_handler,
-                            const boost::filesystem::path &path_debug_info)
-
-{
+                            WaveformHandlerIfacePtr &waveform_handler,
+                            const boost::filesystem::path &path_debug_info) {
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
   utils::WaveformStreamID template_wf_stream_id{template_stream_id};
 
@@ -335,15 +333,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   product_->stream_states_[stream_id] = Detector::StreamState{};
 
-  // set template related filter (used for template waveform processing)
-  WaveformHandlerIface::ProcessingConfig template_wf_config;
+  // template related filter configuration (used for template waveform
+  // processing)
   auto pick_filter_id{pick->filterID()};
-  template_wf_config.filter_string =
-      stream_config.template_config.filter.value_or(pick_filter_id);
-  utils::ReplaceEscapedXMLFilterIDChars(template_wf_config.filter_string);
-  if (!template_wf_config.filter_string.empty()) {
-    template_wf_config.filter_margin_time = stream_config.init_time;
-  }
+  auto template_wf_filter_id{
+      stream_config.template_config.filter.value_or(pick_filter_id)};
+  utils::ReplaceEscapedXMLFilterIDChars(template_wf_filter_id);
 
   std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
   std::string rt_filter_id{stream_config.filter.value_or(pick_filter_id)};
@@ -364,17 +359,26 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     }
   }
 
-  Core::Time start, end;
-  GenericRecordCPtr template_wf;
+  // prepare a demeaned waveform chunk (used for template waveform processor
+  // configuration)
+  auto margin{settings::kTemplateWaveformResampleMargin};
+  if (!template_wf_filter_id.empty()) {
+    margin = std::max(margin, stream_config.init_time);
+  }
+  Core::TimeSpan template_wf_chunk_margin{margin};
+  Core::Time template_wf_chunk_starttime{wf_start - template_wf_chunk_margin};
+  Core::Time template_wf_chunk_endtime{wf_end + template_wf_chunk_margin};
+
+  WaveformHandlerIface::ProcessingConfig template_wf_config;
+  template_wf_config.demean = true;
+
+  GenericRecordCPtr template_wf_chunk;
   try {
-    template_wf = waveform_handler->Get(
+    template_wf_chunk = waveform_handler->Get(
         template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
         template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
-        wf_start, wf_end, template_wf_config);
-
-    start = template_wf->startTime();
-    end = template_wf->endTime();
-
+        template_wf_chunk_starttime, template_wf_chunk_endtime,
+        template_wf_config);
   } catch (WaveformHandler::NoData &e) {
     throw builder::NoWaveformData{
         std::string{"Failed to load template waveform: "} + e.what()};
@@ -385,7 +389,8 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // template processor
   auto template_proc{utils::make_unique<detector::Template>(
-      template_wf, stream_config.template_id, product_.get())};
+      template_wf_chunk, template_wf_filter_id, wf_start, wf_end,
+      stream_config.template_id, product_.get())};
 
   template_proc->set_filter(rt_template_filter.release(),
                             stream_config.init_time);
@@ -397,14 +402,12 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   auto filter_msg{log_prefix + "Filters configured: filter=\"" + rt_filter_id +
                   "\""};
   if (rt_filter_id != template_wf_config.filter_string) {
-    filter_msg +=
-        " (template_filter=\"" + template_wf_config.filter_string + "\")";
+    filter_msg += " (template_filter=\"" + template_wf_filter_id + "\")";
   }
   SCDETECT_LOG_DEBUG_PROCESSOR(template_proc, "%s", filter_msg.c_str());
 
-  TemplateProcessorConfig c{
-      std::move(template_proc),
-      {stream->sensorLocation(), pick, arrival, pick->time().value() - start}};
+  TemplateProcessorConfig c{std::move(template_proc),
+                            {stream->sensorLocation(), pick, arrival}};
 
   processor_configs_.emplace(stream_id, std::move(c));
 
@@ -424,7 +427,7 @@ void DetectorBuilder::Finalize() {
   // use a POT to determine the max relative pick offset
   detector::PickOffsetTable pot{arrival_picks_};
 
-  // initialization time
+  // detector initialization time
   Core::TimeSpan po{pot.pick_offset().value_or(0)};
   if (po) {
     using pair_type = TemplateProcessorConfigs::value_type;
@@ -508,7 +511,6 @@ void DetectorBuilder::Finalize() {
             meta.arrival->phase(),
             meta.arrival->weight(),
         },
-        meta.pick_offset,
         detector::Detector::SensorLocation{
             meta.sensor_location->latitude(), meta.sensor_location->longitude(),
             meta.sensor_location->station()->publicID()});

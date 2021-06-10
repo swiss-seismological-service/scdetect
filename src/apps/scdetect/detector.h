@@ -116,7 +116,6 @@ private:
 };
 
 class DetectorBuilder : public Builder<Detector> {
-
 public:
   DetectorBuilder(const std::string &id, const std::string &origin_id);
 
@@ -127,7 +126,7 @@ public:
   // waveform stream identifier of the stream to be processed.
   DetectorBuilder &
   set_stream(const std::string &stream_id, const StreamConfig &stream_config,
-             WaveformHandlerIfacePtr wf_handler,
+             WaveformHandlerIfacePtr &wf_handler,
              const boost::filesystem::path &path_debug_info = "");
   // Set the path to the debug info directory
   DetectorBuilder &set_debug_info_dir(const boost::filesystem::path &path);
@@ -141,7 +140,7 @@ protected:
 private:
   struct TemplateProcessorConfig {
     // Template matching processor
-    std::unique_ptr<WaveformProcessor> processor;
+    std::unique_ptr<detector::Template> processor;
 
     struct MetaData {
       // The template's sensor location associated
@@ -150,8 +149,6 @@ private:
       DataModel::PickCPtr pick;
       // The template related arrival
       DataModel::ArrivalCPtr arrival;
-      // The template waveform pick offset
-      Core::TimeSpan pick_offset;
     } metadata;
   };
 

@@ -253,6 +253,10 @@ bool Application::init() {
         waveform_handler, config_.path_filesystem_cache,
         settings::kCacheRawWaveforms);
   }
+  // cache demeaned template waveform snippets in order to speed up the
+  // initialization procedure
+  waveform_handler =
+      utils::make_smart<InMemoryCache>(waveform_handler, /*raw=*/false);
 
   // load event related data
   if (!LoadEvents(config_.url_event_db, query())) {

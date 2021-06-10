@@ -2,13 +2,13 @@
 #define SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
 
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
-#include "../waveformprocessor.h"
 #include "arrival.h"
 #include "pot.h"
 #include "template.h"
@@ -75,11 +75,9 @@ public:
   // Returns the number of associated processors
   size_t GetProcessorCount() const;
 
-  // Register the processor `proc` associated with the template arrival
-  // `arrival` for linking. `pick_offset` refers to the template waveform
-  // pick offset.
-  void Register(const detect::WaveformProcessor *proc, const Arrival &arrival,
-                const Core::TimeSpan &pick_offset);
+  // Register the template waveform processor `proc` associated with the
+  // template arrival `arrival` for linking.
+  void Register(const Template *proc, const Arrival &arrival);
   // Remove the processor identified by `proc_id`
   void Remove(const std::string &proc_id);
   // Reset the linker
@@ -92,8 +90,7 @@ public:
   void Terminate();
 
   // Feeds the `proc`'s result `res` to the linker
-  void Feed(const detect::WaveformProcessor *proc,
-            const detect::WaveformProcessor::ResultCPtr &res);
+  void Feed(const Template *proc, const Template::MatchResultCPtr &res);
 
   using PublishResultCallback = std::function<void(const Result &res)>;
   // Set the publish callback function
@@ -101,8 +98,7 @@ public:
 
 protected:
   // Processes the `res`
-  void Process(const detect::WaveformProcessor *proc,
-               const Result::TemplateResult &res);
+  void Process(const Template *proc, const Result::TemplateResult &res);
   // Emit a result
   void EmitResult(const Result &res);
 
@@ -113,10 +109,9 @@ private:
 
   // Template processor
   struct Processor {
+    const Template *proc;
     // The template arrival associated
     Arrival arrival;
-    // The template waveform pick offset
-    Core::TimeSpan pick_offset;
   };
 
   using Processors = std::unordered_map<std::string, Processor>;

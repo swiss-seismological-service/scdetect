@@ -13,6 +13,7 @@
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/stream.h>
 
+#include "../builder.h"
 #include "../filter/crosscorrelation.h"
 #include "../waveformprocessor.h"
 
@@ -21,14 +22,16 @@ namespace detect {
 namespace detector {
 
 // Template waveform processor implementation
-// - implements filtering
+// - implements resampling and filtering
 // - applies the cross-correlation algorithm
 class Template : public WaveformProcessor {
 
 public:
-  // Creates a `Template` waveform processor from the template waveform
-  // `template_wf`
-  Template(const GenericRecordCPtr &template_wf, const std::string &id,
+  // Creates a `Template` waveform processor. Waveform related parameters are
+  // forwarded to the underlying cross-correlation instance.
+  Template(const GenericRecordCPtr &waveform, const std::string filter_id,
+           const Core::Time &template_starttime,
+           const Core::Time &template_endtime, const std::string &processor_id,
            const Processor *p = nullptr);
 
   DEFINE_SMARTPOINTER(MatchResult);
@@ -50,6 +53,11 @@ public:
   void set_target_sampling_frequency(double f);
   boost::optional<double> target_sampling_frequency() const;
 
+  // Returns the template waveform starttime
+  boost::optional<const Core::Time> template_starttime() const;
+  // Returns the template waveform endtime
+  boost::optional<const Core::Time> template_endtime() const;
+
 protected:
   WaveformProcessor::StreamState &stream_state(const Record *record) override;
 
@@ -63,11 +71,11 @@ protected:
 
 private:
   StreamState stream_state_;
+
   // The optional target sampling frequency (used for on-the-fly resampling)
   boost::optional<double> target_sampling_frequency_;
-
   // The in-place cross-correlation filter
-  filter::CrossCorrelation<double> cross_correlation_;
+  filter::AdaptiveCrossCorrelation<double> cross_correlation_;
 };
 
 } // namespace detector
