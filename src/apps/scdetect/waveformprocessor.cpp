@@ -117,7 +117,9 @@ bool WaveformProcessor::Store(const Record *record) {
       } else if (record->samplingFrequency() !=
                  current_stream_state.sampling_frequency) {
         SCDETECT_LOG_WARNING_PROCESSOR(
-            this, "%s: sampling frequency changed, resetting stream: %f != %f",
+            this,
+            "%s: sampling frequency changed, resetting stream (sfreq_record != "
+            "sfreq_stream): %f != %f",
             record->streamID().c_str(), record->samplingFrequency(),
             current_stream_state.sampling_frequency);
         current_stream_state.last_record.reset();
