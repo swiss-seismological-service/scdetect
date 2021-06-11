@@ -110,9 +110,9 @@ private:
   // The filter identifier string used for template creation
   std::string filter_id_;
 
-  // The configued template waveform starttime
+  // The configured template waveform starttime
   Core::Time template_starttime_;
-  // The configued template waveform endtime
+  // The configured template waveform endtime
   Core::Time template_endtime_;
 };
 
