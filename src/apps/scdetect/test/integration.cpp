@@ -133,6 +133,26 @@ Samples dataset{
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
      /*path_sample=*/
      "integration-multi-stream-min-arrivals"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
+     /*path_sample=*/
+     "integration-single-stream-changing-fsamp-00"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
+     /*path_sample=*/
+     "integration-single-stream-changing-fsamp-01"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
+     /*path_sample=*/
+     "integration-single-stream-changing-fsamp-02"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
+     /*path_sample=*/
+     "integration-single-stream-changing-fsamp-03"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
+     /*path_sample=*/
+     "integration-single-stream-changing-fsamp-04"},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
