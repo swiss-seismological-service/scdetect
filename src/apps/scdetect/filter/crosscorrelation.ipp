@@ -280,9 +280,9 @@ void AdaptiveCrossCorrelation<TData>::CreateTemplateWaveform(
                           filter_id_.c_str(), wf->startTime().iso().c_str(),
                           wf->endTime().iso().c_str())};
     }
-    SCDETECT_LOG_DEBUG("Filter template waveform (sampling_frequency=%f): "
+    SCDETECT_LOG_DEBUG("Filtered template waveform (sampling_frequency=%f): "
                        "filter_id=%s",
-                       wf_->samplingFrequency(), filter_id_.c_str());
+                       wf->samplingFrequency(), filter_id_.c_str());
   }
   // trim
   Core::TimeWindow tw{template_starttime_, template_endtime_};
