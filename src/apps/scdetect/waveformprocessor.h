@@ -189,6 +189,10 @@ protected:
   // Store the record
   virtual bool Store(const Record *record);
 
+  // Resets the `WaveformProcessor` with regards to `stream_state` and
+  // `record`.
+  virtual void Reset(StreamState &stream_state, const Record *record);
+
   // Handles gaps. Returns whether the gap has been handled or not.
   virtual bool HandleGap(StreamState &stream_state, const Record *record,
                          DoubleArrayPtr &data);

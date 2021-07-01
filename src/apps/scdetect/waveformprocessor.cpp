@@ -122,7 +122,8 @@ bool WaveformProcessor::Store(const Record *record) {
             "sfreq_stream): %f != %f",
             record->streamID().c_str(), record->samplingFrequency(),
             current_stream_state.sampling_frequency);
-        current_stream_state.last_record.reset();
+
+        Reset(current_stream_state, record);
       } else if (!HandleGap(current_stream_state, record, data)) {
         return false;
       }
@@ -165,6 +166,10 @@ bool WaveformProcessor::Store(const Record *record) {
     return false;
   }
   return true;
+}
+
+void WaveformProcessor::Reset(StreamState &stream_state, const Record *record) {
+  stream_state.last_record.reset();
 }
 
 bool WaveformProcessor::HandleGap(StreamState &stream_state,

@@ -106,6 +106,13 @@ void Detector::Process(StreamState &stream_state, const Record *record,
   }
 }
 
+void Detector::Reset(StreamState &stream_state, const Record *record) {
+  // XXX(damb): drops all pending events
+  detector_.Reset();
+
+  WaveformProcessor::Reset(stream_state, record);
+}
+
 void Detector::Fill(StreamState &stream_state, const Record *record,
                     DoubleArrayPtr &data) {
   // XXX(damb): `Detector` does not implement filtering facilities

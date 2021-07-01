@@ -87,6 +87,8 @@ protected:
   void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
+  void Reset(StreamState &stream_state, const Record *record) override;
+
   void Fill(StreamState &stream_state, const Record *record,
             DoubleArrayPtr &data) override;
 
