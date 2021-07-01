@@ -129,7 +129,7 @@ public:
   // Removes the processors processing streams identified by `stream_id`
   void Remove(const std::string &stream_id);
 
-  void Process(const std::string &waveform_id_hint);
+  void Process(const std::string &stream_id_hint);
   // Reset the detector
   void Reset();
   // Terminates the detector

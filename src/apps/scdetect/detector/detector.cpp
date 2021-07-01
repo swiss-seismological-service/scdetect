@@ -163,7 +163,7 @@ void Detector::Remove(const std::string &stream_id) {
   }
 }
 
-void Detector::Process(const std::string &waveform_id_hint) {
+void Detector::Process(const std::string &stream_id_hint) {
   if (status() == Status::kTerminated) {
     throw BaseException{"error while processing: status=" +
                         std::to_string(utils::as_integer(Status::kTerminated))};
@@ -172,7 +172,7 @@ void Detector::Process(const std::string &waveform_id_hint) {
   if (!processors_.empty()) {
 
     TimeWindows tws;
-    if (!PrepareProcessing(tws, waveform_id_hint)) {
+    if (!PrepareProcessing(tws, stream_id_hint)) {
       // nothing to do
       return;
     }
