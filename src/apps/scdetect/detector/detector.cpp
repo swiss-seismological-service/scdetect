@@ -128,7 +128,7 @@ void Detector::Register(std::unique_ptr<Template> &&proc,
   }
 
   const auto proc_id{proc->id()};
-  ProcessorState p{std::move(proc), buf, boost::none, loc};
+  ProcessorState p{std::move(proc), buf, Core::TimeWindow{}, boost::none, loc};
   processors_.emplace(proc_id, std::move(p));
 
   processor_idx_.emplace(stream_id, proc_id);
@@ -367,13 +367,13 @@ bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
     const auto &proc{processors_.at(proc_id)};
     if (proc.processor->enabled()) {
       Core::TimeWindow tw{proc.buffer->windows().back()};
-      if (!tw.endTime() ||
-          tw.endTime() <= proc.processor->processed().endTime()) {
+      const auto &tw_fed{proc.data_time_window_fed};
+      if (!tw.endTime() || tw.endTime() <= tw_fed.endTime()) {
         continue;
       }
 
-      if (tw.startTime() < proc.processor->processed().endTime()) {
-        tw.setStartTime(proc.processor->processed().endTime());
+      if (tw.startTime() < tw_fed.endTime()) {
+        tw.setStartTime(tw_fed.endTime());
       }
 
       // skip data with too high latency
@@ -445,6 +445,11 @@ bool Detector::Feed(const TimeWindows &tws) {
 
         return false;
       }
+
+      if (!proc.data_time_window_fed) {
+        proc.data_time_window_fed.setStartTime(chunk->startTime());
+      }
+      proc.data_time_window_fed.setEndTime(chunk->endTime());
 
       if (proc.processor->finished()) {
         return false;
@@ -559,9 +564,11 @@ void Detector::ResetTrigger() {
 }
 
 void Detector::ResetProcessors() {
-  std::for_each(
-      std::begin(processors_), std::end(processors_),
-      [](ProcessorStates::value_type &p) { p.second.processor->Reset(); });
+  std::for_each(std::begin(processors_), std::end(processors_),
+                [](ProcessorStates::value_type &p) {
+                  p.second.processor->Reset();
+                  p.second.data_time_window_fed = Core::TimeWindow{};
+                });
 }
 
 void Detector::EmitResult(const Detector::Result &res) {

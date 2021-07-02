@@ -172,6 +172,11 @@ private:
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
+    // The time window fed
+    // XXX(damb): The data time window fed might be different from the data
+    // time window processed (e.g. due to the usage of certain waveform
+    // operators). Therefore, keep track of the time window fed, too.
+    Core::TimeWindow data_time_window_fed;
     // The processor dependent chunk size used to feed data to `Template`
     // waveform processors
     boost::optional<Core::TimeSpan> chunk_size;
