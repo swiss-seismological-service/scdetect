@@ -15,9 +15,9 @@
 #include <seiscomp/system/commandline.h>
 
 #include "config.h"
+#include "detector.h"
 #include "exception.h"
 #include "waveform.h"
-#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -126,7 +126,7 @@ private:
   DataModel::EventParametersPtr ep_;
 
   using DetectorMap =
-      std::unordered_multimap<std::string, std::shared_ptr<WaveformProcessor>>;
+      std::unordered_multimap<std::string, std::shared_ptr<Detector>>;
   DetectorMap detectors_;
 };
 

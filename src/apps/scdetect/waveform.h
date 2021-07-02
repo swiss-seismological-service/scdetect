@@ -24,9 +24,7 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw);
 bool Filter(GenericRecord &trace, const std::string &filter_string);
 bool Filter(DoubleArray &data, const std::string &filter_string,
             double sampling_freq);
-void Resample(GenericRecord &trace, double sampling_frequency, bool average);
-void Resample(DoubleArray &data, double sampling_frequency_from,
-              double sampling_frequency_to, bool average);
+bool Resample(GenericRecord &trace, double target_frequency);
 void Demean(GenericRecord &trace);
 void Demean(DoubleArray &data);
 bool Write(const GenericRecord &trace, std::ostream &out);
@@ -49,7 +47,9 @@ public:
     // Margin time in seconds used for filtering in order to prevent from
     // filtering artifacts
     double filter_margin_time{0};
-    double resample_frequency{0};
+    // Target frequency for resampling
+    double target_frequency{0};
+    // Indicates if the data should be demeaned
     bool demean{true};
   };
 

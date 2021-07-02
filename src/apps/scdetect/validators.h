@@ -10,6 +10,7 @@ namespace config {
 bool ValidateXCorrThreshold(const double &thres);
 bool ValidateArrivalOffsetThreshold(double thres);
 bool ValidateMinArrivals(int n, int num_stream_configs = 0);
+bool ValidateSamplingFrequency(double sampling_frequency);
 bool ValidateFilter(const std::string &filter_string, std::string &err);
 
 } // namespace config

@@ -42,6 +42,8 @@ private:
 
 } // namespace detail
 
+// An utility interface to access event parameters
+// - implements the Singleton Design Pattern
 class EventStore {
 public:
   class BaseException : public Exception {

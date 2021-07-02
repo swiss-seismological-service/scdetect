@@ -1,0 +1,25 @@
+Handle changing sampling frequencies (downsampled)
+
+Description:
+============
+
+- Match an downsampled version of the template waveform with an downsampled
+  version of the original waveform.
+
+- The data is split into 3 chunks:
+  + The original data used for template waveform generation (rate=100Hz).
+  + A second chunk (rate=100Hz); shifted by one hour in time.
+  + A resampled version of the first chunk of data (created by means of the
+  resample:// recordstream (rate=20Hz)) but shifted by one hour in time.
+
+  The second chunk and the third chunk are *contiguous* and correspond to the
+  waveform data to be matched.
+
+```
+>>> from obspy import read
+>>> st = read('data.mseed')
+>>> print(st)
+CH.GRIMS..HHZ | 2020-10-25T19:29:59.338393Z - 2020-10-25T19:40:01.008393Z | 100.0 Hz, 60168 samples
+CH.GRIMS..HHZ | 2020-10-25T20:19:59.918393Z - 2020-10-25T20:29:59.328393Z | 100.0 Hz, 59942 samples
+CH.GRIMS..HHZ | 2020-10-25T20:29:59.848393Z - 2020-10-25T20:40:00.498393Z | 20.0 Hz, 12014 samples
+```

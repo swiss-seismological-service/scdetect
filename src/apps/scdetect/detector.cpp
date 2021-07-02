@@ -19,9 +19,11 @@
 
 #include "eventstore.h"
 #include "log.h"
+#include "operator/ringbuffer.h"
 #include "processor.h"
 #include "settings.h"
 #include "utils.h"
+#include "waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -35,45 +37,19 @@ DetectorBuilder Detector::Create(const std::string &id,
 }
 
 void Detector::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
-  // XXX(damb): Currently, `Detector` does neither implement filter nor
-  // init_time facilities.
+  // XXX(damb): `Detector` doesn't implement filter facilities
 }
 
 const Core::TimeWindow &Detector::processed() const {
   return detector_.processed();
 }
 
-void Detector::set_gap_tolerance(const Core::TimeSpan &duration) {
-  config_.gap_tolerance = static_cast<double>(duration);
-}
-
-const Core::TimeSpan Detector::gap_tolerance() const {
-  return Core::TimeSpan{config_.gap_tolerance};
-}
-
-void Detector::set_gap_interpolation(bool e) { config_.gap_interpolation = e; }
-
-bool Detector::gap_interpolation() const { return config_.gap_interpolation; }
-
-bool Detector::Feed(const Record *record) {
-  if (record->sampleCount() == 0)
-    return false;
-
-  auto it{stream_configs_.find(record->streamID())};
-  if (it == stream_configs_.end()) {
-    return false;
-  }
-
-  return Store(it->second.stream_state, record);
-}
-
 void Detector::Reset() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
 
   // reset template (child) related facilities
-  for (auto &stream_config_pair : stream_configs_) {
-    stream_config_pair.second.stream_state = WaveformProcessor::StreamState{};
-    stream_config_pair.second.stream_buffer->clear();
+  for (auto &stream_state_pair : stream_states_) {
+    stream_state_pair.second = WaveformProcessor::StreamState{};
   }
 
   detector_.Reset();
@@ -93,6 +69,10 @@ void Detector::Terminate() {
     detection_ = boost::none;
   }
   WaveformProcessor::Terminate();
+}
+
+WaveformProcessor::StreamState &Detector::stream_state(const Record *record) {
+  return stream_states_.at(record->streamID());
 }
 
 void Detector::Process(StreamState &stream_state, const Record *record,
@@ -126,84 +106,22 @@ void Detector::Process(StreamState &stream_state, const Record *record,
   }
 }
 
-bool Detector::HandleGap(StreamState &stream_state, const Record *record,
-                         DoubleArrayPtr &data) {
+void Detector::Reset(StreamState &stream_state, const Record *record) {
+  // XXX(damb): drops all pending events
+  detector_.Reset();
 
-  if (record == stream_state.last_record)
-    return false;
-
-  Core::TimeSpan gap{record->startTime() -
-                     stream_state.data_time_window.endTime() -
-                     /* one usec*/ Core::TimeSpan(0, 1)};
-  double gap_seconds = static_cast<double>(gap);
-
-  if (gap > Core::TimeSpan{config_.gap_threshold}) {
-    size_t gap_samples = static_cast<size_t>(
-        ceil(stream_state.sampling_frequency * gap_seconds));
-    if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
-      SCDETECT_LOG_DEBUG_PROCESSOR(
-          this, "%s: detected gap (%.6f secs, %lu samples) (handled)",
-          record->streamID().c_str(), gap_seconds, gap_samples);
-    } else {
-      SCDETECT_LOG_DEBUG_PROCESSOR(
-          this,
-          "%s: detected gap (%.6f secs, %lu samples) (NOT "
-          "handled): status=%d",
-          record->streamID().c_str(), gap_seconds, gap_samples,
-          // TODO(damb): Verify if this is the correct status
-          // to be displayed
-          static_cast<int>(status()));
-      if (status() > WaveformProcessor::Status::kInProgress)
-        return false;
-    }
-  } else if (gap_seconds < 0) {
-    // handle record from the past
-    size_t gap_samples = static_cast<size_t>(
-        ceil(-1 * stream_state.sampling_frequency * gap_seconds));
-    if (gap_samples > 1)
-      return false;
-  }
-
-  return true;
+  WaveformProcessor::Reset(stream_state, record);
 }
 
 void Detector::Fill(StreamState &stream_state, const Record *record,
                     DoubleArrayPtr &data) {
-  // XXX(damb): The detector does not filter the data. Data is buffered, only.
+  // XXX(damb): `Detector` does not implement filtering facilities
   stream_state.received_samples += data->size();
-
-  auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
-  // buffer record
-  if (!buffer->feed(record)) {
-    SCDETECT_LOG_WARNING_PROCESSOR(
-        this, "%s: error while buffering data: start=%s, end=%s, samples=%d",
-        record->streamID().c_str(), record->startTime().iso().c_str(),
-        record->endTime().iso().c_str(), record->sampleCount());
-  }
-}
-
-void Detector::InitStream(StreamState &stream_state, const Record *record) {
-  WaveformProcessor::InitStream(stream_state, record);
-
-  const auto min_thres{2 * 1.0 / record->samplingFrequency()};
-  if (min_thres > config_.gap_threshold) {
-    SCDETECT_LOG_WARNING_PROCESSOR(
-        this,
-        "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
-        "Resetting gap threshold.",
-        min_thres, config_.gap_threshold);
-
-    // TODO(damb): When implementing the feature/handle-changing-sampling
-    // rates (see: https://github.com/damb/scdetect/issues/20) store remember
-    // the configured gap threshold value and reset the current gap threshold
-    // to the configured one, once the sampling interval decreases.
-    config_.gap_threshold = min_thres;
-  }
 }
 
 bool Detector::EnoughDataReceived(const StreamState &stream_state) const {
-  for (const auto &stream_config_pair : stream_configs_) {
-    const auto &state{stream_config_pair.second.stream_state};
+  for (const auto &stream_state_pair : stream_states_) {
+    const auto &state{stream_state_pair.second};
     if (state.received_samples <= state.needed_samples) {
       return false;
     }
@@ -251,38 +169,6 @@ void Detector::PrepareDetection(DetectionPtr &detection,
           theoretical_template_arrival);
     }
   }
-}
-
-bool Detector::FillGap(StreamState &stream_state, const Record *record,
-                       const Core::TimeSpan &duration, double next_sample,
-                       size_t missing_samples) {
-  if (duration <= Core::TimeSpan{config_.gap_tolerance}) {
-    if (config_.gap_interpolation) {
-
-      auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
-
-      auto filled{utils::make_unique<GenericRecord>(
-          record->networkCode(), record->stationCode(), record->locationCode(),
-          record->channelCode(), buffer->timeWindow().endTime(),
-          record->samplingFrequency())};
-
-      auto data_ptr{utils::make_smart<DoubleArray>(missing_samples)};
-      double delta{next_sample - stream_state.last_sample};
-      double step{1. / static_cast<double>(missing_samples + 1)};
-      double di = step;
-      for (size_t i = 0; i < missing_samples; ++i, di += step) {
-        const double value{stream_state.last_sample + di * delta};
-        data_ptr->set(i, value);
-      }
-
-      filled->setData(missing_samples, data_ptr->typedData(), Array::DOUBLE);
-      Fill(stream_state, /*record=*/filled.release(), data_ptr);
-
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -349,10 +235,8 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
 DetectorBuilder &
 DetectorBuilder::set_stream(const std::string &stream_id,
                             const StreamConfig &stream_config,
-                            WaveformHandlerIfacePtr waveform_handler,
-                            const boost::filesystem::path &path_debug_info)
-
-{
+                            WaveformHandlerIfacePtr &waveform_handler,
+                            const boost::filesystem::path &path_debug_info) {
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
   utils::WaveformStreamID template_wf_stream_id{template_stream_id};
 
@@ -454,17 +338,14 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
                      stream_config.template_id.c_str());
 
-  product_->stream_configs_[stream_id] = Detector::StreamConfig{};
+  product_->stream_states_[stream_id] = Detector::StreamState{};
 
-  // set template related filter (used for template waveform processing)
-  WaveformHandlerIface::ProcessingConfig template_wf_config;
+  // template related filter configuration (used for template waveform
+  // processing)
   auto pick_filter_id{pick->filterID()};
-  template_wf_config.filter_string =
-      stream_config.template_config.filter.value_or(pick_filter_id);
-  utils::ReplaceEscapedXMLFilterIDChars(template_wf_config.filter_string);
-  if (!template_wf_config.filter_string.empty()) {
-    template_wf_config.filter_margin_time = stream_config.init_time;
-  }
+  auto template_wf_filter_id{
+      stream_config.template_config.filter.value_or(pick_filter_id)};
+  utils::ReplaceEscapedXMLFilterIDChars(template_wf_filter_id);
 
   std::unique_ptr<WaveformProcessor::Filter> rt_template_filter{nullptr};
   std::string rt_filter_id{stream_config.filter.value_or(pick_filter_id)};
@@ -485,17 +366,26 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     }
   }
 
-  Core::Time start, end;
-  GenericRecordCPtr template_wf;
+  // prepare a demeaned waveform chunk (used for template waveform processor
+  // configuration)
+  auto margin{settings::kTemplateWaveformResampleMargin};
+  if (!template_wf_filter_id.empty()) {
+    margin = std::max(margin, stream_config.init_time);
+  }
+  Core::TimeSpan template_wf_chunk_margin{margin};
+  Core::Time template_wf_chunk_starttime{wf_start - template_wf_chunk_margin};
+  Core::Time template_wf_chunk_endtime{wf_end + template_wf_chunk_margin};
+
+  WaveformHandlerIface::ProcessingConfig template_wf_config;
+  template_wf_config.demean = true;
+
+  GenericRecordCPtr template_wf_chunk;
   try {
-    template_wf = waveform_handler->Get(
+    template_wf_chunk = waveform_handler->Get(
         template_wf_stream_id.net_code(), template_wf_stream_id.sta_code(),
         template_wf_stream_id.loc_code(), template_wf_stream_id.cha_code(),
-        wf_start, wf_end, template_wf_config);
-
-    start = template_wf->startTime();
-    end = template_wf->endTime();
-
+        template_wf_chunk_starttime, template_wf_chunk_endtime,
+        template_wf_config);
   } catch (WaveformHandler::NoData &e) {
     throw builder::NoWaveformData{
         std::string{"Failed to load template waveform: "} + e.what()};
@@ -506,14 +396,25 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   // template processor
   auto template_proc{utils::make_unique<detector::Template>(
-      template_wf, stream_config.template_id, product_.get())};
+      template_wf_chunk, template_wf_filter_id, wf_start, wf_end,
+      stream_config.template_id, product_.get())};
 
   template_proc->set_filter(rt_template_filter.release(),
                             stream_config.init_time);
+  if (stream_config.target_sampling_frequency) {
+    template_proc->set_target_sampling_frequency(
+        *stream_config.target_sampling_frequency);
+  }
 
-  TemplateProcessorConfig c{
-      std::move(template_proc),
-      {stream->sensorLocation(), pick, arrival, pick->time().value() - start}};
+  auto filter_msg{log_prefix + "Filters configured: filter=\"" + rt_filter_id +
+                  "\""};
+  if (rt_filter_id != template_wf_filter_id) {
+    filter_msg += " (template_filter=\"" + template_wf_filter_id + "\")";
+  }
+  SCDETECT_LOG_DEBUG_PROCESSOR(template_proc, "%s", filter_msg.c_str());
+
+  TemplateProcessorConfig c{std::move(template_proc),
+                            {stream->sensorLocation(), pick, arrival}};
 
   processor_configs_.emplace(stream_id, std::move(c));
 
@@ -533,7 +434,7 @@ void DetectorBuilder::Finalize() {
   // use a POT to determine the max relative pick offset
   detector::PickOffsetTable pot{arrival_picks_};
 
-  // initialization time
+  // detector initialization time
   Core::TimeSpan po{pot.pick_offset().value_or(0)};
   if (po) {
     using pair_type = TemplateProcessorConfigs::value_type;
@@ -585,15 +486,21 @@ void DetectorBuilder::Finalize() {
     product_->detector_.set_chunk_size(Core::TimeSpan{cfg.chunk_size});
   }
 
+  auto buffering_operator{
+      utils::make_unique<waveform_operator::RingBufferOperator>(
+          product_.get())};
+  buffering_operator->set_gap_threshold(Core::TimeSpan{cfg.gap_threshold});
+  buffering_operator->set_gap_tolerance(Core::TimeSpan{cfg.gap_tolerance});
+  buffering_operator->set_gap_interpolation(cfg.gap_interpolation);
+
   std::unordered_set<std::string> used_picks;
   for (auto &proc_config_pair : processor_configs_) {
     const auto &stream_id{proc_config_pair.first};
     auto &proc_config{proc_config_pair.second};
 
-    // initialize buffer
-    auto &buf{product_->stream_configs_[stream_id].stream_buffer};
-    buf = std::make_shared<RingBuffer>(Core::TimeSpan{
-        std::max(30.0, cfg.chunk_size) * settings::kBufferMultiplicator});
+    buffering_operator->Add(stream_id,
+                            Core::TimeSpan{std::max(30.0, cfg.chunk_size) *
+                                           settings::kBufferMultiplicator});
 
     const auto &meta{proc_config.metadata};
     boost::optional<std::string> phase_hint;
@@ -603,20 +510,21 @@ void DetectorBuilder::Finalize() {
     }
     // initialize detection processing
     product_->detector_.Register(
-        std::move(proc_config.processor), buf, stream_id,
+        std::move(proc_config.processor), buffering_operator->Get(stream_id),
+        stream_id,
         detector::Arrival{
             {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
              meta.pick->time().value() - product_->origin_->time().value()},
             meta.arrival->phase(),
             meta.arrival->weight(),
         },
-        meta.pick_offset,
         detector::Detector::SensorLocation{
             meta.sensor_location->latitude(), meta.sensor_location->longitude(),
             meta.sensor_location->station()->publicID()});
 
     used_picks.emplace(meta.pick->publicID());
   }
+  product_->set_operator(buffering_operator.release());
 
   // attach reference theoretical template arrivals to the product
   if (cfg.create_template_arrivals) {

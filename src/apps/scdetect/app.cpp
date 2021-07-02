@@ -31,6 +31,7 @@
 #include "detector/arrival.h"
 #include "eventstore.h"
 #include "log.h"
+#include "resamplerstore.h"
 #include "settings.h"
 #include "utils.h"
 #include "validators.h"
@@ -252,6 +253,10 @@ bool Application::init() {
         waveform_handler, config_.path_filesystem_cache,
         settings::kCacheRawWaveforms);
   }
+  // cache demeaned template waveform snippets in order to speed up the
+  // initialization procedure
+  waveform_handler =
+      utils::make_smart<InMemoryCache>(waveform_handler, /*raw=*/false);
 
   // load event related data
   if (!LoadEvents(config_.url_event_db, query())) {
@@ -328,6 +333,7 @@ void Application::done() {
   }
 
   EventStore::Instance().Reset();
+  RecordResamplerStore::Instance().Reset();
 
   StreamApplication::done();
 }

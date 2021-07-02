@@ -16,8 +16,7 @@
 #include <seiscomp/utils/files.h>
 
 #include "log.h"
-#include "seiscomp/core/datetime.h"
-#include "seiscomp/core/timewindow.h"
+#include "resamplerstore.h"
 #include "utils.h"
 
 namespace Seiscomp {
@@ -99,70 +98,26 @@ bool Filter(DoubleArray &data, const std::string &filter_string,
   return true;
 }
 
-void Resample(GenericRecord &trace, double sampling_frequency, bool average) {
-  if (sampling_frequency <= 0 ||
-      trace.samplingFrequency() == sampling_frequency)
-    return;
+bool Resample(GenericRecord &trace, double target_frequency) {
+  if (target_frequency <= 0 || trace.samplingFrequency() == target_frequency)
+    return true;
 
-  auto data{DoubleArray::Cast(trace.data())};
-  Resample(*data, trace.samplingFrequency(), sampling_frequency, average);
-
-  trace.setSamplingFrequency(static_cast<double>(sampling_frequency));
-  trace.dataUpdated();
-}
-
-void Resample(DoubleArray &data, double sampling_frequency_from,
-              double sampling_frequency_to, bool average) {
-
-  double step = sampling_frequency_from / sampling_frequency_to;
-
-  if (sampling_frequency_from < sampling_frequency_to) {
-    // upsampling
-    double fi = data.size() - 1;
-    data.resize(data.size() / step);
-
-    for (int i = data.size() - 1; i >= 0; i--) {
-      data[i] = data[static_cast<int>(fi)];
-      fi -= step;
-    }
-  } else {
-    // downsampling
-    int w = average ? step * 0.5 + 0.5 : 0;
-    int i = 0;
-    double fi = 0.0;
-    int cnt = data.size();
-
-    if (w <= 0) {
-      while (fi < cnt) {
-        data[i++] = data[static_cast<int>(fi)];
-        fi += step;
-      }
-    } else {
-      while (fi < cnt) {
-        int ci = static_cast<int>(fi);
-        double scale = 1.0;
-        double v = data[ci];
-
-        for (int g = 1; g < w; ++g) {
-          if (ci >= g) {
-            v += data[ci - g];
-            scale += 1.0;
-          }
-
-          if (ci + g < cnt) {
-            v += data[ci + g];
-            scale += 1.0;
-          }
-        }
-
-        v /= scale;
-
-        data[i++] = v;
-        fi += step;
-      }
-    }
-    data.resize(i);
+  auto resampler{
+      RecordResamplerStore::Instance().Get(&trace, target_frequency)};
+  std::unique_ptr<Record> resampled;
+  resampled.reset(resampler->feed(&trace));
+  if (!resampled) {
+    SCDETECT_LOG_WARNING("%s: Failed to resample record "
+                         "(sampling_frequency=%f): target_frequency=%f",
+                         std::string{trace.streamID()}.c_str(),
+                         trace.samplingFrequency(), target_frequency);
+    return false;
   }
+
+  trace.setStartTime(resampled->startTime());
+  trace.setSamplingFrequency(static_cast<double>(target_frequency));
+  trace.setData(resampled->data()->copy(Array::DataType::DOUBLE));
+  return true;
 }
 
 void Demean(GenericRecord &trace) {
@@ -223,8 +178,8 @@ void WaveformHandlerIface::Process(const GenericRecordPtr &trace,
     waveform::Demean(*trace);
   }
 
-  if (config.resample_frequency) {
-    waveform::Resample(*trace, config.resample_frequency, true);
+  if (config.target_frequency) {
+    waveform::Resample(*trace, config.target_frequency);
   }
 
   if (!config.filter_string.empty()) {
@@ -398,7 +353,7 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
 
     ProcessingConfig disabled{config};
     disabled.filter_string = "";
-    disabled.resample_frequency = 0;
+    disabled.target_frequency = 0;
     disabled.demean = false;
 
     Core::TimeWindow corrected{tw};
@@ -537,7 +492,7 @@ hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig>::operator()(
   std::size_t ret{0};
   boost::hash_combine(ret, std::hash<std::string>{}(c.filter_string));
   boost::hash_combine(ret, std::hash<double>{}(c.filter_margin_time));
-  boost::hash_combine(ret, std::hash<double>{}(c.resample_frequency));
+  boost::hash_combine(ret, std::hash<double>{}(c.target_frequency));
   boost::hash_combine(ret, std::hash<bool>{}(c.demean));
   return ret;
 }

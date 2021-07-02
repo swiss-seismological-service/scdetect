@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <seiscomp/core/datetime.h>
-#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/event.h>
@@ -28,6 +27,7 @@
 #include "detector/template.h"
 #include "settings.h"
 #include "waveform.h"
+#include "waveformoperator.h"
 #include "waveformprocessor.h"
 
 namespace Seiscomp {
@@ -36,8 +36,6 @@ namespace detect {
 class DetectorBuilder;
 
 // Detector waveform processor implementation
-// - implements gap interpolation
-// - handles buffers
 class Detector : public WaveformProcessor {
 
   Detector(const std::string &id, const DataModel::OriginCPtr &origin);
@@ -79,31 +77,20 @@ public:
   void set_filter(Filter *filter, const Core::TimeSpan &init_time) override;
 
   const Core::TimeWindow &processed() const override;
-  // Sets the maximal gap length to be tolerated
-  void set_gap_tolerance(const Core::TimeSpan &duration);
-  // Returns the gap tolerance
-  const Core::TimeSpan gap_tolerance() const;
-  // Enables/disables the linear interpolation of missing samples
-  // if the gap is smaller than the configured gap tolerance
-  void set_gap_interpolation(bool e);
-  // Returns if gap interpolation is enabled or disabled, respectively
-  bool gap_interpolation() const;
 
-  bool Feed(const Record *rec) override;
   void Reset() override;
   void Terminate() override;
 
 protected:
+  WaveformProcessor::StreamState &stream_state(const Record *record) override;
+
   void Process(StreamState &stream_state, const Record *record,
                const DoubleArray &filtered_data) override;
 
-  bool HandleGap(StreamState &stream_state, const Record *record,
-                 DoubleArrayPtr &data) override;
+  void Reset(StreamState &stream_state, const Record *record) override;
 
   void Fill(StreamState &stream_state, const Record *record,
             DoubleArrayPtr &data) override;
-
-  void InitStream(StreamState &stream_state, const Record *record) override;
 
   bool EnoughDataReceived(const StreamState &stream_state) const override;
   // Callback function storing `res`
@@ -112,20 +99,10 @@ protected:
   void PrepareDetection(DetectionPtr &d, const detector::Detector::Result &res);
 
 private:
-  // Fill gaps
-  bool FillGap(StreamState &stream_state, const Record *record,
-               const Core::TimeSpan &duration, double next_sample,
-               size_t missing_samples);
-
-  struct StreamConfig {
-    WaveformProcessor::StreamState stream_state;
-    // Reference to the stream buffer
-    std::shared_ptr<RecordSequence> stream_buffer;
-  };
-
   using WaveformStreamID = std::string;
-  using StreamConfigs = std::unordered_map<WaveformStreamID, StreamConfig>;
-  StreamConfigs stream_configs_;
+  using StreamStates =
+      std::unordered_map<WaveformStreamID, WaveformProcessor::StreamState>;
+  StreamStates stream_states_;
 
   DetectorConfig config_;
 
@@ -141,7 +118,6 @@ private:
 };
 
 class DetectorBuilder : public Builder<Detector> {
-
 public:
   DetectorBuilder(const std::string &id, const std::string &origin_id);
 
@@ -152,7 +128,7 @@ public:
   // waveform stream identifier of the stream to be processed.
   DetectorBuilder &
   set_stream(const std::string &stream_id, const StreamConfig &stream_config,
-             WaveformHandlerIfacePtr wf_handler,
+             WaveformHandlerIfacePtr &wf_handler,
              const boost::filesystem::path &path_debug_info = "");
   // Set the path to the debug info directory
   DetectorBuilder &set_debug_info_dir(const boost::filesystem::path &path);
@@ -166,7 +142,7 @@ protected:
 private:
   struct TemplateProcessorConfig {
     // Template matching processor
-    std::unique_ptr<WaveformProcessor> processor;
+    std::unique_ptr<detector::Template> processor;
 
     struct MetaData {
       // The template's sensor location associated
@@ -175,8 +151,6 @@ private:
       DataModel::PickCPtr pick;
       // The template related arrival
       DataModel::ArrivalCPtr arrival;
-      // The template waveform pick offset
-      Core::TimeSpan pick_offset;
     } metadata;
   };
 

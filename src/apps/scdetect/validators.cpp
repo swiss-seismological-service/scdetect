@@ -22,6 +22,10 @@ bool ValidateMinArrivals(int n, int num_stream_configs) {
   return num_stream_configs > 0 ? n >= 1 : n >= 1 && n <= num_stream_configs;
 }
 
+bool ValidateSamplingFrequency(double sampling_frequency) {
+  return sampling_frequency > 0 && sampling_frequency <= 1 / 1e-6;
+}
+
 bool ValidateFilter(const std::string &filter_string, std::string &err) {
   auto filter{WaveformProcessor::Filter::Create(filter_string, &err)};
   if (!filter) {

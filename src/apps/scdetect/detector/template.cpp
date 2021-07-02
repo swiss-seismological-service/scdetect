@@ -6,20 +6,27 @@
 #include <string>
 
 #include "../log.h"
+#include "../operator/resample.h"
+#include "../resamplerstore.h"
 #include "../settings.h"
 #include "../utils.h"
 #include "../waveform.h"
+#include "../waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-Template::Template(const GenericRecordCPtr &template_wf, const std::string &id,
-                   const Processor *p)
+Template::Template(const GenericRecordCPtr &waveform,
+                   const std::string filter_id,
+                   const Core::Time &template_starttime,
+                   const Core::Time &template_endtime,
+                   const std::string &processor_id, const Processor *p)
     : WaveformProcessor{p ? std::string{p->id() + settings::kProcessorIdSep +
-                                        id}
-                          : id},
-      cross_correlation_{template_wf} {}
+                                        processor_id}
+                          : processor_id},
+      cross_correlation_{waveform, filter_id, template_starttime,
+                         template_endtime} {}
 
 void Template::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
   if (stream_state_.filter)
@@ -34,13 +41,6 @@ const Core::TimeWindow &Template::processed() const {
   return stream_state_.data_time_window;
 }
 
-bool Template::Feed(const Record *record) {
-  if (record->sampleCount() == 0)
-    return false;
-
-  return Store(stream_state_, record);
-}
-
 void Template::Reset() {
   Filter *tmp{stream_state_.filter};
 
@@ -53,6 +53,28 @@ void Template::Reset() {
   cross_correlation_.Reset();
 
   WaveformProcessor::Reset();
+}
+
+void Template::set_target_sampling_frequency(double f) {
+  if (f > 0) {
+    target_sampling_frequency_ = f;
+  }
+}
+
+boost::optional<double> Template::target_sampling_frequency() const {
+  return target_sampling_frequency_;
+}
+
+boost::optional<const Core::Time> Template::template_starttime() const {
+  return cross_correlation_.template_starttime();
+}
+
+boost::optional<const Core::Time> Template::template_endtime() const {
+  return cross_correlation_.template_endtime();
+}
+
+WaveformProcessor::StreamState &Template::stream_state(const Record *record) {
+  return stream_state_;
 }
 
 void Template::Process(StreamState &stream_state, const Record *record,
@@ -104,16 +126,35 @@ void Template::Process(StreamState &stream_state, const Record *record,
 void Template::Fill(StreamState &stream_state, const Record *record,
                     DoubleArrayPtr &data) {
 
-  // TODO(damb): Allow target sampling frequency to be configurable if filter
-  // is in use.
   WaveformProcessor::Fill(stream_state, record, data);
   // cross-correlate filtered data
   cross_correlation_.Apply(data->size(), data->typedData());
 }
 
-void Template::InitStream(StreamState &stream_state, const Record *record) {
-  WaveformProcessor::InitStream(stream_state, record);
-  cross_correlation_.set_sampling_frequency(stream_state.sampling_frequency);
+void Template::SetupStream(StreamState &stream_state, const Record *record) {
+  WaveformProcessor::SetupStream(stream_state, record);
+  const auto f{stream_state.sampling_frequency};
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: sampling_frequency=%f",
+                               f);
+  if (target_sampling_frequency_ && target_sampling_frequency_ != f) {
+
+    SCDETECT_LOG_DEBUG_PROCESSOR(this,
+                                 "Reinitialize stream: sampling_frequency=%f",
+                                 target_sampling_frequency_);
+    auto resampling_operator{
+        utils::make_unique<waveform_operator::ResamplingOperator>(
+            RecordResamplerStore::Instance().Get(record,
+                                                 *target_sampling_frequency_))};
+    set_operator(resampling_operator.release());
+
+    stream_state.sampling_frequency = *target_sampling_frequency_;
+    if (stream_state.filter) {
+      stream_state.filter->setSamplingFrequency(*target_sampling_frequency_);
+    }
+  }
+
+  cross_correlation_.set_sampling_frequency(
+      target_sampling_frequency_.value_or(f));
 }
 
 } // namespace detector

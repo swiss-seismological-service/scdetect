@@ -19,6 +19,8 @@
 
 #include "../exception.h"
 #include "../processor.h"
+#include "../waveformoperator.h"
+#include "../waveformprocessor.h"
 #include "arrival.h"
 #include "linker.h"
 #include "template.h"
@@ -116,20 +118,18 @@ public:
   // Returns the number of registered template processors
   size_t GetProcessorCount() const;
 
-  // Register the processor `proc` for processing buffered data from `buf` where
-  // records are identified by waveform stream identifier `stream_id`. The
-  // processor `proc` is registered together with the template arrival
-  // `arrival`, the template waveform pick offset `pick_offset` and the sensor
-  // location `loc`.
-  void Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
+  // Register the template waveform processor `proc` for processing buffered
+  // data from `buf` where records are identified by the waveform stream
+  // identifier `stream_id`. `proc` is registered together with the template
+  // arrival `arrival` and the sensor location `loc`.
+  void Register(std::unique_ptr<Template> &&proc,
                 const std::shared_ptr<const RecordSequence> &buf,
                 const std::string &stream_id, const Arrival &arrival,
-                const Core::TimeSpan &pick_offset,
                 const Detector::SensorLocation &loc);
   // Removes the processors processing streams identified by `stream_id`
   void Remove(const std::string &stream_id);
 
-  void Process(const std::string &waveform_id_hint);
+  void Process(const std::string &stream_id_hint);
   // Reset the detector
   void Reset();
   // Terminates the detector
@@ -157,9 +157,8 @@ protected:
   void EmitResult(const Result &res);
 
   // Callback storing results from `Template` processors
-  void StoreTemplateResult(const detect::WaveformProcessor *proc,
-                           const Record *rec,
-                           const detect::WaveformProcessor::ResultCPtr &res);
+  void StoreTemplateResult(const Template *proc, const Record *rec,
+                           const Template::MatchResultCPtr &res);
 
   // Callback storing results from the linker
   void StoreLinkerResult(const Linker::Result &res);
@@ -169,10 +168,15 @@ private:
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
     // The `Template` waveform processor
-    std::unique_ptr<detect::WaveformProcessor> processor;
+    std::unique_ptr<Template> processor;
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
+    // The time window fed
+    // XXX(damb): The data time window fed might be different from the data
+    // time window processed (e.g. due to the usage of certain waveform
+    // operators). Therefore, keep track of the time window fed, too.
+    Core::TimeWindow data_time_window_fed;
     // The processor dependent chunk size used to feed data to `Template`
     // waveform processors
     boost::optional<Core::TimeSpan> chunk_size;

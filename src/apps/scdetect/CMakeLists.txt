@@ -14,11 +14,16 @@ set(
     detector/template.cpp
     eventstore.cpp
     exception.cpp
+    filter.cpp
     main.cpp
+    operator/resample.cpp
+    operator/ringbuffer.cpp
     processor.cpp
+    resamplerstore.cpp
     utils.cpp
     validators.cpp
     waveform.cpp
+    waveformoperator.cpp
     waveformprocessor.cpp
 )
 

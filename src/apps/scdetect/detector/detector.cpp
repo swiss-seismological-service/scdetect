@@ -100,16 +100,17 @@ boost::optional<Core::TimeSpan> Detector::chunk_size() const {
 
 size_t Detector::GetProcessorCount() const { return processors_.size(); }
 
-void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
+void Detector::Register(std::unique_ptr<Template> &&proc,
                         const std::shared_ptr<const RecordSequence> &buf,
                         const std::string &stream_id, const Arrival &arrival,
-                        const Core::TimeSpan &pick_offset,
                         const Detector::SensorLocation &loc) {
 
   proc->set_result_callback(
-      [this](const detect::WaveformProcessor *p, const Record *rec,
+      [this](const detect::WaveformProcessor *proc, const Record *rec,
              const detect::WaveformProcessor::ResultCPtr &res) {
-        StoreTemplateResult(p, rec, res);
+        StoreTemplateResult(
+            dynamic_cast<const Template *>(proc), rec,
+            boost::dynamic_pointer_cast<const Template::MatchResult>(res));
       });
 
   // XXX(damb): Replace the arrival with a *pseudo arrival* i.e. an arrival
@@ -117,7 +118,7 @@ void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
   Arrival pseudo_arrival{arrival};
   pseudo_arrival.pick.waveform_id = stream_id;
 
-  linker_.Register(proc.get(), pseudo_arrival, pick_offset);
+  linker_.Register(proc.get(), pseudo_arrival);
   const auto on_hold_duration{max_latency_.value_or(0.0) +
                               chunk_size_.value_or(0.0) +
                               linker_safety_margin_};
@@ -127,7 +128,7 @@ void Detector::Register(std::unique_ptr<detect::WaveformProcessor> &&proc,
   }
 
   const auto proc_id{proc->id()};
-  ProcessorState p{std::move(proc), buf, boost::none, loc};
+  ProcessorState p{std::move(proc), buf, Core::TimeWindow{}, boost::none, loc};
   processors_.emplace(proc_id, std::move(p));
 
   processor_idx_.emplace(stream_id, proc_id);
@@ -162,7 +163,7 @@ void Detector::Remove(const std::string &stream_id) {
   }
 }
 
-void Detector::Process(const std::string &waveform_id_hint) {
+void Detector::Process(const std::string &stream_id_hint) {
   if (status() == Status::kTerminated) {
     throw BaseException{"error while processing: status=" +
                         std::to_string(utils::as_integer(Status::kTerminated))};
@@ -171,7 +172,7 @@ void Detector::Process(const std::string &waveform_id_hint) {
   if (!processors_.empty()) {
 
     TimeWindows tws;
-    if (!PrepareProcessing(tws, waveform_id_hint)) {
+    if (!PrepareProcessing(tws, stream_id_hint)) {
       // nothing to do
       return;
     }
@@ -366,13 +367,13 @@ bool Detector::PrepareProcessing(Detector::TimeWindows &tws,
     const auto &proc{processors_.at(proc_id)};
     if (proc.processor->enabled()) {
       Core::TimeWindow tw{proc.buffer->windows().back()};
-      if (!tw.endTime() ||
-          tw.endTime() <= proc.processor->processed().endTime()) {
+      const auto &tw_fed{proc.data_time_window_fed};
+      if (!tw.endTime() || tw.endTime() <= tw_fed.endTime()) {
         continue;
       }
 
-      if (tw.startTime() < proc.processor->processed().endTime()) {
-        tw.setStartTime(proc.processor->processed().endTime());
+      if (tw.startTime() < tw_fed.endTime()) {
+        tw.setStartTime(tw_fed.endTime());
       }
 
       // skip data with too high latency
@@ -419,7 +420,9 @@ bool Detector::Feed(const TimeWindows &tws) {
     while (start + *proc.chunk_size <= end) {
       const Core::TimeWindow tw{start, start + *proc.chunk_size};
       auto chunk{dynamic_cast<GenericRecord *>(buffered->copy())};
-      waveform::Trim(*chunk, tw);
+      if (!waveform::Trim(*chunk, tw)) {
+        break;
+      }
       start = chunk->endTime() +
               Core::TimeSpan{0.5 / buffered->samplingFrequency()};
       chunks.push_back(chunk);
@@ -442,6 +445,11 @@ bool Detector::Feed(const TimeWindows &tws) {
 
         return false;
       }
+
+      if (!proc.data_time_window_fed) {
+        proc.data_time_window_fed.setStartTime(chunk->startTime());
+      }
+      proc.data_time_window_fed.setEndTime(chunk->endTime());
 
       if (proc.processor->finished()) {
         return false;
@@ -556,9 +564,11 @@ void Detector::ResetTrigger() {
 }
 
 void Detector::ResetProcessors() {
-  std::for_each(
-      std::begin(processors_), std::end(processors_),
-      [](ProcessorStates::value_type &p) { p.second.processor->Reset(); });
+  std::for_each(std::begin(processors_), std::end(processors_),
+                [](ProcessorStates::value_type &p) {
+                  p.second.processor->Reset();
+                  p.second.data_time_window_fed = Core::TimeWindow{};
+                });
 }
 
 void Detector::EmitResult(const Detector::Result &res) {
@@ -567,9 +577,8 @@ void Detector::EmitResult(const Detector::Result &res) {
   }
 }
 
-void Detector::StoreTemplateResult(
-    const detect::WaveformProcessor *proc, const Record *rec,
-    const detect::WaveformProcessor::ResultCPtr &res) {
+void Detector::StoreTemplateResult(const Template *proc, const Record *rec,
+                                   const Template::MatchResultCPtr &res) {
   if (!proc || !rec || !res) {
     return;
   }
@@ -587,13 +596,11 @@ void Detector::StoreTemplateResult(
   }
 
 #ifdef SCDETECT_DEBUG
-  const auto &match_result{
-      boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
-  const auto &tw{match_result->time_window};
+  const auto &tw{res->time_window};
   SCDETECT_LOG_DEBUG_PROCESSOR(
       proc, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f", rec->streamID().c_str(),
       tw.startTime().iso().c_str(), tw.endTime().iso().c_str(),
-      match_result->coefficient, match_result->lag);
+      res->coefficient, res->lag);
 #endif
 
   linker_.Feed(proc, res);

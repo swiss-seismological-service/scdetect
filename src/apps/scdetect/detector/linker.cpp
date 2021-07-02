@@ -60,11 +60,9 @@ size_t Linker::GetAssociatedChannelCount() const {
 
 size_t Linker::GetProcessorCount() const { return processors_.size(); }
 
-void Linker::Register(const detect::WaveformProcessor *proc,
-                      const Arrival &arrival,
-                      const Core::TimeSpan &pick_offset) {
+void Linker::Register(const Template *proc, const Arrival &arrival) {
   if (proc) {
-    processors_.emplace(proc->id(), Processor{arrival, pick_offset});
+    processors_.emplace(proc->id(), Processor{proc, arrival});
     pot_valid_ = false;
   }
 }
@@ -96,8 +94,7 @@ void Linker::Terminate() {
   status_ = Status::kTerminated;
 }
 
-void Linker::Feed(const detect::WaveformProcessor *proc,
-                  const detect::WaveformProcessor::ResultCPtr &res) {
+void Linker::Feed(const Template *proc, const Template::MatchResultCPtr &res) {
   if (!proc || !res) {
     return;
   }
@@ -108,17 +105,21 @@ void Linker::Feed(const detect::WaveformProcessor *proc,
       return;
     }
 
-    const auto &match_result{
-        boost::dynamic_pointer_cast<const Template::MatchResult>(res)};
     auto &linker_proc{it->second};
     // create a new arrival from a *template arrival*
     auto new_arrival{linker_proc.arrival};
-    const auto time{match_result->time_window.startTime() +
-                    Core::TimeSpan{match_result->lag} +
-                    linker_proc.pick_offset};
-    new_arrival.pick.time = time;
+    const auto template_starttime{linker_proc.proc->template_starttime()};
+    if (template_starttime) {
+      // XXX(damb): recompute the pick_offset; the template proc might have
+      // changed the underlying template waveform (due to resampling)
+      const auto pick_offset{linker_proc.arrival.pick.time -
+                             *template_starttime};
+      const auto time{res->time_window.startTime() + Core::TimeSpan{res->lag} +
+                      pick_offset};
+      new_arrival.pick.time = time;
 
-    Process(proc, Result::TemplateResult{new_arrival, match_result});
+      Process(proc, Result::TemplateResult{new_arrival, res});
+    }
   }
 }
 
@@ -126,8 +127,7 @@ void Linker::set_result_callback(const PublishResultCallback &cb) {
   result_callback_ = cb;
 }
 
-void Linker::Process(const detect::WaveformProcessor *proc,
-                     const Result::TemplateResult &res) {
+void Linker::Process(const Template *proc, const Result::TemplateResult &res) {
   if (!processors_.empty()) {
     // update POT
     if (!pot_valid_) {
