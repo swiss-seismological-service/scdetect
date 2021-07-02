@@ -294,7 +294,7 @@ configuration parameters:
   *before* the template pick time, while a positive value means *after* the
   pick time.
 
-**Filtering**:
+**Filtering and resampling**:
 
 - `"initTime"`: The initialization time in seconds for that the stream related
   processor is blind after initialization. Setting this configuration parameter
@@ -308,8 +308,13 @@ configuration parameters:
   applied.
 
 - `"templateFilter"`: A string defining the filter during the template
-  waveform extraction. For further information, please refer to the description
+  waveform generation. For further information, please refer to the description
   of the `"filter"` configuration property.
+
+- `"targetSamplingFrequency"`: Optionally, defines the target sampling
+  frequency. Both the template waveform and the stream to be processed may be
+  required to be resampled to the sampling frequency specified. Note that data
+  is resampled **before** being filtered.
 
 #### Stream configuration defaults
 
@@ -318,6 +323,7 @@ scope of a detector configuration:
 
 - `"filter"`
 - `"initTime"`
+- `"targetSamplingFrequency"`
 - `"templateFilter"`
 - `"templatePhase"`
 - `"templateWaveformStart"`
