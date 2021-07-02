@@ -408,7 +408,7 @@ DetectorBuilder::set_stream(const std::string &stream_id,
 
   auto filter_msg{log_prefix + "Filters configured: filter=\"" + rt_filter_id +
                   "\""};
-  if (rt_filter_id != template_wf_config.filter_string) {
+  if (rt_filter_id != template_wf_filter_id) {
     filter_msg += " (template_filter=\"" + template_wf_filter_id + "\")";
   }
   SCDETECT_LOG_DEBUG_PROCESSOR(template_proc, "%s", filter_msg.c_str());
