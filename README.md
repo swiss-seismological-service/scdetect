@@ -24,6 +24,9 @@ waveform cross-correlation, also called matched filtering or template matching.
 
 The module allows both single-stream and multi-stream earthquake detection.
 
+In case the detection parameters exceed the configured thresholds, `scdetect`
+declares a new origin.
+
 
 ## Overview
 
