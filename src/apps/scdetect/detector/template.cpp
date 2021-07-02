@@ -147,6 +147,7 @@ void Template::SetupStream(StreamState &stream_state, const Record *record) {
                                                  *target_sampling_frequency_))};
     set_operator(resampling_operator.release());
 
+    stream_state.sampling_frequency = *target_sampling_frequency_;
     if (stream_state.filter) {
       stream_state.filter->setSamplingFrequency(*target_sampling_frequency_);
     }
