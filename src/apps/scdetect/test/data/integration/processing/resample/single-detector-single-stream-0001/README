@@ -1,0 +1,27 @@
+Detect and handle changing sampling frequencies (resampled)
+
+Description:
+============
+
+- Configuration:
+
+  + Do not apply filters.
+  + When looking for the event to be detected, both the template waveform and the
+    waveform to be matched are resampled to the configured target frequency.
+
+- Data and streams:
+
+```
+CH.GRIMS..HHZ | 2020-10-25T19:29:59.338393Z - 2020-10-25T19:40:01.008393Z | 100.0 Hz, 60168 samples
+CH.GRIMS..HHZ | 2020-10-25T20:20:00.448394Z - 2020-10-25T20:29:58.798394Z | 20.0 Hz, 11968 samples
+CH.GRIMS..HHZ | 2020-10-25T20:29:59.338393Z - 2020-10-25T20:40:01.008393Z | 100.0 Hz, 60168 samples
+````
+
+  + The data is split into 3 chunks:
+    - The original data used for template waveform generation (rate=100Hz).
+    - A resampled second chunk (generated using a resample:// recordstream
+    (rate=20Hz)); shifted by one hour in time.
+    - A copy of the first chunk of data but shifted by one hour in time.
+
+    The second chunk and the third chunk are *contiguous* and correspond to the
+    waveform data to be matched.
