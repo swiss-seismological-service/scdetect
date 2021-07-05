@@ -192,13 +192,13 @@ struct TempDirFixture {
   TempDirFixture(bool keep_tempdir);
   ~TempDirFixture();
 
-  const std::string path_tempdir_str() const;
+  std::string path_tempdir_str() const;
   const char *path_tempdir_cstr() const;
 
   fs::path path_tempdir;
 
 protected:
-  static const fs::path CreatePathUnique();
+  static fs::path CreatePathUnique();
 
   void CreateTempdir();
 

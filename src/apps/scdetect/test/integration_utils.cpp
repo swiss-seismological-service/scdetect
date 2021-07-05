@@ -448,7 +448,7 @@ TempDirFixture::~TempDirFixture() {
   }
 }
 
-const std::string TempDirFixture::path_tempdir_str() const {
+std::string TempDirFixture::path_tempdir_str() const {
   return path_tempdir.string();
 }
 
@@ -456,7 +456,7 @@ const char *TempDirFixture::path_tempdir_cstr() const {
   return path_tempdir.c_str();
 }
 
-const fs::path TempDirFixture::CreatePathUnique() {
+fs::path TempDirFixture::CreatePathUnique() {
   return fs::temp_directory_path() / TempDirFixture::path_subdir /
          fs::unique_path();
 }
