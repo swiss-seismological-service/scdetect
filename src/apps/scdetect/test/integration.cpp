@@ -207,6 +207,23 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
   BOOST_TEST_MESSAGE("Running integration test with CLI args: "
                      << boost::algorithm::join(flags_str, " "));
   BOOST_TEST_MESSAGE("Path to temporary test data: " << fx.path_tempdir);
+  try {
+    // parse README
+    std::string readme_header;
+    fs::ifstream ifs{CLIParserFixture::path_data / sample.path_sample /
+                     "README"};
+    getline(ifs, readme_header);
+    if (!readme_header.empty()) {
+      BOOST_TEST_MESSAGE("Test purpose: " << readme_header);
+      getline(ifs, readme_header);
+      std::stringstream buffer;
+      if (buffer << ifs.rdbuf()) {
+        BOOST_TEST_MESSAGE("Test description and configuration:\n\n"
+                           << buffer.str());
+      }
+    }
+  } catch (fs::filesystem_error &e) {
+  }
 
   int retval{EXIT_FAILURE};
   { retval = ApplicationWrapper<Application>{flags_str}(); }
