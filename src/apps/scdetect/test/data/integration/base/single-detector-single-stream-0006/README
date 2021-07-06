@@ -1,0 +1,11 @@
+Detect and apply filters
+
+- Configuration:
+
+  + Apply configured filters.
+
+- Data and streams:
+
+````
+CH.GRIMS..HHZ | 2020-10-25T19:29:59.338393Z - 2020-10-25T19:40:01.008393Z | 100.0 Hz, 60168 samples
+````

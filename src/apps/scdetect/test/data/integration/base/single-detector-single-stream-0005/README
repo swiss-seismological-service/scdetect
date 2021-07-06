@@ -1,0 +1,7 @@
+Detect and attach detected arrivals
+
+- Data and streams:
+
+```
+CH.HASLI..BHZ | 2020-10-25T19:29:48.325900Z - 2020-10-25T19:40:07.350900Z | 40.0 Hz, 24762 samples
+``

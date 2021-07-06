@@ -84,83 +84,94 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
 // samples for parameterized testing
 using Samples = std::vector<ds::Sample>;
 Samples dataset{
+    // base: single detector - single stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-without-arrivals"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0000"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-with-arrivals-00"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0001"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-with-arrivals-01"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0002"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-with-arrivals-02"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0003"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-simple-with-templ-arrivals"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0004"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-filtered"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0005"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/"integration-single-stream-time-correction"},
+     /*path_sample=*/"integration/base/single-detector-single-stream-0006"},
+
+    // base: single detector - multi stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/
-     "integration-multi-detector-single-stream-simple"},
+     /*path_sample=*/"integration/base/single-detector-multi-stream-0000"},
+
+    // base: multi detector - single stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/
-     "integration-multi-stream-simple"},
+     /*path_sample=*/"integration/base/multi-detector-single-stream-0000"},
+
+    // detector: single detector - multi stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/
-     "integration-multi-stream-templ-wf-diff-00"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*path_sample=*/
-     "integration-multi-stream-templ-wf-diff-01"},
+     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
+     /*path_sample=*/"integration/detector/single-detector-multi-stream-0000"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
      /*path_sample=*/
-     "integration-multi-stream-arrival-offset-00"},
+     "integration/detector/single-detector-multi-stream-0001"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
-     /*path_sample=*/
-     "integration-multi-stream-arrival-offset-01"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
-     /*path_sample=*/
-     "integration-multi-stream-min-arrivals"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
-     /*path_sample=*/
-     "integration-single-stream-changing-fsamp-00"},
+     /*path_sample=*/"integration/detector/single-detector-multi-stream-0002"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*path_sample=*/
-     "integration-single-stream-resample-target-freq"},
+     "integration/detector/single-detector-multi-stream-0003"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
+     /*path_sample=*/"integration/detector/single-detector-multi-stream-0004"},
+
+    // processing: resample
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
+     /*path_sample=*/
+     "integration/processing/resample/single-detector-single-stream-0000"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*path_sample=*/
-     "integration-single-stream-changing-fsamp-01"},
+     "integration/processing/resample/single-detector-single-stream-0001"},
+
+    // processing: changing sampling frequency
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*path_sample=*/
-     "integration-single-stream-changing-fsamp-02"},
+     "integration/processing/changing-fsamp/"
+     "single-detector-single-stream-0000"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*path_sample=*/
-     "integration-single-stream-changing-fsamp-03"},
+     "integration/processing/changing-fsamp/"
+     "single-detector-single-stream-0001"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*path_sample=*/
-     "integration-single-stream-changing-fsamp-04"},
+     "integration/processing/changing-fsamp/"
+     "single-detector-single-stream-0002"},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*path_sample=*/
-     "integration-single-stream-changing-fsamp-05"},
+     "integration/processing/changing-fsamp/"
+     "single-detector-single-stream-0003"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
+     /*path_sample=*/
+     "integration/processing/changing-fsamp/"
+     "single-detector-single-stream-0004"},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
@@ -196,6 +207,23 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
   BOOST_TEST_MESSAGE("Running integration test with CLI args: "
                      << boost::algorithm::join(flags_str, " "));
   BOOST_TEST_MESSAGE("Path to temporary test data: " << fx.path_tempdir);
+  try {
+    // parse README
+    std::string readme_header;
+    fs::ifstream ifs{CLIParserFixture::path_data / sample.path_sample /
+                     "README"};
+    getline(ifs, readme_header);
+    if (!readme_header.empty()) {
+      BOOST_TEST_MESSAGE("Test purpose: " << readme_header);
+      getline(ifs, readme_header);
+      std::stringstream buffer;
+      if (buffer << ifs.rdbuf()) {
+        BOOST_TEST_MESSAGE("Test description and configuration:\n\n"
+                           << buffer.str());
+      }
+    }
+  } catch (fs::filesystem_error &e) {
+  }
 
   int retval{EXIT_FAILURE};
   { retval = ApplicationWrapper<Application>{flags_str}(); }

@@ -1,0 +1,15 @@
+Detect with arrival offset
+
+- Configuration:
+
+  + The `arrivalOffsetThreshold` is set to a value less than the data offset of
+  `CH.HASLI..HHZ`. Therefore, the detector is expected not to emit a detection.
+
+- Data and streams:
+
+```
+CH.HASLI..HHZ | 2020-10-25T19:29:56.846667Z - 2020-10-25T19:40:02.838334Z | 120.0 Hz, 72720 samples
+CH.HASLI..HHZ | 2020-10-25T20:29:57.846667Z - 2020-10-25T20:40:03.838334Z | 120.0 Hz, 72720 samples
+CH.GRIMS..HHZ | 2020-10-25T19:29:59.338393Z - 2020-10-25T19:40:01.008393Z | 100.0 Hz, 60168 samples
+CH.GRIMS..HHZ | 2020-10-25T20:29:59.338393Z - 2020-10-25T20:40:01.008393Z | 100.0 Hz, 60168 samples
+```
