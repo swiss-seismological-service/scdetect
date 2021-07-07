@@ -62,24 +62,24 @@ void createAll(IO::DatabaseInterface *dbDriver) {
   // read SQL DDL file
   Environment *env{Environment::Instance()};
   pathDDL = env->shareDir() / pathDDL;
-
-  std::ifstream ifs;
-  ifs.exceptions(std::ifstream::badbit); // No need to check failbit
-  try {
-    ifs.open(pathDDL.string());
-    std::string line;
-    while (std::getline(ifs, line)) {
-      boost::algorithm::trim(line);
-      if (!line.empty()) {
-        processDDL(line);
-      }
-    }
-  } catch (const std::ifstream::failure &e) {
-    throw Core::GeneralException{std::string{"Failed to open/read DDL file: "} +
-                                 e.what()};
+  std::ifstream ifs{pathDDL.string()};
+  if (!ifs.is_open()) {
+    throw Core::GeneralException{std::string{"error while opening DDL file: "} +
+                                 pathDDL.string()};
   }
 
-  ifs.close();
+  std::string line;
+  while (std::getline(ifs, line)) {
+    boost::algorithm::trim(line);
+    if (!line.empty()) {
+      processDDL(line);
+    }
+  }
+
+  if (ifs.bad()) {
+    throw Core::GeneralException{std::string{"error while reading DDL file: "} +
+                                 pathDDL.string()};
+  }
 }
 
 } // namespace DataModel
