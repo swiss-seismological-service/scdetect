@@ -12,8 +12,7 @@ namespace detect {
 namespace waveform_operator {
 
 class ResamplingOperator : public WaveformOperator {
-
-public:
+ public:
   using RecordResampler = RecordResamplerStore::RecordResampler;
 
   ResamplingOperator(std::unique_ptr<RecordResampler> record_resampler);
@@ -22,12 +21,12 @@ public:
 
   void Reset() override;
 
-private:
+ private:
   std::unique_ptr<RecordResampler> record_resampler_;
 };
 
-} // namespace waveform_operator
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace waveform_operator
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_OPERATOR_RESAMPLE_H_
+#endif  // SCDETECT_APPS_SCDETECT_OPERATOR_RESAMPLE_H_

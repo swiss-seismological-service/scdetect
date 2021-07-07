@@ -1,5 +1,7 @@
 #include "detector.h"
 
+#include <seiscomp/core/strings.h>
+
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -8,8 +10,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include <seiscomp/core/strings.h>
 
 #include "../log.h"
 #include "../utils.h"
@@ -22,7 +22,6 @@ namespace detector {
 Detector::Detector(const detect::Processor *detector,
                    const DataModel::OriginCPtr &origin)
     : Processor{detector->id()}, origin_{origin} {
-
   linker_.set_result_callback(
       [this](const Linker::Result &res) { return StoreLinkerResult(res); });
 }
@@ -104,7 +103,6 @@ void Detector::Register(std::unique_ptr<Template> &&proc,
                         const std::shared_ptr<const RecordSequence> &buf,
                         const std::string &stream_id, const Arrival &arrival,
                         const Detector::SensorLocation &loc) {
-
   proc->set_result_callback(
       [this](const detect::WaveformProcessor *proc, const Record *rec,
              const detect::WaveformProcessor::ResultCPtr &res) {
@@ -170,7 +168,6 @@ void Detector::Process(const std::string &stream_id_hint) {
   }
 
   if (!processors_.empty()) {
-
     TimeWindows tws;
     if (!PrepareProcessing(tws, stream_id_hint)) {
       // nothing to do
@@ -464,8 +461,9 @@ void Detector::PrepareResult(const Linker::Result &linker_res,
                              Detector::Result &res) const {
   const auto &ref_result{linker_res.results.at(linker_res.ref_proc_id)};
   if (!ref_result.match_result) {
-    throw ProcessingError{"Failed to prepare result. Reason: missing reference "
-                          "processor match result"};
+    throw ProcessingError{
+        "Failed to prepare result. Reason: missing reference "
+        "processor match result"};
   }
 
   const auto ref_match_result{ref_result.match_result};
@@ -587,10 +585,10 @@ void Detector::StoreTemplateResult(const Template *proc, const Record *rec,
   if (p.processor->finished()) {
     const auto &status{p.processor->status()};
     const auto &status_value{p.processor->status_value()};
-    auto msg{Core::stringify("Failed to match template (proc_id=%s). Reason: "
-                             "status=%d, status_value=%f",
-                             p.processor->id().c_str(),
-                             utils::as_integer(status), status_value)};
+    auto msg{Core::stringify(
+        "Failed to match template (proc_id=%s). Reason: "
+        "status=%d, status_value=%f",
+        p.processor->id().c_str(), utils::as_integer(status), status_value)};
 
     throw TemplateMatchingError{msg};
   }
@@ -610,6 +608,6 @@ void Detector::StoreLinkerResult(const Linker::Result &res) {
   result_queue_.emplace_back(res);
 }
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp

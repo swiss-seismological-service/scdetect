@@ -1,18 +1,17 @@
 #include "integration_utils.h"
 
-#include <algorithm>
-#include <ostream>
-#include <sstream>
-#include <vector>
+#include <seiscomp/core/exceptions.h>
 
+#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
-
-#include <seiscomp/core/exceptions.h>
+#include <ostream>
+#include <sstream>
+#include <vector>
 
 #include "../utils.h"
 
@@ -43,7 +42,6 @@ bool EqualOptional(const T &lhs, const T &rhs, TFunc f) {
 
 template <typename TPtr, typename TFunc, typename TPred>
 std::vector<TPtr> SortByPredicate(const TFunc &f, size_t n, const TPred &pred) {
-
   std::vector<TPtr> ret;
   for (size_t i = 0; i < n; ++i) {
     ret.push_back(f(i));
@@ -61,7 +59,7 @@ std::vector<TPtr> SortByTime(const TFunc &f, size_t n) {
   });
 }
 
-} // namespace
+}  // namespace
 
 namespace cli {
 
@@ -157,12 +155,11 @@ FlagTemplatesJSON::FlagTemplatesJSON(const fs::path &fpath)
     : FlagTemplatesJSON{fpath.string()} {}
 const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 
-} // namespace cli
+}  // namespace cli
 
 /* ------------------------------------------------------------------------- */
 void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
                         const DataModel::EventParametersCPtr &rhs) {
-
   BOOST_TEST_CHECK(lhs->pickCount() == rhs->pickCount());
   BOOST_TEST_CHECK(lhs->originCount() == rhs->originCount());
 
@@ -322,7 +319,6 @@ void OriginCmp(const DataModel::OriginCPtr &lhs,
 
 void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
                       const DataModel::OriginQualityCPtr &rhs) {
-
   BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
     return q->associatedPhaseCount();
   }));
@@ -517,6 +513,6 @@ void CLIParserFixture::setup() {
 
 void CLIParserFixture::teardown() {}
 
-} // namespace test
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp

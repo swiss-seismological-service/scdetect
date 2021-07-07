@@ -1,16 +1,5 @@
 #include "app.h"
 
-#include <algorithm>
-#include <ios>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
-#include <boost/algorithm/string/join.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/arrival.h>
@@ -24,6 +13,16 @@
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
 #include <seiscomp/utils/files.h>
+
+#include <algorithm>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <ios>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "builder.h"
 #include "config.h"
@@ -47,11 +46,10 @@ struct ArrivalPick {
   DataModel::PickPtr pick;
 };
 
-} // namespace
+}  // namespace
 
 Application::Application(int argc, char **argv)
     : StreamApplication(argc, argv) {
-
   setLoadStationsEnabled(true);
   setLoadInventoryEnabled(true);
   setLoadConfigModuleEnabled(true);
@@ -124,8 +122,7 @@ void Application::createCommandLineDescription() {
 }
 
 bool Application::validateParameters() {
-  if (!StreamApplication::validateParameters())
-    return false;
+  if (!StreamApplication::validateParameters()) return false;
 
   config_.Init(commandline());
 
@@ -160,7 +157,6 @@ bool Application::validateParameters() {
   auto ValidateAndStoreTime = [](const std::string &time_str,
                                  Core::Time &result) {
     if (!time_str.empty() && !result.fromString(time_str.c_str(), "%FT%T")) {
-
       SCDETECT_LOG_ERROR("Invalid time: %s", time_str.c_str());
       return false;
     }
@@ -192,24 +188,27 @@ bool Application::validateParameters() {
   }
 
   if (!utils::IsGeZero(config_.stream_config.init_time)) {
-    SCDETECT_LOG_ERROR("Invalid configuration: 'initTime': %f. Must be "
-                       "greater equal 0.",
-                       config_.stream_config.init_time);
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'initTime': %f. Must be "
+        "greater equal 0.",
+        config_.stream_config.init_time);
     return false;
   }
 
   if (!config::ValidateArrivalOffsetThreshold(
           config_.detector_config.arrival_offset_threshold)) {
-    SCDETECT_LOG_ERROR("Invalid configuration: 'arrivalOffsetThreshold': %f. "
-                       "Must be < 0 or >= 2.0e-6",
-                       config_.detector_config.arrival_offset_threshold);
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'arrivalOffsetThreshold': %f. "
+        "Must be < 0 or >= 2.0e-6",
+        config_.detector_config.arrival_offset_threshold);
     return false;
   }
 
   if (!config::ValidateMinArrivals(config_.detector_config.min_arrivals)) {
-    SCDETECT_LOG_ERROR("Invalid configuration: 'minimumArrivals': %d. "
-                       "Must be < 0 or >= 1",
-                       config_.detector_config.min_arrivals);
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'minimumArrivals': %d. "
+        "Must be < 0 or >= 1",
+        config_.detector_config.min_arrivals);
     return false;
   }
 
@@ -226,9 +225,7 @@ bool Application::validateParameters() {
 }
 
 bool Application::initConfiguration() {
-
-  if (!StreamApplication::initConfiguration())
-    return false;
+  if (!StreamApplication::initConfiguration()) return false;
 
   config_.Init(this);
 
@@ -236,9 +233,7 @@ bool Application::initConfiguration() {
 }
 
 bool Application::init() {
-
-  if (!StreamApplication::init())
-    return false;
+  if (!StreamApplication::init()) return false;
 
   if (config_.playback_config.enabled) {
     SCDETECT_LOG_INFO("Playback mode enabled");
@@ -264,8 +259,7 @@ bool Application::init() {
     return false;
   }
 
-  if (!InitDetectors(waveform_handler))
-    return false;
+  if (!InitDetectors(waveform_handler)) return false;
 
   // free memory after initialization
   EventStore::Instance().Reset();
@@ -339,12 +333,10 @@ void Application::done() {
 }
 
 void Application::handleRecord(Record *rec) {
-  if (!rec->data())
-    return;
+  if (!rec->data()) return;
 
   auto range{detectors_.equal_range(std::string{rec->streamID()})};
   for (auto it = range.first; it != range.second; ++it) {
-
     auto &detector_ptr{it->second};
     if (detector_ptr->enabled()) {
       if (!detector_ptr->Feed(rec)) {
@@ -356,11 +348,12 @@ void Application::handleRecord(Record *rec) {
       }
 
       if (detector_ptr->finished()) {
-        SCDETECT_LOG_WARNING("%s: Detector (id=%s) finished (status=%d, "
-                             "status_value=%f). Resetting.",
-                             it->first.c_str(), detector_ptr->id().c_str(),
-                             utils::as_integer(detector_ptr->status()),
-                             detector_ptr->status_value());
+        SCDETECT_LOG_WARNING(
+            "%s: Detector (id=%s) finished (status=%d, "
+            "status_value=%f). Resetting.",
+            it->first.c_str(), detector_ptr->id().c_str(),
+            utils::as_integer(detector_ptr->status()),
+            detector_ptr->status_value());
         detector_ptr->Reset();
         continue;
       }
@@ -375,7 +368,6 @@ void Application::handleRecord(Record *rec) {
 void Application::EmitDetection(const WaveformProcessor *processor,
                                 const Record *record,
                                 const WaveformProcessor::ResultCPtr &result) {
-
   const auto detection{
       boost::dynamic_pointer_cast<const Detector::Detection>(result)};
 
@@ -608,7 +600,6 @@ bool Application::LoadEvents(const std::string &event_db,
 }
 
 bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
-
   config_.path_filesystem_cache =
       boost::filesystem::path(config_.path_filesystem_cache).string();
   if (!Util::pathExists(config_.path_filesystem_cache) &&
@@ -637,9 +628,10 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
     bool detector_exists{it != processor_ids.end()};
     if (detector_exists) {
       if (it->second.complete) {
-        SCDETECT_LOG_WARNING("Processor id is be used by multiple "
-                             "processors: detector_id=%s",
-                             detector_id.c_str());
+        SCDETECT_LOG_WARNING(
+            "Processor id is be used by multiple "
+            "processors: detector_id=%s",
+            detector_id.c_str());
         return false;
       } else {
         bool id_exists{it->second.ids.find(template_id) !=
@@ -868,5 +860,5 @@ void Application::Config::Init(const System::CommandLine &commandline) {
   no_publish = commandline.hasOption("no-publish");
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

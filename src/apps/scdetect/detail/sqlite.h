@@ -23,9 +23,8 @@
 #ifndef _SCDETECT_APPS_SCDETECT_DETAIL_SQLITE_H_
 #define _SCDETECT_APPS_SCDETECT_DETAIL_SQLITE_H_
 
-#include <sqlite3.h>
-
 #include <seiscomp/io/database.h>
+#include <sqlite3.h>
 
 namespace Seiscomp {
 namespace detect {
@@ -36,14 +35,14 @@ class SQLiteDatabase : public Seiscomp::IO::DatabaseInterface {
   // ------------------------------------------------------------------
   //  Xstruction
   // ------------------------------------------------------------------
-public:
+ public:
   SQLiteDatabase();
   ~SQLiteDatabase();
 
   // ------------------------------------------------------------------
   //  Public interface
   // ------------------------------------------------------------------
-public:
+ public:
   bool connect(const char *con) override;
   void disconnect() override;
 
@@ -72,20 +71,20 @@ public:
   // ------------------------------------------------------------------
   //  Protected interface
   // ------------------------------------------------------------------
-protected:
+ protected:
   bool open();
 
   // ------------------------------------------------------------------
   //  Implementation
   // ------------------------------------------------------------------
-private:
+ private:
   sqlite3 *_handle;
   sqlite3_stmt *_stmt;
   int _columnCount;
 };
 
-} // namespace detail
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detail
+}  // namespace detect
+}  // namespace Seiscomp
 
 #endif

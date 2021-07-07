@@ -17,7 +17,7 @@ hash<Seiscomp::detect::record_resampler_store_detail::CacheKey>::operator()(
   return ret;
 }
 
-} // namespace std
+}  // namespace std
 
 namespace Seiscomp {
 namespace detect {
@@ -33,7 +33,7 @@ bool operator!=(const CacheKey &lhs, const CacheKey &rhs) {
   return !(lhs == rhs);
 }
 
-} // namespace record_resampler_store_detail
+}  // namespace record_resampler_store_detail
 
 RecordResamplerStore &RecordResamplerStore::Instance() {
   // guaranteed to be destroyed; instantiated on first use
@@ -65,5 +65,5 @@ RecordResamplerStore::Get(double current_frequency, double target_frequency) {
           cache_.at(key)->clone()));
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

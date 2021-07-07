@@ -24,6 +24,6 @@ WaveformProcessor::Status ResamplingOperator::Feed(const Record *record) {
 
 void ResamplingOperator::Reset() { record_resampler_->reset(); }
 
-} // namespace waveform_operator
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace waveform_operator
+}  // namespace detect
+}  // namespace Seiscomp

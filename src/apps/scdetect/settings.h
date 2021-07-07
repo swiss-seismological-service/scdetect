@@ -27,8 +27,8 @@ constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};
 constexpr double kTemplateWaveformResampleMargin{2};
 
-} // namespace settings
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace settings
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_SETTINGS_H_
+#endif  // SCDETECT_APPS_SCDETECT_SETTINGS_H_

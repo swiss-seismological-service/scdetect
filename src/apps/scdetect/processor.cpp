@@ -9,5 +9,5 @@ Processor::~Processor() {}
 
 const std::string &Processor::id() const { return id_; }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

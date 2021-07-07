@@ -1,7 +1,5 @@
 #include "eventstore.h"
 
-#include <vector>
-
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/databasereader.h>
 #include <seiscomp/datamodel/event.h>
@@ -9,6 +7,8 @@
 #include <seiscomp/datamodel/publicobject.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/database.h>
+
+#include <vector>
 
 #include "datamodel/ddl.h"
 #include "log.h"
@@ -37,8 +37,7 @@ boost::optional<size_t> PublicObjectBuffer::buffer_size() const {
 bool PublicObjectBuffer::feed(DataModel::PublicObject *po) {
   push(po);
   if (buffer_size_) {
-    while (size() > buffer_size_)
-      pop();
+    while (size() > buffer_size_) pop();
   }
   return true;
 }
@@ -67,7 +66,7 @@ DataModel::PublicObject *PublicObjectBuffer::find(const Core::RTTI &classType,
   return PublicObjectCache::find(classType, publicID);
 }
 
-} // namespace detail
+}  // namespace detail
 
 const int EventStore::buffer_size_{25000};
 
@@ -127,8 +126,8 @@ DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
   return nullptr;
 }
 
-DataModel::EventParametersPtr
-EventStore::LoadXMLArchive(const std::string &path) {
+DataModel::EventParametersPtr EventStore::LoadXMLArchive(
+    const std::string &path) {
   DataModel::EventParametersPtr ep;
   if (!path.empty()) {
     IO::XMLArchive ar;
@@ -141,8 +140,8 @@ EventStore::LoadXMLArchive(const std::string &path) {
   return ep;
 }
 
-IO::DatabaseInterfacePtr
-EventStore::CreateInMemoryDB(DataModel::EventParameters *ep) {
+IO::DatabaseInterfacePtr EventStore::CreateInMemoryDB(
+    DataModel::EventParameters *ep) {
   IO::DatabaseInterfacePtr db_engine_write{
       IO::DatabaseInterface::Open("sqlite3_://:memory:")};
   if (!db_engine_write) {
@@ -160,5 +159,5 @@ EventStore::CreateInMemoryDB(DataModel::EventParameters *ep) {
   return db_engine_read;
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

@@ -19,5 +19,5 @@ bool WaveformOperator::Store(const Record *record) {
   return false;
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

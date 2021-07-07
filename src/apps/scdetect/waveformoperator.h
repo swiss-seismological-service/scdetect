@@ -1,9 +1,9 @@
 #ifndef SCDETECT_APPS_SCDETECT_WAVEFORMOPERATOR_H_
 #define SCDETECT_APPS_SCDETECT_WAVEFORMOPERATOR_H_
 
-#include <functional>
-
 #include <seiscomp/core/record.h>
+
+#include <functional>
 
 #include "waveformprocessor.h"
 
@@ -11,7 +11,7 @@ namespace Seiscomp {
 namespace detect {
 
 class WaveformOperator {
-public:
+ public:
   using StoreCallback = std::function<bool(const Record *record)>;
 
   WaveformOperator();
@@ -26,14 +26,14 @@ public:
   // Resets the `WaveformOperator`
   virtual void Reset() = 0;
 
-protected:
+ protected:
   bool Store(const Record *record);
 
-private:
+ private:
   StoreCallback store_callback_;
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_WAVEFORMOPERATOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_WAVEFORMOPERATOR_H_

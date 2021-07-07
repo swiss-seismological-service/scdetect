@@ -1,12 +1,12 @@
 #ifndef SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
 #define SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
 
-#include <boost/circular_buffer.hpp>
-#include <boost/optional.hpp>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/typedarray.h>
+
+#include <boost/circular_buffer.hpp>
+#include <boost/optional.hpp>
 
 namespace Seiscomp {
 namespace detect {
@@ -14,8 +14,9 @@ namespace filter {
 
 // Cross-correlation filter implementation
 // - the filter delay corresponds to the length of the template waveform
-template <typename TData> class CrossCorrelation {
-public:
+template <typename TData>
+class CrossCorrelation {
+ public:
   // Creates a `CrossCorrelation` filter from `waveform`. The filter is
   // configured to the sampling frequency provided by `waveform`. It is a bug
   // if `waveform` is not a valid pointer.
@@ -51,7 +52,7 @@ public:
   // starttime configured (due to both sampling rate accuracy and rounding)
   boost::optional<const Core::Time> template_endtime() const;
 
-protected:
+ protected:
   CrossCorrelation();
 
   // Compute the actual cross-correlation
@@ -67,7 +68,7 @@ protected:
   // Buffer for data to be cross-correlated
   boost::circular_buffer<TData> buffer_;
 
-private:
+ private:
   // Template waveform samples squared summed
   double sum_squared_template_wf_{0};
   // Template waveform samples summed
@@ -87,7 +88,7 @@ private:
 // template waveform resampling facilities)
 template <typename TData>
 class AdaptiveCrossCorrelation : public CrossCorrelation<TData> {
-public:
+ public:
   // Creates an `CrossCorrelation` filter from the *demeaned* raw `waveform`
   // chunk. The final waveform used for template matching is created on-the-fly
   // based on `filter_id`, `template_starttime`, `template_endtime` and the
@@ -99,12 +100,12 @@ public:
                            const Core::Time &template_endtime,
                            double sampling_frequency = 0);
 
-protected:
+ protected:
   void SetupFilter(double sampling_frequency) override;
   // Setup and prepare the template waveform
   void CreateTemplateWaveform(double target_frequency);
 
-private:
+ private:
   // The original waveform chunk the `template_wf_` is created from
   GenericRecordCPtr wf_;
   // The filter identifier string used for template creation
@@ -116,10 +117,10 @@ private:
   Core::Time template_endtime_;
 };
 
-} // namespace filter
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace filter
+}  // namespace detect
+}  // namespace Seiscomp
 
 #include "crosscorrelation.ipp"
 
-#endif // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
+#endif  // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_

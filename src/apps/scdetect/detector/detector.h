@@ -1,6 +1,13 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_
 
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/record.h>
+#include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/origin.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 #include <cmath>
 #include <deque>
 #include <functional>
@@ -8,14 +15,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
-
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/core/record.h>
-#include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/origin.h>
 
 #include "../exception.h"
 #include "../processor.h"
@@ -30,25 +29,25 @@ namespace detect {
 namespace detector {
 
 class Detector : public detect::Processor {
-public:
+ public:
   Detector(const detect::Processor *detector,
            const DataModel::OriginCPtr &origin);
   virtual ~Detector();
 
   class BaseException : public Exception {
-  public:
+   public:
     using Exception::Exception;
     BaseException();
   };
 
   class ProcessingError : public BaseException {
-  public:
+   public:
     using BaseException::BaseException;
     ProcessingError();
   };
 
   class TemplateMatchingError : public ProcessingError {
-  public:
+   public:
     using ProcessingError::ProcessingError;
     TemplateMatchingError();
   };
@@ -140,7 +139,7 @@ public:
   using PublishResultCallback = std::function<void(const Result &result)>;
   void set_result_callback(const PublishResultCallback &cb);
 
-protected:
+ protected:
   using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
   bool PrepareProcessing(TimeWindows &tws, const std::string &waveform_id_hint);
   // Feed data to template processors
@@ -163,7 +162,7 @@ protected:
   // Callback storing results from the linker
   void StoreLinkerResult(const Linker::Result &res);
 
-private:
+ private:
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
@@ -222,8 +221,8 @@ private:
   DataModel::OriginCPtr origin_;
 };
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_

@@ -35,6 +35,6 @@ bool ValidateFilter(const std::string &filter_string, std::string &err) {
   return true;
 }
 
-} // namespace config
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace config
+}  // namespace detect
+}  // namespace Seiscomp

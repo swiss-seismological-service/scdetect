@@ -28,9 +28,9 @@ bool operator!=(const Arrival &lhs, const Arrival &rhs) {
   return !(lhs == rhs);
 }
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 
@@ -43,4 +43,4 @@ inline std::size_t hash<Seiscomp::detect::detector::Arrival>::operator()(
   return ret;
 }
 
-} // namespace std
+}  // namespace std

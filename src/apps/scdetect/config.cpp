@@ -1,9 +1,8 @@
 #include "config.h"
 
+#include <boost/property_tree/exceptions.hpp>
 #include <utility>
 #include <vector>
-
-#include <boost/property_tree/exceptions.hpp>
 
 #include "exception.h"
 #include "log.h"
@@ -21,7 +20,7 @@ BaseException::BaseException() : Exception("base config exception") {}
 ParserException::ParserException()
     : BaseException{"error while parsing configuration"} {}
 
-} // namespace config
+}  // namespace config
 
 StreamConfig::StreamConfig() {}
 
@@ -29,7 +28,9 @@ StreamConfig::StreamConfig(const std::string &wf_stream_id,
                            const std::string &filter, const double init_time,
                            const TemplateStreamConfig &template_config,
                            const std::string &template_id)
-    : wf_stream_id{wf_stream_id}, init_time{init_time}, filter{filter},
+    : wf_stream_id{wf_stream_id},
+      init_time{init_time},
+      filter{filter},
       template_config{template_config} {}
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
@@ -37,9 +38,8 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
     : template_id{pt.get<std::string>("templateId", utils::CreateUUID())
 
       },
-      wf_stream_id{pt.get<std::string>("waveformId")}, init_time{pt.get<double>(
-                                                           "initTime",
-                                                           defaults.init_time)},
+      wf_stream_id{pt.get<std::string>("waveformId")},
+      init_time{pt.get<double>("initTime", defaults.init_time)},
       filter{pt.get_optional<std::string>("filter")},
       target_sampling_frequency{
           pt.get_optional<double>("targetSamplingFrequency")} {
@@ -204,5 +204,5 @@ TemplateConfig::reference TemplateConfig::at(const std::string &stream_id) {
   return stream_configs_.at(stream_id);
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

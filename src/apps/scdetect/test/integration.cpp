@@ -1,10 +1,7 @@
 #define SEISCOMP_TEST_MODULE test_integration_general
+#include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/unittest/unittests.h>
-
-#include <cstdlib>
-#include <ostream>
-#include <string>
-#include <vector>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -14,13 +11,13 @@
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/tools/fpc_tolerance.hpp>
-
-#include <seiscomp/datamodel/eventparameters.h>
-#include <seiscomp/io/archive/xmlarchive.h>
-
-#include "integration_utils.h"
+#include <cstdlib>
+#include <ostream>
+#include <string>
+#include <vector>
 
 #include "../app.h"
+#include "integration_utils.h"
 
 namespace utf = boost::unit_test;
 namespace utf_data = utf::data;
@@ -79,7 +76,7 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
             << ", expected: " << SamplePath(sample.path_expected);
 }
 
-} // namespace ds
+}  // namespace ds
 
 // samples for parameterized testing
 using Samples = std::vector<ds::Sample>;
@@ -178,7 +175,6 @@ BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
 BOOST_TEST_DECORATOR(*utf::tolerance(test_unit_tolerance))
 BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
-
   TempDirFixture fx{CLIParserFixture::keep_tempdir};
   // prepare empty config file
   fs::path path_config{fx.path_tempdir / "scdetect.cfg"};
@@ -257,6 +253,6 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
   EventParametersCmp(ep_result, ep_expected);
 }
 
-} // namespace test
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp

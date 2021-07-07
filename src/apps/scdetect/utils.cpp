@@ -1,14 +1,13 @@
 #include "utils.h"
 
-#include <sstream>
-#include <vector>
+#include <seiscomp/core/strings.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-
-#include <seiscomp/core/strings.h>
+#include <sstream>
+#include <vector>
 
 #include "exception.h"
 #include "settings.h"
@@ -44,8 +43,10 @@ WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
 }
 
 WaveformStreamID::WaveformStreamID(const DataModel::WaveformStreamID &id)
-    : net_code_{id.networkCode()}, sta_code_{id.stationCode()},
-      loc_code_{id.locationCode()}, cha_code_{id.channelCode()} {
+    : net_code_{id.networkCode()},
+      sta_code_{id.stationCode()},
+      loc_code_{id.locationCode()},
+      cha_code_{id.channelCode()} {
   if (!IsValid()) {
     std::ostringstream oss;
     oss << *this;
@@ -58,7 +59,9 @@ WaveformStreamID::WaveformStreamID(const std::string &net_code,
                                    const std::string &sta_code,
                                    const std::string &loc_code,
                                    const std::string &cha_code)
-    : net_code_{net_code}, sta_code_{sta_code}, loc_code_{loc_code},
+    : net_code_{net_code},
+      sta_code_{sta_code},
+      loc_code_{loc_code},
       cha_code_{cha_code} {}
 
 const std::string &WaveformStreamID::net_code() const { return net_code_; }
@@ -76,6 +79,6 @@ std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
   return os;
 }
 
-} // namespace utils
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace utils
+}  // namespace detect
+}  // namespace Seiscomp

@@ -1,11 +1,11 @@
 #ifndef SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
 #define SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
 
+#include <seiscomp/io/recordfilter/resample.h>
+
 #include <functional>
 #include <memory>
 #include <unordered_map>
-
-#include <seiscomp/io/recordfilter/resample.h>
 
 namespace Seiscomp {
 namespace detect {
@@ -19,9 +19,9 @@ struct CacheKey {
   friend bool operator!=(const CacheKey &lhs, const CacheKey &rhs);
 };
 
-} // namespace record_resampler_store_detail
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace record_resampler_store_detail
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 template <>
@@ -31,7 +31,7 @@ struct hash<Seiscomp::detect::record_resampler_store_detail::CacheKey> {
       const noexcept;
 };
 
-} // namespace std
+}  // namespace std
 
 namespace Seiscomp {
 namespace detect {
@@ -39,7 +39,7 @@ namespace detect {
 // A global store for resamplers
 // - implements the Singleton Design Pattern
 class RecordResamplerStore {
-public:
+ public:
   using RecordResampler = IO::RecordResampler<double>;
   static RecordResamplerStore &Instance();
 
@@ -55,7 +55,7 @@ public:
   std::unique_ptr<RecordResampler> Get(double current_frequency,
                                        double target_frequency);
 
-private:
+ private:
   RecordResamplerStore() {}
 
   struct CacheKey {
@@ -74,7 +74,7 @@ private:
   int lanczos_kernel_width_{3};
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
+#endif  // SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_

@@ -1,17 +1,16 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_
 
-#include <cstdlib>
-#include <ostream>
-#include <string>
-
-#include <boost/optional.hpp>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/stream.h>
+
+#include <boost/optional.hpp>
+#include <cstdlib>
+#include <ostream>
+#include <string>
 
 #include "../builder.h"
 #include "../filter/crosscorrelation.h"
@@ -25,8 +24,7 @@ namespace detector {
 // - implements resampling and filtering
 // - applies the cross-correlation algorithm
 class Template : public WaveformProcessor {
-
-public:
+ public:
   // Creates a `Template` waveform processor. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
   Template(const GenericRecordCPtr &waveform, const std::string filter_id,
@@ -37,7 +35,7 @@ public:
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
     double coefficient{std::nan("")};
-    double lag{}; // seconds
+    double lag{};  // seconds
 
     // Time window for w.r.t. the match result
     Core::TimeWindow time_window;
@@ -58,7 +56,7 @@ public:
   // Returns the template waveform endtime
   boost::optional<const Core::Time> template_endtime() const;
 
-protected:
+ protected:
   WaveformProcessor::StreamState &stream_state(const Record *record) override;
 
   void Process(StreamState &stream_state, const Record *record,
@@ -69,7 +67,7 @@ protected:
 
   void SetupStream(StreamState &stream_state, const Record *record) override;
 
-private:
+ private:
   StreamState stream_state_;
 
   // The optional target sampling frequency (used for on-the-fly resampling)
@@ -78,8 +76,8 @@ private:
   filter::AdaptiveCrossCorrelation<double> cross_correlation_;
 };
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATE_H_

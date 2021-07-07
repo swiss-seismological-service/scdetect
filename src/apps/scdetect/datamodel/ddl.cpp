@@ -1,18 +1,17 @@
 #include "ddl.h"
 
-#include <algorithm>
-#include <fstream>
-#include <iterator>
-#include <string>
-#include <vector>
+#include <seiscomp/core/exceptions.h>
+#include <seiscomp/system/environment.h>
 
+#include <algorithm>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
-
-#include <seiscomp/core/exceptions.h>
-#include <seiscomp/system/environment.h>
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <vector>
 
 namespace Seiscomp {
 namespace DataModel {
@@ -82,5 +81,5 @@ void createAll(IO::DatabaseInterface *dbDriver) {
   }
 }
 
-} // namespace DataModel
-} // namespace Seiscomp
+}  // namespace DataModel
+}  // namespace Seiscomp

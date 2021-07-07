@@ -1,8 +1,8 @@
 #define SEISCOMP_TEST_MODULE test_utils_cma
 
-#include <array>
-
 #include <seiscomp/unittest/unittests.h>
+
+#include <array>
 
 #include "../utils.h"
 
@@ -14,7 +14,6 @@ namespace Seiscomp {
 namespace detect {
 
 BOOST_AUTO_TEST_CASE(cma, *utf::tolerance(test_unit_tolerance)) {
-
   std::array<double, 10> samples0123456789{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   BOOST_TEST_CHECK(
       4.5 == utils::CMA(samples0123456789.data(), samples0123456789.size()));
@@ -30,5 +29,5 @@ BOOST_AUTO_TEST_CASE(cma, *utf::tolerance(test_unit_tolerance)) {
   BOOST_TEST_CHECK(0.0 == utils::CMA(samples000.data(), samples000.size()));
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

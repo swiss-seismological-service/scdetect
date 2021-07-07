@@ -1,15 +1,14 @@
 #ifndef SCDETECT_APPS_SCDETECT_CONFIG_H_
 #define SCDETECT_APPS_SCDETECT_CONFIG_H_
 
-#include <initializer_list>
-#include <string>
-#include <unordered_map>
+#include <seiscomp/core/datetime.h>
 
 #include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-
-#include <seiscomp/core/datetime.h>
+#include <initializer_list>
+#include <string>
+#include <unordered_map>
 
 #include "exception.h"
 #include "utils.h"
@@ -20,21 +19,20 @@ namespace detect {
 namespace config {
 
 class BaseException : public Exception {
-public:
+ public:
   using Exception::Exception;
   BaseException();
 };
 
 class ParserException : public BaseException {
-public:
+ public:
   using BaseException::BaseException;
   ParserException();
 };
 
-} // namespace config
+}  // namespace config
 
 struct StreamConfig {
-
   // Stream related template configuration
   struct TemplateStreamConfig {
     std::string phase{"Pg"};
@@ -130,7 +128,7 @@ class TemplateConfig {
   // Container for StreamConfig
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
 
-public:
+ public:
   using size_type = StreamConfigs::size_type;
   using value_type = StreamConfigs::value_type;
   using reference = StreamConfigs::mapped_type &;
@@ -155,7 +153,7 @@ public:
   const_iterator cbegin() const { return stream_configs_.cbegin(); }
   const_iterator cend() const { return stream_configs_.cend(); }
 
-private:
+ private:
   std::string detector_id_{utils::CreateUUID()};
 
   std::string origin_id_;
@@ -164,7 +162,7 @@ private:
   StreamConfigs stream_configs_;
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_CONFIG_H_
+#endif  // SCDETECT_APPS_SCDETECT_CONFIG_H_

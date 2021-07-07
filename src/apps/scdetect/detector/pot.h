@@ -1,16 +1,15 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_
 
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/datamodel/arrival.h>
+#include <seiscomp/datamodel/pick.h>
+
+#include <boost/optional.hpp>
 #include <iterator>
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include <boost/optional.hpp>
-
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/datamodel/arrival.h>
-#include <seiscomp/datamodel/pick.h>
 
 #include "arrival.h"
 
@@ -37,8 +36,7 @@ struct PickOffsetNode {
 /* ------------------------------------------------------------------------- */
 // The Pick Offset Table (POT)
 class PickOffsetTable {
-
-public:
+ public:
   struct ArrivalPick {
     DataModel::ArrivalCPtr arrival;
     DataModel::PickCPtr pick;
@@ -97,9 +95,10 @@ public:
   // Disables all picks with waveform stream ids from the set
   void Disable(const std::unordered_set<std::string> &stream_ids);
 
-  template <typename TFunc> void Traverse(const TFunc &func);
+  template <typename TFunc>
+  void Traverse(const TFunc &func);
 
-private:
+ private:
   static std::vector<Arrival> Convert(const std::vector<ArrivalPick> &picks);
 
   TableType offset_table_;
@@ -118,8 +117,8 @@ bool ValidatePickOffsets(const POT &lhs, const POT &rhs,
                          std::unordered_set<std::string> &exceeded,
                          double thres = 0);
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_

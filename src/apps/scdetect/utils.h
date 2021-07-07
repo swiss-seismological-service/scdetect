@@ -1,6 +1,9 @@
 #ifndef SCDETECT_APPS_SCDETECT_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_UTILS_H_
 
+#include <seiscomp/core/defs.h>
+#include <seiscomp/datamodel/waveformstreamid.h>
+
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -9,9 +12,6 @@
 #include <utility>
 #include <vector>
 
-#include <seiscomp/core/defs.h>
-#include <seiscomp/datamodel/waveformstreamid.h>
-
 namespace Seiscomp {
 namespace detect {
 namespace utils {
@@ -19,13 +19,15 @@ namespace utils {
 const std::string CreateUUID();
 void ReplaceEscapedXMLFilterIDChars(std::string &filter_id);
 
-template <typename T> bool IsGeZero(const T num) { return 0 <= num; }
+template <typename T>
+bool IsGeZero(const T num) {
+  return 0 <= num;
+}
 
 template <typename TMap>
 auto map_keys(const TMap &map) -> std::vector<typename TMap::key_type> {
   std::vector<typename TMap::key_type> retval;
-  for (const auto &pair : map)
-    retval.push_back(pair.first);
+  for (const auto &pair : map) retval.push_back(pair.first);
 
   return retval;
 }
@@ -33,8 +35,7 @@ auto map_keys(const TMap &map) -> std::vector<typename TMap::key_type> {
 template <typename TMap>
 auto map_values(const TMap &map) -> std::vector<typename TMap::mapped_type> {
   std::vector<typename TMap::mapped_type> retval;
-  for (const auto &pair : map)
-    retval.push_back(pair.second);
+  for (const auto &pair : map) retval.push_back(pair.second);
 
   return retval;
 }
@@ -47,19 +48,18 @@ auto as_integer(const TEnum value) ->
 
 // Provide C++11 make_unique<T>()
 template <typename T, typename... Ts>
-std::unique_ptr<T> make_unique(Ts &&... params) {
+std::unique_ptr<T> make_unique(Ts &&...params) {
   return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
 
 template <typename T, typename... Ts>
-typename Core::SmartPointer<T>::Impl make_smart(Ts &&... params) {
+typename Core::SmartPointer<T>::Impl make_smart(Ts &&...params) {
   return
       typename Core::SmartPointer<T>::Impl(new T(std::forward<Ts>(params)...));
 }
 
 template <typename TMap, typename Predicate>
 std::vector<typename TMap::key_type> filter_keys(const TMap &m, Predicate &p) {
-
   std::vector<typename TMap::key_type> retval;
   for (const auto &pair : m) {
     if (p(pair)) {
@@ -71,7 +71,8 @@ std::vector<typename TMap::key_type> filter_keys(const TMap &m, Predicate &p) {
 
 // Compute the mean value of `samples` using a cumulative moving average
 // algorithm.
-template <typename T> double CMA(T *samples, size_t n) {
+template <typename T>
+double CMA(T *samples, size_t n) {
   double cma{0};
   // cummulative moving average for samples a_0, ..., a_n:
   //
@@ -130,7 +131,7 @@ bool LessThan(TFloatingPoint lhs, TFloatingPoint rhs, TFloatingPoint epsilon) {
 
 /* ------------------------------------------------------------------------- */
 class WaveformStreamID {
-public:
+ public:
   explicit WaveformStreamID(const std::string &net_sta_loc_cha);
   explicit WaveformStreamID(const DataModel::WaveformStreamID &id);
   WaveformStreamID(const std::string &net_code, const std::string &sta_code,
@@ -151,18 +152,18 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
 
-protected:
+ protected:
   static const std::string delimiter_;
 
-private:
+ private:
   std::string net_code_;
   std::string sta_code_;
   std::string loc_code_;
   std::string cha_code_;
 };
 
-} // namespace utils
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace utils
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_UTILS_H_
+#endif  // SCDETECT_APPS_SCDETECT_UTILS_H_

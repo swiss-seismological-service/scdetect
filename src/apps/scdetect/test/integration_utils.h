@@ -1,19 +1,18 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <boost/filesystem.hpp>
-
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/originquality.h>
 #include <seiscomp/datamodel/pick.h>
+
+#include <boost/filesystem.hpp>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace fs = boost::filesystem;
 
@@ -27,73 +26,73 @@ class Flag;
 std::string to_string(const Flag &flag);
 
 class Flag {
-public:
+ public:
   virtual const std::string flag() const = 0;
   friend std::ostream &operator<<(std::ostream &os, const Flag &flag);
 
-protected:
+ protected:
   virtual void to_string(std::ostream &os) const;
 };
 
 class ArgFlag : public Flag {
-public:
+ public:
   ArgFlag(const std::string &arg);
 
-protected:
+ protected:
   void to_string(std::ostream &os) const override;
 
   void set_arg(const std::string &arg);
 
-private:
+ private:
   std::string arg_;
 };
 
 class BooleanFlag : public ArgFlag {
-public:
+ public:
   BooleanFlag();
   void Enable();
   void Disable();
 };
 
 class FlagDebug : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagConsole : public BooleanFlag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagOffline : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagPlayback : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagTemplatesReload : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagAgencyId : public ArgFlag {
-public:
+ public:
   FlagAgencyId(const std::string &id);
   const std::string flag() const override;
 };
 
 class FlagAuthor : public ArgFlag {
-public:
+ public:
   FlagAuthor(const std::string &id);
   const std::string flag() const override;
 };
 
 class FlagPlugins : public ArgFlag {
-public:
+ public:
   FlagPlugins(const std::string &plugin);
   FlagPlugins(const std::vector<std::string> &plugins);
 
@@ -101,66 +100,66 @@ public:
 };
 
 class FlagEp : public ArgFlag {
-public:
+ public:
   explicit FlagEp(const std::string &fpath);
   explicit FlagEp(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagConfigFile : public ArgFlag {
-public:
+ public:
   explicit FlagConfigFile(const std::string &fpath);
   explicit FlagConfigFile(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagDB : public ArgFlag {
-public:
+ public:
   explicit FlagDB(const std::string &uri);
   explicit FlagDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagInventoryDB : public ArgFlag {
-public:
+ public:
   explicit FlagInventoryDB(const std::string &uri);
   explicit FlagInventoryDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagEventDB : public ArgFlag {
-public:
+ public:
   explicit FlagEventDB(const std::string &uri);
   explicit FlagEventDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagRecordURL : public ArgFlag {
-public:
+ public:
   explicit FlagRecordURL(const std::string &url);
   const std::string flag() const override;
 };
 
 class FlagRecordStartTime : public ArgFlag {
-public:
+ public:
   FlagRecordStartTime(const std::string &time_str);
   const std::string flag() const override;
 };
 
 class FlagRecordEndTime : public ArgFlag {
-public:
+ public:
   FlagRecordEndTime(const std::string &time_str);
   const std::string flag() const override;
 };
 
 class FlagTemplatesJSON : public ArgFlag {
-public:
+ public:
   explicit FlagTemplatesJSON(const std::string &fpath);
   explicit FlagTemplatesJSON(const fs::path &fpath);
   const std::string flag() const override;
 };
 
-} // namespace cli
+}  // namespace cli
 
 /* -------------------------------------------------------------------------- */
 // Compare `DataModel::EventParameters element-wise
@@ -197,12 +196,12 @@ struct TempDirFixture {
 
   fs::path path_tempdir;
 
-protected:
+ protected:
   static fs::path CreatePathUnique();
 
   void CreateTempdir();
 
-private:
+ private:
   static const std::string path_subdir;
   // Maximum number of tries in order to create the temporary directory
   static const int max_tries;
@@ -223,21 +222,22 @@ struct CLIParserFixture {
 };
 
 /* -------------------------------------------------------------------------- */
-template <typename TApp> class ApplicationWrapper {
-public:
+template <typename TApp>
+class ApplicationWrapper {
+ public:
   ApplicationWrapper(const std::vector<std::string> &argv);
   ~ApplicationWrapper();
 
   int operator()();
 
-private:
+ private:
   std::vector<char *> argv_;
 };
 
 #include "integration_utils.ipp"
 
-} // namespace test
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
+#endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_

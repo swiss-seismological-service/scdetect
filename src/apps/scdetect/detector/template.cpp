@@ -29,8 +29,7 @@ Template::Template(const GenericRecordCPtr &waveform,
                          template_endtime} {}
 
 void Template::set_filter(Filter *filter, const Core::TimeSpan &init_time) {
-  if (stream_state_.filter)
-    delete stream_state_.filter;
+  if (stream_state_.filter) delete stream_state_.filter;
 
   stream_state_.filter = filter;
   init_time_ =
@@ -79,7 +78,6 @@ WaveformProcessor::StreamState &Template::stream_state(const Record *record) {
 
 void Template::Process(StreamState &stream_state, const Record *record,
                        const DoubleArray &filtered_data) {
-
   const auto n{static_cast<size_t>(filtered_data.size())};
   set_status(Status::kInProgress, 1);
 
@@ -125,7 +123,6 @@ void Template::Process(StreamState &stream_state, const Record *record,
 
 void Template::Fill(StreamState &stream_state, const Record *record,
                     DoubleArrayPtr &data) {
-
   WaveformProcessor::Fill(stream_state, record, data);
   // cross-correlate filtered data
   cross_correlation_.Apply(data->size(), data->typedData());
@@ -137,7 +134,6 @@ void Template::SetupStream(StreamState &stream_state, const Record *record) {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: sampling_frequency=%f",
                                f);
   if (target_sampling_frequency_ && target_sampling_frequency_ != f) {
-
     SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                  "Reinitialize stream: sampling_frequency=%f",
                                  target_sampling_frequency_);
@@ -157,6 +153,6 @@ void Template::SetupStream(StreamState &stream_state, const Record *record) {
       target_sampling_frequency_.value_or(f));
 }
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp

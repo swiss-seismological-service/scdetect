@@ -1,17 +1,16 @@
 #ifndef SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
 
-#include <functional>
-#include <memory>
-
-#include <boost/filesystem.hpp>
-
 #include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/math/filter.h>
+
+#include <boost/filesystem.hpp>
+#include <functional>
+#include <memory>
 
 #include "processor.h"
 
@@ -22,8 +21,7 @@ class WaveformOperator;
 
 // Abstract interface for waveform processors
 class WaveformProcessor : public Processor {
-
-public:
+ public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
   WaveformProcessor(const std::string &id,
@@ -31,7 +29,7 @@ public:
 
   DEFINE_SMARTPOINTER(Result);
   class Result : public Core::BaseObject {
-  public:
+   public:
     virtual ~Result();
     /* virtual void Publish() = 0; */
   };
@@ -155,7 +153,7 @@ public:
   // Returns a debug string for the corresponding processor
   virtual std::string DebugString() const;
 
-protected:
+ protected:
   // Describes the current state of a stream
   struct StreamState {
     ~StreamState();
@@ -222,14 +220,14 @@ protected:
 
   std::unique_ptr<WaveformOperator> waveform_operator_;
 
-private:
+ private:
   Status status_{Status::kWaitingForData};
   double status_value_{0};
 
   boost::filesystem::path debug_info_dir_;
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_

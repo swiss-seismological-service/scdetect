@@ -1,18 +1,18 @@
 #ifndef SCDETECT_APPS_SCDETECT_APP_H_
 #define SCDETECT_APPS_SCDETECT_APP_H_
 
+#include <seiscomp/client/application.h>
+#include <seiscomp/client/streamapplication.h>
+#include <seiscomp/datamodel/databasequery.h>
+#include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/system/commandline.h>
+
 #include <iostream>
 #include <list>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <seiscomp/client/application.h>
-#include <seiscomp/client/streamapplication.h>
-#include <seiscomp/datamodel/databasequery.h>
-#include <seiscomp/datamodel/eventparameters.h>
-#include <seiscomp/system/commandline.h>
 
 #include "config.h"
 #include "detector.h"
@@ -23,25 +23,23 @@ namespace Seiscomp {
 namespace detect {
 
 class Application : public Client::StreamApplication {
-
-public:
+ public:
   Application(int argc, char **argv);
   ~Application() override;
 
   class BaseException : public Exception {
-  public:
+   public:
     using Exception::Exception;
     BaseException();
   };
 
   class ConfigError : public BaseException {
-  public:
+   public:
     using BaseException::BaseException;
     ConfigError();
   };
 
   struct Config {
-
     Config();
 
     void Init(const Client::Application *app);
@@ -98,7 +96,7 @@ public:
 
   const char *version() override;
 
-protected:
+ protected:
   void createCommandLineDescription() override;
   bool validateParameters() override;
   bool initConfiguration() override;
@@ -112,12 +110,12 @@ protected:
   void EmitDetection(const WaveformProcessor *processor, const Record *record,
                      const WaveformProcessor::ResultCPtr &result);
 
-protected:
+ protected:
   // Load events either from `event_db` or `db`
   virtual bool LoadEvents(const std::string &event_db,
                           DataModel::DatabaseQueryPtr db);
 
-private:
+ private:
   bool InitDetectors(WaveformHandlerIfacePtr waveform_handler);
 
   Config config_;
@@ -130,7 +128,7 @@ private:
   DetectorMap detectors_;
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_APP_H_
+#endif  // SCDETECT_APPS_SCDETECT_APP_H_

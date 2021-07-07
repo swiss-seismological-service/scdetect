@@ -1,13 +1,13 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
 
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/timewindow.h>
+
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
-
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/core/timewindow.h>
 
 #include "arrival.h"
 #include "pot.h"
@@ -19,7 +19,7 @@ namespace detector {
 
 // Associates template results
 class Linker {
-public:
+ public:
   Linker(const Core::TimeSpan &on_hold = 0.0,
          double arrival_offset_thres = 2.0e-6);
   virtual ~Linker();
@@ -96,13 +96,13 @@ public:
   // Set the publish callback function
   void set_result_callback(const PublishResultCallback &cb);
 
-protected:
+ protected:
   // Processes the `res`
   void Process(const Template *proc, const Result::TemplateResult &res);
   // Emit a result
   void EmitResult(const Result &res);
 
-private:
+ private:
   void CreatePOT();
 
   Status status_{Status::kWaitingForData};
@@ -159,9 +159,9 @@ private:
   boost::optional<PublishResultCallback> result_callback_;
 };
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 
@@ -172,6 +172,6 @@ struct hash<Seiscomp::detect::detector::Linker::Result::TemplateResult> {
       const noexcept;
 };
 
-} // namespace std
+}  // namespace std
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_

@@ -8,24 +8,23 @@ namespace Seiscomp {
 namespace detect {
 
 class Exception : public std::exception {
-
-public:
+ public:
   Exception();
   Exception(const std::string &msg);
 
   const char *what() const noexcept override;
 
-private:
+ private:
   std::string msg_;
 };
 
 class ValueException : public Exception {
-public:
+ public:
   using Exception::Exception;
   ValueException();
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_EXCEPTION_H_
+#endif  // SCDETECT_APPS_SCDETECT_EXCEPTION_H_

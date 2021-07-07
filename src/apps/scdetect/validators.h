@@ -13,8 +13,8 @@ bool ValidateMinArrivals(int n, int num_stream_configs = 0);
 bool ValidateSamplingFrequency(double sampling_frequency);
 bool ValidateFilter(const std::string &filter_string, std::string &err);
 
-} // namespace config
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace config
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_VALIDATORS_H_
+#endif  // SCDETECT_APPS_SCDETECT_VALIDATORS_H_

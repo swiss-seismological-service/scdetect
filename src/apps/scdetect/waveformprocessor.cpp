@@ -16,14 +16,12 @@ WaveformProcessor::WaveformProcessor(
 WaveformProcessor::Result::~Result() {}
 
 void WaveformProcessor::enable() {
-  if (enabled_)
-    return;
+  if (enabled_) return;
   enabled_ = true;
 }
 
 void WaveformProcessor::disable() {
-  if (!enabled_)
-    return;
+  if (!enabled_) return;
   enabled_ = false;
 }
 
@@ -63,8 +61,7 @@ const boost::filesystem::path &WaveformProcessor::debug_info_dir() const {
 bool WaveformProcessor::debug_mode() const { return !debug_info_dir_.empty(); }
 
 bool WaveformProcessor::Feed(const Record *record) {
-  if (record->sampleCount() == 0)
-    return false;
+  if (record->sampleCount() == 0) return false;
 
   if (!waveform_operator_) {
     return Store(record);
@@ -143,8 +140,7 @@ bool WaveformProcessor::Store(const Record *record) {
     current_stream_state.last_sample = (*data)[data->size() - 1];
 
     Fill(current_stream_state, record, data);
-    if (Status::kInProgress < status())
-      return false;
+    if (Status::kInProgress < status()) return false;
 
     if (!current_stream_state.initialized) {
       if (EnoughDataReceived(current_stream_state)) {
@@ -179,7 +175,6 @@ bool WaveformProcessor::HandleGap(StreamState &stream_state,
 
 void WaveformProcessor::Fill(StreamState &stream_state, const Record *record,
                              DoubleArrayPtr &data) {
-
   const auto n{static_cast<size_t>(data->size())};
   stream_state.received_samples += n;
 
@@ -196,8 +191,7 @@ bool WaveformProcessor::EnoughDataReceived(
 
 void WaveformProcessor::EmitResult(const Record *record,
                                    const ResultCPtr &result) {
-  if (enabled() && result_callback_)
-    result_callback_(this, record, result);
+  if (enabled() && result_callback_) result_callback_(this, record, result);
 }
 
 void WaveformProcessor::SetupStream(StreamState &stream_state,
@@ -230,5 +224,5 @@ void WaveformProcessor::set_debug_info_dir(
   debug_info_dir_ = path;
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

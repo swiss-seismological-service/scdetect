@@ -1,21 +1,20 @@
 #include "detector.h"
 
+#include <seiscomp/client/inventory.h>
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/exceptions.h>
+#include <seiscomp/core/timewindow.h>
+
 #include <algorithm>
+#include <boost/none.hpp>
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/algorithm/copy.hpp>
 #include <cmath>
 #include <memory>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-
-#include <boost/none.hpp>
-#include <boost/range/adaptor/map.hpp>
-#include <boost/range/algorithm/copy.hpp>
-
-#include <seiscomp/client/inventory.h>
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/core/exceptions.h>
-#include <seiscomp/core/timewindow.h>
 
 #include "eventstore.h"
 #include "log.h"
@@ -175,7 +174,6 @@ void Detector::PrepareDetection(DetectionPtr &detection,
 DetectorBuilder::DetectorBuilder(const std::string &id,
                                  const std::string &origin_id)
     : origin_id_{origin_id} {
-
   DataModel::OriginCPtr origin{
       EventStore::Instance().GetWithChildren<DataModel::Origin>(origin_id)};
   if (!origin) {
@@ -232,11 +230,10 @@ DetectorBuilder &DetectorBuilder::set_eventparameters() {
   return *this;
 }
 
-DetectorBuilder &
-DetectorBuilder::set_stream(const std::string &stream_id,
-                            const StreamConfig &stream_config,
-                            WaveformHandlerIfacePtr &waveform_handler,
-                            const boost::filesystem::path &path_debug_info) {
+DetectorBuilder &DetectorBuilder::set_stream(
+    const std::string &stream_id, const StreamConfig &stream_config,
+    WaveformHandlerIfacePtr &waveform_handler,
+    const boost::filesystem::path &path_debug_info) {
   const auto &template_stream_id{stream_config.template_config.wf_stream_id};
   utils::WaveformStreamID template_wf_stream_id{template_stream_id};
 
@@ -330,10 +327,10 @@ DetectorBuilder::set_stream(const std::string &stream_id,
     throw builder::NoStream{msg};
   }
 
-  SCDETECT_LOG_DEBUG("%sLoaded stream from inventory for epoch: start=%s, "
-                     "end=%s",
-                     log_prefix.c_str(), wf_start.iso().c_str(),
-                     wf_end.iso().c_str());
+  SCDETECT_LOG_DEBUG(
+      "%sLoaded stream from inventory for epoch: start=%s, "
+      "end=%s",
+      log_prefix.c_str(), wf_start.iso().c_str(), wf_end.iso().c_str());
 
   SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
                      stream_config.template_id.c_str());
@@ -423,14 +420,13 @@ DetectorBuilder::set_stream(const std::string &stream_id,
   return *this;
 }
 
-DetectorBuilder &
-DetectorBuilder::set_debug_info_dir(const boost::filesystem::path &path) {
+DetectorBuilder &DetectorBuilder::set_debug_info_dir(
+    const boost::filesystem::path &path) {
   product_->set_debug_info_dir(path);
   return *this;
 }
 
 void DetectorBuilder::Finalize() {
-
   // use a POT to determine the max relative pick offset
   detector::PickOffsetTable pot{arrival_picks_};
 
@@ -588,5 +584,5 @@ bool DetectorBuilder::IsValidArrival(const DataModel::ArrivalCPtr arrival,
   return true;
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

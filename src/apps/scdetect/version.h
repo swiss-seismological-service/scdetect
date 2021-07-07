@@ -5,6 +5,6 @@ namespace Seiscomp {
 namespace detect {
 constexpr char kVersion[] = "0.1";
 }
-} // namespace Seiscomp
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_VERSION_H_
+#endif  // SCDETECT_APPS_SCDETECT_VERSION_H_

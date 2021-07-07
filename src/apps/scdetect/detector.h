@@ -1,13 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_H_
 
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/arrival.h>
@@ -18,6 +11,12 @@
 #include <seiscomp/datamodel/sensorlocation.h>
 
 #include <boost/optional.hpp>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "builder.h"
 #include "config.h"
@@ -37,10 +36,9 @@ class DetectorBuilder;
 
 // Detector waveform processor implementation
 class Detector : public WaveformProcessor {
-
   Detector(const std::string &id, const DataModel::OriginCPtr &origin);
 
-public:
+ public:
   DEFINE_SMARTPOINTER(Detection);
   struct Detection : public Result {
     double fit{};
@@ -81,7 +79,7 @@ public:
   void Reset() override;
   void Terminate() override;
 
-protected:
+ protected:
   WaveformProcessor::StreamState &stream_state(const Record *record) override;
 
   void Process(StreamState &stream_state, const Record *record,
@@ -98,7 +96,7 @@ protected:
   // Prepares the detection from `res`
   void PrepareDetection(DetectionPtr &d, const detector::Detector::Result &res);
 
-private:
+ private:
   using WaveformStreamID = std::string;
   using StreamStates =
       std::unordered_map<WaveformStreamID, WaveformProcessor::StreamState>;
@@ -118,7 +116,7 @@ private:
 };
 
 class DetectorBuilder : public Builder<Detector> {
-public:
+ public:
   DetectorBuilder(const std::string &id, const std::string &origin_id);
 
   DetectorBuilder &set_config(const DetectorConfig &config, bool playback);
@@ -126,20 +124,20 @@ public:
   DetectorBuilder &set_eventparameters();
   // Set stream related template configuration where `stream_id` refers to the
   // waveform stream identifier of the stream to be processed.
-  DetectorBuilder &
-  set_stream(const std::string &stream_id, const StreamConfig &stream_config,
-             WaveformHandlerIfacePtr &wf_handler,
-             const boost::filesystem::path &path_debug_info = "");
+  DetectorBuilder &set_stream(
+      const std::string &stream_id, const StreamConfig &stream_config,
+      WaveformHandlerIfacePtr &wf_handler,
+      const boost::filesystem::path &path_debug_info = "");
   // Set the path to the debug info directory
   DetectorBuilder &set_debug_info_dir(const boost::filesystem::path &path);
 
-protected:
+ protected:
   void Finalize() override;
 
   bool IsValidArrival(const DataModel::ArrivalCPtr arrival,
                       const DataModel::PickCPtr pick);
 
-private:
+ private:
   struct TemplateProcessorConfig {
     // Template matching processor
     std::unique_ptr<detector::Template> processor;
@@ -163,7 +161,7 @@ private:
   TemplateProcessorConfigs processor_configs_;
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_H_

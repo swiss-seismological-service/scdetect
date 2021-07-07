@@ -1,9 +1,8 @@
 #include "linker.h"
 
+#include <boost/functional/hash.hpp>
 #include <iterator>
 #include <unordered_set>
-
-#include <boost/functional/hash.hpp>
 
 #include "../utils.h"
 
@@ -140,13 +139,11 @@ void Linker::Process(const Template *proc, const Result::TemplateResult &res) {
     // merge result into existing events
     for (auto event_it = std::begin(queue_); event_it != std::end(queue_);
          ++event_it) {
-
       if (event_it->GetArrivalCount() < GetProcessorCount()) {
         auto &templ_results{event_it->result.results};
         auto it{templ_results.find(proc_id)};
         if (it == templ_results.end() ||
             match_result->coefficient > it->second.match_result->coefficient) {
-
           std::vector<Arrival> arrivals{res.arrival};
           std::unordered_set<std::string> wf_ids;
           for (const auto &templ_res_pair : templ_results) {
@@ -188,7 +185,6 @@ void Linker::Process(const Template *proc, const Result::TemplateResult &res) {
       if (arrival_count == GetProcessorCount() ||
           (now >= it->expired &&
            arrival_count >= min_arrivals_.value_or(GetProcessorCount()))) {
-
         if (!thres_result_ || it->result.fit >= *thres_result_) {
           EmitResult(it->result);
         }
@@ -242,7 +238,6 @@ std::string Linker::Result::DebugString() const {
 void Linker::Event::MergeResult(const std::string &proc_id,
                                 const Result::TemplateResult &res,
                                 const POT &pot) {
-
   auto &templ_results{result.results};
   templ_results.emplace(proc_id, res);
 
@@ -265,9 +260,9 @@ void Linker::Event::MergeResult(const std::string &proc_id,
 
 size_t Linker::Event::GetArrivalCount() const { return result.results.size(); }
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 
@@ -275,7 +270,6 @@ inline std::size_t
 hash<Seiscomp::detect::detector::Linker::Result::TemplateResult>::operator()(
     const Seiscomp::detect::detector::Linker::Result::TemplateResult &tr)
     const noexcept {
-
   std::size_t ret{0};
   boost::hash_combine(
       ret, std::hash<Seiscomp::detect::detector::Arrival>{}(tr.arrival));
@@ -287,4 +281,4 @@ hash<Seiscomp::detect::detector::Linker::Result::TemplateResult>::operator()(
   return ret;
 }
 
-} // namespace std
+}  // namespace std

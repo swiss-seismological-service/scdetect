@@ -7,6 +7,7 @@ std::unique_ptr<TProduct> Builder<TProduct>::Build() {
   return std::move(product_);
 }
 
-template <typename TProduct> void Builder<TProduct>::Finalize() {}
+template <typename TProduct>
+void Builder<TProduct>::Finalize() {}
 
-#endif // SCDETECT_APPS_SCDETECT_BUILDER_IPP_
+#endif  // SCDETECT_APPS_SCDETECT_BUILDER_IPP_

@@ -1,16 +1,14 @@
 #define SEISCOMP_TEST_MODULE test_filter_crosscorrelation
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/genericrecord.h>
 #include <seiscomp/unittest/unittests.h>
-
-#include <string>
-#include <vector>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/test/data/dataset.hpp>
 #include <boost/test/data/test_case.hpp>
-
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/core/genericrecord.h>
+#include <string>
+#include <vector>
 
 #include "../filter/crosscorrelation.h"
 #include "../utils.h"
@@ -73,7 +71,7 @@ R1<T, A2...> Join(R1<R2<T, A2...>, A1...> const &outer) {
   return joined;
 }
 
-} // namespace ds
+}  // namespace ds
 
 using Samples = std::vector<ds::Sample>;
 Samples dataset{
@@ -98,7 +96,6 @@ Samples dataset{
 
 BOOST_TEST_DECORATOR(*utf::tolerance(test_unit_tolerance))
 BOOST_DATA_TEST_CASE(crosscorrelation, utf_data::make(dataset)) {
-
   // create dummy record
   auto template_trace{utils::make_smart<GenericRecord>(
       "NET", "STA", "LOC", "CHA", Core::Time::GMT(), 1.0)};
@@ -118,6 +115,6 @@ BOOST_DATA_TEST_CASE(crosscorrelation, utf_data::make(dataset)) {
   BOOST_TEST(joined == sample.expected, utf_tt::per_element());
 }
 
-} // namespace test
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp

@@ -106,8 +106,8 @@ boost::optional<double> PickOffsetTable::pick_offset() const {
   return boost::none;
 }
 
-PickOffsetTable::const_reference
-PickOffsetTable::GetOffsets(const std::string &stream_id) const {
+PickOffsetTable::const_reference PickOffsetTable::GetOffsets(
+    const std::string &stream_id) const {
   const auto it{
       std::find_if(begin(), end(), [&stream_id](const Offsets &offsets) {
         return offsets.at(0).stream_id == stream_id;
@@ -116,8 +116,8 @@ PickOffsetTable::GetOffsets(const std::string &stream_id) const {
   return at(std::distance(begin(), it));
 }
 
-PickOffsetTable::const_reference
-PickOffsetTable::GetOffsets(size_type n) const {
+PickOffsetTable::const_reference PickOffsetTable::GetOffsets(
+    size_type n) const {
   return at(n);
 }
 
@@ -139,8 +139,7 @@ void PickOffsetTable::Enable() {
 void PickOffsetTable::Enable(const std::string &stream_id) {
   if (!enabled_) {
     auto Enable = [&stream_id](PickOffsetNode &n) {
-      if (stream_id == n.stream_id)
-        n.Enable();
+      if (stream_id == n.stream_id) n.Enable();
     };
 
     Traverse(Enable);
@@ -155,8 +154,7 @@ void PickOffsetTable::Enable(
 
   if (!enabled_) {
     auto Enable = [&stream_ids](PickOffsetNode &n) {
-      if (stream_ids.find(n.stream_id) != stream_ids.end())
-        n.Enable();
+      if (stream_ids.find(n.stream_id) != stream_ids.end()) n.Enable();
     };
     Traverse(Enable);
   }
@@ -169,8 +167,7 @@ void PickOffsetTable::Disable() {
 
 void PickOffsetTable::Disable(const std::string &stream_id) {
   auto Disable = [&stream_id](PickOffsetNode &n) {
-    if (stream_id == n.stream_id)
-      n.Disable();
+    if (stream_id == n.stream_id) n.Disable();
   };
 
   Traverse(Disable);
@@ -184,14 +181,14 @@ void PickOffsetTable::Disable(
   }
 
   auto Disable = [&stream_ids](PickOffsetNode &n) {
-    if (stream_ids.find(n.stream_id) != stream_ids.end())
-      n.Disable();
+    if (stream_ids.find(n.stream_id) != stream_ids.end()) n.Disable();
   };
   Traverse(Disable);
   enabled_ = false;
 }
 
-template <typename TFunc> void PickOffsetTable::Traverse(const TFunc &func) {
+template <typename TFunc>
+void PickOffsetTable::Traverse(const TFunc &func) {
   TraverseDepthFirst(*this, func);
 }
 
@@ -220,7 +217,6 @@ void TraverseDepthFirst(PickOffsetTable &t, const TFunc &func) {
 bool ValidatePickOffsets(const POT &lhs, const POT &rhs,
                          std::unordered_set<std::string> &exceeded,
                          double thres) {
-
   const auto GetStreamsEnabled = [](const POT &pot) {
     std::set<std::string> ret;
     const auto nodes{pot.at(0)};
@@ -279,6 +275,6 @@ bool ValidatePickOffsets(const POT &lhs, const POT &rhs,
   return true;
 }
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp

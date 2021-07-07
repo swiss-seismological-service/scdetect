@@ -11,5 +11,5 @@ const char *Exception::what() const noexcept { return msg_.c_str(); }
 
 ValueException::ValueException() : Exception{"value error."} {}
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

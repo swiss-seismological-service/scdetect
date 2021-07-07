@@ -1,14 +1,13 @@
 #ifndef SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_
 #define SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_
 
+#include <seiscomp/core/strings.h>
+#include <seiscomp/core/timewindow.h>
+
+#include <boost/algorithm/string/join.hpp>
 #include <cfenv>
 #include <cmath>
 #include <string>
-
-#include <boost/algorithm/string/join.hpp>
-
-#include <seiscomp/core/strings.h>
-#include <seiscomp/core/timewindow.h>
 
 #include "../filter.h"
 #include "../log.h"
@@ -19,16 +18,19 @@ namespace Seiscomp {
 namespace detect {
 namespace filter {
 
-template <typename TData> CrossCorrelation<TData>::CrossCorrelation() {}
+template <typename TData>
+CrossCorrelation<TData>::CrossCorrelation() {}
 
 template <typename TData>
 CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &waveform)
-    : initialized_{true}, template_wf_{waveform},
+    : initialized_{true},
+      template_wf_{waveform},
       sampling_frequency_{waveform->samplingFrequency()} {
   SetupFilter(*sampling_frequency_);
 }
 
-template <typename TData> CrossCorrelation<TData>::~CrossCorrelation() {}
+template <typename TData>
+CrossCorrelation<TData>::~CrossCorrelation() {}
 
 template <typename TData>
 void CrossCorrelation<TData>::Apply(size_t n_data, TData *data) {
@@ -45,7 +47,8 @@ void CrossCorrelation<TData>::Apply(TypedArray<TData> &data) {
   Apply(data.size(), data.typedData());
 }
 
-template <typename TData> void CrossCorrelation<TData>::Reset() {
+template <typename TData>
+void CrossCorrelation<TData>::Reset() {
   buffer_.clear();
   sum_squared_data_ = 0;
   sum_data_ = 0;
@@ -91,8 +94,8 @@ double CrossCorrelation<TData>::template_length() const {
 }
 
 template <typename TData>
-boost::optional<const Core::Time>
-CrossCorrelation<TData>::template_starttime() const {
+boost::optional<const Core::Time> CrossCorrelation<TData>::template_starttime()
+    const {
   if (initialized_) {
     return template_wf_->startTime();
   }
@@ -100,8 +103,8 @@ CrossCorrelation<TData>::template_starttime() const {
 }
 
 template <typename TData>
-boost::optional<const Core::Time>
-CrossCorrelation<TData>::template_endtime() const {
+boost::optional<const Core::Time> CrossCorrelation<TData>::template_endtime()
+    const {
   if (initialized_) {
     template_wf_->endTime();
   }
@@ -186,17 +189,13 @@ void CrossCorrelation<TData>::Correlate(size_t n_data, TData *data) {
         (denominator_template_wf_ * denominator_data)};
 
     int fe{fetestexcept(FE_ALL_EXCEPT)};
-    if ((fe & ~FE_INEXACT) != 0) // we don't care about FE_INEXACT
+    if ((fe & ~FE_INEXACT) != 0)  // we don't care about FE_INEXACT
     {
       std::vector<std::string> exceptions;
-      if (fe & FE_DIVBYZERO)
-        exceptions.push_back("FE_DIVBYZERO");
-      if (fe & FE_INVALID)
-        exceptions.push_back("FE_INVALID");
-      if (fe & FE_OVERFLOW)
-        exceptions.push_back("FE_OVERFLOW");
-      if (fe & FE_UNDERFLOW)
-        exceptions.push_back("FE_UNDERFLOW");
+      if (fe & FE_DIVBYZERO) exceptions.push_back("FE_DIVBYZERO");
+      if (fe & FE_INVALID) exceptions.push_back("FE_INVALID");
+      if (fe & FE_OVERFLOW) exceptions.push_back("FE_OVERFLOW");
+      if (fe & FE_UNDERFLOW) exceptions.push_back("FE_UNDERFLOW");
 
       std::string msg{
           "Floating point exception during cross-correlation (sample_idx=" +
@@ -227,9 +226,10 @@ AdaptiveCrossCorrelation<TData>::AdaptiveCrossCorrelation(
     const GenericRecordCPtr &waveform, const std::string filter_id,
     const Core::Time &template_starttime, const Core::Time &template_endtime,
     double sampling_frequency)
-    : wf_{waveform}, filter_id_{filter_id},
-      template_starttime_{template_starttime}, template_endtime_{
-                                                   template_endtime} {
+    : wf_{waveform},
+      filter_id_{filter_id},
+      template_starttime_{template_starttime},
+      template_endtime_{template_endtime} {
   this->set_sampling_frequency(sampling_frequency);
 }
 
@@ -267,9 +267,10 @@ void AdaptiveCrossCorrelation<TData>::CreateTemplateWaveform(
                           "(sampling_frequency=%f): target_frequency=%f",
                           wf_->samplingFrequency(), target_frequency)};
     }
-    SCDETECT_LOG_DEBUG("Resampled template waveform (sampling_frequency=%f): "
-                       "target_frequency=%f",
-                       wf_->samplingFrequency(), target_frequency);
+    SCDETECT_LOG_DEBUG(
+        "Resampled template waveform (sampling_frequency=%f): "
+        "target_frequency=%f",
+        wf_->samplingFrequency(), target_frequency);
   }
   // filter
   if (!filter_id_.empty()) {
@@ -280,9 +281,10 @@ void AdaptiveCrossCorrelation<TData>::CreateTemplateWaveform(
                           filter_id_.c_str(), wf->startTime().iso().c_str(),
                           wf->endTime().iso().c_str())};
     }
-    SCDETECT_LOG_DEBUG("Filtered template waveform (sampling_frequency=%f): "
-                       "filter_id=%s",
-                       wf->samplingFrequency(), filter_id_.c_str());
+    SCDETECT_LOG_DEBUG(
+        "Filtered template waveform (sampling_frequency=%f): "
+        "filter_id=%s",
+        wf->samplingFrequency(), filter_id_.c_str());
   }
   // trim
   Core::TimeWindow tw{template_starttime_, template_endtime_};
@@ -297,8 +299,8 @@ void AdaptiveCrossCorrelation<TData>::CreateTemplateWaveform(
   this->template_wf_ = wf;
 }
 
-} // namespace filter
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace filter
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_
+#endif  // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_

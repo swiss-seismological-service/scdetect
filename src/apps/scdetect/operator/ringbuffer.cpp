@@ -1,10 +1,10 @@
 #include "ringbuffer.h"
 
-#include <exception>
-#include <memory>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/recordsequence.h>
+
+#include <exception>
+#include <memory>
 
 #include "../log.h"
 #include "../utils.h"
@@ -24,7 +24,6 @@ RingBufferOperator::RingBufferOperator(
     WaveformProcessor *waveform_processor, Core::TimeSpan buffer_size,
     const std::vector<WaveformStreamID> &wf_stream_ids)
     : buffer_size_{buffer_size}, waveform_processor_{waveform_processor} {
-
   for (const auto &wf_stream_id : wf_stream_ids) {
     Add(wf_stream_id);
   }
@@ -97,16 +96,14 @@ void RingBufferOperator::Add(WaveformStreamID wf_stream_id,
       StreamConfig{StreamState{}, std::make_shared<RingBuffer>(buffer_size)});
 }
 
-const std::shared_ptr<RingBuffer> &
-RingBufferOperator::Get(WaveformStreamID wf_stream_id) {
+const std::shared_ptr<RingBuffer> &RingBufferOperator::Get(
+    WaveformStreamID wf_stream_id) {
   return stream_configs_.at(wf_stream_id).stream_buffer;
 }
 
 bool RingBufferOperator::Store(RingBufferOperator::StreamState &stream_state,
                                const Record *record) {
-
-  if (!record->data())
-    return false;
+  if (!record->data()) return false;
 
   DoubleArrayPtr data{
       dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
@@ -151,9 +148,7 @@ bool RingBufferOperator::Store(RingBufferOperator::StreamState &stream_state,
 
 bool RingBufferOperator::HandleGap(StreamState &stream_state,
                                    const Record *record, DoubleArrayPtr &data) {
-
-  if (record == stream_state.last_record)
-    return false;
+  if (record == stream_state.last_record) return false;
 
   Core::TimeSpan gap{record->startTime() -
                      stream_state.data_time_window.endTime() -
@@ -179,8 +174,7 @@ bool RingBufferOperator::HandleGap(StreamState &stream_state,
     // handle record from the past
     size_t gap_samples = static_cast<size_t>(
         ceil(-1 * stream_state.sampling_frequency * gap_seconds));
-    if (gap_samples > 1)
-      return false;
+    if (gap_samples > 1) return false;
   }
 
   return true;
@@ -231,7 +225,6 @@ bool RingBufferOperator::FillGap(StreamState &stream_state,
                                  double next_sample, size_t missing_samples) {
   if (duration <= gap_tolerance_) {
     if (gap_interpolation_) {
-
       auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
 
       auto filled{utils::make_unique<GenericRecord>(
@@ -258,6 +251,6 @@ bool RingBufferOperator::FillGap(StreamState &stream_state,
   return false;
 }
 
-} // namespace waveform_operator
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace waveform_operator
+}  // namespace detect
+}  // namespace Seiscomp

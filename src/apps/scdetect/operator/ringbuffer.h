@@ -1,14 +1,14 @@
 #ifndef SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
 #define SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
+
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 #include "../settings.h"
 #include "../waveformoperator.h"
@@ -22,7 +22,7 @@ namespace waveform_operator {
 // streams
 // - implements gap interpolation facilities
 class RingBufferOperator : public WaveformOperator {
-public:
+ public:
   using WaveformStreamID = std::string;
   using RingBuffer = Seiscomp::RingBuffer;
 
@@ -60,7 +60,7 @@ public:
   // Returns a shared reference to the buffer identified by `wf_stream_id`
   const std::shared_ptr<RingBuffer> &Get(WaveformStreamID wf_stream_id);
 
-protected:
+ protected:
   struct StreamState {
     // Value of the last sample
     double last_sample{0};
@@ -82,7 +82,7 @@ protected:
 
   void SetupStream(StreamState &stream_state, const Record *record);
 
-private:
+ private:
   // Fill gaps
   bool FillGap(StreamState &stream_state, const Record *record,
                const Core::TimeSpan &duration, double next_sample,
@@ -111,8 +111,8 @@ private:
   WaveformProcessor *waveform_processor_;
 };
 
-} // namespace waveform_operator
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace waveform_operator
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
+#endif  // SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
