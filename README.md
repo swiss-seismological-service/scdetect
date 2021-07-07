@@ -1,5 +1,7 @@
 # SCDetect - Computationally efficient earthquake detection
 
+[![continuous-integration](https://github.com/damb/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/damb/scdetect/actions/workflows/continuous-integration.yml)
+
 ## Content
 
 - [About](#about)
