@@ -1,0 +1,79 @@
+# This workflow runs
+#   - anytime new commits are added to the master branch
+#   - pull requests with target "master" are supplied.
+#
+# It simply executes unittests.
+
+name: continuous-integration
+
+
+# on: push
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  # The CMake build type (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout SeisComP/seiscomp
+      uses: actions/checkout@v2
+      with:
+        repository: SeisComP/seiscomp
+        path: seiscomp
+    - name: Checkout SeisComP/common
+      uses: actions/checkout@v2
+      with:
+        repository: SeisComP/common
+        path: seiscomp/src/base/common
+    - name: Checkout scdetect
+      uses: actions/checkout@v2
+      with:
+        path: seiscomp/src/extras/scdetect
+
+    - name: Install dependencies
+      run: >
+        sudo apt-get -y install
+        libxml2-dev
+        libboost-filesystem-dev
+        libboost-iostreams-dev
+        libboost-thread-dev
+        libboost-program-options-dev
+        libboost-regex-dev
+        libboost-system-dev
+        libboost-test-dev
+        libssl-dev
+        libsqlite3-dev
+
+    - name: Configure CMake (generate project build system)
+      run: >
+        cmake
+        -S ${{github.workspace}}/seiscomp
+        -B ${{github.workspace}}/seiscomp/build
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DCMAKE_INSTALL_PREFIX=$HOME/seiscomp
+        -DSC_GLOBAL_PYTHON_WRAPPER=OFF
+        -DSC_GLOBAL_PYTHON_WRAPPER_NUMPY=OFF
+        -DSC_GLOBAL_GUI=OFF
+        -DSC_ENABLE_CONTRIB=ON
+        -DSC_TRUNK_DB_MYSQL=OFF
+        -DSC_TRUNK_DB_POSTGRESQL=OFF
+        -DSC_TRUNK_DB_SQLITE3=ON
+
+    - name: Build and install project
+      run: >
+        cmake
+        --build ${{github.workspace}}/seiscomp/build
+        --config ${{env.BUILD_TYPE}}
+        --parallel 14
+        --target install
+
+    - name: Run tests
+      working-directory: ${{github.workspace}}/seiscomp/build
+      run: ctest -C ${{env.BUILD_TYPE}} -V -R 'test_scdetect_.*'
