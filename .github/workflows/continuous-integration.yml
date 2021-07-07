@@ -19,7 +19,19 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
+  clang-format:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout scdetect
+      uses: actions/checkout@v2
+    - name: Run clang-format
+      run: >
+        find ${{github.workspace}}
+        -type f \( -name '*.cpp' -o -name '*.ipp' -o -name '*.h' \) |
+        xargs clang-format --dry-run --Werror
+
   build:
+    needs: clang-format
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout SeisComP/seiscomp
