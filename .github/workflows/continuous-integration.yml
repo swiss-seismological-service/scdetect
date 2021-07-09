@@ -2,7 +2,7 @@
 #   - anytime new commits are added to the master branch
 #   - pull requests with target "master" are supplied.
 #
-# It simply executes unittests.
+# It runs code linting and executes unittests.
 
 name: continuous-integration
 
@@ -62,12 +62,27 @@ jobs:
         libboost-test-dev
         libssl-dev
         libsqlite3-dev
+        ccache
+
+    - name: Prepare ccache timestamp
+      id: get-ccache-timestamp
+      run: |
+        echo "::set-output name=timestamp::$(/bin/date -Iseconds -u)"
+      shell: bash
+
+    - name: Cache ccache files
+      uses: actions/cache@v2
+      with:
+        path: ${{github.workspace}}/.ccache
+        key: ${{runner.os}}-ccache-${{steps.get-ccache-timestamp.outputs.timestamp}}
+        restore-keys: |
+          ${{runner.os}}-ccache-
 
     - name: Configure CMake (generate project build system)
       run: >
         cmake
         -S ${{github.workspace}}/seiscomp
-        -B ${{github.workspace}}/seiscomp/build
+        -B build
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DCMAKE_INSTALL_PREFIX=$HOME/seiscomp
         -DSC_GLOBAL_PYTHON_WRAPPER=OFF
@@ -77,15 +92,25 @@ jobs:
         -DSC_TRUNK_DB_MYSQL=OFF
         -DSC_TRUNK_DB_POSTGRESQL=OFF
         -DSC_TRUNK_DB_SQLITE3=ON
+        -DCMAKE_C_COMPILER_LAUNCHER=ccache
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
     - name: Build and install project
       run: >
+        export
+        CCACHE_BASEDIR="${{github.workspace}}"
+        CCACHE_DIR="${{github.workspace}}/.ccache"
+        CCACHE_COMPRESS="true"
+        CCACHE_COMPRESSLEVEL=6
+        CCACHE_MAXSIZE=1G &&
+        ccache -pz &&
         cmake
-        --build ${{github.workspace}}/seiscomp/build
+        --build build
         --config ${{env.BUILD_TYPE}}
         --parallel 14
-        --target install
+        --target install &&
+        ccache -ps
 
     - name: Run tests
-      working-directory: ${{github.workspace}}/seiscomp/build
+      working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}} -V -R 'test_scdetect_.*'
