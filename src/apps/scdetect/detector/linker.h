@@ -11,7 +11,7 @@
 
 #include "arrival.h"
 #include "pot.h"
-#include "template.h"
+#include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -20,8 +20,8 @@ namespace detector {
 // Associates template results
 class Linker {
  public:
-  Linker(const Core::TimeSpan &on_hold = 0.0,
-         double arrival_offset_thres = 2.0e-6);
+  Linker(const Core::TimeSpan &onHold = 0.0,
+         double arrivalOffsetThres = 2.0e-6);
   virtual ~Linker();
 
   enum class Status { kWaitingForData, kTerminated };
@@ -30,12 +30,12 @@ class Linker {
     // The result's fit [-1,1]
     double fit;
     // Reference waveform processor id
-    std::string ref_proc_id;
+    std::string refProcId;
 
     struct TemplateResult {
       Arrival arrival;
       // Reference to the original template result
-      Template::MatchResultCPtr match_result;
+      TemplateWaveformProcessor::MatchResultCPtr matchResult;
     };
 
     // Associates `TemplateResult` with a processor (i.e. using the `proc_id`)
@@ -46,76 +46,78 @@ class Linker {
     POT pot;
 
     // Returns the total number of arrivals
-    size_t GetArrivalCount() const;
+    size_t getArrivalCount() const;
     // Returns a string including debug information
-    std::string DebugString() const;
+    std::string debugString() const;
   };
 
   // Sets the arrival offset threshold
-  void set_thres_arrival_offset(const boost::optional<double> &thres);
+  void setThresArrivalOffset(const boost::optional<double> &thres);
   // Returns the current arrival offset threshold
-  boost::optional<double> thres_arrival_offset() const;
+  boost::optional<double> thresArrivalOffset() const;
   // Sets the result threshold
-  void set_thres_result(const boost::optional<double> &thres);
+  void setThresResult(const boost::optional<double> &thres);
   // Returns the result threshold
-  boost::optional<double> thres_result() const;
+  boost::optional<double> thresResult() const;
   // Configures the linker with a minimum number of required arrivals before
   // issuing a result
-  void set_min_arrivals(const boost::optional<size_t> &n);
+  void setMinArrivals(const boost::optional<size_t> &n);
   // Returns the minimum number of arrivals required for linking
-  boost::optional<size_t> min_arrivals() const;
+  boost::optional<size_t> minArrivals() const;
   // Sets the *on hold* duration
-  void set_on_hold(const Core::TimeSpan &duration);
+  void setOnHold(const Core::TimeSpan &duration);
   // Returns the current *on hold* duration
-  Core::TimeSpan on_hold() const;
+  Core::TimeSpan onHold() const;
   // Returns the linker's status
   Status status() const;
   // Returns the number of associated channels
-  size_t GetAssociatedChannelCount() const;
+  size_t getAssociatedChannelCount() const;
   // Returns the number of associated processors
-  size_t GetProcessorCount() const;
+  size_t getProcessorCount() const;
 
   // Register the template waveform processor `proc` associated with the
   // template arrival `arrival` for linking.
-  void Register(const Template *proc, const Arrival &arrival);
+  void add(const TemplateWaveformProcessor *proc, const Arrival &arrival);
   // Remove the processor identified by `proc_id`
-  void Remove(const std::string &proc_id);
+  void remove(const std::string &proc_id);
   // Reset the linker
   //
   // - drops all pending results
-  void Reset();
+  void reset();
   // Terminates the linker
   //
   // - flushes pending detections
-  void Terminate();
+  void terminate();
 
   // Feeds the `proc`'s result `res` to the linker
-  void Feed(const Template *proc, const Template::MatchResultCPtr &res);
+  void feed(const TemplateWaveformProcessor *proc,
+            const TemplateWaveformProcessor::MatchResultCPtr &res);
 
   using PublishResultCallback = std::function<void(const Result &res)>;
   // Set the publish callback function
-  void set_result_callback(const PublishResultCallback &cb);
+  void setResultCallback(const PublishResultCallback &callback);
 
  protected:
-  // Processes the `res`
-  void Process(const Template *proc, const Result::TemplateResult &res);
+  // Processes the result `res` from `proc`
+  void process(const TemplateWaveformProcessor *proc,
+               const Result::TemplateResult &res);
   // Emit a result
-  void EmitResult(const Result &res);
+  void emitResult(const Result &res);
 
  private:
-  void CreatePOT();
+  void createPot();
 
-  Status status_{Status::kWaitingForData};
+  Status _status{Status::kWaitingForData};
 
-  // Template processor
+  // `TemplateWaveformProcessor` processor
   struct Processor {
-    const Template *proc;
+    const TemplateWaveformProcessor *proc;
     // The template arrival associated
     Arrival arrival;
   };
 
   using Processors = std::unordered_map<std::string, Processor>;
-  Processors processors_;
+  Processors _processors;
 
   struct Event {
     // The time the event is considered as elapsed
@@ -124,39 +126,39 @@ class Linker {
     Result result;
 
     // Time of the reference arrival pick
-    Core::Time ref_pick_time;
+    Core::Time refPickTime;
 
     // Merges the template result `res` into the event
-    void MergeResult(const std::string &proc_id,
+    void mergeResult(const std::string &procId,
                      const Result::TemplateResult &res, const POT &pot);
     // Returns the total number of arrivals
-    size_t GetArrivalCount() const;
+    size_t getArrivalCount() const;
   };
 
   using EventQueue = std::list<Event>;
-  EventQueue queue_;
+  EventQueue _queue;
 
   // The reference POT
-  POT pot_;
-  bool pot_valid_{false};
+  POT _pot;
+  bool _potValid{false};
 
   // The arrival offset threshold; if `boost::none` arrival offset threshold
   // validation is disabled; the default arrival offset corresponds to twice
   // the maximum accuracy `scdetect` is operating when it comes to trimming
   // waveforms (1 micro second (i.e. 1 us)).
-  boost::optional<double> thres_arrival_offset_{2.0e-6};
+  boost::optional<double> _thresArrivalOffset{2.0e-6};
   // The fit threshold indicating when template results are taken into
   // consideration
-  boost::optional<double> thres_result_;
+  boost::optional<double> _thresResult;
   // The minimum number of arrivals required in order to issue a result
-  boost::optional<size_t> min_arrivals_;
+  boost::optional<size_t> _minArrivals;
 
   // The maximum time events are placed on hold before either being emitted or
   // dropped
-  Core::TimeSpan on_hold_{0.0};
+  Core::TimeSpan _onHold{0.0};
 
   // The result callback function
-  boost::optional<PublishResultCallback> result_callback_;
+  boost::optional<PublishResultCallback> _resultCallback;
 };
 
 }  // namespace detector

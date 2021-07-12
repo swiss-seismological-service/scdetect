@@ -26,8 +26,8 @@
 
 #include "builder.h"
 #include "config.h"
-#include "detector.h"
 #include "detector/arrival.h"
+#include "detector/detectorwaveformprocessor.h"
 #include "eventstore.h"
 #include "log.h"
 #include "resamplerstore.h"
@@ -75,20 +75,20 @@ void Application::createCommandLineDescription() {
       "Database", "event-db",
       "load events from the given database or file, format: "
       "[service://]location",
-      &config_.url_event_db);
+      &_config.urlEventDb);
 
   commandline().addOption(
       "Records", "record-starttime",
       "defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for "
       "requesting records from the configured archive recordstream; "
       "implicitly enables reprocessing/playback mode",
-      &config_.playback_config.start_time_str);
+      &_config.playbackConfig.startTimeStr);
   commandline().addOption(
       "Records", "record-endtime",
       "defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for "
       "requesting records from the configured archive recordstream; "
       "implicitly enables reprocessing/playback mode",
-      &config_.playback_config.end_time_str);
+      &_config.playbackConfig.endTimeStr);
 
   commandline().addGroup("Mode");
   commandline().addOption(
@@ -101,7 +101,7 @@ void Application::createCommandLineDescription() {
       "same as --no-publish, but outputs all event parameters scml "
       "formatted; specifying the output path as '-' (a single dash) will "
       "force the output to be redirected to stdout",
-      &config_.path_ep);
+      &_config.pathEp);
   commandline().addOption(
       "Mode", "playback",
       "Use playback mode that does not restrict the maximum allowed "
@@ -118,25 +118,25 @@ void Application::createCommandLineDescription() {
   commandline().addOption(
       "Input", "templates-json",
       "path to a template configuration file (json-formatted)",
-      &config_.path_template_json);
+      &_config.pathTemplateJson);
 }
 
 bool Application::validateParameters() {
   if (!StreamApplication::validateParameters()) return false;
 
-  config_.Init(commandline());
+  _config.init(commandline());
 
   // TODO(damb): Disable messaging (offline mode) with certain command line
   // options
-  if (config_.offline_mode) {
+  if (_config.offlineMode) {
     SCDETECT_LOG_INFO("Disable messaging");
     setMessagingEnabled(false);
 
-    config_.no_publish = true;
+    _config.noPublish = true;
   }
 
-  if (!config_.no_publish && commandline().hasOption("ep")) {
-    config_.no_publish = true;
+  if (!_config.noPublish && commandline().hasOption("ep")) {
+    _config.noPublish = true;
   }
 
   // disable the database if required
@@ -146,78 +146,78 @@ bool Application::validateParameters() {
   }
 
   // validate paths
-  if (!config_.path_template_json.empty() &&
-      !Util::fileExists(config_.path_template_json)) {
+  if (!_config.pathTemplateJson.empty() &&
+      !Util::fileExists(_config.pathTemplateJson)) {
     SCDETECT_LOG_ERROR("Invalid path to template configuration file: %s",
-                       config_.path_template_json.c_str());
+                       _config.pathTemplateJson.c_str());
     return false;
   }
 
   // validate reprocessing config
-  auto ValidateAndStoreTime = [](const std::string &time_str,
+  auto validateAndStoreTime = [](const std::string &timeStr,
                                  Core::Time &result) {
-    if (!time_str.empty() && !result.fromString(time_str.c_str(), "%FT%T")) {
-      SCDETECT_LOG_ERROR("Invalid time: %s", time_str.c_str());
+    if (!timeStr.empty() && !result.fromString(timeStr.c_str(), "%FT%T")) {
+      SCDETECT_LOG_ERROR("Invalid time: %s", timeStr.c_str());
       return false;
     }
     return true;
   };
 
-  if (!ValidateAndStoreTime(config_.playback_config.start_time_str,
-                            config_.playback_config.start_time)) {
+  if (!validateAndStoreTime(_config.playbackConfig.startTimeStr,
+                            _config.playbackConfig.startTime)) {
     return false;
   }
-  if (!ValidateAndStoreTime(config_.playback_config.end_time_str,
-                            config_.playback_config.end_time)) {
+  if (!validateAndStoreTime(_config.playbackConfig.endTimeStr,
+                            _config.playbackConfig.endTime)) {
     return false;
   }
 
-  if (!config::ValidateXCorrThreshold(config_.detector_config.trigger_on)) {
+  if (!config::validateXCorrThreshold(_config.detectorConfig.triggerOn)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'triggerOnThreshold': %f. Not in "
         "interval [-1,1].",
-        config_.detector_config.trigger_on);
+        _config.detectorConfig.triggerOn);
     return false;
   }
-  if (!config::ValidateXCorrThreshold(config_.detector_config.trigger_off)) {
+  if (!config::validateXCorrThreshold(_config.detectorConfig.triggerOff)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'triggerOffThreshold': %f. Not in "
         "interval [-1,1].",
-        config_.detector_config.trigger_off);
+        _config.detectorConfig.triggerOff);
     return false;
   }
 
-  if (!utils::IsGeZero(config_.stream_config.init_time)) {
+  if (!utils::isGeZero(_config.streamConfig.initTime)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'initTime': %f. Must be "
         "greater equal 0.",
-        config_.stream_config.init_time);
+        _config.streamConfig.initTime);
     return false;
   }
 
-  if (!config::ValidateArrivalOffsetThreshold(
-          config_.detector_config.arrival_offset_threshold)) {
+  if (!config::validateArrivalOffsetThreshold(
+          _config.detectorConfig.arrivalOffsetThreshold)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'arrivalOffsetThreshold': %f. "
         "Must be < 0 or >= 2.0e-6",
-        config_.detector_config.arrival_offset_threshold);
+        _config.detectorConfig.arrivalOffsetThreshold);
     return false;
   }
 
-  if (!config::ValidateMinArrivals(config_.detector_config.min_arrivals)) {
+  if (!config::validateMinArrivals(_config.detectorConfig.minArrivals)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'minimumArrivals': %d. "
         "Must be < 0 or >= 1",
-        config_.detector_config.min_arrivals);
+        _config.detectorConfig.minArrivals);
     return false;
   }
 
-  if (config_.stream_config.template_config.wf_start >=
-      config_.stream_config.template_config.wf_end) {
+  if (_config.streamConfig.templateConfig.wfStart >=
+      _config.streamConfig.templateConfig.wfEnd) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'waveformStart' >= 'waveformEnd' : %f >= %f",
-        config_.stream_config.template_config.wf_start,
-        config_.stream_config.template_config.wf_end);
+        _config.streamConfig.templateConfig.wfStart,
+        _config.streamConfig.templateConfig.wfEnd);
     return false;
   }
 
@@ -227,7 +227,7 @@ bool Application::validateParameters() {
 bool Application::initConfiguration() {
   if (!StreamApplication::initConfiguration()) return false;
 
-  config_.Init(this);
+  _config.init(this);
 
   return true;
 }
@@ -235,36 +235,36 @@ bool Application::initConfiguration() {
 bool Application::init() {
   if (!StreamApplication::init()) return false;
 
-  if (config_.playback_config.enabled) {
+  if (_config.playbackConfig.enabled) {
     SCDETECT_LOG_INFO("Playback mode enabled");
   }
 
   // TODO(damb): Check if std::unique_ptr wouldn't be sufficient, here.
-  WaveformHandlerIfacePtr waveform_handler{
+  WaveformHandlerIfacePtr waveformHandler{
       utils::make_smart<WaveformHandler>(recordStreamURL())};
-  if (!config_.templates_no_cache) {
+  if (!_config.templatesNoCache) {
     // cache template waveforms on filesystem
-    waveform_handler = utils::make_smart<FileSystemCache>(
-        waveform_handler, config_.path_filesystem_cache,
+    waveformHandler = utils::make_smart<FileSystemCache>(
+        waveformHandler, _config.pathFilesystemCache,
         settings::kCacheRawWaveforms);
   }
   // cache demeaned template waveform snippets in order to speed up the
   // initialization procedure
-  waveform_handler =
-      utils::make_smart<InMemoryCache>(waveform_handler, /*raw=*/false);
+  waveformHandler =
+      utils::make_smart<InMemoryCache>(waveformHandler, /*raw=*/false);
 
   // load event related data
-  if (!LoadEvents(config_.url_event_db, query())) {
+  if (!loadEvents(_config.urlEventDb, query())) {
     SCDETECT_LOG_ERROR("Failed to load events");
     return false;
   }
 
-  if (!InitDetectors(waveform_handler)) return false;
+  if (!initDetectors(waveformHandler)) return false;
 
   // free memory after initialization
-  EventStore::Instance().Reset();
+  EventStore::Instance().reset();
 
-  output_origins_ = addOutputObjectLog("origin", primaryMessagingGroup());
+  _outputOrigins = addOutputObjectLog("origin", primaryMessagingGroup());
 
   return true;
 }
@@ -272,62 +272,62 @@ bool Application::init() {
 bool Application::run() {
   SCDETECT_LOG_DEBUG("Application initialized");
 
-  if (config_.templates_prepare) {
+  if (_config.templatesPrepare) {
     SCDETECT_LOG_DEBUG(
         "Requested application exit after template initialization");
     return true;
   }
 
   if (commandline().hasOption("ep")) {
-    ep_ = utils::make_smart<DataModel::EventParameters>();
+    _ep = utils::make_smart<DataModel::EventParameters>();
   }
 
   // subscribe to streams
-  for (const auto &detector_pair : detectors_) {
-    utils::WaveformStreamID wf_stream_id{detector_pair.first};
+  for (const auto &detectorPair : _detectors) {
+    utils::WaveformStreamID wfStreamId{detectorPair.first};
 
-    recordStream()->addStream(wf_stream_id.net_code(), wf_stream_id.sta_code(),
-                              wf_stream_id.loc_code(), wf_stream_id.cha_code());
+    recordStream()->addStream(wfStreamId.netCode(), wfStreamId.staCode(),
+                              wfStreamId.locCode(), wfStreamId.chaCode());
   }
 
-  if (!config_.playback_config.start_time_str.empty()) {
-    recordStream()->setStartTime(config_.playback_config.start_time);
-    config_.playback_config.enabled = true;
+  if (!_config.playbackConfig.startTimeStr.empty()) {
+    recordStream()->setStartTime(_config.playbackConfig.startTime);
+    _config.playbackConfig.enabled = true;
   }
-  if (!config_.playback_config.end_time_str.empty()) {
-    recordStream()->setEndTime(config_.playback_config.end_time);
-    config_.playback_config.enabled = true;
+  if (!_config.playbackConfig.endTimeStr.empty()) {
+    recordStream()->setEndTime(_config.playbackConfig.endTime);
+    _config.playbackConfig.enabled = true;
   }
 
   return StreamApplication::run();
 }
 
 void Application::done() {
-  if (!config_.templates_prepare) {
-    std::unordered_set<std::string> detector_ids;
+  if (!_config.templatesPrepare) {
+    std::unordered_set<std::string> detectorIds;
     // terminate detectors
-    for (const auto &detector_pair : detectors_) {
-      auto &detector{detector_pair.second};
-      const auto detector_id{detector->id()};
-      if (detector_ids.find(detector_id) == detector_ids.end()) {
-        detector_ids.emplace(detector->id());
-        detector->Terminate();
+    for (const auto &detectorPair : _detectors) {
+      auto &detector{detectorPair.second};
+      const auto detectorId{detector->id()};
+      if (detectorIds.find(detectorId) == detectorIds.end()) {
+        detectorIds.emplace(detector->id());
+        detector->terminate();
       }
     }
 
-    if (ep_) {
+    if (_ep) {
       IO::XMLArchive ar;
-      ar.create(config_.path_ep.empty() ? "-" : config_.path_ep.c_str());
+      ar.create(_config.pathEp.empty() ? "-" : _config.pathEp.c_str());
       ar.setFormattedOutput(true);
-      ar << ep_;
+      ar << _ep;
       ar.close();
-      SCDETECT_LOG_DEBUG("Found %lu origins.", ep_->originCount());
-      ep_.reset();
+      SCDETECT_LOG_DEBUG("Found %lu origins.", _ep->originCount());
+      _ep.reset();
     }
   }
 
-  EventStore::Instance().Reset();
-  RecordResamplerStore::Instance().Reset();
+  EventStore::Instance().reset();
+  RecordResamplerStore::Instance().reset();
 
   StreamApplication::done();
 }
@@ -335,45 +335,44 @@ void Application::done() {
 void Application::handleRecord(Record *rec) {
   if (!rec->data()) return;
 
-  auto range{detectors_.equal_range(std::string{rec->streamID()})};
+  auto range{_detectors.equal_range(std::string{rec->streamID()})};
   for (auto it = range.first; it != range.second; ++it) {
-    auto &detector_ptr{it->second};
-    if (detector_ptr->enabled()) {
-      if (!detector_ptr->Feed(rec)) {
+    auto &detector{it->second};
+    if (detector->enabled()) {
+      if (!detector->feed(rec)) {
         SCDETECT_LOG_WARNING(
             "%s: Failed to feed record into detector (id=%s). Resetting.",
-            it->first.c_str(), detector_ptr->id().c_str());
-        detector_ptr->Reset();
+            it->first.c_str(), detector->id().c_str());
+        detector->reset();
         continue;
       }
 
-      if (detector_ptr->finished()) {
+      if (detector->finished()) {
         SCDETECT_LOG_WARNING(
             "%s: Detector (id=%s) finished (status=%d, "
-            "status_value=%f). Resetting.",
-            it->first.c_str(), detector_ptr->id().c_str(),
-            utils::as_integer(detector_ptr->status()),
-            detector_ptr->status_value());
-        detector_ptr->Reset();
+            "statusValue=%f). Resetting.",
+            it->first.c_str(), detector->id().c_str(),
+            utils::asInteger(detector->status()), detector->statusValue());
+        detector->reset();
         continue;
       }
     } else {
       SCDETECT_LOG_DEBUG(
           "%s: Skip feeding record into detector (id=%s). Reason: Disabled.",
-          it->first.c_str(), detector_ptr->id().c_str());
+          it->first.c_str(), detector->id().c_str());
     }
   }
 }
 
-void Application::EmitDetection(const WaveformProcessor *processor,
+void Application::emitDetection(const WaveformProcessor *processor,
                                 const Record *record,
                                 const WaveformProcessor::ResultCPtr &result) {
-  const auto detection{
-      boost::dynamic_pointer_cast<const Detector::Detection>(result)};
+  const auto detection{boost::dynamic_pointer_cast<
+      const detector::DetectorWaveformProcessor::Detection>(result)};
 
   SCDETECT_LOG_DEBUG_TAGGED(
       processor->id(), "Creating origin (time=%s, detected_arrivals=%d) ...",
-      detection->time.iso().c_str(), detection->template_results.size());
+      detection->time.iso().c_str(), detection->templateResults.size());
   Core::Time now{Core::Time::GMT()};
 
   DataModel::CreationInfo ci;
@@ -385,7 +384,7 @@ void Application::EmitDetection(const WaveformProcessor *processor,
   magnitude->setCreationInfo(ci);
   magnitude->setType(settings::kMagnitudeType);
   magnitude->setMagnitude(DataModel::RealQuantity(detection->magnitude));
-  magnitude->setStationCount(detection->num_stations_used);
+  magnitude->setStationCount(detection->numStationsUsed);
 
   DataModel::OriginPtr origin{DataModel::Origin::Create()};
   origin->setCreationInfo(ci);
@@ -398,12 +397,12 @@ void Application::EmitDetection(const WaveformProcessor *processor,
 
   std::vector<double> azimuths;
   std::vector<double> distances;
-  for (const auto &result_pair : detection->template_results) {
+  for (const auto &resultPair : detection->templateResults) {
     double az, baz, dist;
-    const auto &sensor_location{result_pair.second.sensor_location};
+    const auto &sensorLocation{resultPair.second.sensorLocation};
     Math::Geo::delazi(detection->latitude, detection->longitude,
-                      sensor_location.latitude, sensor_location.longitude,
-                      &dist, &az, &baz);
+                      sensorLocation.latitude, sensorLocation.longitude, &dist,
+                      &az, &baz);
 
     distances.push_back(dist);
     azimuths.push_back(az);
@@ -412,55 +411,55 @@ void Application::EmitDetection(const WaveformProcessor *processor,
   std::sort(azimuths.begin(), azimuths.end());
   std::sort(distances.begin(), distances.end());
 
-  DataModel::OriginQuality origin_quality;
+  DataModel::OriginQuality originQuality;
   if (azimuths.size() > 2) {
-    double az_gap{};
+    double azGap{};
     for (size_t i = 0; i < azimuths.size() - 1; ++i)
-      az_gap = (azimuths[i + 1] - azimuths[i]) > az_gap
-                   ? (azimuths[i + 1] - azimuths[i])
-                   : az_gap;
+      azGap = (azimuths[i + 1] - azimuths[i]) > azGap
+                  ? (azimuths[i + 1] - azimuths[i])
+                  : azGap;
 
-    origin_quality.setAzimuthalGap(az_gap);
-    magnitude->setAzimuthalGap(az_gap);
+    originQuality.setAzimuthalGap(azGap);
+    magnitude->setAzimuthalGap(azGap);
   }
 
   if (!distances.empty()) {
-    origin_quality.setMinimumDistance(distances.front());
-    origin_quality.setMaximumDistance(distances.back());
-    origin_quality.setMedianDistance(distances[distances.size() / 2]);
+    originQuality.setMinimumDistance(distances.front());
+    originQuality.setMaximumDistance(distances.back());
+    originQuality.setMedianDistance(distances[distances.size() / 2]);
   }
 
-  origin_quality.setStandardError(1.0 - detection->fit);
-  origin_quality.setAssociatedStationCount(detection->num_stations_associated);
-  origin_quality.setUsedStationCount(detection->num_stations_used);
-  origin_quality.setAssociatedPhaseCount(detection->num_channels_associated);
-  origin_quality.setUsedPhaseCount(detection->num_channels_used);
+  originQuality.setStandardError(1.0 - detection->fit);
+  originQuality.setAssociatedStationCount(detection->numStationsAssociated);
+  originQuality.setUsedStationCount(detection->numStationsUsed);
+  originQuality.setAssociatedPhaseCount(detection->numChannelsAssociated);
+  originQuality.setUsedPhaseCount(detection->numChannelsUsed);
 
-  origin->setQuality(origin_quality);
+  origin->setQuality(originQuality);
   origin->setMethodID(settings::kOriginMethod);
 
-  origin->setQuality(origin_quality);
+  origin->setQuality(originQuality);
   origin->setMethodID(settings::kOriginMethod);
 
-  const auto CreatePick = [](const detector::Arrival &a) {
+  const auto createPick = [](const detector::Arrival &a) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
 
     ret->setTime(DataModel::TimeQuantity{a.pick.time, boost::none,
-                                         a.pick.lower_uncertainty,
-                                         a.pick.upper_uncertainty});
-    utils::WaveformStreamID wf_id{a.pick.waveform_id};
-    ret->setWaveformID(
-        DataModel::WaveformStreamID{wf_id.net_code(), wf_id.sta_code(),
-                                    wf_id.loc_code(), wf_id.cha_code(), ""});
+                                         a.pick.lowerUncertainty,
+                                         a.pick.upperUncertainty});
+    utils::WaveformStreamID wfStreamId{a.pick.waveformStreamId};
+    ret->setWaveformID(DataModel::WaveformStreamID{
+        wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
+        wfStreamId.chaCode(), ""});
     ret->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
-    if (a.pick.phase_hint) {
-      ret->setPhaseHint(DataModel::Phase{*a.pick.phase_hint});
+    if (a.pick.phaseHint) {
+      ret->setPhaseHint(DataModel::Phase{*a.pick.phaseHint});
     }
     return ret;
   };
 
-  const auto CreateArrival = [&ci](const detector::Arrival &a,
+  const auto createArrival = [&ci](const detector::Arrival &a,
                                    const DataModel::PickCPtr &pick) {
     auto ret{utils::make_smart<DataModel::Arrival>()};
     ret->setCreationInfo(ci);
@@ -472,112 +471,111 @@ void Application::EmitDetection(const WaveformProcessor *processor,
     return ret;
   };
 
-  std::vector<ArrivalPick> arrival_picks;
-  if (detection->with_arrivals) {
-    for (const auto &result_pair : detection->template_results) {
-      const auto &res{result_pair.second};
+  std::vector<ArrivalPick> arrivalPicks;
+  if (detection->withArrivals) {
+    for (const auto &resultPair : detection->templateResults) {
+      const auto &res{resultPair.second};
 
-      const auto pick{CreatePick(res.arrival)};
-      const auto arrival{CreateArrival(res.arrival, pick)};
-      arrival_picks.push_back({arrival, pick});
+      const auto pick{createPick(res.arrival)};
+      const auto arrival{createArrival(res.arrival, pick)};
+      arrivalPicks.push_back({arrival, pick});
     }
   }
 
   // create theoretical template arrivals
-  for (const auto &a : detection->theoretical_template_arrivals) {
-    const auto pick{CreatePick(a)};
-    const auto arrival{CreateArrival(a, pick)};
-    arrival_picks.push_back({arrival, pick});
+  for (const auto &a : detection->theoreticalTemplateArrivals) {
+    const auto pick{createPick(a)};
+    const auto arrival{createArrival(a, pick)};
+    arrivalPicks.push_back({arrival, pick});
   }
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
 
-  logObject(output_origins_, Core::Time::GMT());
+  logObject(_outputOrigins, Core::Time::GMT());
 
-  if (connection() && !config_.no_publish) {
+  if (connection() && !_config.noPublish) {
     SCDETECT_LOG_DEBUG_TAGGED(processor->id(), "Sending event parameters ...");
 
-    auto notifier_msg{utils::make_smart<DataModel::NotifierMessage>()};
+    auto notifierMsg{utils::make_smart<DataModel::NotifierMessage>()};
 
     // origin
     auto notifier{utils::make_smart<DataModel::Notifier>(
         "EventParameters", DataModel::OP_ADD, origin.get())};
-    notifier_msg->attach(notifier.get());
+    notifierMsg->attach(notifier.get());
 
     // magnitude
     {
       auto notifier{utils::make_smart<DataModel::Notifier>(
           origin->publicID(), DataModel::OP_ADD, magnitude.get())};
-      notifier_msg->attach(notifier.get());
+      notifierMsg->attach(notifier.get());
     }
 
-    for (auto &arrival_pick : arrival_picks) {
+    for (auto &arrivalPick : arrivalPicks) {
       // pick
       {
         auto notifier{utils::make_smart<DataModel::Notifier>(
-            "EventParameters", DataModel::OP_ADD, arrival_pick.pick.get())};
+            "EventParameters", DataModel::OP_ADD, arrivalPick.pick.get())};
 
-        notifier_msg->attach(notifier.get());
+        notifierMsg->attach(notifier.get());
       }
       // arrival
       {
         auto notifier{utils::make_smart<DataModel::Notifier>(
-            origin->publicID(), DataModel::OP_ADD, arrival_pick.arrival.get())};
+            origin->publicID(), DataModel::OP_ADD, arrivalPick.arrival.get())};
 
-        notifier_msg->attach(notifier.get());
+        notifierMsg->attach(notifier.get());
       }
     }
 
-    if (!connection()->send(notifier_msg.get())) {
+    if (!connection()->send(notifierMsg.get())) {
       SCDETECT_LOG_ERROR_TAGGED(processor->id(),
                                 "Sending of event parameters failed.");
     }
   }
 
-  if (ep_) {
-    ep_->add(origin.get());
+  if (_ep) {
+    _ep->add(origin.get());
 
     origin->add(magnitude.get());
 
-    for (auto &arrival_pick : arrival_picks) {
-      origin->add(arrival_pick.arrival.get());
+    for (auto &arrivalPick : arrivalPicks) {
+      origin->add(arrivalPick.arrival.get());
 
-      ep_->add(arrival_pick.pick.get());
+      _ep->add(arrivalPick.pick.get());
     }
   }
 }
 
-bool Application::LoadEvents(const std::string &event_db,
+bool Application::loadEvents(const std::string &eventDb,
                              DataModel::DatabaseQueryPtr db) {
   bool loaded{false};
-  if (!event_db.empty()) {
-    SCDETECT_LOG_INFO("Loading events from %s", event_db.c_str());
-    if (event_db.find("://") == std::string::npos) {
+  if (!eventDb.empty()) {
+    SCDETECT_LOG_INFO("Loading events from %s", eventDb.c_str());
+    if (eventDb.find("://") == std::string::npos) {
       try {
-        EventStore::Instance().Load(event_db);
+        EventStore::Instance().load(eventDb);
         loaded = true;
       } catch (std::exception &e) {
         SCDETECT_LOG_ERROR("%s", e.what());
       }
-    } else if (event_db.find("file://") == 0) {
+    } else if (eventDb.find("file://") == 0) {
       try {
-        EventStore::Instance().Load(event_db.substr(7));
+        EventStore::Instance().load(eventDb.substr(7));
         loaded = true;
       } catch (std::exception &e) {
         SCDETECT_LOG_ERROR("%s", e.what());
       }
     } else {
-      SCDETECT_LOG_INFO("Trying to connect to %s", event_db.c_str());
-      IO::DatabaseInterfacePtr db{
-          IO::DatabaseInterface::Open(event_db.c_str())};
+      SCDETECT_LOG_INFO("Trying to connect to %s", eventDb.c_str());
+      IO::DatabaseInterfacePtr db{IO::DatabaseInterface::Open(eventDb.c_str())};
       if (db) {
         SCDETECT_LOG_INFO("Connected successfully");
         auto query{utils::make_smart<DataModel::DatabaseQuery>(db.get())};
-        EventStore::Instance().Load(query.get());
+        EventStore::Instance().load(query.get());
         loaded = true;
       } else {
         SCDETECT_LOG_WARNING("Database connection to %s failed",
-                             event_db.c_str());
+                             eventDb.c_str());
       }
     }
   }
@@ -585,7 +583,7 @@ bool Application::LoadEvents(const std::string &event_db,
   if (!loaded && isDatabaseEnabled()) {
     SCDETECT_LOG_INFO("Loading events from %s", databaseURI().c_str());
     try {
-      EventStore::Instance().Load(query());
+      EventStore::Instance().load(query());
       loaded = true;
     } catch (std::exception &e) {
       SCDETECT_LOG_ERROR("%s", e.what());
@@ -599,19 +597,19 @@ bool Application::LoadEvents(const std::string &event_db,
   return loaded;
 }
 
-bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
-  config_.path_filesystem_cache =
-      boost::filesystem::path(config_.path_filesystem_cache).string();
-  if (!Util::pathExists(config_.path_filesystem_cache) &&
-      !Util::createPath(config_.path_filesystem_cache)) {
+bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
+  _config.pathFilesystemCache =
+      boost::filesystem::path(_config.pathFilesystemCache).string();
+  if (!Util::pathExists(_config.pathFilesystemCache) &&
+      !Util::createPath(_config.pathFilesystemCache)) {
     SCDETECT_LOG_ERROR("Failed to create path: %s",
-                       config_.path_filesystem_cache.c_str());
+                       _config.pathFilesystemCache.c_str());
     return false;
   }
 
   // load template related data
   // TODO(damb): Allow parsing template configuration from profiles
-  if (config_.path_template_json.empty()) {
+  if (_config.pathTemplateJson.empty()) {
     SCDETECT_LOG_ERROR("Missing template configuration file.");
     return false;
   }
@@ -621,115 +619,110 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
     bool complete{false};
     std::unordered_set<std::string> ids;
   };
-  std::unordered_map<std::string, TemplateProcessorIds> processor_ids;
-  auto IsUniqueProcessorId = [&processor_ids](const std::string &detector_id,
-                                              const std::string &template_id) {
-    auto it{processor_ids.find(detector_id)};
-    bool detector_exists{it != processor_ids.end()};
-    if (detector_exists) {
+  std::unordered_map<std::string, TemplateProcessorIds> processorIds;
+  auto isUniqueProcessorId = [&processorIds](const std::string &detectorId,
+                                             const std::string &templateId) {
+    auto it{processorIds.find(detectorId)};
+    bool detectorExists{it != processorIds.end()};
+    if (detectorExists) {
       if (it->second.complete) {
         SCDETECT_LOG_WARNING(
             "Processor id is be used by multiple "
-            "processors: detector_id=%s",
-            detector_id.c_str());
+            "processors: detectorId=%s",
+            detectorId.c_str());
         return false;
       } else {
-        bool id_exists{it->second.ids.find(template_id) !=
-                       it->second.ids.end()};
-        if (id_exists) {
+        bool idExists{it->second.ids.find(templateId) != it->second.ids.end()};
+        if (idExists) {
           SCDETECT_LOG_WARNING(
               "Processor id is be used by multiple processors: "
-              "detector_id=%s, template_id=%s",
-              detector_id.c_str(), template_id.c_str());
+              "detectorId=%s, templateId=%s",
+              detectorId.c_str(), templateId.c_str());
         }
-        it->second.ids.emplace(template_id);
-        return !id_exists;
+        it->second.ids.emplace(templateId);
+        return !idExists;
       }
     } else {
-      TemplateProcessorIds template_ids;
-      template_ids.ids.emplace(template_id);
-      processor_ids.emplace(detector_id, template_ids);
-      return !detector_exists;
+      TemplateProcessorIds templateIds;
+      templateIds.ids.emplace(templateId);
+      processorIds.emplace(detectorId, templateIds);
+      return !detectorExists;
     }
   };
 
   try {
     SCDETECT_LOG_INFO("Loading template configuration from %s",
-                      config_.path_template_json.c_str());
+                      _config.pathTemplateJson.c_str());
 
-    std::ifstream ifs{config_.path_template_json};
+    std::ifstream ifs{_config.pathTemplateJson};
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
 
-    for (const auto &template_setting_pt : pt) {
+    for (const auto &templateSettingPt : pt) {
       try {
-        TemplateConfig tc{template_setting_pt.second, config_.detector_config,
-                          config_.stream_config};
+        TemplateConfig tc{templateSettingPt.second, _config.detectorConfig,
+                          _config.streamConfig};
 
         SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
-                           tc.detector_id().c_str());
+                           tc.detectorId().c_str());
 
-        auto detector_builder{
-            std::move(Detector::Create(tc.detector_id(), tc.origin_id())
-                          .set_config(tc.detector_config(),
-                                      config_.playback_config.enabled)
-                          .set_eventparameters())};
+        auto detectorBuilder{std::move(
+            detector::DetectorWaveformProcessor::Create(tc.detectorId(),
+                                                        tc.originId())
+                .setConfig(tc.detectorConfig(), _config.playbackConfig.enabled)
+                .setEventParameters())};
 
-        std::vector<std::string> stream_ids;
-        for (const auto &stream_config_pair : tc) {
-          IsUniqueProcessorId(tc.detector_id(),
-                              stream_config_pair.second.template_id);
+        std::vector<std::string> streamIds;
+        for (const auto &streamConfigPair : tc) {
+          isUniqueProcessorId(tc.detectorId(),
+                              streamConfigPair.second.templateId);
           try {
-            detector_builder.set_stream(stream_config_pair.first,
-                                        stream_config_pair.second,
-                                        waveform_handler);
+            detectorBuilder.setStream(streamConfigPair.first,
+                                      streamConfigPair.second, waveformHandler);
           } catch (builder::NoSensorLocation &e) {
-            if (config_.skip_template_if_no_sensor_location_data) {
+            if (_config.skipTemplateIfNoSensorLocationData) {
               SCDETECT_LOG_WARNING(
                   "%s (%s): No sensor location data for template processor "
                   "available. Skipping.",
-                  stream_config_pair.first.c_str(),
-                  stream_config_pair.second.template_config.wf_stream_id
-                      .c_str());
+                  streamConfigPair.first.c_str(),
+                  streamConfigPair.second.templateConfig.wfStreamId.c_str());
               continue;
             }
             throw;
           } catch (builder::NoStream &e) {
-            if (config_.skip_template_if_no_stream_data) {
+            if (_config.skipTemplateIfNoStreamData) {
               SCDETECT_LOG_WARNING(
                   "%s (%s): No stream data for template processor "
                   "available. Skipping.",
-                  stream_config_pair.first.c_str(),
-                  stream_config_pair.second.template_config.wf_stream_id
-                      .c_str());
+                  streamConfigPair.first.c_str(),
+                  streamConfigPair.second.templateConfig.wfStreamId.c_str());
               continue;
             }
             throw;
           } catch (builder::NoWaveformData &e) {
-            if (config_.skip_template_if_no_waveform_data) {
+            if (_config.skipTemplateIfNoWaveformData) {
               SCDETECT_LOG_WARNING(
                   "%s (%s): No waveform data for template processor "
                   "available. Skipping.",
-                  stream_config_pair.first.c_str(),
-                  stream_config_pair.second.template_config.wf_stream_id
-                      .c_str());
+                  streamConfigPair.first.c_str(),
+                  streamConfigPair.second.templateConfig.wfStreamId.c_str());
               continue;
             }
             throw;
           }
-          stream_ids.push_back(stream_config_pair.first);
+          streamIds.push_back(streamConfigPair.first);
         }
-        processor_ids.at(tc.detector_id()).complete = true;
+        processorIds.at(tc.detectorId()).complete = true;
 
-        std::shared_ptr<detect::Detector> detector_ptr{
-            detector_builder.Build()};
-        detector_ptr->set_result_callback(
+        std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
+            detectorBuilder.build()};
+        detectorPtr->setResultCallback(
             [this](const WaveformProcessor *proc, const Record *rec,
                    const WaveformProcessor::ResultCPtr &res) {
-              EmitDetection(proc, rec, res);
+              emitDetection(proc, rec, res);
             });
-        for (const auto &stream_id : stream_ids)
-          detectors_.emplace(stream_id, detector_ptr);
+        for (const auto &streamId : streamIds)
+          _detectors.emplace(streamId, detectorPtr);
 
       } catch (Exception &e) {
         SCDETECT_LOG_WARNING("Failed to create detector: %s. Skipping.",
@@ -740,12 +733,12 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
   } catch (boost::property_tree::json_parser::json_parser_error &e) {
     SCDETECT_LOG_ERROR(
         "Failed to parse JSON template configuration file (%s): %s",
-        config_.path_template_json.c_str(), e.what());
+        _config.pathTemplateJson.c_str(), e.what());
     return false;
   } catch (std::ifstream::failure &e) {
     SCDETECT_LOG_ERROR(
         "Failed to parse JSON template configuration file (%s): %s",
-        config_.path_template_json.c_str(), e.what());
+        _config.pathTemplateJson.c_str(), e.what());
     return false;
   }
   return true;
@@ -754,110 +747,108 @@ bool Application::InitDetectors(WaveformHandlerIfacePtr waveform_handler) {
 Application::Config::Config() {
   Environment *env{Environment::Instance()};
 
-  boost::filesystem::path sc_install_dir{env->installDir()};
-  boost::filesystem::path path_cache{sc_install_dir /
-                                     settings::kPathFilesystemCache};
-  path_filesystem_cache = path_cache.string();
+  boost::filesystem::path scInstallDir{env->installDir()};
+  boost::filesystem::path pathCache{scInstallDir /
+                                    settings::kPathFilesystemCache};
+  pathFilesystemCache = pathCache.string();
 }
 
-void Application::Config::Init(const Client::Application *app) {
+void Application::Config::init(const Client::Application *app) {
   try {
-    path_template_json = app->configGetPath("templatesJSON");
+    pathTemplateJson = app->configGetPath("templatesJSON");
   } catch (...) {
   }
 
   try {
-    stream_config.template_config.phase =
-        app->configGetString("template.phase");
+    streamConfig.templateConfig.phase = app->configGetString("template.phase");
   } catch (...) {
   }
   try {
-    stream_config.template_config.wf_start =
+    streamConfig.templateConfig.wfStart =
         app->configGetDouble("template.waveformStart");
   } catch (...) {
   }
   try {
-    stream_config.template_config.wf_end =
+    streamConfig.templateConfig.wfEnd =
         app->configGetDouble("template.waveformEnd");
   } catch (...) {
   }
 
   try {
-    stream_config.init_time = app->configGetDouble("processing.initTime");
+    streamConfig.initTime = app->configGetDouble("processing.initTime");
   } catch (...) {
   }
   try {
-    detector_config.gap_interpolation =
+    detectorConfig.gapInterpolation =
         app->configGetBool("processing.gapInterpolation");
   } catch (...) {
   }
   try {
-    detector_config.gap_threshold =
+    detectorConfig.gapThreshold =
         app->configGetDouble("processing.minGapLength");
   } catch (...) {
   }
   try {
-    detector_config.gap_tolerance =
+    detectorConfig.gapTolerance =
         app->configGetDouble("processing.maxGapLength");
   } catch (...) {
   }
 
   try {
-    detector_config.trigger_on =
+    detectorConfig.triggerOn =
         app->configGetDouble("detector.triggerOnThreshold");
   } catch (...) {
   }
   try {
-    detector_config.trigger_off =
+    detectorConfig.triggerOff =
         app->configGetDouble("detector.triggerOffThreshold");
   } catch (...) {
   }
   try {
-    detector_config.trigger_duration =
+    detectorConfig.triggerDuration =
         app->configGetDouble("detector.triggerDuration");
   } catch (...) {
   }
   try {
-    detector_config.time_correction =
+    detectorConfig.timeCorrection =
         app->configGetDouble("detector.timeCorrection");
   } catch (...) {
   }
   try {
-    detector_config.create_arrivals =
+    detectorConfig.createArrivals =
         app->configGetBool("detector.createArrivals");
   } catch (...) {
   }
   try {
-    detector_config.create_template_arrivals =
+    detectorConfig.createTemplateArrivals =
         app->configGetBool("detector.createTemplateArrivals");
   } catch (...) {
   }
   try {
-    detector_config.arrival_offset_threshold =
+    detectorConfig.arrivalOffsetThreshold =
         app->configGetDouble("detector.arrivalOffsetThreshold");
   } catch (...) {
   }
   try {
-    detector_config.min_arrivals =
-        app->configGetInt("detector.minimumArrivals");
+    detectorConfig.minArrivals = app->configGetInt("detector.minimumArrivals");
   } catch (...) {
   }
 }
 
-void Application::Config::Init(const System::CommandLine &commandline) {
-  templates_prepare = commandline.hasOption("templates-prepare");
-  templates_no_cache = commandline.hasOption("templates-reload");
+void Application::Config::init(const System::CommandLine &commandline) {
+  templatesPrepare = commandline.hasOption("templates-prepare");
+  templatesNoCache = commandline.hasOption("templates-reload");
 
   if (commandline.hasOption("templates-json")) {
     Environment *env{Environment::Instance()};
-    path_template_json =
+    pathTemplateJson =
         env->absolutePath(commandline.option<std::string>("templates-json"));
   }
 
-  playback_config.enabled = commandline.hasOption("playback");
+  playbackConfig.enabled = commandline.hasOption("playback");
 
-  offline_mode = commandline.hasOption("offline");
-  no_publish = commandline.hasOption("no-publish");
+  offlineMode = commandline.hasOption("offline");
+  noPublish = commandline.hasOption("no-publish");
 }
 
 }  // namespace detect

@@ -31,7 +31,7 @@ class Processor {
   const std::string &id() const;
 
  private:
-  std::string id_;
+  std::string _id;
 };
 
 }  // namespace detect

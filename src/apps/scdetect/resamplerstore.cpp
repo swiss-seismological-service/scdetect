@@ -12,8 +12,8 @@ hash<Seiscomp::detect::record_resampler_store_detail::CacheKey>::operator()(
     const Seiscomp::detect::record_resampler_store_detail::CacheKey &key)
     const noexcept {
   std::size_t ret{0};
-  boost::hash_combine(ret, std::hash<double>{}(key.current_frequency));
-  boost::hash_combine(ret, std::hash<double>{}(key.target_frequency));
+  boost::hash_combine(ret, std::hash<double>{}(key.currentFrequency));
+  boost::hash_combine(ret, std::hash<double>{}(key.targetFrequency));
   return ret;
 }
 
@@ -25,8 +25,8 @@ namespace detect {
 namespace record_resampler_store_detail {
 
 bool operator==(const CacheKey &lhs, const CacheKey &rhs) {
-  return (lhs.current_frequency == rhs.current_frequency &&
-          lhs.target_frequency == rhs.target_frequency);
+  return (lhs.currentFrequency == rhs.currentFrequency &&
+          lhs.targetFrequency == rhs.targetFrequency);
 }
 
 bool operator!=(const CacheKey &lhs, const CacheKey &rhs) {
@@ -41,28 +41,28 @@ RecordResamplerStore &RecordResamplerStore::Instance() {
   return instance;
 }
 
-void RecordResamplerStore::Reset() { cache_.clear(); }
+void RecordResamplerStore::reset() { _cache.clear(); }
 
 std::unique_ptr<RecordResamplerStore::RecordResampler>
-RecordResamplerStore::Get(const Record *rec, double target_frequency) {
-  return Get(rec->samplingFrequency(), target_frequency);
+RecordResamplerStore::get(const Record *rec, double targetFrequency) {
+  return get(rec->samplingFrequency(), targetFrequency);
 }
 
 std::unique_ptr<RecordResamplerStore::RecordResampler>
-RecordResamplerStore::Get(double current_frequency, double target_frequency) {
-  record_resampler_store_detail::CacheKey key{current_frequency,
-                                              target_frequency};
+RecordResamplerStore::get(double currentFrequency, double targetFrequency) {
+  record_resampler_store_detail::CacheKey key{currentFrequency,
+                                              targetFrequency};
 
-  if (cache_.find(key) == cache_.end()) {
-    cache_.emplace(key,
-                   utils::make_unique<RecordResamplerStore::RecordResampler>(
-                       target_frequency, fp_, fs_, coefficient_scale_,
-                       lanczos_kernel_width_));
+  if (_cache.find(key) == _cache.end()) {
+    _cache.emplace(
+        key,
+        utils::make_unique<RecordResamplerStore::RecordResampler>(
+            targetFrequency, _fp, _fs, _coefficientScale, _lanczosKernelWidth));
   }
 
   return std::unique_ptr<RecordResamplerStore::RecordResampler>(
       dynamic_cast<RecordResamplerStore::RecordResampler *>(
-          cache_.at(key)->clone()));
+          _cache.at(key)->clone()));
 }
 
 }  // namespace detect

@@ -20,15 +20,15 @@ namespace detect {
 
 namespace waveform {
 
-bool Trim(GenericRecord &trace, const Core::TimeWindow &tw);
-bool Filter(GenericRecord &trace, const std::string &filter_string);
-bool Filter(DoubleArray &data, const std::string &filter_string,
-            double sampling_freq);
-bool Resample(GenericRecord &trace, double target_frequency);
-void Demean(GenericRecord &trace);
-void Demean(DoubleArray &data);
-bool Write(const GenericRecord &trace, std::ostream &out);
-bool Read(GenericRecord &trace, std::istream &in);
+bool trim(GenericRecord &trace, const Core::TimeWindow &tw);
+bool filter(GenericRecord &trace, const std::string &filterId);
+bool filter(DoubleArray &data, const std::string &filterId,
+            double samplingFrequency);
+bool resample(GenericRecord &trace, double targetFrequency);
+void demean(GenericRecord &trace);
+void demean(DoubleArray &data);
+bool write(const GenericRecord &trace, std::ostream &out);
+bool read(GenericRecord &trace, std::istream &in);
 
 }  // namespace waveform
 
@@ -43,44 +43,44 @@ class WaveformHandlerIface : public Core::BaseObject {
 
   struct ProcessingConfig {
     // The filter identifier
-    std::string filter_string;
+    std::string filterId;
     // Margin time in seconds used for filtering in order to prevent from
     // filtering artifacts
-    double filter_margin_time{0};
+    double filterMarginTime{0};
     // Target frequency for resampling
-    double target_frequency{0};
+    double targetFrequency{0};
     // Indicates if the data should be demeaned
     bool demean{true};
   };
 
   virtual ~WaveformHandlerIface() {}
 
-  virtual GenericRecordCPtr Get(const DataModel::WaveformStreamID &id,
+  virtual GenericRecordCPtr get(const DataModel::WaveformStreamID &id,
                                 const Core::TimeWindow &tw,
                                 const ProcessingConfig &config) = 0;
 
-  virtual GenericRecordCPtr Get(const std::string &net_code,
-                                const std::string &sta_code,
-                                const std::string &loc_code,
-                                const std::string &cha_code,
+  virtual GenericRecordCPtr get(const std::string &netCode,
+                                const std::string &staCode,
+                                const std::string &locCode,
+                                const std::string &chaCode,
                                 const Core::TimeWindow &tw,
                                 const ProcessingConfig &config) = 0;
 
-  virtual GenericRecordCPtr Get(const DataModel::WaveformStreamID &id,
+  virtual GenericRecordCPtr get(const DataModel::WaveformStreamID &id,
                                 const Core::Time &start, const Core::Time &end,
                                 const ProcessingConfig &config) = 0;
 
-  virtual GenericRecordCPtr Get(const std::string &net_code,
-                                const std::string &sta_code,
-                                const std::string &loc_code,
-                                const std::string &cha_code,
+  virtual GenericRecordCPtr get(const std::string &netCode,
+                                const std::string &staCode,
+                                const std::string &locCode,
+                                const std::string &chaCode,
                                 const Core::Time &start, const Core::Time &end,
                                 const ProcessingConfig &config) = 0;
 
  protected:
   // Process `trace` according to `config`
-  void Process(const GenericRecordPtr &trace, const ProcessingConfig &config,
-               const Core::TimeWindow &tw_trim = Core::TimeWindow{}) const;
+  void process(const GenericRecordPtr &trace, const ProcessingConfig &config,
+               const Core::TimeWindow &twTrim = Core::TimeWindow{}) const;
 };
 
 DEFINE_SMARTPOINTER(WaveformHandler);
@@ -92,84 +92,84 @@ class WaveformHandler : public WaveformHandlerIface {
     NoData();
   };
 
-  WaveformHandler(const std::string &record_stream_url);
+  WaveformHandler(const std::string &recordStreamUrl);
 
-  GenericRecordCPtr Get(
+  GenericRecordCPtr get(
       const DataModel::WaveformStreamID &id, const Core::TimeWindow &tw,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(
-      const std::string &net_code, const std::string &sta_code,
-      const std::string &loc_code, const std::string &cha_code,
+  GenericRecordCPtr get(
+      const std::string &netCode, const std::string &staCode,
+      const std::string &locCode, const std::string &chaCode,
       const Core::TimeWindow &tw,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(
+  GenericRecordCPtr get(
       const DataModel::WaveformStreamID &id, const Core::Time &start,
       const Core::Time &end,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(
-      const std::string &net_code, const std::string &sta_code,
-      const std::string &loc_code, const std::string &cha_code,
+  GenericRecordCPtr get(
+      const std::string &netCode, const std::string &staCode,
+      const std::string &locCode, const std::string &chaCode,
       const Core::Time &start, const Core::Time &end,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
  private:
-  std::string record_stream_url_;
+  std::string _recordStreamUrl;
 
-  static const double download_margin_;
+  static const double _downloadMargin;
 };
 
 DEFINE_SMARTPOINTER(Cached);
 class Cached : public WaveformHandlerIface {
  public:
-  GenericRecordCPtr Get(
+  GenericRecordCPtr get(
       const DataModel::WaveformStreamID &id, const Core::TimeWindow &tw,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(
-      const std::string &net_code, const std::string &sta_code,
-      const std::string &loc_code, const std::string &cha_code,
+  GenericRecordCPtr get(
+      const std::string &cacheKey, const std::string &staCode,
+      const std::string &locCode, const std::string &chaCode,
       const Core::TimeWindow &tw,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(
+  GenericRecordCPtr get(
       const DataModel::WaveformStreamID &id, const Core::Time &start,
       const Core::Time &end,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
-  GenericRecordCPtr Get(
-      const std::string &net_code, const std::string &sta_code,
-      const std::string &loc_code, const std::string &cha_code,
+  GenericRecordCPtr get(
+      const std::string &netCode, const std::string &staCode,
+      const std::string &locCode, const std::string &chaCode,
       const Core::Time &start, const Core::Time &end,
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
  protected:
-  Cached(WaveformHandlerIfacePtr waveform_handler, bool raw = false);
+  Cached(WaveformHandlerIfacePtr waveformHandler, bool raw = false);
 
-  virtual void MakeCacheKey(
-      const std::string &net_code, const std::string &sta_code,
-      const std::string &loc_code, const std::string &cha_code,
+  virtual void makeCacheKey(
+      const std::string &netCode, const std::string &staCode,
+      const std::string &locCode, const std::string &chaCode,
       const Core::TimeWindow &tw,
       const WaveformHandlerIface::ProcessingConfig &config,
       std::string &result) const;
-  virtual void MakeCacheKey(std::vector<std::string> key_components,
+  virtual void makeCacheKey(std::vector<std::string> keyComponents,
                             std::string &result) const;
-  virtual GenericRecordCPtr Get(const std::string &key) = 0;
-  virtual bool Set(const std::string &key, GenericRecordCPtr value) = 0;
-  virtual bool Exists(const std::string &key) = 0;
+  virtual GenericRecordCPtr get(const std::string &key) = 0;
+  virtual bool set(const std::string &key, GenericRecordCPtr value) = 0;
+  virtual bool exists(const std::string &key) = 0;
 
-  virtual bool CacheProcessed() const;
+  virtual bool cacheProcessed() const;
 
  private:
-  WaveformHandlerIfacePtr waveform_handler_;
+  WaveformHandlerIfacePtr _waveformHandler;
 
   // Indicates if either the raw waveform or the processed waveform should be
   // cached
-  bool raw_;
+  bool _raw;
 
-  static const std::string cache_key_sep_;
+  static const std::string _cacheKeySep;
 };
 
 DEFINE_SMARTPOINTER(FileSystemCache);
@@ -179,26 +179,26 @@ class FileSystemCache : public Cached {
                   const std::string &path, bool raw = false);
 
  protected:
-  GenericRecordCPtr Get(const std::string &key) override;
-  bool Set(const std::string &key, GenericRecordCPtr value) override;
-  bool Exists(const std::string &key) override;
+  GenericRecordCPtr get(const std::string &key) override;
+  bool set(const std::string &key, GenericRecordCPtr value) override;
+  bool exists(const std::string &key) override;
 
  private:
-  std::string path_cache_;
+  std::string _pathCache;
 };
 
 DEFINE_SMARTPOINTER(InMemoryCache);
 class InMemoryCache : public Cached {
  public:
-  InMemoryCache(WaveformHandlerIfacePtr waveform_handler, bool raw = false);
+  InMemoryCache(WaveformHandlerIfacePtr waveformHandler, bool raw = false);
 
  protected:
-  GenericRecordCPtr Get(const std::string &key) override;
-  bool Set(const std::string &key, GenericRecordCPtr value) override;
-  bool Exists(const std::string &key) override;
+  GenericRecordCPtr get(const std::string &key) override;
+  bool set(const std::string &key, GenericRecordCPtr value) override;
+  bool exists(const std::string &key) override;
 
  private:
-  std::unordered_map<std::string, GenericRecordCPtr> cache_;
+  std::unordered_map<std::string, GenericRecordCPtr> _cache;
 };
 
 }  // namespace detect

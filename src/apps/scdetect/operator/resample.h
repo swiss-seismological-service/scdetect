@@ -15,14 +15,14 @@ class ResamplingOperator : public WaveformOperator {
  public:
   using RecordResampler = RecordResamplerStore::RecordResampler;
 
-  ResamplingOperator(std::unique_ptr<RecordResampler> record_resampler);
+  ResamplingOperator(std::unique_ptr<RecordResampler> recordResampler);
 
-  WaveformProcessor::Status Feed(const Record *record) override;
+  WaveformProcessor::Status feed(const Record *record) override;
 
-  void Reset() override;
+  void reset() override;
 
  private:
-  std::unique_ptr<RecordResampler> record_resampler_;
+  std::unique_ptr<RecordResampler> _recordResampler;
 };
 
 }  // namespace waveform_operator

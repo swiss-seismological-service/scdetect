@@ -10,183 +10,182 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-Linker::Linker(const Core::TimeSpan &on_hold, double arrival_offset_thres)
-    : thres_arrival_offset_{arrival_offset_thres}, on_hold_{on_hold} {}
+Linker::Linker(const Core::TimeSpan &onHold, double arrivalOffsetThres)
+    : _thresArrivalOffset{arrivalOffsetThres}, _onHold{onHold} {}
 
 Linker::~Linker() {}
 
-void Linker::set_thres_arrival_offset(const boost::optional<double> &thres) {
-  thres_arrival_offset_ = thres;
+void Linker::setThresArrivalOffset(const boost::optional<double> &thres) {
+  _thresArrivalOffset = thres;
 }
 
-boost::optional<double> Linker::thres_arrival_offset() const {
-  return thres_arrival_offset_;
+boost::optional<double> Linker::thresArrivalOffset() const {
+  return _thresArrivalOffset;
 }
 
-void Linker::set_thres_result(const boost::optional<double> &thres) {
-  thres_result_ = thres;
+void Linker::setThresResult(const boost::optional<double> &thres) {
+  _thresResult = thres;
 }
 
-boost::optional<double> Linker::thres_result() const { return thres_result_; }
+boost::optional<double> Linker::thresResult() const { return _thresResult; }
 
-void Linker::set_min_arrivals(const boost::optional<size_t> &n) {
+void Linker::setMinArrivals(const boost::optional<size_t> &n) {
   auto v{n};
   if (v && 1 > *v) {
     v = boost::none;
   }
 
-  min_arrivals_ = v;
+  _minArrivals = v;
 }
 
-boost::optional<size_t> Linker::min_arrivals() const { return min_arrivals_; }
+boost::optional<size_t> Linker::minArrivals() const { return _minArrivals; }
 
-void Linker::set_on_hold(const Core::TimeSpan &duration) {
-  on_hold_ = duration;
-}
+void Linker::setOnHold(const Core::TimeSpan &duration) { _onHold = duration; }
 
-Core::TimeSpan Linker::on_hold() const { return on_hold_; }
+Core::TimeSpan Linker::onHold() const { return _onHold; }
 
-Linker::Status Linker::status() const { return status_; }
+Linker::Status Linker::status() const { return _status; }
 
-size_t Linker::GetAssociatedChannelCount() const {
-  std::unordered_set<std::string> wf_ids;
-  for (const auto &proc_pair : processors_) {
-    wf_ids.emplace(proc_pair.second.arrival.pick.waveform_id);
+size_t Linker::getAssociatedChannelCount() const {
+  std::unordered_set<std::string> wfIds;
+  for (const auto &procPair : _processors) {
+    wfIds.emplace(procPair.second.arrival.pick.waveformStreamId);
   }
 
-  return wf_ids.size();
+  return wfIds.size();
 }
 
-size_t Linker::GetProcessorCount() const { return processors_.size(); }
+size_t Linker::getProcessorCount() const { return _processors.size(); }
 
-void Linker::Register(const Template *proc, const Arrival &arrival) {
+void Linker::add(const TemplateWaveformProcessor *proc,
+                 const Arrival &arrival) {
   if (proc) {
-    processors_.emplace(proc->id(), Processor{proc, arrival});
-    pot_valid_ = false;
+    _processors.emplace(proc->id(), Processor{proc, arrival});
+    _potValid = false;
   }
 }
 
-void Linker::Remove(const std::string &proc_id) {
-  processors_.erase(proc_id);
-  pot_valid_ = false;
+void Linker::remove(const std::string &proc_id) {
+  _processors.erase(proc_id);
+  _potValid = false;
 }
 
-void Linker::Reset() {
-  queue_.clear();
-  pot_valid_ = false;
+void Linker::reset() {
+  _queue.clear();
+  _potValid = false;
 
-  status_ = Status::kWaitingForData;
+  _status = Status::kWaitingForData;
 }
 
-void Linker::Terminate() {
+void Linker::terminate() {
   // flush pending events
-  while (!queue_.empty()) {
-    const auto event{queue_.front()};
-    if (event.GetArrivalCount() >=
-            min_arrivals_.value_or(GetProcessorCount()) &&
-        (!thres_result_ || event.result.fit >= *thres_result_)) {
-      EmitResult(event.result);
+  while (!_queue.empty()) {
+    const auto event{_queue.front()};
+    if (event.getArrivalCount() >= _minArrivals.value_or(getProcessorCount()) &&
+        (!_thresResult || event.result.fit >= *_thresResult)) {
+      emitResult(event.result);
     }
 
-    queue_.pop_front();
+    _queue.pop_front();
   }
-  status_ = Status::kTerminated;
+  _status = Status::kTerminated;
 }
 
-void Linker::Feed(const Template *proc, const Template::MatchResultCPtr &res) {
+void Linker::feed(const TemplateWaveformProcessor *proc,
+                  const TemplateWaveformProcessor::MatchResultCPtr &res) {
   if (!proc || !res) {
     return;
   }
 
   if (status() < Status::kTerminated) {
-    auto it{processors_.find(proc->id())};
-    if (it == processors_.end()) {
+    auto it{_processors.find(proc->id())};
+    if (it == _processors.end()) {
       return;
     }
 
-    auto &linker_proc{it->second};
+    auto &linkerProc{it->second};
     // create a new arrival from a *template arrival*
-    auto new_arrival{linker_proc.arrival};
-    const auto template_starttime{linker_proc.proc->template_starttime()};
-    if (template_starttime) {
-      // XXX(damb): recompute the pick_offset; the template proc might have
+    auto newArrival{linkerProc.arrival};
+    const auto templateStartTime{linkerProc.proc->templateStartTime()};
+    if (templateStartTime) {
+      // XXX(damb): recompute the pickOffset; the template proc might have
       // changed the underlying template waveform (due to resampling)
-      const auto pick_offset{linker_proc.arrival.pick.time -
-                             *template_starttime};
-      const auto time{res->time_window.startTime() + Core::TimeSpan{res->lag} +
-                      pick_offset};
-      new_arrival.pick.time = time;
+      const auto pickOffset{linkerProc.arrival.pick.time - *templateStartTime};
+      const auto time{res->timeWindow.startTime() + Core::TimeSpan{res->lag} +
+                      pickOffset};
+      newArrival.pick.time = time;
 
-      Process(proc, Result::TemplateResult{new_arrival, res});
+      process(proc, Result::TemplateResult{newArrival, res});
     }
   }
 }
 
-void Linker::set_result_callback(const PublishResultCallback &cb) {
-  result_callback_ = cb;
+void Linker::setResultCallback(const PublishResultCallback &callback) {
+  _resultCallback = callback;
 }
 
-void Linker::Process(const Template *proc, const Result::TemplateResult &res) {
-  if (!processors_.empty()) {
+void Linker::process(const TemplateWaveformProcessor *proc,
+                     const Result::TemplateResult &res) {
+  if (!_processors.empty()) {
     // update POT
-    if (!pot_valid_) {
-      CreatePOT();
+    if (!_potValid) {
+      createPot();
     }
-    pot_.Enable();
+    _pot.enable();
 
-    const auto &proc_id{proc->id()};
-    const auto &match_result{res.match_result};
+    const auto &procId{proc->id()};
+    const auto &matchResult{res.matchResult};
     // merge result into existing events
-    for (auto event_it = std::begin(queue_); event_it != std::end(queue_);
-         ++event_it) {
-      if (event_it->GetArrivalCount() < GetProcessorCount()) {
-        auto &templ_results{event_it->result.results};
-        auto it{templ_results.find(proc_id)};
-        if (it == templ_results.end() ||
-            match_result->coefficient > it->second.match_result->coefficient) {
+    for (auto eventIt = std::begin(_queue); eventIt != std::end(_queue);
+         ++eventIt) {
+      if (eventIt->getArrivalCount() < getProcessorCount()) {
+        auto &templResults{eventIt->result.results};
+        auto it{templResults.find(procId)};
+        if (it == templResults.end() ||
+            matchResult->coefficient > it->second.matchResult->coefficient) {
           std::vector<Arrival> arrivals{res.arrival};
-          std::unordered_set<std::string> wf_ids;
-          for (const auto &templ_res_pair : templ_results) {
-            const auto &a{templ_res_pair.second.arrival};
+          std::unordered_set<std::string> wfIds;
+          for (const auto &templResultPair : templResults) {
+            const auto &a{templResultPair.second.arrival};
             arrivals.push_back(a);
-            wf_ids.emplace(a.pick.waveform_id);
+            wfIds.emplace(a.pick.waveformStreamId);
           }
 
           POT pot{arrivals};
 
-          if (thres_arrival_offset_) {
+          if (_thresArrivalOffset) {
             // prepare reference POT
-            pot_.Disable(wf_ids);
+            _pot.disable(wfIds);
 
             std::unordered_set<std::string> exceeded;
-            if (!ValidatePickOffsets(pot_, pot, exceeded,
-                                     *thres_arrival_offset_) ||
+            if (!validatePickOffsets(_pot, pot, exceeded,
+                                     *_thresArrivalOffset) ||
                 !exceeded.empty()) {
               continue;
             }
           }
 
-          event_it->MergeResult(proc_id, res, pot);
+          eventIt->mergeResult(procId, res, pot);
         }
-        pot_.Enable();
+        _pot.enable();
       }
     }
 
     const auto now{Core::Time::GMT()};
     // create new event
-    Event event{now + on_hold_};
-    event.MergeResult(proc_id, res, POT{std::vector<Arrival>{res.arrival}});
-    queue_.emplace_back(event);
+    Event event{now + _onHold};
+    event.mergeResult(procId, res, POT{std::vector<Arrival>{res.arrival}});
+    _queue.emplace_back(event);
 
     std::vector<EventQueue::iterator> ready;
-    for (auto it = std::begin(queue_); it != std::end(queue_); ++it) {
-      const auto arrival_count{it->GetArrivalCount()};
+    for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
+      const auto arrivalCount{it->getArrivalCount()};
       // emit results which are ready and surpass threshold
-      if (arrival_count == GetProcessorCount() ||
+      if (arrivalCount == getProcessorCount() ||
           (now >= it->expired &&
-           arrival_count >= min_arrivals_.value_or(GetProcessorCount()))) {
-        if (!thres_result_ || it->result.fit >= *thres_result_) {
-          EmitResult(it->result);
+           arrivalCount >= _minArrivals.value_or(getProcessorCount()))) {
+        if (!_thresResult || it->result.fit >= *_thresResult) {
+          emitResult(it->result);
         }
         ready.push_back(it);
       }
@@ -198,67 +197,67 @@ void Linker::Process(const Template *proc, const Result::TemplateResult &res) {
 
     // clean up result queue
     for (auto &it : ready) {
-      queue_.erase(it);
+      _queue.erase(it);
     }
   }
 }
 
-void Linker::EmitResult(const Result &res) {
-  if (result_callback_) {
-    result_callback_.value()(res);
+void Linker::emitResult(const Result &res) {
+  if (_resultCallback) {
+    _resultCallback.value()(res);
   }
 }
 
-void Linker::CreatePOT() {
+void Linker::createPot() {
   std::vector<Arrival> arrivals;
   using pair_type = Processors::value_type;
-  std::transform(processors_.cbegin(), processors_.cend(),
+  std::transform(_processors.cbegin(), _processors.cend(),
                  back_inserter(arrivals),
                  [](const pair_type &p) { return p.second.arrival; });
 
   // XXX(damb): The current implementation simply recreates the POT
-  pot_ = POT(arrivals);
-  pot_valid_ = true;
+  _pot = POT(arrivals);
+  _potValid = true;
 }
 
 /* ------------------------------------------------------------------------- */
-size_t Linker::Result::GetArrivalCount() const { return results.size(); }
+size_t Linker::Result::getArrivalCount() const { return results.size(); }
 
-std::string Linker::Result::DebugString() const {
-  const Core::Time starttime{
-      results.at(ref_proc_id).match_result->time_window.startTime()};
-  const Core::Time endtime{starttime +
-                           Core::TimeSpan{pot.pick_offset().value_or(0)}};
-  return std::string{"(" + starttime.iso() + " - " + endtime.iso() +
+std::string Linker::Result::debugString() const {
+  const Core::Time startTime{
+      results.at(refProcId).matchResult->timeWindow.startTime()};
+  const Core::Time endTime{startTime +
+                           Core::TimeSpan{pot.pickOffset().value_or(0)}};
+  return std::string{"(" + startTime.iso() + " - " + endTime.iso() +
                      "): fit=" + std::to_string(fit) +
-                     ", arrival_count=" + std::to_string(GetArrivalCount())};
+                     ", arrival_count=" + std::to_string(getArrivalCount())};
 }
 
 /* ------------------------------------------------------------------------- */
-void Linker::Event::MergeResult(const std::string &proc_id,
+void Linker::Event::mergeResult(const std::string &procId,
                                 const Result::TemplateResult &res,
                                 const POT &pot) {
-  auto &templ_results{result.results};
-  templ_results.emplace(proc_id, res);
+  auto &templResults{result.results};
+  templResults.emplace(procId, res);
 
   std::vector<double> fits;
-  std::transform(std::begin(templ_results), std::end(templ_results),
+  std::transform(std::begin(templResults), std::end(templResults),
                  std::back_inserter(fits),
                  [](const Result::TemplateResults::value_type &p) {
-                   return p.second.match_result->coefficient;
+                   return p.second.matchResult->coefficient;
                  });
 
   // XXX(damb): Currently, we use the mean in order to compute the overall
   // event's score
-  result.fit = utils::CMA(fits.data(), fits.size());
+  result.fit = utils::cma(fits.data(), fits.size());
   result.pot = pot;
-  if (!ref_pick_time || res.arrival.pick.time < ref_pick_time) {
-    ref_pick_time = res.arrival.pick.time;
-    result.ref_proc_id = proc_id;
+  if (!refPickTime || res.arrival.pick.time < refPickTime) {
+    refPickTime = res.arrival.pick.time;
+    result.refProcId = procId;
   }
 }
 
-size_t Linker::Event::GetArrivalCount() const { return result.results.size(); }
+size_t Linker::Event::getArrivalCount() const { return result.results.size(); }
 
 }  // namespace detector
 }  // namespace detect
@@ -274,8 +273,8 @@ hash<Seiscomp::detect::detector::Linker::Result::TemplateResult>::operator()(
   boost::hash_combine(
       ret, std::hash<Seiscomp::detect::detector::Arrival>{}(tr.arrival));
 
-  if (tr.match_result) {
-    boost::hash_combine(ret, std::hash<double>{}(tr.match_result->coefficient));
+  if (tr.matchResult) {
+    boost::hash_combine(ret, std::hash<double>{}(tr.matchResult->coefficient));
   }
 
   return ret;

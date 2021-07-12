@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "config.h"
-#include "detector.h"
+#include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
 #include "waveform.h"
 
@@ -42,56 +42,56 @@ class Application : public Client::StreamApplication {
   struct Config {
     Config();
 
-    void Init(const Client::Application *app);
-    void Init(const System::CommandLine &commandline);
+    void init(const Client::Application *app);
+    void init(const System::CommandLine &commandline);
 
-    std::string path_filesystem_cache;
-    std::string url_event_db;
+    std::string pathFilesystemCache;
+    std::string urlEventDb;
 
-    bool templates_prepare{false};
-    bool templates_no_cache{false};
+    bool templatesPrepare{false};
+    bool templatesNoCache{false};
 
     // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skip_template_if_no_waveform_data{true};
+    bool skipTemplateIfNoWaveformData{true};
     // Defines if a detector should be initialized although template processors
     // could not be initialized due to missing stream information in the
     // inventory.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skip_template_if_no_stream_data{true};
+    bool skipTemplateIfNoStreamData{true};
     // Defines if a detector should be initialized although template processors
     // could not be initialized due to missing sensor location information in
     // the inventory.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skip_template_if_no_sensor_location_data{true};
+    bool skipTemplateIfNoSensorLocationData{true};
 
     // Input
-    std::string path_template_json{};
+    std::string pathTemplateJson{};
 
     // Reprocessing / playback
     struct {
-      std::string start_time_str;
-      std::string end_time_str;
+      std::string startTimeStr;
+      std::string endTimeStr;
 
-      Core::Time start_time;
-      Core::Time end_time;
+      Core::Time startTime;
+      Core::Time endTime;
 
       // Indicates if playback mode is enabled/disabled
       bool enabled{false};
-    } playback_config;
+    } playbackConfig;
 
     // Messaging
-    bool offline_mode{false};
-    bool no_publish{false};
-    std::string path_ep;
+    bool offlineMode{false};
+    bool noPublish{false};
+    std::string pathEp;
 
-    DetectorConfig detector_config;
+    DetectorConfig detectorConfig;
 
-    StreamConfig stream_config;
+    StreamConfig streamConfig;
   };
 
   const char *version() override;
@@ -107,25 +107,25 @@ class Application : public Client::StreamApplication {
 
   void handleRecord(Record *rec) override;
 
-  void EmitDetection(const WaveformProcessor *processor, const Record *record,
+  void emitDetection(const WaveformProcessor *processor, const Record *record,
                      const WaveformProcessor::ResultCPtr &result);
 
  protected:
-  // Load events either from `event_db` or `db`
-  virtual bool LoadEvents(const std::string &event_db,
+  // Load events either from `eventDb` or `db`
+  virtual bool loadEvents(const std::string &eventDb,
                           DataModel::DatabaseQueryPtr db);
 
  private:
-  bool InitDetectors(WaveformHandlerIfacePtr waveform_handler);
+  bool initDetectors(WaveformHandlerIfacePtr waveformHandler);
 
-  Config config_;
-  ObjectLog *output_origins_;
+  Config _config;
+  ObjectLog *_outputOrigins;
 
-  DataModel::EventParametersPtr ep_;
+  DataModel::EventParametersPtr _ep;
 
-  using DetectorMap =
-      std::unordered_multimap<std::string, std::shared_ptr<Detector>>;
-  DetectorMap detectors_;
+  using DetectorMap = std::unordered_multimap<
+      std::string, std::shared_ptr<detector::DetectorWaveformProcessor>>;
+  DetectorMap _detectors;
 };
 
 }  // namespace detect

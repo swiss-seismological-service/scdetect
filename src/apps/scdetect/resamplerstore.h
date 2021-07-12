@@ -12,8 +12,8 @@ namespace detect {
 namespace record_resampler_store_detail {
 
 struct CacheKey {
-  double current_frequency;
-  double target_frequency;
+  double currentFrequency;
+  double targetFrequency;
 
   friend bool operator==(const CacheKey &lhs, const CacheKey &rhs);
   friend bool operator!=(const CacheKey &lhs, const CacheKey &rhs);
@@ -47,31 +47,31 @@ class RecordResamplerStore {
   void operator=(const RecordResamplerStore &) = delete;
 
   // Reset the store
-  void Reset();
+  void reset();
 
-  std::unique_ptr<RecordResampler> Get(const Record *rec,
-                                       double target_frequency);
+  std::unique_ptr<RecordResampler> get(const Record *rec,
+                                       double targetFrequency);
 
-  std::unique_ptr<RecordResampler> Get(double current_frequency,
-                                       double target_frequency);
+  std::unique_ptr<RecordResampler> get(double currentFrequency,
+                                       double targetFrequency);
 
  private:
   RecordResamplerStore() {}
 
   struct CacheKey {
-    double source_frequency;
-    double target_frequency;
+    double sourceFrequency;
+    double targetFrequency;
   };
 
   using Cache = std::unordered_map<record_resampler_store_detail::CacheKey,
                                    std::unique_ptr<RecordResampler>>;
 
-  Cache cache_;
+  Cache _cache;
 
-  double fp_{0.7};
-  double fs_{0.9};
-  double coefficient_scale_{10};
-  int lanczos_kernel_width_{3};
+  double _fp{0.7};
+  double _fs{0.9};
+  double _coefficientScale{10};
+  int _lanczosKernelWidth{3};
 };
 
 }  // namespace detect

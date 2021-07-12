@@ -42,13 +42,13 @@ class Builder {
   Builder(Builder &&other) = default;
   Builder &operator=(Builder &&other) = default;
 
-  virtual std::unique_ptr<TProduct> Build();
+  virtual std::unique_ptr<TProduct> build();
 
  protected:
-  // Finalize the product
-  virtual void Finalize();
+  // finalize the product
+  virtual void finalize();
 
-  std::unique_ptr<TProduct> product_{nullptr};
+  std::unique_ptr<TProduct> _product{nullptr};
 };
 
 #include "builder.ipp"

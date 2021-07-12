@@ -18,19 +18,19 @@ class WaveformOperator {
   virtual ~WaveformOperator();
 
   // Sets the callback function
-  void set_store_callback(const StoreCallback &callback);
+  void setStoreCallback(const StoreCallback &callback);
 
   // Feeds `record` to the operator
-  virtual WaveformProcessor::Status Feed(const Record *record) = 0;
+  virtual WaveformProcessor::Status feed(const Record *record) = 0;
 
   // Resets the `WaveformOperator`
-  virtual void Reset() = 0;
+  virtual void reset() = 0;
 
  protected:
-  bool Store(const Record *record);
+  bool store(const Record *record);
 
  private:
-  StoreCallback store_callback_;
+  StoreCallback _storeCallback;
 };
 
 }  // namespace detect

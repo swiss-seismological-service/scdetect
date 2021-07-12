@@ -7,11 +7,11 @@ namespace Seiscomp {
 namespace detect {
 namespace config {
 
-bool ValidateXCorrThreshold(const double &thres);
-bool ValidateArrivalOffsetThreshold(double thres);
-bool ValidateMinArrivals(int n, int num_stream_configs = 0);
-bool ValidateSamplingFrequency(double sampling_frequency);
-bool ValidateFilter(const std::string &filter_string, std::string &err);
+bool validateXCorrThreshold(const double &thres);
+bool validateArrivalOffsetThreshold(double thres);
+bool validateMinArrivals(int n, int numStreamConfigs = 0);
+bool validateSamplingFrequency(double samplingFrequency);
+bool validateFilter(const std::string &filterId, std::string &err);
 
 }  // namespace config
 }  // namespace detect

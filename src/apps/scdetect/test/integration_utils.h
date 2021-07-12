@@ -41,17 +41,17 @@ class ArgFlag : public Flag {
  protected:
   void to_string(std::ostream &os) const override;
 
-  void set_arg(const std::string &arg);
+  void setArg(const std::string &arg);
 
  private:
-  std::string arg_;
+  std::string _arg;
 };
 
 class BooleanFlag : public ArgFlag {
  public:
   BooleanFlag();
-  void Enable();
-  void Disable();
+  void enable();
+  void disable();
 };
 
 class FlagDebug : public Flag {
@@ -142,13 +142,13 @@ class FlagRecordURL : public ArgFlag {
 
 class FlagRecordStartTime : public ArgFlag {
  public:
-  FlagRecordStartTime(const std::string &time_str);
+  FlagRecordStartTime(const std::string &timeStr);
   const std::string flag() const override;
 };
 
 class FlagRecordEndTime : public ArgFlag {
  public:
-  FlagRecordEndTime(const std::string &time_str);
+  FlagRecordEndTime(const std::string &timeStr);
   const std::string flag() const override;
 };
 
@@ -163,50 +163,50 @@ class FlagTemplatesJSON : public ArgFlag {
 
 /* -------------------------------------------------------------------------- */
 // Compare `DataModel::EventParameters element-wise
-void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
+void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
                         const DataModel::EventParametersCPtr &rhs);
 
 // Compare `DataModel::Pick` element-wise
-void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
+void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
 
 // Compare `DataModel::Origin` element-wise
-void OriginCmp(const DataModel::OriginCPtr &lhs,
+void originCmp(const DataModel::OriginCPtr &lhs,
                const DataModel::OriginCPtr &rhs);
 
 // Compare `DataModel::OriginQuality` element-wise
-void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
+void originQualityCmp(const DataModel::OriginQualityCPtr &lhs,
                       const DataModel::OriginQualityCPtr &rhs);
 
 // Compare `DataModel::Arrival` element-wise
-void ArrivalCmp(const DataModel::ArrivalCPtr &lhs,
+void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
                 const DataModel::ArrivalCPtr &rhs);
 
 // Compare `DataModel::Magnitude` element-wise
-void MagnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
+void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs);
 
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {
   TempDirFixture();
-  TempDirFixture(bool keep_tempdir);
+  TempDirFixture(bool keepTempdir);
   ~TempDirFixture();
 
-  std::string path_tempdir_str() const;
-  const char *path_tempdir_cstr() const;
+  std::string pathTempdirStr() const;
+  const char *pathTempdirCStr() const;
 
-  fs::path path_tempdir;
+  fs::path pathTempdir;
 
  protected:
-  static fs::path CreatePathUnique();
+  static fs::path createPathUnique();
 
-  void CreateTempdir();
+  void createTempdir();
 
  private:
-  static const std::string path_subdir;
+  static const std::string _pathSubDir;
   // Maximum number of tries in order to create the temporary directory
-  static const int max_tries;
+  static const int _maxTries;
 
-  bool keep_tempdir_{false};
+  bool _keepTempdir{false};
 };
 
 /* -------------------------------------------------------------------------- */
@@ -217,8 +217,8 @@ struct CLIParserFixture {
   void setup();
   void teardown();
 
-  static fs::path path_data;
-  static bool keep_tempdir;
+  static fs::path pathData;
+  static bool keepTempdir;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -231,7 +231,7 @@ class ApplicationWrapper {
   int operator()();
 
  private:
-  std::vector<char *> argv_;
+  std::vector<char *> _argv;
 };
 
 #include "integration_utils.ipp"

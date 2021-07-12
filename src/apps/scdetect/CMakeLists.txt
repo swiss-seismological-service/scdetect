@@ -6,12 +6,13 @@ set(
     config.cpp
     datamodel/ddl.cpp
     detail/sqlite.cpp
-    detector.cpp
     detector/arrival.cpp
     detector/detector.cpp
+    detector/detectorbuilder.cpp
+    detector/detectorwaveformprocessor.cpp
     detector/linker.cpp
     detector/pot.cpp
-    detector/template.cpp
+    detector/templatewaveformprocessor.cpp
     eventstore.cpp
     exception.cpp
     filter.cpp

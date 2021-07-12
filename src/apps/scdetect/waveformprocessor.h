@@ -25,7 +25,7 @@ class WaveformProcessor : public Processor {
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
   WaveformProcessor(const std::string &id,
-                    const boost::filesystem::path &debug_info_dir = "");
+                    const boost::filesystem::path &debugInfoDir = "");
 
   DEFINE_SMARTPOINTER(Result);
   class Result : public Core::BaseObject {
@@ -105,23 +105,23 @@ class WaveformProcessor : public Processor {
   bool enabled() const;
 
   // Sets the result callback in order to publish processing results
-  void set_result_callback(const PublishResultCallback &callback);
+  void setResultCallback(const PublishResultCallback &callback);
 
   // Returns the current status of the processor
   Status status() const;
 
   // Returns the value associated with the status
-  double status_value() const;
+  double statusValue() const;
 
   // Sets the filter to apply; the filter pointer passed is owned by the
   // `WaveformProcessor`
-  virtual void set_filter(Filter *filter, const Core::TimeSpan &init_time) = 0;
+  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
   // Configures a `WaveformProcessor` with `op`. `op` is applied to all records
-  // fed. `op` sits between `Feed` and `Store`. The pointer ownership goes to
+  // fed. `op` sits between `feed` and `store`. The pointer ownership goes to
   // the processor.
-  void set_operator(WaveformOperator *op);
+  void setOperator(WaveformOperator *op);
   // Returns the processor's initialization time
-  virtual const Core::TimeSpan init_time() const;
+  virtual const Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
   // Status::kInProgress.
@@ -131,100 +131,100 @@ class WaveformProcessor : public Processor {
   virtual const Core::TimeWindow &processed() const = 0;
 
   // Returns the file system path to the processor's debug info directory
-  const boost::filesystem::path &debug_info_dir() const;
+  const boost::filesystem::path &debugInfoDir() const;
 
   // Returns if the processor is operated in debug mode
-  bool debug_mode() const;
+  bool debugMode() const;
 
-  // Feed data to the processor (implies a call to the Process() method).
-  virtual bool Feed(const Record *record);
+  // Feed data to the processor (implies a call to the process() method).
+  virtual bool feed(const Record *record);
 
   // Resets the processor completely. The configured init time is going to be
   // processed again.
-  virtual void Reset();
+  virtual void reset();
 
   // Terminates the processor ignoring its current status
-  virtual void Terminate();
+  virtual void terminate();
 
   // Closes the processor meaning that no more records are going to be fed in.
   // The processing has been finished.
-  virtual void Close() const;
+  virtual void close() const;
 
   // Returns a debug string for the corresponding processor
-  virtual std::string DebugString() const;
+  virtual std::string debugString() const;
 
  protected:
   // Describes the current state of a stream
   struct StreamState {
     ~StreamState();
     // Value of the last sample
-    double last_sample{0};
+    double lastSample{0};
 
     // Number of samples required to finish initialization
-    size_t needed_samples{0};
+    size_t neededSamples{0};
     // Number of samples already received
-    size_t received_samples{0};
+    size_t receivedSamples{0};
     // Initialization state
     bool initialized{false};
 
     // The last received record of the stream
-    RecordCPtr last_record;
+    RecordCPtr lastRecord;
     // The complete processed data time window so far
-    Core::TimeWindow data_time_window;
+    Core::TimeWindow dataTimeWindow;
 
     // The sampling frequency of the stream
-    double sampling_frequency{0};
+    double samplingFrequency{0};
     // The filter (if used)
     Filter *filter{nullptr};
   };
 
-  virtual StreamState &stream_state(const Record *record) = 0;
+  virtual StreamState &streamState(const Record *record) = 0;
 
   // Virtual method that must be used in derived classes to analyse a
-  // datastream. Both the raw record and the filtered data array is passed.
-  virtual void Process(StreamState &stream_state, const Record *record,
-                       const DoubleArray &filtered_data) = 0;
+  // data stream. Both the raw record and the filtered data array is passed.
+  virtual void process(StreamState &streamState, const Record *record,
+                       const DoubleArray &filteredData) = 0;
   // Store the record
-  virtual bool Store(const Record *record);
+  virtual bool store(const Record *record);
 
-  // Resets the `WaveformProcessor` with regards to `stream_state` and
+  // Resets the `WaveformProcessor` with regards to `streamState` and
   // `record`.
-  virtual void Reset(StreamState &stream_state, const Record *record);
+  virtual void reset(StreamState &streamState, const Record *record);
 
   // Handles gaps. Returns whether the gap has been handled or not.
-  virtual bool HandleGap(StreamState &stream_state, const Record *record,
+  virtual bool handleGap(StreamState &streamState, const Record *record,
                          DoubleArrayPtr &data);
 
   // Fill data and perform filtering (if required)
-  virtual void Fill(StreamState &stream_state, const Record *record,
+  virtual void fill(StreamState &streamState, const Record *record,
                     DoubleArrayPtr &data);
 
   // Initially check if the `WaveformProcessor` received enough data in order to
-  // execute the `Process` method.
-  virtual bool EnoughDataReceived(const StreamState &stream_state) const;
+  // execute the `process` method.
+  virtual bool enoughDataReceived(const StreamState &streamState) const;
 
-  virtual void EmitResult(const Record *record, const ResultCPtr &result);
+  virtual void emitResult(const Record *record, const ResultCPtr &result);
   // Setup and initialize the stream
-  virtual void SetupStream(StreamState &stream_state, const Record *record);
+  virtual void setupStream(StreamState &streamState, const Record *record);
 
-  void set_status(Status status, double value);
+  void setStatus(Status status, double value);
 
-  void set_debug_info_dir(const boost::filesystem::path &path);
+  void setDebugInfoDir(const boost::filesystem::path &path);
 
-  bool enabled_{true};
+  bool _enabled{true};
 
   // WaveformProcessor initialization time
-  Core::TimeSpan init_time_;
+  Core::TimeSpan _initTime;
 
-  PublishResultCallback result_callback_;
+  PublishResultCallback _resultCallback;
 
-  std::unique_ptr<WaveformOperator> waveform_operator_;
+  std::unique_ptr<WaveformOperator> _waveformOperator;
 
  private:
-  Status status_{Status::kWaitingForData};
-  double status_value_{0};
+  Status _status{Status::kWaitingForData};
+  double _statusValue{0};
 
-  boost::filesystem::path debug_info_dir_;
+  boost::filesystem::path _debugInfoDir;
 };
 
 }  // namespace detect

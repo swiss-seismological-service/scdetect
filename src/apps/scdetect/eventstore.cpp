@@ -22,22 +22,22 @@ namespace detail {
 PublicObjectBuffer::PublicObjectBuffer() {}
 PublicObjectBuffer::PublicObjectBuffer(
     DataModel::DatabaseReader *archive,
-    const boost::optional<size_t> &buffer_size)
-    : PublicObjectCache{archive}, buffer_size_{buffer_size} {}
+    const boost::optional<size_t> &bufferSize)
+    : PublicObjectCache{archive}, _bufferSize{bufferSize} {}
 
-void PublicObjectBuffer::set_buffer_size(
-    const boost::optional<size_t> &buffer_size) {
-  buffer_size_ = buffer_size;
+void PublicObjectBuffer::setBufferSize(
+    const boost::optional<size_t> &bufferSize) {
+  _bufferSize = bufferSize;
 }
 
-boost::optional<size_t> PublicObjectBuffer::buffer_size() const {
-  return buffer_size_;
+boost::optional<size_t> PublicObjectBuffer::bufferSize() const {
+  return _bufferSize;
 }
 
 bool PublicObjectBuffer::feed(DataModel::PublicObject *po) {
   push(po);
-  if (buffer_size_) {
-    while (size() > buffer_size_) pop();
+  if (_bufferSize) {
+    while (size() > _bufferSize) pop();
   }
   return true;
 }
@@ -68,7 +68,7 @@ DataModel::PublicObject *PublicObjectBuffer::find(const Core::RTTI &classType,
 
 }  // namespace detail
 
-const int EventStore::buffer_size_{25000};
+const int EventStore::_bufferSize{25000};
 
 EventStore::BaseException::BaseException()
     : Exception{"base EventStore exception"} {}
@@ -82,51 +82,51 @@ EventStore &EventStore::Instance() {
   return instance;
 }
 
-void EventStore::Load(const std::string &path) {
-  Load(LoadXMLArchive(path).get());
+void EventStore::load(const std::string &path) {
+  load(loadXMLArchive(path).get());
 }
-void EventStore::Load(const boost::filesystem::path &path) {
-  Load(path.string());
+void EventStore::load(const boost::filesystem::path &path) {
+  load(path.string());
 }
 
-void EventStore::Load(DataModel::EventParameters *ep) {
+void EventStore::load(DataModel::EventParameters *ep) {
   auto db_query{
-      utils::make_smart<DataModel::DatabaseQuery>(CreateInMemoryDB(ep).get())};
-  Load(db_query.get());
+      utils::make_smart<DataModel::DatabaseQuery>(createInMemoryDb(ep).get())};
+  load(db_query.get());
 }
 
-void EventStore::Load(DataModel::DatabaseQuery *db_query) {
-  Reset();
-  cache_.setDatabaseArchive(db_query);
-  db_query_ = db_query;
+void EventStore::load(DataModel::DatabaseQuery *db) {
+  reset();
+  _cache.setDatabaseArchive(db);
+  _dbQuery = db;
 }
 
-void EventStore::Reset() {
-  cache_.clear();
-  cache_.setDatabaseArchive(nullptr);
-  db_query_.reset();
+void EventStore::reset() {
+  _cache.clear();
+  _cache.setDatabaseArchive(nullptr);
+  _dbQuery.reset();
 }
 
-DataModel::EventPtr EventStore::GetEvent(const std::string &origin_id) const {
-  auto event{db_query_->getEvent(origin_id)};
+DataModel::EventPtr EventStore::getEvent(const std::string &originId) const {
+  auto event{_dbQuery->getEvent(originId)};
   if (event) {
-    cache_.feed(event);
+    _cache.feed(event);
     return event;
   }
   return nullptr;
 }
 
-DataModel::PublicObject *EventStore::Get(const Core::RTTI &class_type,
-                                         const std::string &public_id,
+DataModel::PublicObject *EventStore::get(const Core::RTTI &classType,
+                                         const std::string &publicId,
                                          bool loadChildren) const {
-  auto retval{cache_.find(class_type, public_id, loadChildren)};
+  auto retval{_cache.find(classType, publicId, loadChildren)};
   if (retval) {
     return retval;
   }
   return nullptr;
 }
 
-DataModel::EventParametersPtr EventStore::LoadXMLArchive(
+DataModel::EventParametersPtr EventStore::loadXMLArchive(
     const std::string &path) {
   DataModel::EventParametersPtr ep;
   if (!path.empty()) {
@@ -140,23 +140,23 @@ DataModel::EventParametersPtr EventStore::LoadXMLArchive(
   return ep;
 }
 
-IO::DatabaseInterfacePtr EventStore::CreateInMemoryDB(
+IO::DatabaseInterfacePtr EventStore::createInMemoryDb(
     DataModel::EventParameters *ep) {
-  IO::DatabaseInterfacePtr db_engine_write{
+  IO::DatabaseInterfacePtr dbEngineWrite{
       IO::DatabaseInterface::Open("sqlite3_://:memory:")};
-  if (!db_engine_write) {
+  if (!dbEngineWrite) {
     throw EventStore::DatabaseException{
         "Failed to initialize SQLite in-memory DB"};
   }
-  DataModel::createAll(db_engine_write.get());
-  DataModel::DatabaseArchive db_archive{db_engine_write.get()};
-  DataModel::DatabaseObjectWriter writer{db_archive};
+  DataModel::createAll(dbEngineWrite.get());
+  DataModel::DatabaseArchive dbArchive{dbEngineWrite.get()};
+  DataModel::DatabaseObjectWriter writer{dbArchive};
   writer(ep);
 
-  // XXX(damb): Create a separate interface - `db_engine_write` is going to be
-  // closed by the `db_archive` instance when going out of scope.
-  IO::DatabaseInterfacePtr db_engine_read{db_engine_write};
-  return db_engine_read;
+  // XXX(damb): Create a separate interface - `dbEngineWrite` is going to be
+  // closed by the `dbArchive` instance when going out of scope.
+  IO::DatabaseInterfacePtr dbEngineRead{dbEngineWrite};
+  return dbEngineRead;
 }
 
 }  // namespace detect

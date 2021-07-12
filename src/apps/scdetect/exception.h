@@ -15,7 +15,7 @@ class Exception : public std::exception {
   const char *what() const noexcept override;
 
  private:
-  std::string msg_;
+  std::string _msg;
 };
 
 class ValueException : public Exception {

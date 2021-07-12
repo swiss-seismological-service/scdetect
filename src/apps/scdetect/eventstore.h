@@ -25,10 +25,10 @@ class PublicObjectBuffer : public DataModel::PublicObjectCache {
  public:
   PublicObjectBuffer();
   PublicObjectBuffer(DataModel::DatabaseReader *archive,
-                     const boost::optional<size_t> &buffer_size);
+                     const boost::optional<size_t> &bufferSize);
 
-  void set_buffer_size(const boost::optional<size_t> &buffer_size);
-  boost::optional<size_t> buffer_size() const;
+  void setBufferSize(const boost::optional<size_t> &bufferSize);
+  boost::optional<size_t> bufferSize() const;
 
   bool feed(DataModel::PublicObject *po) override;
 
@@ -36,7 +36,7 @@ class PublicObjectBuffer : public DataModel::PublicObjectCache {
                                 const std::string &publicID, bool loadChildren);
 
  private:
-  boost::optional<size_t> buffer_size_;
+  boost::optional<size_t> _bufferSize;
 };
 
 }  // namespace detail
@@ -71,49 +71,49 @@ class EventStore {
   EventStore(const EventStore &) = delete;
   void operator=(const EventStore &) = delete;
 
-  void Load(const std::string &path);
-  void Load(const boost::filesystem::path &path);
-  void Load(DataModel::EventParameters *ep);
-  void Load(DataModel::DatabaseQuery *db);
+  void load(const std::string &path);
+  void load(const boost::filesystem::path &path);
+  void load(DataModel::EventParameters *ep);
+  void load(DataModel::DatabaseQuery *db);
 
   // Reset the store
-  void Reset();
+  void reset();
 
-  // Returns the requested object specified by `public_id` (excluding
+  // Returns the requested object specified by `publicId` (excluding
   // descendants)
   template <typename T>
-  SmartPointer<T> Get(const std::string &public_id) const {
-    return T::Cast(Get(T::TypeInfo(), public_id));
+  SmartPointer<T> get(const std::string &publicId) const {
+    return T::Cast(get(T::TypeInfo(), publicId));
   }
 
-  // Returns the requested object specified by `public_id` (including
+  // Returns the requested object specified by `publicId` (including
   // descendants)
   template <typename T>
-  SmartPointer<T> GetWithChildren(const std::string &public_id) const {
-    return T::Cast(Get(T::TypeInfo(), public_id, true));
+  SmartPointer<T> getWithChildren(const std::string &publicId) const {
+    return T::Cast(get(T::TypeInfo(), publicId, true));
   }
 
-  // Returns the event for a given `origin_id` if any
-  DataModel::EventPtr GetEvent(const std::string &origin_id) const;
+  // Returns the event for a given `originId` if any
+  DataModel::EventPtr getEvent(const std::string &originId) const;
 
  protected:
-  DataModel::PublicObject *Get(const Core::RTTI &class_type,
-                               const std::string &public_id,
+  DataModel::PublicObject *get(const Core::RTTI &classType,
+                               const std::string &publicId,
                                bool loadChildren = false) const;
 
-  DataModel::EventParametersPtr LoadXMLArchive(const std::string &path);
+  DataModel::EventParametersPtr loadXMLArchive(const std::string &path);
 
   // Create an in-memory SQLite DB populated with `ep` and return the
   // corresponding pointer to the database engine created
-  IO::DatabaseInterfacePtr CreateInMemoryDB(DataModel::EventParameters *ep);
+  IO::DatabaseInterfacePtr createInMemoryDb(DataModel::EventParameters *ep);
 
  private:
   EventStore() {}
 
-  DataModel::DatabaseQueryPtr db_query_;
-  mutable detail::PublicObjectBuffer cache_;
+  DataModel::DatabaseQueryPtr _dbQuery;
+  mutable detail::PublicObjectBuffer _cache;
 
-  static const int buffer_size_;
+  static const int _bufferSize;
 };
 
 }  // namespace detect

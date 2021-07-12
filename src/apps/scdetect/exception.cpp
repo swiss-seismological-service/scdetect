@@ -3,11 +3,11 @@
 namespace Seiscomp {
 namespace detect {
 
-Exception::Exception() : msg_{"base module exception."} {}
+Exception::Exception() : _msg{"base module exception"} {}
 
-Exception::Exception(const std::string &msg) : msg_{msg} {}
+Exception::Exception(const std::string &msg) : _msg{msg} {}
 
-const char *Exception::what() const noexcept { return msg_.c_str(); }
+const char *Exception::what() const noexcept { return _msg.c_str(); }
 
 ValueException::ValueException() : Exception{"value error."} {}
 

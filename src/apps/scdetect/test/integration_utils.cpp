@@ -27,7 +27,7 @@ namespace test {
 namespace {
 
 template <typename T, typename TFunc>
-auto GetOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
+auto getOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
   try {
     return f(obj);
   } catch (Core::ValueException &e) {
@@ -36,12 +36,12 @@ auto GetOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
 }
 
 template <typename T, typename TFunc>
-bool EqualOptional(const T &lhs, const T &rhs, TFunc f) {
-  return GetOptional(lhs, f) == GetOptional(rhs, f);
+bool equalOptional(const T &lhs, const T &rhs, TFunc f) {
+  return getOptional(lhs, f) == getOptional(rhs, f);
 }
 
 template <typename TPtr, typename TFunc, typename TPred>
-std::vector<TPtr> SortByPredicate(const TFunc &f, size_t n, const TPred &pred) {
+std::vector<TPtr> sortByPredicate(const TFunc &f, size_t n, const TPred &pred) {
   std::vector<TPtr> ret;
   for (size_t i = 0; i < n; ++i) {
     ret.push_back(f(i));
@@ -51,10 +51,10 @@ std::vector<TPtr> SortByPredicate(const TFunc &f, size_t n, const TPred &pred) {
   return ret;
 }
 
-// TODO(damb): Define function return value with regards to `SortByPredicate()`
+// TODO(damb): Define function return value with regards to `sortByPredicate()`
 template <typename TPtr, typename TFunc>
-std::vector<TPtr> SortByTime(const TFunc &f, size_t n) {
-  return SortByPredicate<TPtr>(f, n, [](const TPtr &lhs, const TPtr &rhs) {
+std::vector<TPtr> sortByTime(const TFunc &f, size_t n) {
+  return sortByPredicate<TPtr>(f, n, [](const TPtr &lhs, const TPtr &rhs) {
     return lhs->time().value() < rhs->time().value();
   });
 }
@@ -76,13 +76,13 @@ std::ostream &operator<<(std::ostream &os, const Flag &flag) {
   return os;
 }
 
-ArgFlag::ArgFlag(const std::string &arg) : arg_{arg} {}
-void ArgFlag::to_string(std::ostream &os) const { os << flag() << "=" << arg_; }
-void ArgFlag::set_arg(const std::string &arg) { arg_ = arg; }
+ArgFlag::ArgFlag(const std::string &arg) : _arg{arg} {}
+void ArgFlag::to_string(std::ostream &os) const { os << flag() << "=" << _arg; }
+void ArgFlag::setArg(const std::string &arg) { _arg = arg; }
 
 BooleanFlag::BooleanFlag() : ArgFlag{"1"} {}
-void BooleanFlag::Enable() { set_arg("1"); }
-void BooleanFlag::Disable() { set_arg("0"); }
+void BooleanFlag::enable() { setArg("1"); }
+void BooleanFlag::disable() { setArg("0"); }
 
 const std::string FlagDebug::flag() const { return "--debug"; }
 
@@ -139,14 +139,14 @@ const std::string FlagEventDB::flag() const { return "--event-db"; }
 FlagRecordURL ::FlagRecordURL(const std::string &url) : ArgFlag{url} {}
 const std::string FlagRecordURL::flag() const { return "--record-url"; }
 
-FlagRecordStartTime::FlagRecordStartTime(const std::string &time_str)
-    : ArgFlag{time_str} {}
+FlagRecordStartTime::FlagRecordStartTime(const std::string &timeStr)
+    : ArgFlag{timeStr} {}
 const std::string FlagRecordStartTime::flag() const {
   return "--record-starttime";
 }
 
-FlagRecordEndTime::FlagRecordEndTime(const std::string &time_str)
-    : ArgFlag{time_str} {}
+FlagRecordEndTime::FlagRecordEndTime(const std::string &timeStr)
+    : ArgFlag{timeStr} {}
 const std::string FlagRecordEndTime::flag() const { return "--record-endtime"; }
 
 FlagTemplatesJSON::FlagTemplatesJSON(const std::string &fpath)
@@ -158,7 +158,7 @@ const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 }  // namespace cli
 
 /* ------------------------------------------------------------------------- */
-void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
+void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
                         const DataModel::EventParametersCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->pickCount() == rhs->pickCount());
   BOOST_TEST_CHECK(lhs->originCount() == rhs->originCount());
@@ -169,42 +169,42 @@ void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
   BOOST_TEST_CHECK(lhs->focalMechanismCount() == rhs->focalMechanismCount());
 
   // compare picks
-  const auto lhs_picks{SortByTime<DataModel::PickCPtr>(
+  const auto lhsPicks{sortByTime<DataModel::PickCPtr>(
       [&lhs](size_t i) { return lhs->pick(i); }, lhs->pickCount())};
-  const auto rhs_picks{SortByTime<DataModel::PickCPtr>(
+  const auto rhsPicks{sortByTime<DataModel::PickCPtr>(
       [&rhs](size_t i) { return rhs->pick(i); }, rhs->pickCount())};
-  for (size_t i = 0; i < lhs_picks.size(); ++i) {
-    DataModel::PickCPtr pick_result{lhs_picks.at(i)};
-    DataModel::PickCPtr pick_expected{rhs_picks.at(i)};
+  for (size_t i = 0; i < lhsPicks.size(); ++i) {
+    DataModel::PickCPtr pickResult{lhsPicks.at(i)};
+    DataModel::PickCPtr pickExpected{rhsPicks.at(i)};
 
-    PickCmp(pick_result, pick_expected);
+    pickCmp(pickResult, pickExpected);
   }
 
   // compare origins
-  const auto OriginPredicate = [](const DataModel::OriginCPtr &lhs,
+  const auto originPredicate = [](const DataModel::OriginCPtr &lhs,
                                   const DataModel::OriginCPtr &rhs) {
     // XXX(damb): Used to generate a pseudo total order
-    const auto MinimumDistancePredicate = [](const DataModel::OriginCPtr &o) {
+    const auto minimumDistancePredicate = [](const DataModel::OriginCPtr &o) {
       return o->quality().minimumDistance();
     };
-    return MinimumDistancePredicate(lhs) < MinimumDistancePredicate(rhs);
+    return minimumDistancePredicate(lhs) < minimumDistancePredicate(rhs);
   };
 
-  const auto lhs_origins{SortByPredicate<DataModel::OriginCPtr>(
+  const auto lhsOrigins{sortByPredicate<DataModel::OriginCPtr>(
       [&lhs](size_t i) { return lhs->origin(i); }, lhs->originCount(),
-      OriginPredicate)};
-  const auto rhs_origins{SortByPredicate<DataModel::OriginCPtr>(
+      originPredicate)};
+  const auto rhsOrigins{sortByPredicate<DataModel::OriginCPtr>(
       [&rhs](size_t i) { return rhs->origin(i); }, rhs->originCount(),
-      OriginPredicate)};
-  for (size_t i = 0; i < lhs_origins.size(); ++i) {
-    DataModel::OriginCPtr origin_result{lhs_origins.at(i)};
-    DataModel::OriginCPtr origin_expected{rhs_origins.at(i)};
+      originPredicate)};
+  for (size_t i = 0; i < lhsOrigins.size(); ++i) {
+    DataModel::OriginCPtr originResult{lhsOrigins.at(i)};
+    DataModel::OriginCPtr originExpected{rhsOrigins.at(i)};
 
-    OriginCmp(origin_result, origin_expected);
+    originCmp(originResult, originExpected);
   }
 }
 
-void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
+void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
   // compare attributes since the `creationInfo` attribute differs, anyway
   BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
                    static_cast<double>(rhs->time().value()));
@@ -213,43 +213,43 @@ void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
 
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->horizontalSlowness(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->backazimuth(); }));
 
   BOOST_TEST_CHECK(lhs->slownessMethodID() == rhs->slownessMethodID());
 
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->onset(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->phaseHint(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->polarity(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->evaluationMode(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::PickCPtr p) { return p->evaluationStatus(); }));
 
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::PickCPtr p) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::PickCPtr p) {
     return p->creationInfo().agencyID();
   }));
 }
 
-void OriginCmp(const DataModel::OriginCPtr &lhs,
+void originCmp(const DataModel::OriginCPtr &lhs,
                const DataModel::OriginCPtr &rhs) {
   BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
                    static_cast<double>(rhs->time().value()));
   BOOST_TEST_CHECK(lhs->latitude() == rhs->latitude());
   BOOST_TEST_CHECK(lhs->longitude() == rhs->longitude());
 
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->depth(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->depthType(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->timeFixed(); }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
     return orig->epicenterFixed();
   }));
 
@@ -257,225 +257,227 @@ void OriginCmp(const DataModel::OriginCPtr &lhs,
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
   BOOST_TEST_CHECK(lhs->earthModelID() == rhs->earthModelID());
 
-  auto lhs_q{utils::make_smart<DataModel::OriginQuality>(lhs->quality())};
-  auto rhs_q{utils::make_smart<DataModel::OriginQuality>(rhs->quality())};
-  OriginQualityCmp(lhs_q, rhs_q);
+  auto lhsOriginQuality{
+      utils::make_smart<DataModel::OriginQuality>(lhs->quality())};
+  auto rhsOriginQuality{
+      utils::make_smart<DataModel::OriginQuality>(rhs->quality())};
+  originQualityCmp(lhsOriginQuality, rhsOriginQuality);
 
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
     return orig->uncertainty();
   }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::OriginCPtr orig) { return orig->type(); }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
     return orig->evaluationMode();
   }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
     return orig->evaluationStatus();
   }));
 
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {
     return orig->creationInfo().agencyID();
   }));
 
   // compare arrivals
   BOOST_TEST_CHECK(lhs->arrivalCount() == rhs->arrivalCount());
-  const auto PhaseCodePredicate = [](const DataModel::ArrivalCPtr &lhs,
+  const auto phaseCodePredicate = [](const DataModel::ArrivalCPtr &lhs,
                                      const DataModel::ArrivalCPtr &rhs) {
     return lhs->phase().code() < rhs->phase().code();
   };
-  const auto lhs_arrivals{SortByPredicate<DataModel::ArrivalCPtr>(
+  const auto lhsArrivals{sortByPredicate<DataModel::ArrivalCPtr>(
       [&lhs](size_t i) { return lhs->arrival(i); }, lhs->arrivalCount(),
-      PhaseCodePredicate)};
-  const auto rhs_arrivals{SortByPredicate<DataModel::ArrivalCPtr>(
+      phaseCodePredicate)};
+  const auto rhsArrivals{sortByPredicate<DataModel::ArrivalCPtr>(
       [&rhs](size_t i) { return rhs->arrival(i); }, rhs->arrivalCount(),
-      PhaseCodePredicate)};
-  for (size_t j = 0; j < lhs_arrivals.size(); ++j) {
-    DataModel::ArrivalCPtr arrival_result{lhs_arrivals.at(j)};
-    DataModel::ArrivalCPtr arrival_expected{rhs_arrivals.at(j)};
+      phaseCodePredicate)};
+  for (size_t j = 0; j < lhsArrivals.size(); ++j) {
+    DataModel::ArrivalCPtr arrivalResult{lhsArrivals.at(j)};
+    DataModel::ArrivalCPtr arrivalExpected{rhsArrivals.at(j)};
 
-    ArrivalCmp(arrival_result, arrival_expected);
+    arrivalCmp(arrivalResult, arrivalExpected);
   }
 
   // compare magnitudes
   BOOST_TEST_CHECK(lhs->magnitudeCount() == rhs->magnitudeCount());
-  const auto MagnitudePredicate = [](const DataModel::MagnitudeCPtr &lhs,
+  const auto magnitudePredicate = [](const DataModel::MagnitudeCPtr &lhs,
                                      const DataModel::MagnitudeCPtr &rhs) {
     return lhs->magnitude().value() < rhs->magnitude().value() &&
            lhs->type() < rhs->type();
   };
-  const auto lhs_mags{SortByPredicate<DataModel::MagnitudeCPtr>(
+  const auto lhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
       [&lhs](size_t i) { return lhs->magnitude(i); }, lhs->magnitudeCount(),
-      MagnitudePredicate)};
-  const auto rhs_mags{SortByPredicate<DataModel::MagnitudeCPtr>(
+      magnitudePredicate)};
+  const auto rhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
       [&rhs](size_t i) { return rhs->magnitude(i); }, rhs->magnitudeCount(),
-      MagnitudePredicate)};
-  for (size_t j = 0; j < lhs_mags.size(); ++j) {
-    DataModel::MagnitudeCPtr mag_result{lhs_mags.at(j)};
-    DataModel::MagnitudeCPtr mag_expected{rhs_mags.at(j)};
+      magnitudePredicate)};
+  for (size_t j = 0; j < lhsMags.size(); ++j) {
+    DataModel::MagnitudeCPtr magResult{lhsMags.at(j)};
+    DataModel::MagnitudeCPtr magExpected{rhsMags.at(j)};
 
-    MagnitudeCmp(mag_result, mag_expected);
+    magnitudeCmp(magResult, magExpected);
   }
 }
 
-void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
+void originQualityCmp(const DataModel::OriginQualityCPtr &lhs,
                       const DataModel::OriginQualityCPtr &rhs) {
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
     return q->associatedPhaseCount();
   }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
     return q->usedPhaseCount();
   }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
     return q->associatedStationCount();
   }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
     return q->usedStationCount();
   }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginQualityCPtr q) {
     return q->depthPhaseCount();
   }));
-  const auto StandardErrorPredicate = [](DataModel::OriginQualityCPtr q) {
+  const auto standardErrorPredicate = [](DataModel::OriginQualityCPtr q) {
     return q->standardError();
   };
-  BOOST_TEST_CHECK(*GetOptional(lhs, StandardErrorPredicate) ==
-                       *GetOptional(rhs, StandardErrorPredicate),
+  BOOST_TEST_CHECK(*getOptional(lhs, standardErrorPredicate) ==
+                       *getOptional(rhs, standardErrorPredicate),
                    utf_tt::tolerance(5.0e-3));
-  const auto AzimuthalGapPredicate = [](DataModel::OriginQualityCPtr q) {
+  const auto azimuthalGapPredicate = [](DataModel::OriginQualityCPtr q) {
     return q->azimuthalGap();
   };
-  BOOST_TEST_CHECK(GetOptional(lhs, AzimuthalGapPredicate).value_or(-1) ==
-                   GetOptional(rhs, AzimuthalGapPredicate).value_or(-1));
-  const auto SecondaryAzimuthalGapPredicate =
+  BOOST_TEST_CHECK(getOptional(lhs, azimuthalGapPredicate).value_or(-1) ==
+                   getOptional(rhs, azimuthalGapPredicate).value_or(-1));
+  const auto secondaryAzimuthalGapPredicate =
       [](DataModel::OriginQualityCPtr q) { return q->secondaryAzimuthalGap(); };
   BOOST_TEST_CHECK(
-      GetOptional(lhs, SecondaryAzimuthalGapPredicate).value_or(-1) ==
-      GetOptional(rhs, SecondaryAzimuthalGapPredicate).value_or(-1));
+      getOptional(lhs, secondaryAzimuthalGapPredicate).value_or(-1) ==
+      getOptional(rhs, secondaryAzimuthalGapPredicate).value_or(-1));
   BOOST_TEST_CHECK(lhs->groundTruthLevel() == rhs->groundTruthLevel());
-  const auto MaximumDistancePredicate = [](DataModel::OriginQualityCPtr q) {
+  const auto maximumDistancePredicate = [](DataModel::OriginQualityCPtr q) {
     return q->maximumDistance();
   };
-  BOOST_TEST_CHECK(GetOptional(lhs, MaximumDistancePredicate).value_or(-1) ==
-                   GetOptional(rhs, MaximumDistancePredicate).value_or(-1));
-  const auto MinimumDistancePredicate = [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(getOptional(lhs, maximumDistancePredicate).value_or(-1) ==
+                   getOptional(rhs, maximumDistancePredicate).value_or(-1));
+  const auto minimumDistancePredicate = [](DataModel::OriginQualityCPtr q) {
     return q->minimumDistance();
   };
-  BOOST_TEST_CHECK(GetOptional(lhs, MinimumDistancePredicate).value_or(-1) ==
-                   GetOptional(rhs, MinimumDistancePredicate).value_or(-1));
-  const auto MedianDistancePredicate = [](DataModel::OriginQualityCPtr q) {
+  BOOST_TEST_CHECK(getOptional(lhs, minimumDistancePredicate).value_or(-1) ==
+                   getOptional(rhs, minimumDistancePredicate).value_or(-1));
+  const auto medianDistancePredicate = [](DataModel::OriginQualityCPtr q) {
     return q->medianDistance();
   };
-  BOOST_TEST_CHECK(GetOptional(lhs, MedianDistancePredicate).value_or(-1) ==
-                   GetOptional(rhs, MedianDistancePredicate).value_or(-1));
+  BOOST_TEST_CHECK(getOptional(lhs, medianDistancePredicate).value_or(-1) ==
+                   getOptional(rhs, medianDistancePredicate).value_or(-1));
 }
 
-void ArrivalCmp(const DataModel::ArrivalCPtr &lhs,
+void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
                 const DataModel::ArrivalCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->phase().code() == rhs->phase().code());
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->timeCorrection(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->azimuth(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->distance(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->takeOffAngle(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->timeResidual(); }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
     return a->horizontalSlownessResidual();
   }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->timeUsed(); }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
     return a->horizontalSlownessUsed();
   }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->backazimuthUsed(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->weight(); }));
   BOOST_TEST_CHECK(lhs->earthModelID() == rhs->earthModelID());
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::ArrivalCPtr a) { return a->preliminary(); }));
 
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::ArrivalCPtr a) {
     return a->creationInfo().agencyID();
   }));
 }
 
-void MagnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
+void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->magnitude() == rhs->magnitude());
   BOOST_TEST_CHECK(lhs->type() == rhs->type());
   BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
 
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::MagnitudeCPtr m) { return m->stationCount(); }));
-  BOOST_TEST_CHECK(EqualOptional(
+  BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::MagnitudeCPtr m) { return m->azimuthalGap(); }));
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
     return m->evaluationStatus();
   }));
 
-  BOOST_TEST_CHECK(EqualOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
     return m->creationInfo().agencyID();
   }));
 }
 
 /* -------------------------------------------------------------------------- */
-const std::string TempDirFixture::path_subdir{"scdetect"};
-const int TempDirFixture::max_tries{5};
+const std::string TempDirFixture::_pathSubDir{"scdetect"};
+const int TempDirFixture::_maxTries{5};
 
-TempDirFixture::TempDirFixture() : path_tempdir{CreatePathUnique()} {
-  CreateTempdir();
+TempDirFixture::TempDirFixture() : pathTempdir{createPathUnique()} {
+  createTempdir();
 }
 
-TempDirFixture::TempDirFixture(bool keep_tempdir)
-    : path_tempdir{CreatePathUnique()}, keep_tempdir_{keep_tempdir} {
-  CreateTempdir();
+TempDirFixture::TempDirFixture(bool keepTempdir)
+    : pathTempdir{createPathUnique()}, _keepTempdir{keepTempdir} {
+  createTempdir();
 }
 
 TempDirFixture::~TempDirFixture() {
   try {
-    if (!keep_tempdir_) {
-      fs::remove_all(path_tempdir);
+    if (!_keepTempdir) {
+      fs::remove_all(pathTempdir);
     }
   } catch (fs::filesystem_error &e) {
   }
 }
 
-std::string TempDirFixture::path_tempdir_str() const {
-  return path_tempdir.string();
+std::string TempDirFixture::pathTempdirStr() const {
+  return pathTempdir.string();
 }
 
-const char *TempDirFixture::path_tempdir_cstr() const {
-  return path_tempdir.c_str();
+const char *TempDirFixture::pathTempdirCStr() const {
+  return pathTempdir.c_str();
 }
 
-fs::path TempDirFixture::CreatePathUnique() {
-  return fs::temp_directory_path() / TempDirFixture::path_subdir /
+fs::path TempDirFixture::createPathUnique() {
+  return fs::temp_directory_path() / TempDirFixture::_pathSubDir /
          fs::unique_path();
 }
 
-void TempDirFixture::CreateTempdir() {
-  int tries{max_tries};
-  while (fs::exists(path_tempdir)) {
-    path_tempdir = CreatePathUnique();
+void TempDirFixture::createTempdir() {
+  int tries{_maxTries};
+  while (fs::exists(pathTempdir)) {
+    pathTempdir = createPathUnique();
 
     if (!(--tries)) {
       BOOST_FAIL("Failed to create temporary directory. Too many tries.");
     }
   }
   try {
-    fs::create_directories(path_tempdir);
+    fs::create_directories(pathTempdir);
   } catch (fs::filesystem_error &e) {
     BOOST_FAIL("Failed to create temporary directory: " << e.what());
   }
 }
 
 /* ------------------------------------------------------------------------- */
-fs::path CLIParserFixture::path_data{""};
-bool CLIParserFixture::keep_tempdir{false};
+fs::path CLIParserFixture::pathData{""};
+bool CLIParserFixture::keepTempdir{false};
 
 CLIParserFixture::CLIParserFixture() {}
 CLIParserFixture::~CLIParserFixture() {}
@@ -484,9 +486,9 @@ void CLIParserFixture::setup() {
   try {
     po::options_description desc;
     desc.add_options()("keep-tempfiles",
-                       po::value<bool>(&keep_tempdir)->default_value(false),
+                       po::value<bool>(&keepTempdir)->default_value(false),
                        "Keep temporary files from tests")(
-        "path-data", po::value<fs::path>(&path_data),
+        "path-data", po::value<fs::path>(&pathData),
         "Path to test data directory");
 
     po::positional_options_description pdesc;
@@ -506,9 +508,9 @@ void CLIParserFixture::setup() {
 
   // validate
   BOOST_TEST_REQUIRE(
-      bool{fs::is_directory(path_data) && !fs::is_empty(path_data)},
-      "Invalid path to test data directory:" << path_data);
-  path_data = fs::absolute(path_data);
+      bool{fs::is_directory(pathData) && !fs::is_empty(pathData)},
+      "Invalid path to test data directory:" << pathData);
+  pathData = fs::absolute(pathData);
 }
 
 void CLIParserFixture::teardown() {}

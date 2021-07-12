@@ -16,38 +16,38 @@ namespace Seiscomp {
 namespace detect {
 namespace utils {
 
-const std::string CreateUUID() {
+const std::string createUUID() {
   auto uuid{boost::uuids::random_generator{}()};
   return boost::uuids::to_string(uuid);
 }
 
-void ReplaceEscapedXMLFilterIDChars(std::string &str) {
+void replaceEscapedXMLFilterIdChars(std::string &str) {
   boost::replace_all(str, "&gt;", ">");
 }
 
 /* ------------------------------------------------------------------------- */
-const std::string WaveformStreamID::delimiter_{"."};
+const std::string WaveformStreamID::_delimiter{"."};
 
-WaveformStreamID::WaveformStreamID(const std::string &net_sta_loc_cha) {
+WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {
   std::vector<std::string> tokens;
-  Core::split(tokens, net_sta_loc_cha, delimiter_.c_str(), false);
+  Core::split(tokens, netStaLocCha, _delimiter.c_str(), false);
 
   if (4 != tokens.size()) {
     throw ValueException{std::string{"Invalid number of tokens: "} +
                          std::to_string(tokens.size())};
   }
-  net_code_ = tokens[0];
-  sta_code_ = tokens[1];
-  loc_code_ = tokens[2];
-  cha_code_ = tokens[3];
+  _netCode = tokens[0];
+  _staCode = tokens[1];
+  _locCode = tokens[2];
+  _chaCode = tokens[3];
 }
 
 WaveformStreamID::WaveformStreamID(const DataModel::WaveformStreamID &id)
-    : net_code_{id.networkCode()},
-      sta_code_{id.stationCode()},
-      loc_code_{id.locationCode()},
-      cha_code_{id.channelCode()} {
-  if (!IsValid()) {
+    : _netCode{id.networkCode()},
+      _staCode{id.stationCode()},
+      _locCode{id.locationCode()},
+      _chaCode{id.channelCode()} {
+  if (!isValid()) {
     std::ostringstream oss;
     oss << *this;
     throw ValueException{std::string{"Invalid DataModel::WaveformStreamID: "} +
@@ -55,27 +55,27 @@ WaveformStreamID::WaveformStreamID(const DataModel::WaveformStreamID &id)
   }
 }
 
-WaveformStreamID::WaveformStreamID(const std::string &net_code,
-                                   const std::string &sta_code,
-                                   const std::string &loc_code,
-                                   const std::string &cha_code)
-    : net_code_{net_code},
-      sta_code_{sta_code},
-      loc_code_{loc_code},
-      cha_code_{cha_code} {}
+WaveformStreamID::WaveformStreamID(const std::string &netCode,
+                                   const std::string &staCode,
+                                   const std::string &locCode,
+                                   const std::string &chaCode)
+    : _netCode{netCode},
+      _staCode{staCode},
+      _locCode{locCode},
+      _chaCode{chaCode} {}
 
-const std::string &WaveformStreamID::net_code() const { return net_code_; }
-const std::string &WaveformStreamID::sta_code() const { return sta_code_; }
-const std::string &WaveformStreamID::loc_code() const { return loc_code_; }
-const std::string &WaveformStreamID::cha_code() const { return cha_code_; }
+const std::string &WaveformStreamID::netCode() const { return _netCode; }
+const std::string &WaveformStreamID::staCode() const { return _staCode; }
+const std::string &WaveformStreamID::locCode() const { return _locCode; }
+const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
-bool WaveformStreamID::IsValid() const {
-  return !(net_code_.empty() || sta_code_.empty() || cha_code_.empty());
+bool WaveformStreamID::isValid() const {
+  return !(_netCode.empty() || _staCode.empty() || _chaCode.empty());
 }
 
 std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
-  os << id.net_code_ << id.delimiter_ << id.sta_code_ << id.delimiter_
-     << id.loc_code_ << id.delimiter_ << id.cha_code_;
+  os << id._netCode << id._delimiter << id._staCode << id._delimiter
+     << id._locCode << id._delimiter << id._chaCode;
   return os;
 }
 
