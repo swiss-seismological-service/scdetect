@@ -121,28 +121,29 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
    * cc = --------------------------------------------------
    *      sqrt(sum((Xi-meanX)^2)) * sqrt(sum((Yi-meanY)^2))
    *
-   * Where sum(X)  is the sum of Xi for i=1 until i=n
+   * Where sum(X) is the sum of Xi for i=1 until i=n.
    *
    * This can be rearranged in a form suitable for a single-pass algorithm
-   * (where the mean of X and Y are not needed)
+   * (where the mean of X and Y are not needed):
    *
    *                 n * sum(Xi*Yi) - sum(Xi) * sum(Yi)
    * cc = -----------------------------------------------------------
    *      sqrt(n*sum(Xi^2)-sum(Xi)^2) * sqrt(n*sum(Yi^2)-sum(Yi)^2))
    *
-   * For cross-correlation, where we have a template waveform trace `tr1` which
-   * is correlated against a data trace `tr2` at subsequent offset, we can
-   * pre-compute the parts that involve `tr1` and re-use them at each step of
-   * the cross-correlation:
+   * Given a cross-correlation with a template waveform trace `tr1` which is
+   * correlated against a data trace `tr2` at subsequent offset, pre-compute the
+   * parts that involve `tr1` and re-use them at each step of the
+   * cross-correlation:
    *
    *   _sumTemplateWaveform = sum(Xi)
    *   _sumSquaredTemplateWaveform= sum(Xi^2)
-   *   _denominatorTemplateWaveform =
+   *   _denominatorTemplateWaveform = \
    *     sqrt(n*_sumSquaredTemplateWaveform-(_sumTemplateWaveform)^2)
    *
-   * For the parts that involve the data trace (from the circular buffer) alone
-   * we can compute them in a rolling fashion (removing first sample of
-   * previous iteration and adding the last sample of the new iteration):
+   * For the parts that involve the data trace (extracted from the circular
+   * buffer) exclusively, compute the components in a rolling fashion (removing
+   * first sample of previous iteration and adding the last sample of the
+   * current iteration):
    *
    *   _sumData = sum(Yi)
    *   _sumSquaredData = sum(Yi^2)
@@ -152,11 +153,12 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
    * order to compute the Pearson correlation coefficient:
    *
    *       n * sum(Xi*Yi) - _sumTemplateWaveform * _sumData
-   * cc = -----------------------------------------------
-   *        _denominatorTemplateWaveform * denominator_data
+   * cc = --------------------------------------------------
+   *       _denominatorTemplateWaveform * denominator_data
    *
-   * Unfortunately, we cannot optimize sum(Xi*Yi) and this will be a inner
-   * loop inside the main cross-correlation loop
+   * Unfortunately, further optimization of sum(Xi*Yi) is not possible which
+   * requires to be computed within an inner loop inside the main
+   * cross-correlation loop.
    */
 
   if (!_initialized) {
