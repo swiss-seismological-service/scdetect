@@ -1,12 +1,12 @@
 #ifndef SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
 #define SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
 
-#include <boost/circular_buffer.hpp>
-#include <boost/optional.hpp>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/typedarray.h>
+
+#include <boost/circular_buffer.hpp>
+#include <boost/optional.hpp>
 
 namespace Seiscomp {
 namespace detect {
@@ -14,8 +14,9 @@ namespace filter {
 
 // Cross-correlation filter implementation
 // - the filter delay corresponds to the length of the template waveform
-template <typename TData> class CrossCorrelation {
-public:
+template <typename TData>
+class CrossCorrelation {
+ public:
   // Creates a `CrossCorrelation` filter from `waveform`. The filter is
   // configured to the sampling frequency provided by `waveform`. It is a bug
   // if `waveform` is not a valid pointer.
@@ -25,60 +26,60 @@ public:
 
   // Apply the cross-correlation in place to the (previously filtered) data.
   // Before using the filter make sure the sam
-  void Apply(size_t n_data, TData *data);
+  void apply(size_t nData, TData *data);
 
-  void Apply(std::vector<TData> &data);
+  void apply(std::vector<TData> &data);
 
-  void Apply(TypedArray<TData> &data);
+  void apply(TypedArray<TData> &data);
   // Reset the cross-correlation filter
-  virtual void Reset();
+  virtual void reset();
 
   // Set the sampling frequency in Hz. Allows delayed initialization when the
   // data arrive
-  void set_sampling_frequency(double sampling_frequency);
+  void setSamplingFrequency(double sampling_frequency);
   // Returns the configured sampling frequency
-  double sampling_frequency() const;
+  double samplingFrequency() const;
 
   // Returns the number of template samples
-  size_t template_size() const;
+  size_t templateSize() const;
   // Returns the template duration in seconds
-  double template_length() const;
+  double templateLength() const;
 
   // Returns the template waveform starttime which might be different from the
   // starttime configured (due to both sampling rate accuracy and rounding)
-  boost::optional<const Core::Time> template_starttime() const;
+  boost::optional<const Core::Time> templateStartTime() const;
   // Returns the template waveform endtime which might be different from the
   // starttime configured (due to both sampling rate accuracy and rounding)
-  boost::optional<const Core::Time> template_endtime() const;
+  boost::optional<const Core::Time> templateEndTime() const;
 
-protected:
+ protected:
   CrossCorrelation();
 
   // Compute the actual cross-correlation
-  virtual void Correlate(size_t n_data, TData *data);
+  virtual void correlate(size_t nData, TData *data);
 
-  virtual void SetupFilter(double sampling_frequency);
+  virtual void setupFilter(double samplingFrequency);
 
-  bool initialized_{false};
+  bool _initialized{false};
   // The template waveform to be correlated
-  GenericRecordCPtr template_wf_;
+  GenericRecordCPtr _templateWaveform;
   // Filter sampling frequency
-  boost::optional<double> sampling_frequency_;
+  boost::optional<double> _samplingFrequency;
   // Buffer for data to be cross-correlated
-  boost::circular_buffer<TData> buffer_;
+  boost::circular_buffer<TData> _buffer;
 
-private:
+ private:
   // Template waveform samples squared summed
-  double sum_squared_template_wf_{0};
+  double _sumSquaredTemplateWaveform{0};
   // Template waveform samples summed
-  double sum_template_wf_{0};
+  double _sumTemplateWaveform{0};
 
-  double denominator_template_wf_{0};
+  double _denominatorTemplateWaveform{0};
 
   // The data samples squared summed
-  double sum_squared_data_{0};
+  double _sumSquaredData{0};
   // The data samples summed
-  double sum_data_{0};
+  double _sumData{0};
 };
 
 // Adaptive cross-correlation filter implementation
@@ -87,39 +88,39 @@ private:
 // template waveform resampling facilities)
 template <typename TData>
 class AdaptiveCrossCorrelation : public CrossCorrelation<TData> {
-public:
+ public:
   // Creates an `CrossCorrelation` filter from the *demeaned* raw `waveform`
   // chunk. The final waveform used for template matching is created on-the-fly
-  // based on `filter_id`, `template_starttime`, `template_endtime` and the
-  // configured target `sampling_frequency`. It is a bug if `waveform` is not a
+  // based on `filterId`, `templateStartTime`, `templateEndTime` and the
+  // configured target `samplingFrequency`. It is a bug if `waveform` is not a
   // valid pointer.
   AdaptiveCrossCorrelation(const GenericRecordCPtr &waveform,
-                           const std::string filter_id,
-                           const Core::Time &template_starttime,
-                           const Core::Time &template_endtime,
-                           double sampling_frequency = 0);
+                           const std::string filterId,
+                           const Core::Time &templateStartTime,
+                           const Core::Time &templateEndTime,
+                           double samplingFrequency = 0);
 
-protected:
-  void SetupFilter(double sampling_frequency) override;
+ protected:
+  void setupFilter(double samplingFrequency) override;
   // Setup and prepare the template waveform
-  void CreateTemplateWaveform(double target_frequency);
+  void createTemplateWaveform(double targetFrequency);
 
-private:
-  // The original waveform chunk the `template_wf_` is created from
-  GenericRecordCPtr wf_;
+ private:
+  // The original waveform chunk the `_templateWaveform` is created from
+  GenericRecordCPtr _wf;
   // The filter identifier string used for template creation
-  std::string filter_id_;
+  std::string _filterId;
 
   // The configured template waveform starttime
-  Core::Time template_starttime_;
+  Core::Time _templateStartTime;
   // The configured template waveform endtime
-  Core::Time template_endtime_;
+  Core::Time _templateEndTime;
 };
 
-} // namespace filter
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace filter
+}  // namespace detect
+}  // namespace Seiscomp
 
 #include "crosscorrelation.ipp"
 
-#endif // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
+#endif  // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_

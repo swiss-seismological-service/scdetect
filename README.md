@@ -1,5 +1,7 @@
 # SCDetect - Computationally efficient earthquake detection
 
+[![continuous-integration](https://github.com/damb/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/damb/scdetect/actions/workflows/continuous-integration.yml)
+
 ## Content
 
 - [About](#about)
@@ -430,7 +432,7 @@ $ scdetect \
 In the example above even the [waveform
 data](#waveform-data-and-recordstream-configuration) is read from a file (i.e.
 `data.mseed`). Furthermore, the resulting detections are dumped
-[SCML](https://docs.gempa.de/seiscomp/4/current/base/glossary.html#term-scml)
+[SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
 formatted to the `detections.scml` file.
 
 Note that as the `--config-db URI` CLI option is a standard SeisComP module CLI
@@ -564,7 +566,7 @@ $ ctest -R "^test_scdetect.*"
 ```
 
 For additional information, please also refer to SeisComP's [unit testing
-guide](https://docs.gempa.de/seiscomp/4/current/base/tests.html).
+guide](https://docs.gempa.de/seiscomp/current/base/tests.html).
 
 ## Issues
 

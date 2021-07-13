@@ -10,90 +10,87 @@ namespace Seiscomp {
 namespace detect {
 
 WaveformProcessor::WaveformProcessor(
-    const std::string &id, const boost::filesystem::path &debug_info_dir)
-    : Processor{id}, debug_info_dir_{debug_info_dir} {}
+    const std::string &id, const boost::filesystem::path &debugInfoDir)
+    : Processor{id}, _debugInfoDir{debugInfoDir} {}
 
 WaveformProcessor::Result::~Result() {}
 
 void WaveformProcessor::enable() {
-  if (enabled_)
-    return;
-  enabled_ = true;
+  if (_enabled) return;
+  _enabled = true;
 }
 
 void WaveformProcessor::disable() {
-  if (!enabled_)
-    return;
-  enabled_ = false;
+  if (!_enabled) return;
+  _enabled = false;
 }
 
-bool WaveformProcessor::enabled() const { return enabled_; }
+bool WaveformProcessor::enabled() const { return _enabled; }
 
-void WaveformProcessor::set_result_callback(
+void WaveformProcessor::setResultCallback(
     const PublishResultCallback &callback) {
-  result_callback_ = callback;
+  _resultCallback = callback;
 }
 
-WaveformProcessor::Status WaveformProcessor::status() const { return status_; }
+WaveformProcessor::Status WaveformProcessor::status() const { return _status; }
 
-double WaveformProcessor::status_value() const { return status_value_; }
+double WaveformProcessor::statusValue() const { return _statusValue; }
 
-void WaveformProcessor::set_operator(WaveformOperator *op) {
-  if (waveform_operator_) {
-    waveform_operator_.reset();
+void WaveformProcessor::setOperator(WaveformOperator *op) {
+  if (_waveformOperator) {
+    _waveformOperator.reset();
   }
 
-  waveform_operator_.reset(op);
-  if (waveform_operator_) {
-    waveform_operator_->set_store_callback(
-        [this](const Record *record) { return Store(record); });
+  _waveformOperator.reset(op);
+  if (_waveformOperator) {
+    _waveformOperator->setStoreCallback(
+        [this](const Record *record) { return store(record); });
   }
 }
 
-const Core::TimeSpan WaveformProcessor::init_time() const { return init_time_; }
+const Core::TimeSpan WaveformProcessor::initTime() const { return _initTime; }
 
 bool WaveformProcessor::finished() const {
-  return Status::kInProgress < status_;
+  return Status::kInProgress < _status;
 }
 
-const boost::filesystem::path &WaveformProcessor::debug_info_dir() const {
-  return debug_info_dir_;
+const boost::filesystem::path &WaveformProcessor::debugInfoDir() const {
+  return _debugInfoDir;
 }
 
-bool WaveformProcessor::debug_mode() const { return !debug_info_dir_.empty(); }
+bool WaveformProcessor::debugMode() const { return !_debugInfoDir.empty(); }
 
-bool WaveformProcessor::Feed(const Record *record) {
-  if (record->sampleCount() == 0)
-    return false;
+bool WaveformProcessor::feed(const Record *record) {
+  if (record->sampleCount() == 0) return false;
 
-  if (!waveform_operator_) {
-    return Store(record);
+  if (!_waveformOperator) {
+    return store(record);
   }
 
-  WaveformProcessor::Status s{waveform_operator_->Feed(record)};
+  WaveformProcessor::Status s{_waveformOperator->feed(record)};
   if (s > WaveformProcessor::Status::kTerminated) {
-    set_status(s, -1);
+    setStatus(s, -1);
     return false;
   }
   return true;
 }
 
-void WaveformProcessor::Reset() {
-  if (waveform_operator_) {
-    waveform_operator_->Reset();
+void WaveformProcessor::reset() {
+  if (_waveformOperator) {
+    _waveformOperator->reset();
   }
 
-  status_ = Status::kWaitingForData;
-  status_value_ = 0;
+  _status = Status::kWaitingForData;
+  _statusValue = 0;
 }
 
-void WaveformProcessor::Terminate() {
-  set_status(Status::kTerminated, static_cast<int>(status_));
+void WaveformProcessor::terminate() {
+  setStatus(Status::kTerminated, static_cast<int>(_status));
 }
 
-void WaveformProcessor::Close() const {}
+void WaveformProcessor::close() const {}
 
-std::string WaveformProcessor::DebugString() const { return ""; }
+std::string WaveformProcessor::debugString() const { return ""; }
 
 WaveformProcessor::StreamState::~StreamState() {
   if (filter) {
@@ -101,66 +98,65 @@ WaveformProcessor::StreamState::~StreamState() {
   }
 }
 
-bool WaveformProcessor::Store(const Record *record) {
+bool WaveformProcessor::store(const Record *record) {
   if (WaveformProcessor::Status::kInProgress < status() || !record->data())
     return false;
 
   try {
-    StreamState &current_stream_state{stream_state(record)};
+    StreamState &currentStreamState{streamState(record)};
 
     DoubleArrayPtr data{
         dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-    if (current_stream_state.last_record) {
-      if (record == current_stream_state.last_record) {
+    if (currentStreamState.lastRecord) {
+      if (record == currentStreamState.lastRecord) {
         return false;
       } else if (record->samplingFrequency() !=
-                 current_stream_state.sampling_frequency) {
+                 currentStreamState.samplingFrequency) {
         SCDETECT_LOG_WARNING_PROCESSOR(
             this,
             "%s: sampling frequency changed, resetting stream (sfreq_record != "
             "sfreq_stream): %f != %f",
             record->streamID().c_str(), record->samplingFrequency(),
-            current_stream_state.sampling_frequency);
+            currentStreamState.samplingFrequency);
 
-        Reset(current_stream_state, record);
-      } else if (!HandleGap(current_stream_state, record, data)) {
+        reset(currentStreamState, record);
+      } else if (!handleGap(currentStreamState, record, data)) {
         return false;
       }
 
-      current_stream_state.data_time_window.setEndTime(record->endTime());
+      currentStreamState.dataTimeWindow.setEndTime(record->endTime());
     }
 
-    if (!current_stream_state.last_record) {
+    if (!currentStreamState.lastRecord) {
       try {
-        SetupStream(current_stream_state, record);
+        setupStream(currentStreamState, record);
       } catch (std::exception &e) {
         SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: Failed to setup stream: %s",
                                        record->streamID().c_str(), e.what());
         return false;
       }
     }
-    current_stream_state.last_sample = (*data)[data->size() - 1];
+    currentStreamState.lastSample = (*data)[data->size() - 1];
 
-    Fill(current_stream_state, record, data);
-    if (Status::kInProgress < status())
-      return false;
+    fill(currentStreamState, record, data);
+    if (Status::kInProgress < status()) return false;
 
-    if (!current_stream_state.initialized) {
-      if (EnoughDataReceived(current_stream_state)) {
-        // stream_state.initialized = true;
-        Process(current_stream_state, record, *data);
+    if (!currentStreamState.initialized) {
+      if (enoughDataReceived(currentStreamState)) {
+        // streamState.initialized = true;
+        process(currentStreamState, record, *data);
         // NOTE: To allow derived classes to notice modification of the variable
-        // stream_state.initialized, it is necessary to set this after calling
+        // streamState.initialized, it is necessary to set this after calling
         // process.
-        current_stream_state.initialized = true;
+        currentStreamState.initialized = true;
       }
     } else {
       // Call process to cause a derived processor to work on the data.
-      Process(current_stream_state, record, *data);
+      process(currentStreamState, record, *data);
     }
 
-    current_stream_state.last_record = record;
+    currentStreamState.lastRecord = record;
 
   } catch (...) {
     return false;
@@ -168,67 +164,64 @@ bool WaveformProcessor::Store(const Record *record) {
   return true;
 }
 
-void WaveformProcessor::Reset(StreamState &stream_state, const Record *record) {
-  stream_state.last_record.reset();
+void WaveformProcessor::reset(StreamState &streamState, const Record *record) {
+  streamState.lastRecord.reset();
 }
 
-bool WaveformProcessor::HandleGap(StreamState &stream_state,
+bool WaveformProcessor::handleGap(StreamState &streamState,
                                   const Record *record, DoubleArrayPtr &data) {
   return true;
 }
 
-void WaveformProcessor::Fill(StreamState &stream_state, const Record *record,
+void WaveformProcessor::fill(StreamState &streamState, const Record *record,
                              DoubleArrayPtr &data) {
-
   const auto n{static_cast<size_t>(data->size())};
-  stream_state.received_samples += n;
+  streamState.receivedSamples += n;
 
-  if (stream_state.filter) {
+  if (streamState.filter) {
     auto samples{data->typedData()};
-    stream_state.filter->apply(n, samples);
+    streamState.filter->apply(n, samples);
   }
 }
 
-bool WaveformProcessor::EnoughDataReceived(
-    const StreamState &stream_state) const {
-  return stream_state.received_samples > stream_state.needed_samples;
+bool WaveformProcessor::enoughDataReceived(
+    const StreamState &streamState) const {
+  return streamState.receivedSamples > streamState.neededSamples;
 }
 
-void WaveformProcessor::EmitResult(const Record *record,
+void WaveformProcessor::emitResult(const Record *record,
                                    const ResultCPtr &result) {
-  if (enabled() && result_callback_)
-    result_callback_(this, record, result);
+  if (enabled() && _resultCallback) _resultCallback(this, record, result);
 }
 
-void WaveformProcessor::SetupStream(StreamState &stream_state,
+void WaveformProcessor::setupStream(StreamState &streamState,
                                     const Record *record) {
   const auto &f{record->samplingFrequency()};
-  stream_state.sampling_frequency = f;
-  stream_state.needed_samples = static_cast<size_t>(init_time_ * f + 0.5);
-  if (stream_state.filter) {
-    stream_state.filter->setSamplingFrequency(f);
+  streamState.samplingFrequency = f;
+  streamState.neededSamples = static_cast<size_t>(_initTime * f + 0.5);
+  if (streamState.filter) {
+    streamState.filter->setSamplingFrequency(f);
   }
 
   // update the received data timewindow
-  stream_state.data_time_window = record->timeWindow();
+  streamState.dataTimeWindow = record->timeWindow();
 
-  if (stream_state.filter) {
-    stream_state.filter->setStartTime(record->startTime());
-    stream_state.filter->setStreamID(
+  if (streamState.filter) {
+    streamState.filter->setStartTime(record->startTime());
+    streamState.filter->setStreamID(
         record->networkCode(), record->stationCode(), record->locationCode(),
         record->channelCode());
   }
 }
 
-void WaveformProcessor::set_status(Status status, double value) {
-  status_ = status;
-  status_value_ = value;
+void WaveformProcessor::setStatus(Status status, double value) {
+  _status = status;
+  _statusValue = value;
 }
 
-void WaveformProcessor::set_debug_info_dir(
-    const boost::filesystem::path &path) {
-  debug_info_dir_ = path;
+void WaveformProcessor::setDebugInfoDir(const boost::filesystem::path &path) {
+  _debugInfoDir = path;
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp

@@ -1,27 +1,27 @@
 #ifndef SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
 #define SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
 
+#include <seiscomp/io/recordfilter/resample.h>
+
 #include <functional>
 #include <memory>
 #include <unordered_map>
-
-#include <seiscomp/io/recordfilter/resample.h>
 
 namespace Seiscomp {
 namespace detect {
 namespace record_resampler_store_detail {
 
 struct CacheKey {
-  double current_frequency;
-  double target_frequency;
+  double currentFrequency;
+  double targetFrequency;
 
   friend bool operator==(const CacheKey &lhs, const CacheKey &rhs);
   friend bool operator!=(const CacheKey &lhs, const CacheKey &rhs);
 };
 
-} // namespace record_resampler_store_detail
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace record_resampler_store_detail
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 template <>
@@ -31,7 +31,7 @@ struct hash<Seiscomp::detect::record_resampler_store_detail::CacheKey> {
       const noexcept;
 };
 
-} // namespace std
+}  // namespace std
 
 namespace Seiscomp {
 namespace detect {
@@ -39,7 +39,7 @@ namespace detect {
 // A global store for resamplers
 // - implements the Singleton Design Pattern
 class RecordResamplerStore {
-public:
+ public:
   using RecordResampler = IO::RecordResampler<double>;
   static RecordResamplerStore &Instance();
 
@@ -47,34 +47,34 @@ public:
   void operator=(const RecordResamplerStore &) = delete;
 
   // Reset the store
-  void Reset();
+  void reset();
 
-  std::unique_ptr<RecordResampler> Get(const Record *rec,
-                                       double target_frequency);
+  std::unique_ptr<RecordResampler> get(const Record *rec,
+                                       double targetFrequency);
 
-  std::unique_ptr<RecordResampler> Get(double current_frequency,
-                                       double target_frequency);
+  std::unique_ptr<RecordResampler> get(double currentFrequency,
+                                       double targetFrequency);
 
-private:
+ private:
   RecordResamplerStore() {}
 
   struct CacheKey {
-    double source_frequency;
-    double target_frequency;
+    double sourceFrequency;
+    double targetFrequency;
   };
 
   using Cache = std::unordered_map<record_resampler_store_detail::CacheKey,
                                    std::unique_ptr<RecordResampler>>;
 
-  Cache cache_;
+  Cache _cache;
 
-  double fp_{0.7};
-  double fs_{0.9};
-  double coefficient_scale_{10};
-  int lanczos_kernel_width_{3};
+  double _fp{0.7};
+  double _fs{0.9};
+  double _coefficientScale{10};
+  int _lanczosKernelWidth{3};
 };
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
+#endif  // SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_

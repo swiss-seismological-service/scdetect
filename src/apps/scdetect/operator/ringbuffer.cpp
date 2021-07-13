@@ -1,10 +1,10 @@
 #include "ringbuffer.h"
 
-#include <exception>
-#include <memory>
-
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/recordsequence.h>
+
+#include <exception>
+#include <memory>
 
 #include "../log.h"
 #include "../utils.h"
@@ -13,62 +13,59 @@ namespace Seiscomp {
 namespace detect {
 namespace waveform_operator {
 
-RingBufferOperator::RingBufferOperator(WaveformProcessor *waveform_processor)
-    : waveform_processor_{waveform_processor} {}
+RingBufferOperator::RingBufferOperator(WaveformProcessor *waveformProcessor)
+    : _processor{waveformProcessor} {}
 
-RingBufferOperator::RingBufferOperator(WaveformProcessor *waveform_processor,
-                                       Core::TimeSpan buffer_size)
-    : buffer_size_{buffer_size}, waveform_processor_{waveform_processor} {}
+RingBufferOperator::RingBufferOperator(WaveformProcessor *waveformProcessor,
+                                       Core::TimeSpan bufferSize)
+    : _bufferSize{bufferSize}, _processor{waveformProcessor} {}
 
 RingBufferOperator::RingBufferOperator(
-    WaveformProcessor *waveform_processor, Core::TimeSpan buffer_size,
-    const std::vector<WaveformStreamID> &wf_stream_ids)
-    : buffer_size_{buffer_size}, waveform_processor_{waveform_processor} {
-
-  for (const auto &wf_stream_id : wf_stream_ids) {
-    Add(wf_stream_id);
+    WaveformProcessor *waveformProcessor, Core::TimeSpan bufferSize,
+    const std::vector<WaveformStreamID> &wfStreamIds)
+    : _bufferSize{bufferSize}, _processor{waveformProcessor} {
+  for (const auto &wfStreamId : wfStreamIds) {
+    add(wfStreamId);
   }
 }
 
-void RingBufferOperator::set_gap_interpolation(bool gap_interpolation) {
-  gap_interpolation_ = gap_interpolation;
+void RingBufferOperator::setGapInterpolation(bool gapInterpolation) {
+  _gapInterpolation = gapInterpolation;
 }
 
-bool RingBufferOperator::gap_interpolation() const {
-  return gap_interpolation_;
-}
+bool RingBufferOperator::gapInterpolation() const { return _gapInterpolation; }
 
-void RingBufferOperator::set_gap_threshold(const Core::TimeSpan &duration) {
+void RingBufferOperator::setGapThreshold(const Core::TimeSpan &duration) {
   if (duration && duration > Core::TimeSpan{0.0}) {
-    gap_threshold_ = duration;
+    _gapThreshold = duration;
   }
 }
 
-const Core::TimeSpan RingBufferOperator::gap_threshold() const {
-  return gap_threshold_;
+const Core::TimeSpan RingBufferOperator::gapThreshold() const {
+  return _gapThreshold;
 }
 
-void RingBufferOperator::set_gap_tolerance(const Core::TimeSpan &duration) {
+void RingBufferOperator::setGapTolerance(const Core::TimeSpan &duration) {
   if (duration && duration > Core::TimeSpan{0.0}) {
-    gap_tolerance_ = duration;
+    _gapTolerance = duration;
   }
 }
 
-const Core::TimeSpan RingBufferOperator::gap_tolerance() const {
-  return gap_tolerance_;
+const Core::TimeSpan RingBufferOperator::gapTolerance() const {
+  return _gapTolerance;
 }
 
-WaveformProcessor::Status RingBufferOperator::Feed(const Record *record) {
+WaveformProcessor::Status RingBufferOperator::feed(const Record *record) {
   if (record->sampleCount() == 0)
     return WaveformProcessor::Status::kWaitingForData;
 
-  auto it{stream_configs_.find(record->streamID())};
-  if (it == stream_configs_.end()) {
+  auto it{_streamConfigs.find(record->streamID())};
+  if (it == _streamConfigs.end()) {
     return WaveformProcessor::Status::kInvalidStream;
   }
 
-  if (Store(it->second.stream_state, record)) {
-    WaveformOperator::Store(record);
+  if (store(it->second.streamState, record)) {
+    WaveformOperator::store(record);
 
     return WaveformProcessor::Status::kInProgress;
   }
@@ -76,124 +73,119 @@ WaveformProcessor::Status RingBufferOperator::Feed(const Record *record) {
   return WaveformProcessor::Status::kError;
 }
 
-void RingBufferOperator::Reset() { stream_configs_.clear(); }
+void RingBufferOperator::reset() { _streamConfigs.clear(); }
 
-void RingBufferOperator::Add(WaveformStreamID wf_stream_id) {
-  Add(wf_stream_id, buffer_size_);
+void RingBufferOperator::add(WaveformStreamID wfStreamId) {
+  add(wfStreamId, _bufferSize);
 }
 
-void RingBufferOperator::Add(WaveformStreamID wf_stream_id,
-                             Core::TimeSpan buffer_size) {
-  if (stream_configs_.find(wf_stream_id) != stream_configs_.end()) {
+void RingBufferOperator::add(WaveformStreamID wfStreamId,
+                             Core::TimeSpan bufferSize) {
+  if (_streamConfigs.find(wfStreamId) != _streamConfigs.end()) {
     return;
   }
 
-  if (!buffer_size) {
-    buffer_size = buffer_size_;
+  if (!bufferSize) {
+    bufferSize = _bufferSize;
   }
 
-  stream_configs_.emplace(
-      wf_stream_id,
-      StreamConfig{StreamState{}, std::make_shared<RingBuffer>(buffer_size)});
+  _streamConfigs.emplace(
+      wfStreamId,
+      StreamConfig{StreamState{}, std::make_shared<RingBuffer>(bufferSize)});
 }
 
-const std::shared_ptr<RingBuffer> &
-RingBufferOperator::Get(WaveformStreamID wf_stream_id) {
-  return stream_configs_.at(wf_stream_id).stream_buffer;
+const std::shared_ptr<RingBuffer> &RingBufferOperator::get(
+    WaveformStreamID wfStreamId) {
+  return _streamConfigs.at(wfStreamId).streamBuffer;
 }
 
-bool RingBufferOperator::Store(RingBufferOperator::StreamState &stream_state,
+bool RingBufferOperator::store(RingBufferOperator::StreamState &streamState,
                                const Record *record) {
-
-  if (!record->data())
-    return false;
+  if (!record->data()) return false;
 
   DoubleArrayPtr data{
       dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-  if (stream_state.last_record) {
-    if (record == stream_state.last_record) {
+  if (streamState.lastRecord) {
+    if (record == streamState.lastRecord) {
       return false;
-    } else if (record->samplingFrequency() != stream_state.sampling_frequency) {
+    } else if (record->samplingFrequency() != streamState.samplingFrequency) {
       SCDETECT_LOG_WARNING_PROCESSOR(
-          waveform_processor_,
+          _processor,
           "%s: buffering operator: sampling frequency changed, resetting "
           "stream (sfreq_record != sfreq_stream): %f != %f",
           record->streamID().c_str(), record->samplingFrequency(),
-          stream_state.sampling_frequency);
-      stream_state.last_record.reset();
-    } else if (!HandleGap(stream_state, record, data)) {
+          streamState.samplingFrequency);
+      streamState.lastRecord.reset();
+    } else if (!handleGap(streamState, record, data)) {
       return false;
     }
 
-    stream_state.data_time_window.setEndTime(record->endTime());
+    streamState.dataTimeWindow.setEndTime(record->endTime());
   }
 
-  if (!stream_state.last_record) {
+  if (!streamState.lastRecord) {
     try {
-      SetupStream(stream_state, record);
+      setupStream(streamState, record);
     } catch (std::exception &e) {
-      SCDETECT_LOG_WARNING_PROCESSOR(waveform_processor_,
+      SCDETECT_LOG_WARNING_PROCESSOR(_processor,
                                      "%s: Failed to setup stream: %s",
                                      record->streamID().c_str(), e.what());
       return false;
     }
 
-    auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
+    auto &buffer{_streamConfigs.at(record->streamID()).streamBuffer};
     buffer->clear();
   }
 
-  stream_state.last_sample = (*data)[data->size() - 1];
-  stream_state.last_record = record;
+  streamState.lastSample = (*data)[data->size() - 1];
+  streamState.lastRecord = record;
 
-  return Fill(stream_state, record, data);
+  return fill(streamState, record, data);
 }
 
-bool RingBufferOperator::HandleGap(StreamState &stream_state,
+bool RingBufferOperator::handleGap(StreamState &streamState,
                                    const Record *record, DoubleArrayPtr &data) {
-
-  if (record == stream_state.last_record)
-    return false;
+  if (record == streamState.lastRecord) return false;
 
   Core::TimeSpan gap{record->startTime() -
-                     stream_state.data_time_window.endTime() -
-                     /* one usec*/ Core::TimeSpan(0, 1)};
-  double gap_seconds = static_cast<double>(gap);
+                     streamState.dataTimeWindow.endTime() -
+                     /*one usec*/ Core::TimeSpan(0, 1)};
+  double gapSeconds = static_cast<double>(gap);
 
-  if (gap > gap_threshold_) {
-    size_t gap_samples = static_cast<size_t>(
-        ceil(stream_state.sampling_frequency * gap_seconds));
-    if (FillGap(stream_state, record, gap, (*data)[0], gap_samples)) {
+  size_t gapSamples;
+  if (gap > _gapThreshold) {
+    gapSamples =
+        static_cast<size_t>(ceil(streamState.samplingFrequency * gapSeconds));
+    if (fillGap(streamState, record, gap, (*data)[0], gapSamples)) {
       SCDETECT_LOG_DEBUG_PROCESSOR(
-          waveform_processor_,
-          "%s: detected gap (%.6f secs, %lu samples) (handled)",
-          record->streamID().c_str(), gap_seconds, gap_samples);
+          _processor, "%s: detected gap (%.6f secs, %lu samples) (handled)",
+          record->streamID().c_str(), gapSeconds, gapSamples);
     } else {
       SCDETECT_LOG_DEBUG_PROCESSOR(
-          waveform_processor_,
+          _processor,
           "%s: detected gap (%.6f secs, %lu samples) (NOT "
           "handled)",
-          record->streamID().c_str(), gap_seconds, gap_samples);
+          record->streamID().c_str(), gapSeconds, gapSamples);
     }
-  } else if (gap_seconds < 0) {
+  } else if (gapSeconds < 0) {
     // handle record from the past
-    size_t gap_samples = static_cast<size_t>(
-        ceil(-1 * stream_state.sampling_frequency * gap_seconds));
-    if (gap_samples > 1)
-      return false;
+    gapSamples = static_cast<size_t>(
+        ceil(-1 * streamState.samplingFrequency * gapSeconds));
+    if (gapSamples > 1) return false;
   }
 
   return true;
 }
 
-bool RingBufferOperator::Fill(StreamState &stream_state, const Record *record,
+bool RingBufferOperator::fill(StreamState &streamState, const Record *record,
                               DoubleArrayPtr &data) {
-  auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
+  auto &buffer{_streamConfigs.at(record->streamID()).streamBuffer};
   // buffer record
   auto retval{buffer->feed(record)};
   if (!retval) {
     SCDETECT_LOG_WARNING_PROCESSOR(
-        waveform_processor_,
+        _processor,
         "%s: error while buffering data: start=%s, end=%s, samples=%d",
         record->streamID().c_str(), record->startTime().iso().c_str(),
         record->endTime().iso().c_str(), record->sampleCount());
@@ -201,55 +193,53 @@ bool RingBufferOperator::Fill(StreamState &stream_state, const Record *record,
   return retval;
 }
 
-void RingBufferOperator::SetupStream(StreamState &stream_state,
+void RingBufferOperator::setupStream(StreamState &streamState,
                                      const Record *record) {
   const auto &f{record->samplingFrequency()};
-  stream_state.sampling_frequency = f;
+  streamState.samplingFrequency = f;
 
-  const auto min_thres{2 * 1.0 / f};
-  if (min_thres > gap_threshold_) {
+  const auto minThres{2 * 1.0 / f};
+  if (minThres > _gapThreshold) {
     SCDETECT_LOG_WARNING_PROCESSOR(
-        waveform_processor_,
+        _processor,
         "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
         "Resetting gap threshold.",
-        min_thres, static_cast<double>(gap_threshold_));
+        minThres, static_cast<double>(_gapThreshold));
 
     // TODO(damb): When implementing the feature/handle-changing-sampling
     // rates (see: https://github.com/damb/scdetect/issues/20) store remember
     // the configured gap threshold value and reset the current gap threshold
     // to the configured one, once the sampling interval decreases.
-    gap_threshold_ = min_thres;
+    _gapThreshold = minThres;
   }
 
   // update the received data timewindow
-  stream_state.data_time_window = record->timeWindow();
+  streamState.dataTimeWindow = record->timeWindow();
 }
 
-bool RingBufferOperator::FillGap(StreamState &stream_state,
-                                 const Record *record,
+bool RingBufferOperator::fillGap(StreamState &streamState, const Record *record,
                                  const Core::TimeSpan &duration,
-                                 double next_sample, size_t missing_samples) {
-  if (duration <= gap_tolerance_) {
-    if (gap_interpolation_) {
-
-      auto &buffer{stream_configs_.at(record->streamID()).stream_buffer};
+                                 double nextSample, size_t missingSamples) {
+  if (duration <= _gapTolerance) {
+    if (_gapInterpolation) {
+      auto &buffer{_streamConfigs.at(record->streamID()).streamBuffer};
 
       auto filled{utils::make_unique<GenericRecord>(
           record->networkCode(), record->stationCode(), record->locationCode(),
           record->channelCode(), buffer->timeWindow().endTime(),
           record->samplingFrequency())};
 
-      auto data_ptr{utils::make_smart<DoubleArray>(missing_samples)};
-      double delta{next_sample - stream_state.last_sample};
-      double step{1. / static_cast<double>(missing_samples + 1)};
+      auto dataPtr{utils::make_smart<DoubleArray>(missingSamples)};
+      double delta{nextSample - streamState.lastSample};
+      double step{1. / static_cast<double>(missingSamples + 1)};
       double di = step;
-      for (size_t i = 0; i < missing_samples; ++i, di += step) {
-        const double value{stream_state.last_sample + di * delta};
-        data_ptr->set(i, value);
+      for (size_t i = 0; i < missingSamples; ++i, di += step) {
+        const double value{streamState.lastSample + di * delta};
+        dataPtr->set(i, value);
       }
 
-      filled->setData(missing_samples, data_ptr->typedData(), Array::DOUBLE);
-      Fill(stream_state, /*record=*/filled.release(), data_ptr);
+      filled->setData(missingSamples, dataPtr->typedData(), Array::DOUBLE);
+      fill(streamState, /*record=*/filled.release(), dataPtr);
 
       return true;
     }
@@ -258,6 +248,6 @@ bool RingBufferOperator::FillGap(StreamState &stream_state,
   return false;
 }
 
-} // namespace waveform_operator
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace waveform_operator
+}  // namespace detect
+}  // namespace Seiscomp

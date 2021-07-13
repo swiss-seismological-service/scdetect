@@ -1,16 +1,15 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_
 
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/datamodel/arrival.h>
+#include <seiscomp/datamodel/pick.h>
+
+#include <boost/optional.hpp>
 #include <iterator>
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include <boost/optional.hpp>
-
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/datamodel/arrival.h>
-#include <seiscomp/datamodel/pick.h>
 
 #include "arrival.h"
 
@@ -19,26 +18,25 @@ namespace detect {
 namespace detector {
 
 struct PickOffsetNode {
-  PickOffsetNode(const std::string &stream_id, double pick_offset = 0);
-  PickOffsetNode(const std::string &stream_id, const Core::Time &lhs,
+  PickOffsetNode(const std::string &waveformStreamId, double pickOffset = 0);
+  PickOffsetNode(const std::string &waveformStreamId, const Core::Time &lhs,
                  const Core::Time &rhs);
 
   // The waveform stream identifier
-  std::string stream_id;
+  std::string waveformStreamId;
   // Defines the relative pick offset
-  double pick_offset{0};
+  double pickOffset{0};
 
   bool enabled{true};
 
-  void Enable();
-  void Disable();
+  void enable();
+  void disable();
 };
 
 /* ------------------------------------------------------------------------- */
 // The Pick Offset Table (POT)
 class PickOffsetTable {
-
-public:
+ public:
   struct ArrivalPick {
     DataModel::ArrivalCPtr arrival;
     DataModel::PickCPtr pick;
@@ -74,37 +72,38 @@ public:
   const_iterator cend() const;
 
   // Returns the maximum relative pick offset if defined
-  boost::optional<double> pick_offset() const;
+  boost::optional<double> pickOffset() const;
   // Returns sorted pick offset nodes with regards to the node identified by
-  // `stream_id`; throws if out of bounds
-  const_reference GetOffsets(const std::string &stream_id) const;
+  // `waveformStreamId`; throws if out of bounds
+  const_reference getOffsets(const std::string &waveformStreamId) const;
   // Returns sorted pick offset nodes with regards to the node at position `n`;
   // throws if out of bounds
-  const_reference GetOffsets(size_type n) const;
+  const_reference getOffsets(size_type n) const;
   // Returns the set waveform stream identifiers of the POT's nodes
-  std::unordered_set<std::string> GetWaveformIDs() const;
+  std::unordered_set<std::string> getWaveformStreamIds() const;
 
   // Enable all entries within the table
-  void Enable();
-  // Enables the pick identified by `stream_id` in the table
-  void Enable(const std::string &stream_id);
+  void enable();
+  // Enables the pick identified by `waveformStreamId` in the table
+  void enable(const std::string &waveformStreamId);
   // Enables all picks with waveform stream ids from the set
-  void Enable(const std::unordered_set<std::string> &stream_ids);
+  void enable(const std::unordered_set<std::string> &waveformStreamIds);
   // Disable all entries within the table
-  void Disable();
-  // Disables the pick identified by `stream_id` in the table
-  void Disable(const std::string &stream_id);
+  void disable();
+  // Disables the pick identified by `waveformStreamId` in the table
+  void disable(const std::string &waveformStreamId);
   // Disables all picks with waveform stream ids from the set
-  void Disable(const std::unordered_set<std::string> &stream_ids);
+  void disable(const std::unordered_set<std::string> &waveformStreamIds);
 
-  template <typename TFunc> void Traverse(const TFunc &func);
+  template <typename TFunc>
+  void traverse(const TFunc &func);
 
-private:
-  static std::vector<Arrival> Convert(const std::vector<ArrivalPick> &picks);
+ private:
+  static std::vector<Arrival> convert(const std::vector<ArrivalPick> &picks);
 
-  TableType offset_table_;
+  TableType _offsetTable;
 
-  bool enabled_{true};
+  bool _enabled{true};
 };
 
 using POT = PickOffsetTable;
@@ -114,12 +113,12 @@ using POT = PickOffsetTable;
 // `exceeded`.
 // Returns if the validation was successful (`true`) or not (`false`),
 // respectively.
-bool ValidatePickOffsets(const POT &lhs, const POT &rhs,
+bool validatePickOffsets(const POT &lhs, const POT &rhs,
                          std::unordered_set<std::string> &exceeded,
                          double thres = 0);
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_POT_H_

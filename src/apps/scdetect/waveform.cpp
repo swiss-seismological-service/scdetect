@@ -1,12 +1,5 @@
 #include "waveform.h"
 
-#include <fstream>
-#include <memory>
-
-#include <boost/algorithm/string/join.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/functional/hash.hpp>
-
 #include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/strings.h>
 #include <seiscomp/io/recordinput.h>
@@ -14,6 +7,12 @@
 #include <seiscomp/io/recordstream.h>
 #include <seiscomp/math/filter.h>
 #include <seiscomp/utils/files.h>
+
+#include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp>
+#include <fstream>
+#include <memory>
 
 #include "log.h"
 #include "resamplerstore.h"
@@ -25,19 +24,19 @@ namespace waveform {
 
 namespace {
 
-template <class T> T NextPowerOfTwo(T a, T min = 1, T max = 1 << 31) {
+template <class T>
+T nextPowerOfTwo(T a, T min = 1, T max = 1 << 31) {
   int b = min;
   while (b < a) {
     b <<= 1;
-    if (b > max)
-      return -1;
+    if (b > max) return -1;
   }
   return b;
 }
 
-} // namespace
+}  // namespace
 
-bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
+bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
   auto offset{
       static_cast<int>(static_cast<double>(tw.startTime() - trace.startTime()) *
                        trace.samplingFrequency())};
@@ -65,12 +64,11 @@ bool Trim(GenericRecord &trace, const Core::TimeWindow &tw) {
   return true;
 }
 
-bool Filter(GenericRecord &trace, const std::string &filter_string) {
-  if (filter_string.empty())
-    return false;
+bool filter(GenericRecord &trace, const std::string &filterId) {
+  if (filterId.empty()) return false;
 
   auto data{DoubleArray::Cast(trace.data())};
-  if (!Filter(*data, filter_string, trace.samplingFrequency())) {
+  if (!filter(*data, filterId, trace.samplingFrequency())) {
     return false;
   }
   trace.dataUpdated();
@@ -78,69 +76,67 @@ bool Filter(GenericRecord &trace, const std::string &filter_string) {
   return true;
 }
 
-bool Filter(DoubleArray &data, const std::string &filter_string,
-            double sampling_freq) {
-  if (filter_string.empty() || sampling_freq <= 0)
-    return false;
+bool filter(DoubleArray &data, const std::string &filterId,
+            double samplingFrequency) {
+  if (filterId.empty() || samplingFrequency <= 0) return false;
 
-  std::string filter_error;
-  auto filter = Math::Filtering::InPlaceFilter<double>::Create(filter_string,
-                                                               &filter_error);
+  std::string filterError;
+  auto filter =
+      Math::Filtering::InPlaceFilter<double>::Create(filterId, &filterError);
   if (!filter) {
     SCDETECT_LOG_WARNING("Filter creation failed for '%s': %s",
-                         filter_string.c_str(), filter_error.c_str());
+                         filterId.c_str(), filterError.c_str());
     return false;
   }
-  filter->setSamplingFrequency(sampling_freq);
+  filter->setSamplingFrequency(samplingFrequency);
   filter->apply(data.size(), data.typedData());
   delete filter;
 
   return true;
 }
 
-bool Resample(GenericRecord &trace, double target_frequency) {
-  if (target_frequency <= 0 || trace.samplingFrequency() == target_frequency)
+bool resample(GenericRecord &trace, double targetFrequency) {
+  if (targetFrequency <= 0 || trace.samplingFrequency() == targetFrequency)
     return true;
 
-  auto resampler{
-      RecordResamplerStore::Instance().Get(&trace, target_frequency)};
+  auto resampler{RecordResamplerStore::Instance().get(&trace, targetFrequency)};
   std::unique_ptr<Record> resampled;
   resampled.reset(resampler->feed(&trace));
   if (!resampled) {
-    SCDETECT_LOG_WARNING("%s: Failed to resample record "
-                         "(sampling_frequency=%f): target_frequency=%f",
-                         std::string{trace.streamID()}.c_str(),
-                         trace.samplingFrequency(), target_frequency);
+    SCDETECT_LOG_WARNING(
+        "%s: Failed to resample record "
+        "(samplingFrequency=%f): targetFrequency=%f",
+        std::string{trace.streamID()}.c_str(), trace.samplingFrequency(),
+        targetFrequency);
     return false;
   }
 
   trace.setStartTime(resampled->startTime());
-  trace.setSamplingFrequency(static_cast<double>(target_frequency));
+  trace.setSamplingFrequency(static_cast<double>(targetFrequency));
   trace.setData(resampled->data()->copy(Array::DataType::DOUBLE));
   return true;
 }
 
-void Demean(GenericRecord &trace) {
+void demean(GenericRecord &trace) {
   auto data{DoubleArray::Cast(trace.data())};
-  Demean(*data);
+  demean(*data);
   trace.dataUpdated();
 }
 
-void Demean(DoubleArray &data) {
-  const auto mean{utils::CMA(data.typedData(), data.size())};
+void demean(DoubleArray &data) {
+  const auto mean{utils::cma(data.typedData(), data.size())};
   data -= mean;
 }
 
-bool Write(const GenericRecord &trace, std::ostream &out) {
+bool write(const GenericRecord &trace, std::ostream &out) {
   IO::MSeedRecord rec{trace};
-  int rec_length = rec.data()->size() * rec.data()->elementSize() + 64;
-  rec_length = NextPowerOfTwo<int>(rec_length, 128,
-                                   1048576); // MINRECLEN 128, MAXRECLEN 1048576
-  if (rec_length <= 0)
-    return false;
+  int recLength = rec.data()->size() * rec.data()->elementSize() + 64;
+  recLength = nextPowerOfTwo<int>(recLength, 128,
+                                  1048576);  // MINRECLEN 128, MAXRECLEN 1048576
+  if (recLength <= 0) return false;
 
   try {
-    rec.setOutputRecordLength(rec_length);
+    rec.setOutputRecordLength(recLength);
     rec.write(out);
   } catch (std::exception &e) {
     SCDETECT_LOG_WARNING("Failed writing waveform: %s", e.what());
@@ -149,7 +145,7 @@ bool Write(const GenericRecord &trace, std::ostream &out) {
   return true;
 }
 
-bool Read(GenericRecord &trace, std::istream &in) {
+bool read(GenericRecord &trace, std::istream &in) {
   IO::MSeedRecord rec(Array::DOUBLE, Record::Hint::DATA_ONLY);
   try {
     rec.read(in);
@@ -163,109 +159,109 @@ bool Read(GenericRecord &trace, std::istream &in) {
   return true;
 }
 
-} // namespace waveform
+}  // namespace waveform
 
 WaveformHandlerIface::BaseException::BaseException()
     : Exception{"base waveform handler exception"} {}
 
-const double WaveformHandler::download_margin_{2};
+const double WaveformHandler::_downloadMargin{2};
 
-void WaveformHandlerIface::Process(const GenericRecordPtr &trace,
+void WaveformHandlerIface::process(const GenericRecordPtr &trace,
                                    const ProcessingConfig &config,
-                                   const Core::TimeWindow &tw_trim) const {
-
+                                   const Core::TimeWindow &twTrim) const {
   if (config.demean) {
-    waveform::Demean(*trace);
+    waveform::demean(*trace);
   }
 
-  if (config.target_frequency) {
-    waveform::Resample(*trace, config.target_frequency);
+  if (config.targetFrequency) {
+    waveform::resample(*trace, config.targetFrequency);
   }
 
-  if (!config.filter_string.empty()) {
-    if (!waveform::Filter(*trace, config.filter_string)) {
+  if (!config.filterId.empty()) {
+    if (!waveform::filter(*trace, config.filterId)) {
       throw BaseException{Core::stringify(
           "%s: Filtering failed with filter: filter=%s,"
           "start=%s, end=%s",
-          trace->streamID().c_str(), config.filter_string.c_str(),
+          trace->streamID().c_str(), config.filterId.c_str(),
           trace->startTime().iso().c_str(), trace->endTime().iso().c_str())};
     }
   }
 
-  if (tw_trim) {
-    if (!waveform::Trim(*trace, tw_trim)) {
+  if (twTrim) {
+    if (!waveform::trim(*trace, twTrim)) {
       throw BaseException{Core::stringify(
           "%s: Incomplete trace; not enough data for requested time:"
           "start=%s, end=%s",
-          trace->streamID().c_str(), tw_trim.startTime().iso().c_str(),
-          tw_trim.endTime().iso().c_str())};
+          trace->streamID().c_str(), twTrim.startTime().iso().c_str(),
+          twTrim.endTime().iso().c_str())};
     }
   }
 }
 
 WaveformHandler::NoData::NoData() : BaseException{"no data avaiable"} {}
 
-WaveformHandler::WaveformHandler(const std::string &record_stream_url)
-    : record_stream_url_(record_stream_url) {}
+WaveformHandler::WaveformHandler(const std::string &recordStreamUrl)
+    : _recordStreamUrl(recordStreamUrl) {}
 
-GenericRecordCPtr WaveformHandler::Get(const DataModel::WaveformStreamID &id,
+GenericRecordCPtr WaveformHandler::get(const DataModel::WaveformStreamID &id,
                                        const Core::TimeWindow &tw,
                                        const ProcessingConfig &config) {
-  return Get(id.networkCode(), id.stationCode(), id.locationCode(),
+  return get(id.networkCode(), id.stationCode(), id.locationCode(),
              id.channelCode(), tw, config);
 }
 
-GenericRecordCPtr WaveformHandler::Get(const DataModel::WaveformStreamID &id,
+GenericRecordCPtr WaveformHandler::get(const DataModel::WaveformStreamID &id,
                                        const Core::Time &start,
                                        const Core::Time &end,
                                        const ProcessingConfig &config) {
   Core::TimeWindow tw{start, end};
-  return Get(id.networkCode(), id.stationCode(), id.locationCode(),
+  return get(id.networkCode(), id.stationCode(), id.locationCode(),
              id.channelCode(), tw, config);
 }
 
-GenericRecordCPtr
-WaveformHandler::Get(const std::string &net_code, const std::string &sta_code,
-                     const std::string &loc_code, const std::string &cha_code,
-                     const Core::Time &start, const Core::Time &end,
-                     const ProcessingConfig &config) {
+GenericRecordCPtr WaveformHandler::get(const std::string &netCode,
+                                       const std::string &staCode,
+                                       const std::string &locCode,
+                                       const std::string &chaCode,
+                                       const Core::Time &start,
+                                       const Core::Time &end,
+                                       const ProcessingConfig &config) {
   Core::TimeWindow tw{start, end};
-  return Get(net_code, sta_code, loc_code, cha_code, tw, config);
+  return get(netCode, staCode, locCode, chaCode, tw, config);
 }
 
-GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
-                                       const std::string &sta_code,
-                                       const std::string &loc_code,
-                                       const std::string &cha_code,
+GenericRecordCPtr WaveformHandler::get(const std::string &netCode,
+                                       const std::string &staCode,
+                                       const std::string &locCode,
+                                       const std::string &chaCode,
                                        const Core::TimeWindow &tw,
                                        const ProcessingConfig &config) {
-
-  utils::WaveformStreamID wf_stream_id{net_code, sta_code, loc_code, cha_code};
-  if (!wf_stream_id.IsValid()) {
+  utils::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
+  if (!wfStreamId.isValid()) {
     throw BaseException{"Invalid waveform stream identifier."};
   }
 
-  IO::RecordStreamPtr rs = IO::RecordStream::Open(record_stream_url_.c_str());
+  IO::RecordStreamPtr rs = IO::RecordStream::Open(_recordStreamUrl.c_str());
   if (!rs) {
     throw BaseException{
-        std::string{"Failed to open RecordStream: " + record_stream_url_}};
+        std::string{"Failed to open RecordStream: " + _recordStreamUrl}};
   }
 
-  Core::TimeSpan download_margin{download_margin_};
-  Core::TimeWindow tw_with_margin{tw.startTime() - download_margin,
-                                  tw.endTime() + download_margin};
-  if (!config.filter_string.empty()) {
-    Core::TimeSpan margin{config.filter_margin_time};
-    tw_with_margin.setStartTime(tw_with_margin.startTime() - margin);
-    tw_with_margin.setEndTime(tw_with_margin.endTime() + margin);
+  Core::TimeSpan downloadMargin{_downloadMargin};
+  Core::TimeWindow twWithMargin{tw.startTime() - downloadMargin,
+                                tw.endTime() + downloadMargin};
+  if (!config.filterId.empty()) {
+    Core::TimeSpan margin{config.filterMarginTime};
+    twWithMargin.setStartTime(twWithMargin.startTime() - margin);
+    twWithMargin.setEndTime(twWithMargin.endTime() + margin);
   }
 
-  rs->setTimeWindow(tw_with_margin);
-  rs->addStream(net_code, sta_code, loc_code, cha_code);
+  rs->setTimeWindow(twWithMargin);
+  rs->addStream(netCode, staCode, locCode, chaCode);
 
   IO::RecordInput inp{rs.get(), Array::DOUBLE, Record::DATA_ONLY};
   std::unique_ptr<RecordSequence> seq{
-      utils::make_unique<TimeWindowBuffer>(tw_with_margin)};
+      utils::make_unique<TimeWindowBuffer>(twWithMargin)};
   RecordPtr rec;
   while ((rec = inp.next())) {
     seq->feed(rec.get());
@@ -274,8 +270,8 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
 
   if (seq->empty()) {
     throw NoData{Core::stringify(
-        "%s.%s.%s.%s: No data: start=%s, end=%s", net_code.c_str(),
-        sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
+        "%s.%s.%s.%s: No data: start=%s, end=%s", netCode.c_str(),
+        staCode.c_str(), locCode.c_str(), chaCode.c_str(),
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
@@ -284,91 +280,89 @@ GenericRecordCPtr WaveformHandler::Get(const std::string &net_code,
     throw BaseException{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "
         "end=%s",
-        net_code.c_str(), sta_code.c_str(), loc_code.c_str(), cha_code.c_str(),
+        netCode.c_str(), staCode.c_str(), locCode.c_str(), chaCode.c_str(),
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
-  Process(trace, config, tw);
+  process(trace, config, tw);
   return trace;
 }
 
-const std::string Cached::cache_key_sep_{"."};
+const std::string Cached::_cacheKeySep{"."};
 
-Cached::Cached(WaveformHandlerIfacePtr waveform_handler, bool raw)
-    : waveform_handler_(waveform_handler), raw_(raw) {}
+Cached::Cached(WaveformHandlerIfacePtr waveformHandler, bool raw)
+    : _waveformHandler(waveformHandler), _raw(raw) {}
 
-GenericRecordCPtr
-Cached::Get(const DataModel::WaveformStreamID &id, const Core::TimeWindow &tw,
-            const WaveformHandlerIface::ProcessingConfig &config) {
-  return Get(id.networkCode(), id.stationCode(), id.locationCode(),
+GenericRecordCPtr Cached::get(
+    const DataModel::WaveformStreamID &id, const Core::TimeWindow &tw,
+    const WaveformHandlerIface::ProcessingConfig &config) {
+  return get(id.networkCode(), id.stationCode(), id.locationCode(),
              id.channelCode(), tw, config);
 }
 
-GenericRecordCPtr
-Cached::Get(const DataModel::WaveformStreamID &id, const Core::Time &start,
-            const Core::Time &end,
-            const WaveformHandlerIface::ProcessingConfig &config) {
+GenericRecordCPtr Cached::get(
+    const DataModel::WaveformStreamID &id, const Core::Time &start,
+    const Core::Time &end,
+    const WaveformHandlerIface::ProcessingConfig &config) {
   Core::TimeWindow tw{start, end};
-  return Get(id.networkCode(), id.stationCode(), id.locationCode(),
+  return get(id.networkCode(), id.stationCode(), id.locationCode(),
              id.channelCode(), tw, config);
 }
 
-GenericRecordCPtr
-Cached::Get(const std::string &net_code, const std::string &sta_code,
-            const std::string &loc_code, const std::string &cha_code,
-            const Core::Time &start, const Core::Time &end,
-            const WaveformHandlerIface::ProcessingConfig &config) {
+GenericRecordCPtr Cached::get(
+    const std::string &netCode, const std::string &staCode,
+    const std::string &locCode, const std::string &chaCode,
+    const Core::Time &start, const Core::Time &end,
+    const WaveformHandlerIface::ProcessingConfig &config) {
   Core::TimeWindow tw{start, end};
-  return Get(net_code, sta_code, loc_code, cha_code, tw, config);
+  return get(netCode, staCode, locCode, chaCode, tw, config);
 }
 
-GenericRecordCPtr
-Cached::Get(const std::string &net_code, const std::string &sta_code,
-            const std::string &loc_code, const std::string &cha_code,
-            const Core::TimeWindow &tw,
-            const WaveformHandlerIface::ProcessingConfig &config) {
-
-  auto SetCache = [&](const std::string &cache_key,
+GenericRecordCPtr Cached::get(
+    const std::string &netCode, const std::string &staCode,
+    const std::string &locCode, const std::string &chaCode,
+    const Core::TimeWindow &tw,
+    const WaveformHandlerIface::ProcessingConfig &config) {
+  auto setCache = [&](const std::string &cacheKey,
                       GenericRecordCPtr trace) -> bool {
-    if (!Set(cache_key, trace)) {
-      SCDETECT_LOG_DEBUG("Failed to cache trace for key: %s",
-                         cache_key.c_str());
+    if (!set(cacheKey, trace)) {
+      SCDETECT_LOG_DEBUG("Failed to cache trace for key: %s", cacheKey.c_str());
       return false;
     }
     return true;
   };
 
-  utils::WaveformStreamID wf_stream_id{net_code, sta_code, loc_code, cha_code};
-  if (!wf_stream_id.IsValid()) {
+  utils::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
+  if (!wfStreamId.isValid()) {
     throw BaseException{"Invalid waveform stream identifier."};
   }
 
   std::string cache_key;
-  MakeCacheKey(net_code, sta_code, loc_code, cha_code, tw, config, cache_key);
+  makeCacheKey(netCode, staCode, locCode, chaCode, tw, config, cache_key);
 
   bool cached = true;
-  GenericRecordCPtr trace{Get(cache_key)};
+  GenericRecordCPtr trace{get(cache_key)};
   if (!trace) {
     cached = false;
 
     ProcessingConfig disabled{config};
-    disabled.filter_string = "";
-    disabled.target_frequency = 0;
+    disabled.filterId = "";
+    disabled.targetFrequency = 0;
     disabled.demean = false;
 
     Core::TimeWindow corrected{tw};
-    if (!config.filter_string.empty()) {
-      const Core::TimeSpan margin{config.filter_margin_time};
+    if (!config.filterId.empty()) {
+      const Core::TimeSpan margin{config.filterMarginTime};
       corrected.setStartTime(tw.startTime() - margin);
       corrected.setEndTime(tw.endTime() + margin);
     }
-    trace = waveform_handler_->Get(net_code, sta_code, loc_code, cha_code,
-                                   corrected, disabled);
+    trace = _waveformHandler->get(netCode, staCode, locCode, chaCode, corrected,
+                                  disabled);
   }
 
   // cache the raw data
-  if (!cached && !CacheProcessed()) {
-    SetCache(cache_key, trace);
+  if (!cached && !cacheProcessed()) {
+    setCache(cache_key, trace);
     // TODO (damb): Find a better solution! -> Ideally,
     // `WaveformHandlerIface::Get()` would return a pointer of type
     // `GenericRecordPtr` i.e. a non-const pointer.
@@ -377,111 +371,106 @@ Cached::Get(const std::string &net_code, const std::string &sta_code,
     trace = utils::make_smart<const GenericRecord>(*trace);
   }
 
-  Process(const_cast<GenericRecord *>(trace.get()), config, tw);
+  process(const_cast<GenericRecord *>(trace.get()), config, tw);
 
   // cache processed data
-  if (!cached && CacheProcessed()) {
-    SetCache(cache_key, trace);
+  if (!cached && cacheProcessed()) {
+    setCache(cache_key, trace);
   }
 
   return trace;
 }
 
-void Cached::MakeCacheKey(const std::string &net_code,
-                          const std::string &sta_code,
-                          const std::string &loc_code,
-                          const std::string &cha_code,
+void Cached::makeCacheKey(const std::string &netCode,
+                          const std::string &staCode,
+                          const std::string &locCode,
+                          const std::string &chaCode,
                           const Core::TimeWindow &tw,
                           const WaveformHandlerIface::ProcessingConfig &config,
                           std::string &result) const {
-
-  Core::TimeWindow tw_with_margin{tw};
-  if (!CacheProcessed()) {
-    if (!config.filter_string.empty()) {
-      Core::TimeSpan margin{config.filter_margin_time};
-      tw_with_margin.setStartTime(tw.startTime() - margin);
-      tw_with_margin.setEndTime(tw.endTime() + margin);
+  Core::TimeWindow twWithMargin{tw};
+  if (!cacheProcessed()) {
+    if (!config.filterId.empty()) {
+      Core::TimeSpan margin{config.filterMarginTime};
+      twWithMargin.setStartTime(tw.startTime() - margin);
+      twWithMargin.setEndTime(tw.endTime() + margin);
     }
   }
 
-  std::vector<std::string> key_components{net_code,
-                                          sta_code,
-                                          loc_code,
-                                          cha_code,
-                                          tw_with_margin.startTime().iso(),
-                                          tw_with_margin.endTime().iso()};
+  std::vector<std::string> keyComponents{netCode,
+                                         staCode,
+                                         locCode,
+                                         chaCode,
+                                         twWithMargin.startTime().iso(),
+                                         twWithMargin.endTime().iso()};
 
-  if (CacheProcessed()) {
-    key_components.push_back(
+  if (cacheProcessed()) {
+    keyComponents.push_back(
         std::to_string(std::hash<ProcessingConfig>{}(config)));
   }
 
-  MakeCacheKey(key_components, result);
+  makeCacheKey(keyComponents, result);
 }
 
-void Cached::MakeCacheKey(std::vector<std::string> key_components,
+void Cached::makeCacheKey(std::vector<std::string> keyComponents,
                           std::string &result) const {
-  result = boost::algorithm::join(key_components, cache_key_sep_);
+  result = boost::algorithm::join(keyComponents, _cacheKeySep);
 }
 
 FileSystemCache::FileSystemCache(WaveformHandlerIfacePtr waveform_handler,
                                  const std::string &path, bool raw)
-    : Cached(waveform_handler, raw), path_cache_(path) {}
+    : Cached(waveform_handler, raw), _pathCache(path) {}
 
-GenericRecordCPtr FileSystemCache::Get(const std::string &key) {
-  std::string fpath{(boost::filesystem::path(path_cache_) / key).string()};
-  if (!Util::fileExists(fpath))
-    return nullptr;
+GenericRecordCPtr FileSystemCache::get(const std::string &key) {
+  std::string fpath{(boost::filesystem::path(_pathCache) / key).string()};
+  if (!Util::fileExists(fpath)) return nullptr;
 
   std::ifstream ifs{fpath};
   auto trace{utils::make_smart<GenericRecord>()};
-  if (!waveform::Read(*trace, ifs))
-    return nullptr;
+  if (!waveform::read(*trace, ifs)) return nullptr;
 
   return trace;
 }
 
-bool Cached::CacheProcessed() const { return !raw_; }
+bool Cached::cacheProcessed() const { return !_raw; }
 
-bool FileSystemCache::Set(const std::string &key, GenericRecordCPtr value) {
-  if (!value)
-    return false;
+bool FileSystemCache::set(const std::string &key, GenericRecordCPtr value) {
+  if (!value) return false;
 
-  std::string fpath{(boost::filesystem::path(path_cache_) / key).string()};
+  std::string fpath{(boost::filesystem::path(_pathCache) / key).string()};
   std::ofstream ofs(fpath);
-  if (!waveform::Write(*value, ofs)) {
+  if (!waveform::write(*value, ofs)) {
     SCDETECT_LOG_DEBUG("Failed to set cache for file: %s", fpath.c_str());
     return false;
   }
   return true;
 }
 
-bool FileSystemCache::Exists(const std::string &key) {
-  std::string fpath{(boost::filesystem::path(path_cache_) / key).string()};
+bool FileSystemCache::exists(const std::string &key) {
+  std::string fpath{(boost::filesystem::path(_pathCache) / key).string()};
   return Util::fileExists(fpath);
 }
 
-InMemoryCache::InMemoryCache(WaveformHandlerIfacePtr waveform_handler, bool raw)
-    : Cached(waveform_handler, raw) {}
+InMemoryCache::InMemoryCache(WaveformHandlerIfacePtr waveformHandler, bool raw)
+    : Cached(waveformHandler, raw) {}
 
-GenericRecordCPtr InMemoryCache::Get(const std::string &key) {
-  const auto it = cache_.find(key);
-  if (cache_.end() == it)
-    return nullptr;
+GenericRecordCPtr InMemoryCache::get(const std::string &key) {
+  const auto it = _cache.find(key);
+  if (_cache.end() == it) return nullptr;
   return it->second;
 }
 
-bool InMemoryCache::Set(const std::string &key, GenericRecordCPtr value) {
-  cache_[key] = value;
+bool InMemoryCache::set(const std::string &key, GenericRecordCPtr value) {
+  _cache[key] = value;
   return true;
 }
 
-bool InMemoryCache::Exists(const std::string &key) {
-  return cache_.find(key) != cache_.end();
+bool InMemoryCache::exists(const std::string &key) {
+  return _cache.find(key) != _cache.end();
 }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 
@@ -490,11 +479,11 @@ hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig>::operator()(
     const Seiscomp::detect::WaveformHandlerIface::ProcessingConfig &c)
     const noexcept {
   std::size_t ret{0};
-  boost::hash_combine(ret, std::hash<std::string>{}(c.filter_string));
-  boost::hash_combine(ret, std::hash<double>{}(c.filter_margin_time));
-  boost::hash_combine(ret, std::hash<double>{}(c.target_frequency));
+  boost::hash_combine(ret, std::hash<std::string>{}(c.filterId));
+  boost::hash_combine(ret, std::hash<double>{}(c.filterMarginTime));
+  boost::hash_combine(ret, std::hash<double>{}(c.targetFrequency));
   boost::hash_combine(ret, std::hash<bool>{}(c.demean));
   return ret;
 }
 
-} // namespace std
+}  // namespace std

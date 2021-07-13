@@ -1,19 +1,18 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <boost/filesystem.hpp>
-
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/originquality.h>
 #include <seiscomp/datamodel/pick.h>
+
+#include <boost/filesystem.hpp>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace fs = boost::filesystem;
 
@@ -27,73 +26,73 @@ class Flag;
 std::string to_string(const Flag &flag);
 
 class Flag {
-public:
+ public:
   virtual const std::string flag() const = 0;
   friend std::ostream &operator<<(std::ostream &os, const Flag &flag);
 
-protected:
+ protected:
   virtual void to_string(std::ostream &os) const;
 };
 
 class ArgFlag : public Flag {
-public:
+ public:
   ArgFlag(const std::string &arg);
 
-protected:
+ protected:
   void to_string(std::ostream &os) const override;
 
-  void set_arg(const std::string &arg);
+  void setArg(const std::string &arg);
 
-private:
-  std::string arg_;
+ private:
+  std::string _arg;
 };
 
 class BooleanFlag : public ArgFlag {
-public:
+ public:
   BooleanFlag();
-  void Enable();
-  void Disable();
+  void enable();
+  void disable();
 };
 
 class FlagDebug : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagConsole : public BooleanFlag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagOffline : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagPlayback : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagTemplatesReload : public Flag {
-public:
+ public:
   const std::string flag() const override;
 };
 
 class FlagAgencyId : public ArgFlag {
-public:
+ public:
   FlagAgencyId(const std::string &id);
   const std::string flag() const override;
 };
 
 class FlagAuthor : public ArgFlag {
-public:
+ public:
   FlagAuthor(const std::string &id);
   const std::string flag() const override;
 };
 
 class FlagPlugins : public ArgFlag {
-public:
+ public:
   FlagPlugins(const std::string &plugin);
   FlagPlugins(const std::vector<std::string> &plugins);
 
@@ -101,113 +100,113 @@ public:
 };
 
 class FlagEp : public ArgFlag {
-public:
+ public:
   explicit FlagEp(const std::string &fpath);
   explicit FlagEp(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagConfigFile : public ArgFlag {
-public:
+ public:
   explicit FlagConfigFile(const std::string &fpath);
   explicit FlagConfigFile(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagDB : public ArgFlag {
-public:
+ public:
   explicit FlagDB(const std::string &uri);
   explicit FlagDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagInventoryDB : public ArgFlag {
-public:
+ public:
   explicit FlagInventoryDB(const std::string &uri);
   explicit FlagInventoryDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagEventDB : public ArgFlag {
-public:
+ public:
   explicit FlagEventDB(const std::string &uri);
   explicit FlagEventDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
 class FlagRecordURL : public ArgFlag {
-public:
+ public:
   explicit FlagRecordURL(const std::string &url);
   const std::string flag() const override;
 };
 
 class FlagRecordStartTime : public ArgFlag {
-public:
-  FlagRecordStartTime(const std::string &time_str);
+ public:
+  FlagRecordStartTime(const std::string &timeStr);
   const std::string flag() const override;
 };
 
 class FlagRecordEndTime : public ArgFlag {
-public:
-  FlagRecordEndTime(const std::string &time_str);
+ public:
+  FlagRecordEndTime(const std::string &timeStr);
   const std::string flag() const override;
 };
 
 class FlagTemplatesJSON : public ArgFlag {
-public:
+ public:
   explicit FlagTemplatesJSON(const std::string &fpath);
   explicit FlagTemplatesJSON(const fs::path &fpath);
   const std::string flag() const override;
 };
 
-} // namespace cli
+}  // namespace cli
 
 /* -------------------------------------------------------------------------- */
 // Compare `DataModel::EventParameters element-wise
-void EventParametersCmp(const DataModel::EventParametersCPtr &lhs,
+void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
                         const DataModel::EventParametersCPtr &rhs);
 
 // Compare `DataModel::Pick` element-wise
-void PickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
+void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
 
 // Compare `DataModel::Origin` element-wise
-void OriginCmp(const DataModel::OriginCPtr &lhs,
+void originCmp(const DataModel::OriginCPtr &lhs,
                const DataModel::OriginCPtr &rhs);
 
 // Compare `DataModel::OriginQuality` element-wise
-void OriginQualityCmp(const DataModel::OriginQualityCPtr &lhs,
+void originQualityCmp(const DataModel::OriginQualityCPtr &lhs,
                       const DataModel::OriginQualityCPtr &rhs);
 
 // Compare `DataModel::Arrival` element-wise
-void ArrivalCmp(const DataModel::ArrivalCPtr &lhs,
+void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
                 const DataModel::ArrivalCPtr &rhs);
 
 // Compare `DataModel::Magnitude` element-wise
-void MagnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
+void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs);
 
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {
   TempDirFixture();
-  TempDirFixture(bool keep_tempdir);
+  TempDirFixture(bool keepTempdir);
   ~TempDirFixture();
 
-  std::string path_tempdir_str() const;
-  const char *path_tempdir_cstr() const;
+  std::string pathTempdirStr() const;
+  const char *pathTempdirCStr() const;
 
-  fs::path path_tempdir;
+  fs::path pathTempdir;
 
-protected:
-  static fs::path CreatePathUnique();
+ protected:
+  static fs::path createPathUnique();
 
-  void CreateTempdir();
+  void createTempdir();
 
-private:
-  static const std::string path_subdir;
+ private:
+  static const std::string _pathSubDir;
   // Maximum number of tries in order to create the temporary directory
-  static const int max_tries;
+  static const int _maxTries;
 
-  bool keep_tempdir_{false};
+  bool _keepTempdir{false};
 };
 
 /* -------------------------------------------------------------------------- */
@@ -218,26 +217,27 @@ struct CLIParserFixture {
   void setup();
   void teardown();
 
-  static fs::path path_data;
-  static bool keep_tempdir;
+  static fs::path pathData;
+  static bool keepTempdir;
 };
 
 /* -------------------------------------------------------------------------- */
-template <typename TApp> class ApplicationWrapper {
-public:
+template <typename TApp>
+class ApplicationWrapper {
+ public:
   ApplicationWrapper(const std::vector<std::string> &argv);
   ~ApplicationWrapper();
 
   int operator()();
 
-private:
-  std::vector<char *> argv_;
+ private:
+  std::vector<char *> _argv;
 };
 
 #include "integration_utils.ipp"
 
-} // namespace test
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
+#endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_

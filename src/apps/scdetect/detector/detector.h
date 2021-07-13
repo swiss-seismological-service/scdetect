@@ -1,6 +1,13 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_
 
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/record.h>
+#include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/origin.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 #include <cmath>
 #include <deque>
 #include <functional>
@@ -9,46 +16,38 @@
 #include <unordered_set>
 #include <vector>
 
-#include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
-
-#include <seiscomp/core/datetime.h>
-#include <seiscomp/core/record.h>
-#include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/origin.h>
-
 #include "../exception.h"
 #include "../processor.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
 #include "arrival.h"
 #include "linker.h"
-#include "template.h"
+#include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 
 class Detector : public detect::Processor {
-public:
+ public:
   Detector(const detect::Processor *detector,
            const DataModel::OriginCPtr &origin);
   virtual ~Detector();
 
   class BaseException : public Exception {
-  public:
+   public:
     using Exception::Exception;
     BaseException();
   };
 
   class ProcessingError : public BaseException {
-  public:
+   public:
     using BaseException::BaseException;
     ProcessingError();
   };
 
   class TemplateMatchingError : public ProcessingError {
-  public:
+   public:
     using ProcessingError::ProcessingError;
     TemplateMatchingError();
   };
@@ -60,27 +59,27 @@ public:
     double longitude;
 
     // The unique station's identifier (usually the station's public id)
-    std::string station_id;
+    std::string stationId;
   };
 
   struct Result {
-    Core::Time origin_time;
+    Core::Time originTime;
     double fit;
     boost::optional<double> magnitude;
 
     struct TemplateResult {
       Arrival arrival;
-      SensorLocation sensor_location;
+      SensorLocation sensorLocation;
     };
 
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;
-    TemplateResults template_results;
+    TemplateResults templateResults;
 
-    size_t num_channels_used;
-    size_t num_channels_associated;
-    size_t num_stations_used;
-    size_t num_stations_associated;
+    size_t numChannelsUsed;
+    size_t numChannelsAssociated;
+    size_t numStationsUsed;
+    size_t numStationsAssociated;
   };
 
   // Returns the detector's status
@@ -90,85 +89,87 @@ public:
   // Returns `true` if the detector is currently triggered, else `false`
   bool triggered() const;
   // Enables trigger duration facilities with `duration`
-  void EnableTrigger(const Core::TimeSpan &duration);
+  void enableTrigger(const Core::TimeSpan &duration);
   // Disables trigger duration facilities
-  void DisableTrigger();
+  void disableTrigger();
   // Set the trigger thresholds
-  void set_trigger_thresholds(double trigger_on, double trigger_off = 1);
+  void setTriggerThresholds(double triggerOn, double triggerOff = 1);
   // Set the maximum arrival offset threshold
-  void set_arrival_offset_threshold(const boost::optional<double> &thres);
+  void setArrivalOffsetThreshold(const boost::optional<double> &thres);
   // Returns the arrival offset threshold configured
-  boost::optional<double> arrival_offset_threshold() const;
+  boost::optional<double> arrivalOffsetThreshold() const;
   // Configures the detector with a minimum number of arrivals required to
   // declare an event as a detection
-  void set_min_arrivals(const boost::optional<size_t> &n);
+  void setMinArrivals(const boost::optional<size_t> &n);
   // Returns the minimum number of arrivals required in order to declare an
   // event as a detection
-  boost::optional<size_t> min_arrivals() const;
+  boost::optional<size_t> minArrivals() const;
   // Sets the maximum data latency w.r.t. `NOW`. If configured with
   // `boost::none` latency is not taken into account and thus not validated
-  void set_maximum_latency(const boost::optional<Core::TimeSpan> &latency);
+  void setMaxLatency(const boost::optional<Core::TimeSpan> &latency);
   // Returns the maximum allowed data latency configured
-  boost::optional<Core::TimeSpan> maximum_latency() const;
+  boost::optional<Core::TimeSpan> maxLatency() const;
   // Sets the processing chunk size. If configured with `boost::none` as much
-  // data is processed as possible as a single chunk
-  void set_chunk_size(const boost::optional<Core::TimeSpan> &chunk_size);
+  // data is processed as possible as a single chunk.
+  void setChunkSize(const boost::optional<Core::TimeSpan> &chunkSize);
   // Returns the processing chunk size
-  boost::optional<Core::TimeSpan> chunk_size() const;
+  boost::optional<Core::TimeSpan> chunkSize() const;
   // Returns the number of registered template processors
-  size_t GetProcessorCount() const;
+  size_t getProcessorCount() const;
 
   // Register the template waveform processor `proc` for processing buffered
   // data from `buf` where records are identified by the waveform stream
-  // identifier `stream_id`. `proc` is registered together with the template
-  // arrival `arrival` and the sensor location `loc`.
-  void Register(std::unique_ptr<Template> &&proc,
-                const std::shared_ptr<const RecordSequence> &buf,
-                const std::string &stream_id, const Arrival &arrival,
-                const Detector::SensorLocation &loc);
-  // Removes the processors processing streams identified by `stream_id`
-  void Remove(const std::string &stream_id);
+  // identifier `waveformStreamId`. `proc` is registered together with the
+  // template arrival `arrival` and the sensor location `loc`.
+  void add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
+           const std::shared_ptr<const RecordSequence> &buf,
+           const std::string &waveformStreamId, const Arrival &arrival,
+           const Detector::SensorLocation &loc);
+  // Removes the processors processing streams identified by `waveformStreamId`
+  void remove(const std::string &waveformStreamId);
 
-  void Process(const std::string &stream_id_hint);
+  void process(const std::string &waveformStreamIdHint);
   // Reset the detector
-  void Reset();
+  void reset();
   // Terminates the detector
   //
   // - if triggered forces flushing the pending detection
-  void Terminate();
+  void terminate();
 
   using PublishResultCallback = std::function<void(const Result &result)>;
-  void set_result_callback(const PublishResultCallback &cb);
+  void setResultCallback(const PublishResultCallback &callback);
 
-protected:
+ protected:
   using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
-  bool PrepareProcessing(TimeWindows &tws, const std::string &waveform_id_hint);
+  bool prepareProcessing(TimeWindows &tws,
+                         const std::string &waveformStreamIdHint);
   // Feed data to template processors
-  bool Feed(const TimeWindows &tws);
+  bool feed(const TimeWindows &tws);
   // Prepare detection
-  void PrepareResult(const Linker::Result &linker_res, Result &res) const;
+  void prepareResult(const Linker::Result &linkerResult, Result &result) const;
   // Reset the processor's processing facilities
-  void ResetProcessing();
+  void resetProcessing();
   // Reset the trigger
-  void ResetTrigger();
+  void resetTrigger();
   // Reset the currently enabled processors
-  void ResetProcessors();
+  void resetProcessors();
   // Emit the detection result
-  void EmitResult(const Result &res);
+  void emitResult(const Result &result);
 
-  // Callback storing results from `Template` processors
-  void StoreTemplateResult(const Template *proc, const Record *rec,
-                           const Template::MatchResultCPtr &res);
+  // Callback storing results from `TemplateWaveformProcessor`
+  void storeTemplateResult(
+      const TemplateWaveformProcessor *processor, const Record *record,
+      const TemplateWaveformProcessor::MatchResultCPtr &result);
 
   // Callback storing results from the linker
-  void StoreLinkerResult(const Linker::Result &res);
+  void storeLinkerResult(const Linker::Result &linkerResult);
 
-private:
+ private:
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
-    // The `Template` waveform processor
-    std::unique_ptr<Template> processor;
+
+    std::unique_ptr<TemplateWaveformProcessor> processor;
     // Reference to the record buffer
     std::shared_ptr<const RecordSequence> buffer;
 
@@ -176,54 +177,54 @@ private:
     // XXX(damb): The data time window fed might be different from the data
     // time window processed (e.g. due to the usage of certain waveform
     // operators). Therefore, keep track of the time window fed, too.
-    Core::TimeWindow data_time_window_fed;
-    // The processor dependent chunk size used to feed data to `Template`
-    // waveform processors
-    boost::optional<Core::TimeSpan> chunk_size;
+    Core::TimeWindow dataTimeWindowFed;
+    // The processor dependent chunk size used to feed data to
+    // `TemplateWaveformProcessor` waveform processors
+    boost::optional<Core::TimeSpan> chunkSize;
 
     // The sensor location w.r.t. the template `processor`
-    SensorLocation sensor_location;
+    SensorLocation sensorLocation;
   };
 
   using ProcessorStates = std::unordered_map<std::string, ProcessorState>;
-  ProcessorStates processors_;
+  ProcessorStates _processors;
   using ProcessorIdx = std::unordered_multimap<std::string, std::string>;
-  ProcessorIdx processor_idx_;
+  ProcessorIdx _processorIdx;
 
   // The detector's status
-  Status status_{Status::kWaitingForData};
+  Status _status{Status::kWaitingForData};
   // The overall time window processed
-  Core::TimeWindow processed_;
+  Core::TimeWindow _processed;
 
   // The current linker result
-  boost::optional<Linker::Result> current_result_;
+  boost::optional<Linker::Result> _currentResult;
   // The result callback function
-  boost::optional<PublishResultCallback> result_callback_;
+  boost::optional<PublishResultCallback> _resultCallback;
 
-  boost::optional<double> thres_trigger_on_;
-  boost::optional<double> thres_trigger_off_;
-  boost::optional<Core::TimeSpan> trigger_duration_;
-  boost::optional<Core::Time> trigger_end_;
+  boost::optional<double> _thresTriggerOn;
+  boost::optional<double> _thresTriggerOff;
+  boost::optional<Core::TimeSpan> _triggerDuration;
+  boost::optional<Core::Time> _triggerEnd;
   // The processor used for triggering (i.e. the current reference processor)
-  boost::optional<std::string> trigger_proc_id_;
+  boost::optional<std::string> _triggerProcId;
 
   // The linker required for associating arrivals
-  Linker linker_;
+  Linker _linker;
   using ResultQueue = std::deque<Linker::Result>;
-  ResultQueue result_queue_;
+  ResultQueue _resultQueue;
   // Safety margin for linker on hold duration
-  Core::TimeSpan linker_safety_margin_{1.0};
+  Core::TimeSpan _linkerSafetyMargin{1.0};
 
   // Maximum data latency
-  boost::optional<Core::TimeSpan> max_latency_;
+  boost::optional<Core::TimeSpan> _maxLatency;
   // The configured processing chunk size
-  boost::optional<Core::TimeSpan> chunk_size_;
+  boost::optional<Core::TimeSpan> _chunkSize;
 
-  DataModel::OriginCPtr origin_;
+  DataModel::OriginCPtr _origin;
 };
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_DETECTOR_H_

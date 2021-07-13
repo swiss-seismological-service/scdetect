@@ -5,16 +5,16 @@ namespace detect {
 namespace waveform_operator {
 
 ResamplingOperator::ResamplingOperator(
-    std::unique_ptr<RecordResampler> record_resampler)
-    : record_resampler_{std::move(record_resampler)} {}
+    std::unique_ptr<RecordResampler> recordResampler)
+    : _recordResampler{std::move(recordResampler)} {}
 
-WaveformProcessor::Status ResamplingOperator::Feed(const Record *record) {
+WaveformProcessor::Status ResamplingOperator::feed(const Record *record) {
   if (record->sampleCount() == 0)
     return WaveformProcessor::Status::kWaitingForData;
 
-  auto resampled{record_resampler_->feed(record)};
+  auto resampled{_recordResampler->feed(record)};
   if (resampled) {
-    WaveformOperator::Store(resampled);
+    WaveformOperator::store(resampled);
 
     return WaveformProcessor::Status::kInProgress;
   }
@@ -22,8 +22,8 @@ WaveformProcessor::Status ResamplingOperator::Feed(const Record *record) {
   return WaveformProcessor::Status::kError;
 }
 
-void ResamplingOperator::Reset() { record_resampler_->reset(); }
+void ResamplingOperator::reset() { _recordResampler->reset(); }
 
-} // namespace waveform_operator
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace waveform_operator
+}  // namespace detect
+}  // namespace Seiscomp

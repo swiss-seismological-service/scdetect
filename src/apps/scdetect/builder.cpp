@@ -14,6 +14,6 @@ NoStream::NoStream() : BaseException{"no stream data available"} {}
 NoSensorLocation::NoSensorLocation()
     : BaseException{"no sensor location data available"} {}
 
-} // namespace builder
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace builder
+}  // namespace detect
+}  // namespace Seiscomp

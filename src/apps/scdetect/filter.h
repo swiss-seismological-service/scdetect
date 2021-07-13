@@ -8,13 +8,13 @@ namespace detect {
 namespace filter {
 
 class BaseException : public Exception {
-public:
+ public:
   using Exception::Exception;
   BaseException();
 };
 
-} // namespace filter
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace filter
+}  // namespace detect
+}  // namespace Seiscomp
 
-#endif // SCDETECT_APPS_SCDETECT_FILTER_H_
+#endif  // SCDETECT_APPS_SCDETECT_FILTER_H_

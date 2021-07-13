@@ -2,11 +2,12 @@
 #define SCDETECT_APPS_SCDETECT_BUILDER_IPP_
 
 template <typename TProduct>
-std::unique_ptr<TProduct> Builder<TProduct>::Build() {
-  Finalize();
-  return std::move(product_);
+std::unique_ptr<TProduct> Builder<TProduct>::build() {
+  finalize();
+  return std::move(_product);
 }
 
-template <typename TProduct> void Builder<TProduct>::Finalize() {}
+template <typename TProduct>
+void Builder<TProduct>::finalize() {}
 
-#endif // SCDETECT_APPS_SCDETECT_BUILDER_IPP_
+#endif  // SCDETECT_APPS_SCDETECT_BUILDER_IPP_

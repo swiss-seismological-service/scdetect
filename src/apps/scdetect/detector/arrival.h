@@ -1,12 +1,11 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
 
-#include <functional>
-#include <string>
+#include <seiscomp/core/datetime.h>
 
 #include <boost/optional.hpp>
-
-#include <seiscomp/core/datetime.h>
+#include <functional>
+#include <string>
 
 namespace Seiscomp {
 namespace detect {
@@ -17,18 +16,18 @@ struct Pick {
   // The pick's time
   Core::Time time;
   // The pick's waveform stream identifier
-  std::string waveform_id;
+  std::string waveformStreamId;
 
   // The tentative phase
-  boost::optional<std::string> phase_hint;
+  boost::optional<std::string> phaseHint;
 
   // The pick offset w.r.t. origin time
   Core::TimeSpan offset;
 
   // Lower uncertainty w.r.t. the pick time
-  boost::optional<double> lower_uncertainty;
+  boost::optional<double> lowerUncertainty;
   // Upper uncertainty w.r.t. the pick time
-  boost::optional<double> upper_uncertainty;
+  boost::optional<double> upperUncertainty;
 
   friend bool operator==(const Pick &lhs, const Pick &rhs);
   friend bool operator!=(const Pick &lhs, const Pick &rhs);
@@ -49,17 +48,18 @@ struct Arrival {
   friend bool operator!=(const Arrival &lhs, const Arrival &rhs);
 };
 
-} // namespace detector
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
 
 namespace std {
 
-template <> struct hash<Seiscomp::detect::detector::Arrival> {
-  std::size_t
-  operator()(const Seiscomp::detect::detector::Arrival &a) const noexcept;
+template <>
+struct hash<Seiscomp::detect::detector::Arrival> {
+  std::size_t operator()(
+      const Seiscomp::detect::detector::Arrival &a) const noexcept;
 };
 
-} // namespace std
+}  // namespace std
 
-#endif // SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_

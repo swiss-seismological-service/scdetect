@@ -7,24 +7,26 @@
 template <typename TApp>
 ApplicationWrapper<TApp>::ApplicationWrapper(
     const std::vector<std::string> &argv) {
-  auto StrToCStr = [](const std::string &str) {
+  auto strToCStr = [](const std::string &str) {
     char *ret{new char[str.size() + 1]};
     std::strcpy(ret, str.c_str());
     return ret;
   };
 
-  argv_.reserve(argv.size());
-  std::transform(argv.cbegin(), argv.cend(), back_inserter(argv_), StrToCStr);
+  _argv.reserve(argv.size());
+  std::transform(argv.cbegin(), argv.cend(), back_inserter(_argv), strToCStr);
 }
 
-template <typename TApp> ApplicationWrapper<TApp>::~ApplicationWrapper() {
-  for (size_t i = 0; i < argv_.size(); ++i) {
-    delete[] argv_[i];
+template <typename TApp>
+ApplicationWrapper<TApp>::~ApplicationWrapper() {
+  for (size_t i = 0; i < _argv.size(); ++i) {
+    delete[] _argv[i];
   }
 }
 
-template <typename TApp> int ApplicationWrapper<TApp>::operator()() {
-  return TApp(static_cast<int>(argv_.size()), argv_.data())();
+template <typename TApp>
+int ApplicationWrapper<TApp>::operator()() {
+  return TApp(static_cast<int>(_argv.size()), _argv.data())();
 }
 
-#endif // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
+#endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_

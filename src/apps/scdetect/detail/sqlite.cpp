@@ -105,8 +105,7 @@ void SQLiteDatabase::rollback() { execute("rollback transaction"); }
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 bool SQLiteDatabase::execute(const char *command) {
-  if (!isConnected() || command == NULL)
-    return false;
+  if (!isConnected() || command == NULL) return false;
 
   char *errmsg = NULL;
   int result = sqlite3_exec(_handle, command, NULL, NULL, &errmsg);
@@ -121,8 +120,7 @@ bool SQLiteDatabase::execute(const char *command) {
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 bool SQLiteDatabase::beginQuery(const char *query) {
-  if (!isConnected() || query == NULL)
-    return false;
+  if (!isConnected() || query == NULL) return false;
   if (_stmt) {
     SEISCOMP_ERROR("beginQuery: nested queries are not supported");
     return false;
@@ -130,11 +128,9 @@ bool SQLiteDatabase::beginQuery(const char *query) {
 
   const char *tail;
   int res = sqlite3_prepare(_handle, query, -1, &_stmt, &tail);
-  if (res != SQLITE_OK)
-    return false;
+  if (res != SQLITE_OK) return false;
 
-  if (_stmt == NULL)
-    return false;
+  if (_stmt == NULL) return false;
 
   _columnCount = sqlite3_column_count(_stmt);
 
@@ -166,8 +162,7 @@ IO::DatabaseInterface::OID SQLiteDatabase::lastInsertId(const char *) {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 uint64_t SQLiteDatabase::numberOfAffectedRows() {
   int count = sqlite3_changes(_handle);
-  if (count < 0)
-    return (uint64_t)~0;
+  if (count < 0) return (uint64_t)~0;
 
   return count;
 }
@@ -180,8 +175,7 @@ bool SQLiteDatabase::fetchRow() { return sqlite3_step(_stmt) == SQLITE_ROW; }
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 int SQLiteDatabase::findColumn(const char *name) {
   for (int i = 0; i < _columnCount; ++i)
-    if (!strcmp(sqlite3_column_name(_stmt, i), name))
-      return i;
+    if (!strcmp(sqlite3_column_name(_stmt, i), name)) return i;
 
   return -1;
 }
@@ -219,13 +213,13 @@ bool SQLiteDatabase::escape(std::string &out, const std::string &in) {
 
   for (size_t i = 0; i < length && *in_buf; ++length, ++in_buf) {
     switch (*in_buf) {
-    case '\'':
-      out_buf[j++] = '\'';
-      out_buf[j++] = '\'';
-      break;
-    default:
-      out_buf[j++] = *in_buf;
-      break;
+      case '\'':
+        out_buf[j++] = '\'';
+        out_buf[j++] = '\'';
+        break;
+      default:
+        out_buf[j++] = *in_buf;
+        break;
     }
   }
 
@@ -234,6 +228,6 @@ bool SQLiteDatabase::escape(std::string &out, const std::string &in) {
   return true;
 }
 
-} // namespace detail
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detail
+}  // namespace detect
+}  // namespace Seiscomp

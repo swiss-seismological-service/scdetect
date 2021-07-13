@@ -3,11 +3,11 @@
 namespace Seiscomp {
 namespace detect {
 
-Processor::Processor(const std::string &id) : id_{id} {}
+Processor::Processor(const std::string &id) : _id{id} {}
 
 Processor::~Processor() {}
 
-const std::string &Processor::id() const { return id_; }
+const std::string &Processor::id() const { return _id; }
 
-} // namespace detect
-} // namespace Seiscomp
+}  // namespace detect
+}  // namespace Seiscomp
