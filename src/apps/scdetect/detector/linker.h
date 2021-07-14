@@ -78,8 +78,8 @@ class Linker {
   // Register the template waveform processor `proc` associated with the
   // template arrival `arrival` for linking.
   void add(const TemplateWaveformProcessor *proc, const Arrival &arrival);
-  // Remove the processor identified by `proc_id`
-  void remove(const std::string &proc_id);
+  // Remove the processor identified by `procId`
+  void remove(const std::string &procId);
   // Reset the linker
   //
   // - drops all pending results

@@ -65,8 +65,8 @@ void Linker::add(const TemplateWaveformProcessor *proc,
   }
 }
 
-void Linker::remove(const std::string &proc_id) {
-  _processors.erase(proc_id);
+void Linker::remove(const std::string &procId) {
+  _processors.erase(procId);
   _potValid = false;
 }
 
