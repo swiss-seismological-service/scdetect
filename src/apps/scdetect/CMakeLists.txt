@@ -10,6 +10,8 @@ set(
     detector/detector.cpp
     detector/detectorbuilder.cpp
     detector/detectorwaveformprocessor.cpp
+    detector/linker/association.cpp
+    detector/linker/event.cpp
     detector/linker.cpp
     detector/pot.cpp
     detector/templatewaveformprocessor.cpp

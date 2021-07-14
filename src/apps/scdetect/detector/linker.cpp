@@ -82,8 +82,8 @@ void Linker::terminate() {
   while (!_queue.empty()) {
     const auto event{_queue.front()};
     if (event.getArrivalCount() >= _minArrivals.value_or(getProcessorCount()) &&
-        (!_thresResult || event.result.fit >= *_thresResult)) {
-      emitResult(event.result);
+        (!_thresResult || event.association.fit >= *_thresResult)) {
+      emitResult(event.association);
     }
 
     _queue.pop_front();
@@ -115,7 +115,7 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
                       pickOffset};
       newArrival.pick.time = time;
 
-      process(proc, Result::TemplateResult{newArrival, res});
+      process(proc, linker::Association::TemplateResult{newArrival, res});
     }
   }
 }
@@ -125,7 +125,7 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 }
 
 void Linker::process(const TemplateWaveformProcessor *proc,
-                     const Result::TemplateResult &res) {
+                     const linker::Association::TemplateResult &res) {
   if (!_processors.empty()) {
     // update POT
     if (!_potValid) {
@@ -139,7 +139,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     for (auto eventIt = std::begin(_queue); eventIt != std::end(_queue);
          ++eventIt) {
       if (eventIt->getArrivalCount() < getProcessorCount()) {
-        auto &templResults{eventIt->result.results};
+        auto &templResults{eventIt->association.results};
         auto it{templResults.find(procId)};
         if (it == templResults.end() ||
             matchResult->coefficient > it->second.matchResult->coefficient) {
@@ -165,7 +165,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
             }
           }
 
-          eventIt->mergeResult(procId, res, pot);
+          eventIt->feed(procId, res, pot);
         }
         _pot.enable();
       }
@@ -173,8 +173,8 @@ void Linker::process(const TemplateWaveformProcessor *proc,
 
     const auto now{Core::Time::GMT()};
     // create new event
-    Event event{now + _onHold};
-    event.mergeResult(procId, res, POT{std::vector<Arrival>{res.arrival}});
+    linker::Event event{now + _onHold};
+    event.feed(procId, res, POT{std::vector<Arrival>{res.arrival}});
     _queue.emplace_back(event);
 
     std::vector<EventQueue::iterator> ready;
@@ -184,8 +184,8 @@ void Linker::process(const TemplateWaveformProcessor *proc,
       if (arrivalCount == getProcessorCount() ||
           (now >= it->expired &&
            arrivalCount >= _minArrivals.value_or(getProcessorCount()))) {
-        if (!_thresResult || it->result.fit >= *_thresResult) {
-          emitResult(it->result);
+        if (!_thresResult || it->association.fit >= *_thresResult) {
+          emitResult(it->association);
         }
         ready.push_back(it);
       }
@@ -202,7 +202,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
   }
 }
 
-void Linker::emitResult(const Result &res) {
+void Linker::emitResult(const linker::Association &res) {
   if (_resultCallback) {
     _resultCallback.value()(res);
   }
@@ -220,64 +220,6 @@ void Linker::createPot() {
   _potValid = true;
 }
 
-/* ------------------------------------------------------------------------- */
-size_t Linker::Result::getArrivalCount() const { return results.size(); }
-
-std::string Linker::Result::debugString() const {
-  const Core::Time startTime{
-      results.at(refProcId).matchResult->timeWindow.startTime()};
-  const Core::Time endTime{startTime +
-                           Core::TimeSpan{pot.pickOffset().value_or(0)}};
-  return std::string{"(" + startTime.iso() + " - " + endTime.iso() +
-                     "): fit=" + std::to_string(fit) +
-                     ", arrival_count=" + std::to_string(getArrivalCount())};
-}
-
-/* ------------------------------------------------------------------------- */
-void Linker::Event::mergeResult(const std::string &procId,
-                                const Result::TemplateResult &res,
-                                const POT &pot) {
-  auto &templResults{result.results};
-  templResults.emplace(procId, res);
-
-  std::vector<double> fits;
-  std::transform(std::begin(templResults), std::end(templResults),
-                 std::back_inserter(fits),
-                 [](const Result::TemplateResults::value_type &p) {
-                   return p.second.matchResult->coefficient;
-                 });
-
-  // XXX(damb): Currently, we use the mean in order to compute the overall
-  // event's score
-  result.fit = utils::cma(fits.data(), fits.size());
-  result.pot = pot;
-  if (!refPickTime || res.arrival.pick.time < refPickTime) {
-    refPickTime = res.arrival.pick.time;
-    result.refProcId = procId;
-  }
-}
-
-size_t Linker::Event::getArrivalCount() const { return result.results.size(); }
-
 }  // namespace detector
 }  // namespace detect
 }  // namespace Seiscomp
-
-namespace std {
-
-inline std::size_t
-hash<Seiscomp::detect::detector::Linker::Result::TemplateResult>::operator()(
-    const Seiscomp::detect::detector::Linker::Result::TemplateResult &tr)
-    const noexcept {
-  std::size_t ret{0};
-  boost::hash_combine(
-      ret, std::hash<Seiscomp::detect::detector::Arrival>{}(tr.arrival));
-
-  if (tr.matchResult) {
-    boost::hash_combine(ret, std::hash<double>{}(tr.matchResult->coefficient));
-  }
-
-  return ret;
-}
-
-}  // namespace std

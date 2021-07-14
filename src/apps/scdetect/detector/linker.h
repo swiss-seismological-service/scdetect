@@ -10,6 +10,8 @@
 #include <unordered_map>
 
 #include "arrival.h"
+#include "linker/association.h"
+#include "linker/event.h"
 #include "pot.h"
 #include "templatewaveformprocessor.h"
 
@@ -25,31 +27,6 @@ class Linker {
   virtual ~Linker();
 
   enum class Status { kWaitingForData, kTerminated };
-
-  struct Result {
-    // The result's fit [-1,1]
-    double fit;
-    // Reference waveform processor id
-    std::string refProcId;
-
-    struct TemplateResult {
-      Arrival arrival;
-      // Reference to the original template result
-      TemplateWaveformProcessor::MatchResultCPtr matchResult;
-    };
-
-    // Associates `TemplateResult` with a processor (i.e. using the `proc_id`)
-    using TemplateResults = std::unordered_map<std::string, TemplateResult>;
-    TemplateResults results;
-
-    // The result's POT
-    POT pot;
-
-    // Returns the total number of arrivals
-    size_t getArrivalCount() const;
-    // Returns a string including debug information
-    std::string debugString() const;
-  };
 
   // Sets the arrival offset threshold
   void setThresArrivalOffset(const boost::optional<double> &thres);
@@ -93,16 +70,17 @@ class Linker {
   void feed(const TemplateWaveformProcessor *proc,
             const TemplateWaveformProcessor::MatchResultCPtr &res);
 
-  using PublishResultCallback = std::function<void(const Result &res)>;
+  using PublishResultCallback =
+      std::function<void(const linker::Association &res)>;
   // Set the publish callback function
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
   // Processes the result `res` from `proc`
   void process(const TemplateWaveformProcessor *proc,
-               const Result::TemplateResult &res);
+               const linker::Association::TemplateResult &res);
   // Emit a result
-  void emitResult(const Result &res);
+  void emitResult(const linker::Association &res);
 
  private:
   void createPot();
@@ -119,23 +97,7 @@ class Linker {
   using Processors = std::unordered_map<std::string, Processor>;
   Processors _processors;
 
-  struct Event {
-    // The time the event is considered as elapsed
-    Core::Time expired;
-    // The final result
-    Result result;
-
-    // Time of the reference arrival pick
-    Core::Time refPickTime;
-
-    // Merges the template result `res` into the event
-    void mergeResult(const std::string &procId,
-                     const Result::TemplateResult &res, const POT &pot);
-    // Returns the total number of arrivals
-    size_t getArrivalCount() const;
-  };
-
-  using EventQueue = std::list<Event>;
+  using EventQueue = std::list<linker::Event>;
   EventQueue _queue;
 
   // The reference POT
@@ -164,16 +126,5 @@ class Linker {
 }  // namespace detector
 }  // namespace detect
 }  // namespace Seiscomp
-
-namespace std {
-
-template <>
-struct hash<Seiscomp::detect::detector::Linker::Result::TemplateResult> {
-  std::size_t operator()(
-      const Seiscomp::detect::detector::Linker::Result::TemplateResult &tr)
-      const noexcept;
-};
-
-}  // namespace std
 
 #endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_

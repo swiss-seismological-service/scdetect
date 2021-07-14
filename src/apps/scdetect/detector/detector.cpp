@@ -22,8 +22,9 @@ namespace detector {
 Detector::Detector(const detect::Processor *detector,
                    const DataModel::OriginCPtr &origin)
     : Processor{detector->id()}, _origin{origin} {
-  _linker.setResultCallback(
-      [this](const Linker::Result &res) { return storeLinkerResult(res); });
+  _linker.setResultCallback([this](const linker::Association &res) {
+    return storeLinkerResult(res);
+  });
 }
 
 Detector::~Detector() {}
@@ -223,7 +224,7 @@ void Detector::process(const std::string &waveformStreamIdHint) {
           std::transform(
               std::begin(result.results), std::end(result.results),
               std::back_inserter(contributing),
-              [](const Linker::Result::TemplateResults::value_type &p) {
+              [](const linker::Association::TemplateResults::value_type &p) {
                 return p.first;
               });
           std::for_each(std::begin(_processors), std::end(_processors),
@@ -451,7 +452,7 @@ bool Detector::feed(const TimeWindows &tws) {
   return true;
 }
 
-void Detector::prepareResult(const Linker::Result &linkerResult,
+void Detector::prepareResult(const linker::Association &linkerResult,
                              Detector::Result &result) const {
   const auto &refResult{linkerResult.results.at(linkerResult.refProcId)};
   if (!refResult.matchResult) {
@@ -599,7 +600,7 @@ void Detector::storeTemplateResult(
   _linker.feed(processor, result);
 }
 
-void Detector::storeLinkerResult(const Linker::Result &linkerResult) {
+void Detector::storeLinkerResult(const linker::Association &linkerResult) {
   _resultQueue.emplace_back(linkerResult);
 }
 

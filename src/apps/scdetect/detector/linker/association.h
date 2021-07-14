@@ -1,0 +1,58 @@
+#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_ASSOCIATION_H_
+#define SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_ASSOCIATION_H_
+
+#include <functional>
+#include <string>
+#include <unordered_map>
+
+#include "../arrival.h"
+#include "../pot.h"
+#include "../templatewaveformprocessor.h"
+
+namespace Seiscomp {
+namespace detect {
+namespace detector {
+namespace linker {
+
+struct Association {
+  // The association's fit [-1,1]
+  double fit;
+  // The association's reference `TemplateWaveformProcessor` identifier
+  std::string refProcId;
+
+  struct TemplateResult {
+    Arrival arrival;
+    // Reference to the original template result
+    TemplateWaveformProcessor::MatchResultCPtr matchResult;
+  };
+  // Associates `TemplateResult` with a processor (i.e. by means of the
+  // processor's identifier)
+  using TemplateResults = std::unordered_map<std::string, TemplateResult>;
+  TemplateResults results;
+
+  // The association's POT
+  POT pot;
+
+  // Returns the total number of associated arrivals
+  size_t getArrivalCount() const;
+  // Returns a string including debug information
+  std::string debugString() const;
+};
+
+}  // namespace linker
+}  // namespace detector
+}  // namespace detect
+}  // namespace Seiscomp
+
+namespace std {
+
+template <>
+struct hash<Seiscomp::detect::detector::linker::Association::TemplateResult> {
+  std::size_t operator()(
+      const Seiscomp::detect::detector::linker::Association::TemplateResult &tr)
+      const noexcept;
+};
+
+}  // namespace std
+
+#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_ASSOCIATION_H_
