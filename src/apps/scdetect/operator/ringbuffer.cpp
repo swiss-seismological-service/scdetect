@@ -37,6 +37,13 @@ bool RingBufferOperator::gapInterpolation() const { return _gapInterpolation; }
 
 void RingBufferOperator::setGapThreshold(const Core::TimeSpan &duration) {
   if (duration && duration > Core::TimeSpan{0.0}) {
+    for (auto &streamConfigPair : _streamConfigs) {
+      auto &streamState{streamConfigPair.second.streamState};
+      if (streamState.gapThreshold != duration) {
+        reset(streamState);
+      }
+    }
+
     _gapThreshold = duration;
   }
 }
@@ -116,7 +123,7 @@ bool RingBufferOperator::store(RingBufferOperator::StreamState &streamState,
           "stream (sfreq_record != sfreq_stream): %f != %f",
           record->streamID().c_str(), record->samplingFrequency(),
           streamState.samplingFrequency);
-      streamState.lastRecord.reset();
+      reset(streamState);
     } else if (!handleGap(streamState, record, data)) {
       return false;
     }
@@ -154,7 +161,7 @@ bool RingBufferOperator::handleGap(StreamState &streamState,
   double gapSeconds = static_cast<double>(gap);
 
   size_t gapSamples;
-  if (gap > _gapThreshold) {
+  if (gap > streamState.gapThreshold) {
     gapSamples =
         static_cast<size_t>(ceil(streamState.samplingFrequency * gapSeconds));
     if (fillGap(streamState, record, gap, (*data)[0], gapSamples)) {
@@ -197,24 +204,25 @@ void RingBufferOperator::setupStream(StreamState &streamState,
                                      const Record *record) {
   const auto &f{record->samplingFrequency()};
   streamState.samplingFrequency = f;
+  streamState.gapThreshold = _gapThreshold;
 
   const auto minThres{2 * 1.0 / f};
-  if (minThres > _gapThreshold) {
+  if (minThres > streamState.gapThreshold) {
     SCDETECT_LOG_WARNING_PROCESSOR(
         _processor,
         "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
         "Resetting gap threshold.",
-        minThres, static_cast<double>(_gapThreshold));
+        minThres, static_cast<double>(streamState.gapThreshold));
 
-    // TODO(damb): When implementing the feature/handle-changing-sampling
-    // rates (see: https://github.com/damb/scdetect/issues/20) store remember
-    // the configured gap threshold value and reset the current gap threshold
-    // to the configured one, once the sampling interval decreases.
-    _gapThreshold = minThres;
+    streamState.gapThreshold = minThres;
   }
 
   // update the received data timewindow
   streamState.dataTimeWindow = record->timeWindow();
+}
+
+void RingBufferOperator::reset(StreamState &streamState) {
+  streamState.lastRecord.reset();
 }
 
 bool RingBufferOperator::fillGap(StreamState &streamState, const Record *record,

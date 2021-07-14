@@ -39,6 +39,8 @@ class RingBufferOperator : public WaveformOperator {
   // Returns if gap interpolation is enabled or disabled, respectively
   bool gapInterpolation() const;
   // Sets the threshold (i.e. the minimum gap length) for gap interpolation
+  //
+  // - may imply resetting streams including the related buffer
   void setGapThreshold(const Core::TimeSpan &duration);
   // Returns the gap threshold configured
   const Core::TimeSpan gapThreshold() const;
@@ -70,6 +72,8 @@ class RingBufferOperator : public WaveformOperator {
     Core::TimeWindow dataTimeWindow;
     // The sampling frequency of the stream
     double samplingFrequency{0};
+    // The stream specific minimum gap length to detect a gap
+    Core::TimeSpan gapThreshold;
   };
 
   bool store(StreamState &streamState, const Record *record);
@@ -81,6 +85,8 @@ class RingBufferOperator : public WaveformOperator {
             DoubleArrayPtr &data);
 
   void setupStream(StreamState &streamState, const Record *record);
+
+  void reset(StreamState &streamState);
 
  private:
   // Fill gaps
@@ -102,7 +108,7 @@ class RingBufferOperator : public WaveformOperator {
 
   // Indicates if gap interpolation is enabled/disabled
   bool _gapInterpolation{false};
-  // The minimum gap length to detect a gap
+  // The configured minimum gap length to detect a gap
   Core::TimeSpan _gapThreshold;
   // The maximum gap length to tolerate
   Core::TimeSpan _gapTolerance;
