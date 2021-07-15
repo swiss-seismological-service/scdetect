@@ -207,6 +207,23 @@ configuration parameters:
   an event. Note that the threshold is only relevant for a multi-stream
   detector setup.
 
+- `"minimumArrivals"`: Defines the minimum number of arrivals w.r.t. streams
+  within the stream set configured which must be part of an event to qualify
+  for a detection.
+
+- `"mergingStrategy"`: Defines the merging strategy applied before linking
+  cross-correlation results. Possible configuration options are:
+  + `"greaterEqualTriggerOnThreshold"`: cross-correlation results with regards
+    to the configured streams must be greater or equal to the configured
+    `"triggerOnThreshold"` in order to be taken into account for linking.
+    Results lower than the `"triggerOnThreshold"` are dropped.
+  + `"all"`: all cross-correlation results with regards to the configured
+    streams are taken into account while linking. Trying to merge all
+    incoming cross-correlation results is computationally quite expensive.
+
+  Note that the configured merging strategy may have a significant performance
+  impact in a multi-stream detector setup.
+
 - `"createArrivals"`: A boolean value which defines if detections should
   include *detected arrivals*, i.e. arrivals with regards to the streams
   included within the stream set. If enabled, origins will be created with
@@ -221,10 +238,6 @@ configuration parameters:
   should include so called *template arrivals*. Template arrivals refer to
   streams which are not part of the detector configuration's stream set, but
   contain valid picks as part of the template origin.
-
-- `"minimumArrivals"`: Defines the minimum number of arrivals w.r.t. streams
-  within the stream set configured which must be part of an event to qualify
-  for a detection.
 
 - `"timeCorrection"`: Defines the time correction in seconds for both
   detections and arrivals. That is, this allows shifting a detection in time.
