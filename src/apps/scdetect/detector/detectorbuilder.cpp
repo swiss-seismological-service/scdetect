@@ -438,7 +438,8 @@ bool DetectorBuilder::isValidArrival(const DataModel::ArrivalCPtr arrival,
 const std::unordered_map<std::string, linker::MergingStrategy::Type>
     DetectorBuilder::_mergingStrategyLookupTable{
         {"all", linker::MergingStrategy::Type::kAll},
-        {"minTriggerOn", linker::MergingStrategy::Type::kMinAssociationThres}};
+        {"greaterEqualTriggerOnThreshold",
+         linker::MergingStrategy::Type::kMinAssociationThres}};
 
 }  // namespace detector
 }  // namespace detect

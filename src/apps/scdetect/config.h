@@ -119,7 +119,7 @@ struct DetectorConfig {
   // Defines the linker's merging strategy which may lead to dropping template
   // waveform processor results if not fulfilling the merging strategy's
   // criteria
-  std::string mergingStrategy{"minTriggerOn"};
+  std::string mergingStrategy{"greaterEqualTriggerOnThreshold"};
 
   // Defines the chunk size in seconds which is used to feed data to template
   // waveform processors

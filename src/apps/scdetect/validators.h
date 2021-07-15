@@ -9,7 +9,7 @@ namespace detect {
 namespace config {
 
 static const std::vector<std::string> kValidLinkerMergingStrategies{
-    "all", "minTriggerOn"};
+    "all", "greaterEqualTriggerOnThreshold"};
 
 bool validateXCorrThreshold(const double &thres);
 bool validateArrivalOffsetThreshold(double thres);

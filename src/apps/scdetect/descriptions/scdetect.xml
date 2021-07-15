@@ -115,8 +115,9 @@
             Defines the default cross-correlation result merging strategy while
             linking. Possible values are:
 
-            - "minTriggerOn": the cross-correlation coefficient must be greater
-            equal the configured "triggerOn" threshold in order to be merged.
+            - "greaterEqualTriggerOnThreshold": the cross-correlation
+            coefficient must be greater or equal to the configured
+            "triggerOnThreshold" in order to be merged.
             - "all": tries to merge all cross-correlation results. Trying to
             merge all cross-correlation results is computationally quite
             expensive.
