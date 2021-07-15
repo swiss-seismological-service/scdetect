@@ -33,10 +33,10 @@ class Linker {
   void setThresArrivalOffset(const boost::optional<double> &thres);
   // Returns the current arrival offset threshold
   boost::optional<double> thresArrivalOffset() const;
-  // Sets the result threshold
-  void setThresResult(const boost::optional<double> &thres);
-  // Returns the result threshold
-  boost::optional<double> thresResult() const;
+  // Sets the association threshold
+  void setThresAssociation(const boost::optional<double> &thres);
+  // Returns the association threshold
+  boost::optional<double> thresAssociation() const;
   // Configures the linker with a minimum number of required arrivals before
   // issuing a result
   void setMinArrivals(const boost::optional<size_t> &n);
@@ -112,9 +112,9 @@ class Linker {
   // the maximum accuracy `scdetect` is operating when it comes to trimming
   // waveforms (1 micro second (i.e. 1 us)).
   boost::optional<double> _thresArrivalOffset{2.0e-6};
-  // The fit threshold indicating when template results are taken into
+  // The association threshold indicating when template results are taken into
   // consideration
-  boost::optional<double> _thresResult;
+  boost::optional<double> _thresAssociation;
   // The minimum number of arrivals required in order to issue a result
   boost::optional<size_t> _minArrivals;
 

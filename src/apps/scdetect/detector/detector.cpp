@@ -52,7 +52,7 @@ void Detector::disableTrigger() { _triggerDuration = boost::none; }
 
 void Detector::setTriggerThresholds(double triggerOn, double triggerOff) {
   _thresTriggerOn = triggerOn;
-  _linker.setThresResult(_thresTriggerOn);
+  _linker.setThresAssociation(_thresTriggerOn);
 
   if (_thresTriggerOn && config::validateXCorrThreshold(triggerOff)) {
     _thresTriggerOff = triggerOff;

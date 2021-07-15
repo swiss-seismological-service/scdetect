@@ -23,11 +23,13 @@ boost::optional<double> Linker::thresArrivalOffset() const {
   return _thresArrivalOffset;
 }
 
-void Linker::setThresResult(const boost::optional<double> &thres) {
-  _thresResult = thres;
+void Linker::setThresAssociation(const boost::optional<double> &thres) {
+  _thresAssociation = thres;
 }
 
-boost::optional<double> Linker::thresResult() const { return _thresResult; }
+boost::optional<double> Linker::thresAssociation() const {
+  return _thresAssociation;
+}
 
 void Linker::setMinArrivals(const boost::optional<size_t> &n) {
   auto v{n};
@@ -87,7 +89,7 @@ void Linker::terminate() {
   while (!_queue.empty()) {
     const auto event{_queue.front()};
     if (event.getArrivalCount() >= _minArrivals.value_or(getProcessorCount()) &&
-        (!_thresResult || event.association.fit >= *_thresResult)) {
+        (!_thresAssociation || event.association.fit >= *_thresAssociation)) {
       emitResult(event.association);
     }
 
@@ -133,8 +135,8 @@ void Linker::process(const TemplateWaveformProcessor *proc,
                      const linker::Association::TemplateResult &res) {
   if (!_processors.empty()) {
     // filter/drop based on merging strategy
-    if (_mergingStrategy && _thresResult &&
-        !_mergingStrategy->operator()(res, *_thresResult)) {
+    if (_mergingStrategy && _thresAssociation &&
+        !_mergingStrategy->operator()(res, *_thresAssociation)) {
 #ifdef SCDETECT_DEBUG
       SCDETECT_LOG_DEBUG_PROCESSOR(
           proc,
@@ -201,7 +203,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
       if (arrivalCount == getProcessorCount() ||
           (now >= it->expired &&
            arrivalCount >= _minArrivals.value_or(getProcessorCount()))) {
-        if (!_thresResult || it->association.fit >= *_thresResult) {
+        if (!_thresAssociation || it->association.fit >= *_thresAssociation) {
           emitResult(it->association);
         }
         ready.push_back(it);
