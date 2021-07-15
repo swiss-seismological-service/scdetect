@@ -75,6 +75,11 @@ boost::optional<size_t> Detector::minArrivals() const {
   return _linker.minArrivals();
 }
 
+void Detector::setMergingStrategy(
+    linker::MergingStrategy::Type mergingStrategyTypeId) {
+  _linker.setMergingStrategy(mergingStrategyTypeId);
+}
+
 void Detector::setMaxLatency(const boost::optional<Core::TimeSpan> &latency) {
   _maxLatency = latency;
 }

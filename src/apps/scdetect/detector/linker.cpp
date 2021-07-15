@@ -44,6 +44,11 @@ void Linker::setOnHold(const Core::TimeSpan &duration) { _onHold = duration; }
 
 Core::TimeSpan Linker::onHold() const { return _onHold; }
 
+void Linker::setMergingStrategy(
+    linker::MergingStrategy::Type mergingStrategyTypeId) {
+  _mergingStrategy = linker::MergingStrategy::Create(mergingStrategyTypeId);
+}
+
 Linker::Status Linker::status() const { return _status; }
 
 size_t Linker::getAssociatedChannelCount() const {
@@ -127,6 +132,18 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 void Linker::process(const TemplateWaveformProcessor *proc,
                      const linker::Association::TemplateResult &res) {
   if (!_processors.empty()) {
+    // filter/drop based on merging strategy
+    if (_mergingStrategy && _thresResult &&
+        !_mergingStrategy->operator()(res, *_thresResult)) {
+#ifdef SCDETECT_DEBUG
+      SCDETECT_LOG_DEBUG_PROCESSOR(
+          proc,
+          "Dropping result due to merging strategy applied: fit=%9f, lag=%10f",
+          res.matchResult->coefficient, res.matchResult->lag);
+#endif
+      return;
+    }
+
     // update POT
     if (!_potValid) {
       createPot();

@@ -194,7 +194,6 @@ bool Application::validateParameters() {
         _config.streamConfig.initTime);
     return false;
   }
-
   if (!config::validateArrivalOffsetThreshold(
           _config.detectorConfig.arrivalOffsetThreshold)) {
     SCDETECT_LOG_ERROR(
@@ -203,7 +202,6 @@ bool Application::validateParameters() {
         _config.detectorConfig.arrivalOffsetThreshold);
     return false;
   }
-
   if (!config::validateMinArrivals(_config.detectorConfig.minArrivals)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'minimumArrivals': %d. "
@@ -211,7 +209,16 @@ bool Application::validateParameters() {
         _config.detectorConfig.minArrivals);
     return false;
   }
+  if (!config::validateLinkerMergingStrategy(
+          _config.detectorConfig.mergingStrategy)) {
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'mergingStrategy': %s. Must be one of: {%s}",
+        _config.detectorConfig.mergingStrategy.c_str(),
+        boost::algorithm::join(config::kValidLinkerMergingStrategies, ",")
+            .c_str());
 
+    return false;
+  }
   if (_config.streamConfig.templateConfig.wfStart >=
       _config.streamConfig.templateConfig.wfEnd) {
     SCDETECT_LOG_ERROR(

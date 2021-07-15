@@ -110,6 +110,21 @@
             configured must be available.
           </description>
         </parameter>
+        <parameter name="mergingStrategy" type="string" default="minTriggerOn">
+          <description>
+            Defines the default cross-correlation result merging strategy while
+            linking. Possible values are:
+
+            - "minTriggerOn": the cross-correlation coefficient must be greater
+            equal the configured "triggerOn" threshold in order to be merged.
+            - "all": tries to merge all cross-correlation results. Trying to
+            merge all cross-correlation results is computationally quite
+            expensive.
+
+            Note that the configured merging strategy may have a significant
+            performance impact in a multi-stream detector setup.
+          </description>
+        </parameter>
       </group>
     </configuration>
 

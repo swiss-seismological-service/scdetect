@@ -103,7 +103,8 @@ bool DetectorConfig::isValid(size_t numStreamConfigs) const {
             utils::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
           config::validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
           config::validateMinArrivals(minArrivals,
-                                      static_cast<int>(numStreamConfigs)));
+                                      static_cast<int>(numStreamConfigs)) &&
+          config::validateLinkerMergingStrategy(mergingStrategy));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
@@ -135,6 +136,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       "arrivalOffsetThreshold", detectorDefaults.arrivalOffsetThreshold);
   _detectorConfig.minArrivals =
       pt.get<int>("minimumArrivals", detectorDefaults.minArrivals);
+  _detectorConfig.mergingStrategy =
+      pt.get<std::string>("mergingStrategy", detectorDefaults.mergingStrategy);
   _detectorConfig.chunkSize =
       pt.get<double>("chunkSize", detectorDefaults.chunkSize);
 

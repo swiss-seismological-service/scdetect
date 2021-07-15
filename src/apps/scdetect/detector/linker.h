@@ -12,6 +12,7 @@
 #include "arrival.h"
 #include "linker/association.h"
 #include "linker/event.h"
+#include "linker/strategy.h"
 #include "pot.h"
 #include "templatewaveformprocessor.h"
 
@@ -45,6 +46,8 @@ class Linker {
   void setOnHold(const Core::TimeSpan &duration);
   // Returns the current *on hold* duration
   Core::TimeSpan onHold() const;
+  // Sets the linker's merging strategy based on `mergingStrategyTypeId`
+  void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
   // Returns the linker's status
   Status status() const;
   // Returns the number of associated channels
@@ -118,6 +121,9 @@ class Linker {
   // The maximum time events are placed on hold before either being emitted or
   // dropped
   Core::TimeSpan _onHold{0.0};
+
+  // The merging strategy used while linking
+  std::unique_ptr<linker::MergingStrategy> _mergingStrategy;
 
   // The result callback function
   boost::optional<PublishResultCallback> _resultCallback;

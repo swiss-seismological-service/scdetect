@@ -14,6 +14,7 @@
 #include "../builder.h"
 #include "../config.h"
 #include "../waveform.h"
+#include "linker/strategy.h"
 #include "pot.h"
 #include "templatewaveformprocessor.h"
 
@@ -67,6 +68,9 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   using TemplateProcessorConfigs =
       std::unordered_map<std::string, TemplateProcessorConfig>;
   TemplateProcessorConfigs _processorConfigs;
+
+  static const std::unordered_map<std::string, linker::MergingStrategy::Type>
+      _mergingStrategyLookupTable;
 };
 
 }  // namespace detector

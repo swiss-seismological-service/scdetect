@@ -48,6 +48,9 @@ DetectorBuilder &DetectorBuilder::setConfig(const DetectorConfig &config,
 
   _product->_enabled = config.enabled;
 
+  _product->_detector.setMergingStrategy(
+      _mergingStrategyLookupTable.at(config.mergingStrategy));
+
   // configure playback related facilities
   if (playback) {
     _product->_detector.setMaxLatency(boost::none);
@@ -431,6 +434,11 @@ bool DetectorBuilder::isValidArrival(const DataModel::ArrivalCPtr arrival,
   }
   return true;
 }
+
+const std::unordered_map<std::string, linker::MergingStrategy::Type>
+    DetectorBuilder::_mergingStrategyLookupTable{
+        {"all", linker::MergingStrategy::Type::kAll},
+        {"minTriggerOn", linker::MergingStrategy::Type::kMinAssociationThres}};
 
 }  // namespace detector
 }  // namespace detect

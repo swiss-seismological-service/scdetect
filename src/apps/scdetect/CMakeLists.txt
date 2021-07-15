@@ -12,6 +12,7 @@ set(
     detector/detectorwaveformprocessor.cpp
     detector/linker/association.cpp
     detector/linker/event.cpp
+    detector/linker/strategy.cpp
     detector/linker.cpp
     detector/pot.cpp
     detector/templatewaveformprocessor.cpp

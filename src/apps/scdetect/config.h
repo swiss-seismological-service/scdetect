@@ -116,6 +116,11 @@ struct DetectorConfig {
   // - setting a negative value disables the validation i.e. all arrivals must
   // be available (default)
   int minArrivals{-1};
+  // Defines the linker's merging strategy which may lead to dropping template
+  // waveform processor results if not fulfilling the merging strategy's
+  // criteria
+  std::string mergingStrategy{"minTriggerOn"};
+
   // Defines the chunk size in seconds which is used to feed data to template
   // waveform processors
   // - setting a negative value forces a default chunk size of 10s

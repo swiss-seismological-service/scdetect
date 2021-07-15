@@ -1,5 +1,8 @@
 #include "validators.h"
 
+#include <algorithm>
+
+#include "settings.h"
 #include "waveformprocessor.h"
 
 namespace Seiscomp {
@@ -33,6 +36,12 @@ bool validateFilter(const std::string &filterId, std::string &err) {
   }
   delete filter;
   return true;
+}
+
+bool validateLinkerMergingStrategy(const std::string &mergingStrategy) {
+  return std::find(kValidLinkerMergingStrategies.begin(),
+                   kValidLinkerMergingStrategies.end(),
+                   mergingStrategy) != kValidLinkerMergingStrategies.end();
 }
 
 }  // namespace config
