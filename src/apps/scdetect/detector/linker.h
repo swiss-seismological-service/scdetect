@@ -20,7 +20,7 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-// Associates template results
+// Associates `TemplateWaveformProcessor` results
 class Linker {
  public:
   Linker(const Core::TimeSpan &onHold = 0.0,
