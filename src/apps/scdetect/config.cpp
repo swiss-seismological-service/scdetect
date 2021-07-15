@@ -84,11 +84,11 @@ bool StreamConfig::isValid() const {
   };
 
   if (filter) {
-    return validateFilter(*filter);
+    retval = validateFilter(*filter);
   }
 
   if (templateConfig.filter) {
-    return validateFilter(*templateConfig.filter);
+    retval = validateFilter(*templateConfig.filter);
   }
 
   return (retval && templateConfig.wfStart < templateConfig.wfEnd &&
