@@ -52,6 +52,10 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
   templateConfig.wfStreamId =
       pt.get<std::string>("templateWaveformId", wfStreamId);
 
+  if (!targetSamplingFrequency && defaults.targetSamplingFrequency) {
+    targetSamplingFrequency = defaults.targetSamplingFrequency;
+  }
+
   if (!filter && defaults.filter) {
     filter = defaults.filter;
   }
