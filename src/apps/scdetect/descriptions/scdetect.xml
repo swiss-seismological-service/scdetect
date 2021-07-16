@@ -117,7 +117,11 @@
 
             - "greaterEqualTriggerOnThreshold": the cross-correlation
             coefficient must be greater or equal to the configured
-            "triggerOnThreshold" in order to be merged.
+            "triggerOnThreshold" in order to be taken into account for linking.
+            - "greaterEqualMergingThreshold": the cross-correlation coefficient
+            must be greater or equal to the configured stream configuration
+            specific `"mergingThreshold"` in order to be taken into account for
+            linking.
             - "all": tries to merge all cross-correlation results. Trying to
             merge all cross-correlation results is computationally quite
             expensive.
