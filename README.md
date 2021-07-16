@@ -53,7 +53,7 @@ From an architectural point of view `scdetect` is positioned somewhere between
 is, `scdetect` fetches waveform data by means of the RecordStream interface,
 but it also uses data products for template generation.
 
-For further information with regards to the SeisComP architecture please refer
+For further information with regard to the SeisComP architecture please refer
 to the [SeisComP
 documentation](https://docs.gempa.de/seiscomp/current/base/overview.html).
 
@@ -73,7 +73,7 @@ For a general more in-depth introduction on how to use SeisComP modules
 including their particular configuration, please refer to the [SeisComP
 documentation](https://www.seiscomp.de/doc/index.html).
 
-The subsequent sections are intented to provide an introduction on how to use
+The subsequent sections are intended to provide an introduction on how to use
 and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
@@ -168,12 +168,12 @@ configuration parameters:
 **General**:
 
 - `"detectorId"`: A string defining the detector identifier. If not defined a
-  unique indentifier will be generated, automatically. Since `scdetect`
+  unique identifier will be generated, automatically. Since `scdetect`
   implements hierarchical logging specifying the detector identifier may be of
   particular use while debugging.
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with
-  regards to `NOW`. If data arrive later than the value specified it is not
+  regard to `NOW`. If data arrive later than the value specified it is not
   used, anymore. Note that data latency is not validated if `scdetect` is run
   in *playback mode*.
 
@@ -203,7 +203,7 @@ configuration parameters:
 **Detections and arrivals**:
 
 - `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds (i.e. with
-  regards to the template arrival) to tolerate when associating an arrival with
+  regard to the template arrival) to tolerate when associating an arrival with
   an event. Note that the threshold is only relevant for a multi-stream
   detector setup.
 
@@ -213,11 +213,11 @@ configuration parameters:
 
 - `"mergingStrategy"`: Defines the merging strategy applied before linking
   cross-correlation results. Possible configuration options are:
-  + `"greaterEqualTriggerOnThreshold"`: cross-correlation results with regards
+  + `"greaterEqualTriggerOnThreshold"`: cross-correlation results with regard
     to the configured streams must be greater or equal to the configured
     `"triggerOnThreshold"` in order to be taken into account for linking.
     Results lower than the `"triggerOnThreshold"` are dropped.
-  + `"all"`: all cross-correlation results with regards to the configured
+  + `"all"`: all cross-correlation results with regard to the configured
     streams are taken into account while linking. Trying to merge all
     incoming cross-correlation results is computationally quite expensive.
 
@@ -225,7 +225,7 @@ configuration parameters:
   impact in a multi-stream detector setup.
 
 - `"createArrivals"`: A boolean value which defines if detections should
-  include *detected arrivals*, i.e. arrivals with regards to the streams
+  include *detected arrivals*, i.e. arrivals with regard to the streams
   included within the stream set. If enabled, origins will be created with
   detected arrivals being associated, else origins are created not containing
   any reference to detected arrivals.
@@ -277,7 +277,7 @@ configuration parameters:
 **General**:
 
 - `"templateId"`: A string defining the stream related template identifier. If
-  undefined a unique indentifier will be generated, automatically. Since `scdetect`
+  undefined a unique identifier will be generated, automatically. Since `scdetect`
   implements hierarchical logging specifying the template identifier may be of
   particular use while debugging.
 
@@ -303,11 +303,11 @@ configuration parameters:
   configured.
 
 - `"templateWaveformStart"`: The template waveform start in seconds with
-  regards to the template pick time. A negative value refers to a template
+  regard to the template pick time. A negative value refers to a template
   waveform start *before* the template pick time, while a positive value means
   *after* the pick time.
 
-- `"templateWaveformEnd"`: The template waveform end in seconds with regards to
+- `"templateWaveformEnd"`: The template waveform end in seconds with regard to
   the template pick time. A negative value refers to a template waveform start
   *before* the template pick time, while a positive value means *after* the
   pick time.
@@ -347,8 +347,8 @@ scope of a detector configuration:
 - `"templateWaveformStart"`
 - `"templateWaveformEnd"`
 
-That is, if not explictly overridden by stream configurations the corresponding
-fallback values will be used.
+That is, if not explicitly overridden by stream configurations the
+corresponding fallback values will be used.
 
 **Example**:
 
@@ -469,7 +469,7 @@ Alternatively, the RecordStream can be defined making use of `scdetect`'s `-I [
 --record-url ] URI` CLI flag (Note that this is the standard CLI flag used for
 all SeisComP modules implementing SeisComP's `StreamApplication` interface.).
 
-In general, with regards to waveform data `scdetect` implements the following
+In general, with regard to waveform data `scdetect` implements the following
 approach:
 
 1. **Initialization**: Download template waveform data from the *archive*
