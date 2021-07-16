@@ -63,6 +63,9 @@ struct StreamConfig {
   double initTime{60};
   // Defines the processing specific filter
   boost::optional<std::string> filter;
+  // Defines a stream specific merging threshold for using cross-correlation
+  // results during the linking procedure
+  boost::optional<double> mergingThreshold;
   // Defines the processing specific target sampling frequency, which might
   // force resampling the data to be processed
   boost::optional<double> targetSamplingFrequency;

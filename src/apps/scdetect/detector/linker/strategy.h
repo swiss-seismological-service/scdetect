@@ -16,28 +16,39 @@ namespace linker {
 // are going to be used for linking
 class MergingStrategy {
  public:
-  enum class Type { kMinAssociationThres, kAll };
+  enum class Type {
+    kGreaterEqualAssociationThres,
+    kGreaterEqualMergingThres,
+    kAll
+  };
 
   template <typename... Args>
   static std::unique_ptr<MergingStrategy> Create(Type mergingStrategyTypeId,
                                                  Args &&...args);
 
   virtual bool operator()(const Association::TemplateResult &result,
-                          double associationThres) = 0;
+                          double associationThres, double mergingThres) = 0;
 };
 
 // Strategy which will try to merge all results fed to the linker
 class LinkAllResults : public MergingStrategy {
  public:
   bool operator()(const Association::TemplateResult &result,
-                  double associationThres) override;
+                  double associationThres, double mergingThres) override;
 };
 
 // Strategy which will only link the result if >= the association threshold
 class LinkIfGreaterEqualAssociationThres : public MergingStrategy {
  public:
   bool operator()(const Association::TemplateResult &result,
-                  double associationThres) override;
+                  double associationThres, double mergingThres) override;
+};
+
+// Strategy which will only link the result if >= the merging threshold
+class LinkIfGreaterEqualMergingThres : public MergingStrategy {
+ public:
+  bool operator()(const Association::TemplateResult &result,
+                  double associationThres, double mergingThres) override;
 };
 
 }  // namespace linker

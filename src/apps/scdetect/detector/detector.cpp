@@ -105,7 +105,8 @@ size_t Detector::getProcessorCount() const { return _processors.size(); }
 void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
                    const std::shared_ptr<const RecordSequence> &buf,
                    const std::string &waveformStreamId, const Arrival &arrival,
-                   const Detector::SensorLocation &loc) {
+                   const Detector::SensorLocation &loc,
+                   const boost::optional<double> &mergingThreshold) {
   proc->setResultCallback(
       [this](const detect::WaveformProcessor *proc, const Record *rec,
              const detect::WaveformProcessor::ResultCPtr &res) {
@@ -120,7 +121,7 @@ void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
   Arrival pseudoArrival{arrival};
   pseudoArrival.pick.waveformStreamId = waveformStreamId;
 
-  _linker.add(proc.get(), pseudoArrival);
+  _linker.add(proc.get(), pseudoArrival, mergingThreshold);
   const auto onHoldDuration{_maxLatency.value_or(0.0) +
                             _chunkSize.value_or(0.0) + _linkerSafetyMargin};
 

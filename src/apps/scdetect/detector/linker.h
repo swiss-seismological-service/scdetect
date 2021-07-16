@@ -4,6 +4,7 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
+#include <boost/optional.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -57,7 +58,8 @@ class Linker {
 
   // Register the template waveform processor `proc` associated with the
   // template arrival `arrival` for linking.
-  void add(const TemplateWaveformProcessor *proc, const Arrival &arrival);
+  void add(const TemplateWaveformProcessor *proc, const Arrival &arrival,
+           const boost::optional<double> &mergingThreshold);
   // Remove the processor identified by `procId`
   void remove(const std::string &procId);
   // Reset the linker
@@ -95,8 +97,11 @@ class Linker {
     const TemplateWaveformProcessor *proc;
     // The template arrival associated
     Arrival arrival;
+    // The processor specific merging threshold
+    boost::optional<double> mergingThreshold;
   };
 
+  // Maps the processor id with `Processor`
   using Processors = std::unordered_map<std::string, Processor>;
   Processors _processors;
 

@@ -128,7 +128,8 @@ class Detector : public detect::Processor {
   void add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
            const std::shared_ptr<const RecordSequence> &buf,
            const std::string &waveformStreamId, const Arrival &arrival,
-           const Detector::SensorLocation &loc);
+           const Detector::SensorLocation &loc,
+           const boost::optional<double> &mergingThreshold);
   // Removes the processors processing streams identified by `waveformStreamId`
   void remove(const std::string &waveformStreamId);
 

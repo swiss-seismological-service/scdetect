@@ -64,10 +64,10 @@ size_t Linker::getAssociatedChannelCount() const {
 
 size_t Linker::getProcessorCount() const { return _processors.size(); }
 
-void Linker::add(const TemplateWaveformProcessor *proc,
-                 const Arrival &arrival) {
+void Linker::add(const TemplateWaveformProcessor *proc, const Arrival &arrival,
+                 const boost::optional<double> &mergingThreshold) {
   if (proc) {
-    _processors.emplace(proc->id(), Processor{proc, arrival});
+    _processors.emplace(proc->id(), Processor{proc, arrival, mergingThreshold});
     _potValid = false;
   }
 }
@@ -122,7 +122,23 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
                       pickOffset};
       newArrival.pick.time = time;
 
-      process(proc, linker::Association::TemplateResult{newArrival, res});
+      linker::Association::TemplateResult templateResult{newArrival, res};
+      // filter/drop based on merging strategy
+      if (_mergingStrategy && _thresAssociation &&
+          !_mergingStrategy->operator()(
+              templateResult, *_thresAssociation,
+              linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
+#ifdef SCDETECT_DEBUG
+        SCDETECT_LOG_DEBUG_PROCESSOR(proc,
+                                     "Dropping result due to merging strategy "
+                                     "applied: fit=%9f, lag=%10f",
+                                     templateResult.matchResult->coefficient,
+                                     templateResult.matchResult->lag);
+#endif
+        return;
+      }
+
+      process(proc, templateResult);
     }
   }
 }
@@ -134,18 +150,6 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 void Linker::process(const TemplateWaveformProcessor *proc,
                      const linker::Association::TemplateResult &res) {
   if (!_processors.empty()) {
-    // filter/drop based on merging strategy
-    if (_mergingStrategy && _thresAssociation &&
-        !_mergingStrategy->operator()(res, *_thresAssociation)) {
-#ifdef SCDETECT_DEBUG
-      SCDETECT_LOG_DEBUG_PROCESSOR(
-          proc,
-          "Dropping result due to merging strategy applied: fit=%9f, lag=%10f",
-          res.matchResult->coefficient, res.matchResult->lag);
-#endif
-      return;
-    }
-
     // update POT
     if (!_potValid) {
       createPot();

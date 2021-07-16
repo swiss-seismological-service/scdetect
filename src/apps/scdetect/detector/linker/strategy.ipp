@@ -31,8 +31,11 @@ template <typename... Args>
 std::unique_ptr<MergingStrategy> MergingStrategy::Create(
     MergingStrategy::Type mergingStrategyTypeId, Args &&...args) {
   switch (mergingStrategyTypeId) {
-    case MergingStrategy::Type::kMinAssociationThres:
+    case MergingStrategy::Type::kGreaterEqualAssociationThres:
       return create<LinkIfGreaterEqualAssociationThres>(
+          std::forward<Args>(args)...);
+    case MergingStrategy::Type::kGreaterEqualMergingThres:
+      return create<LinkIfGreaterEqualMergingThres>(
           std::forward<Args>(args)...);
     case MergingStrategy::Type::kAll:
       return create<LinkAllResults>(std::forward<Args>(args)...);

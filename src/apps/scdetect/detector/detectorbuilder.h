@@ -50,6 +50,8 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   struct TemplateProcessorConfig {
     // Template matching processor
     std::unique_ptr<TemplateWaveformProcessor> processor;
+    // `TemplateWaveformProcessor` specific merging threshold
+    boost::optional<double> mergingThreshold;
 
     struct MetaData {
       // The template's sensor location associated

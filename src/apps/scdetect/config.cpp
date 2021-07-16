@@ -41,6 +41,7 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       wfStreamId{pt.get<std::string>("waveformId")},
       initTime{pt.get<double>("initTime", defaults.initTime)},
       filter{pt.get_optional<std::string>("filter")},
+      mergingThreshold{pt.get_optional<double>("mergingThreshold")},
       targetSamplingFrequency{
           pt.get_optional<double>("targetSamplingFrequency")} {
   templateConfig.phase =
@@ -54,6 +55,10 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
 
   if (!targetSamplingFrequency && defaults.targetSamplingFrequency) {
     targetSamplingFrequency = defaults.targetSamplingFrequency;
+  }
+
+  if (!mergingThreshold && defaults.mergingThreshold) {
+    mergingThreshold = defaults.mergingThreshold;
   }
 
   if (!filter && defaults.filter) {
@@ -77,6 +82,10 @@ bool StreamConfig::isValid() const {
     retval = utils::WaveformStreamID{templateConfig.wfStreamId}.isValid();
   } catch (ValueException &e) {
     return false;
+  }
+
+  if (mergingThreshold) {
+    retval = config::validateXCorrThreshold(*mergingThreshold);
   }
 
   const auto validateFilter = [](const std::string &filterId) {
@@ -152,6 +161,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   patchedStreamDefaults.filter = pt.get_optional<std::string>("filter");
   patchedStreamDefaults.targetSamplingFrequency =
       pt.get_optional<double>("targetSamplingFrequency");
+  patchedStreamDefaults.mergingThreshold =
+      pt.get_optional<double>("mergingThreshold");
   patchedStreamDefaults.templateConfig.phase =
       pt.get<std::string>("templatePhase", streamDefaults.templateConfig.phase);
   patchedStreamDefaults.templateConfig.wfStart = pt.get<double>(
