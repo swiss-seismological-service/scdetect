@@ -110,7 +110,7 @@
             configured must be available.
           </description>
         </parameter>
-        <parameter name="mergingStrategy" type="string" default="minTriggerOn">
+        <parameter name="mergingStrategy" type="string" default="greaterEqualTriggerOnThreshold">
           <description>
             Defines the default cross-correlation result merging strategy while
             linking. Possible values are:
@@ -118,10 +118,12 @@
             - "greaterEqualTriggerOnThreshold": the cross-correlation
             coefficient must be greater or equal to the configured
             "triggerOnThreshold" in order to be taken into account for linking.
+
             - "greaterEqualMergingThreshold": the cross-correlation coefficient
             must be greater or equal to the configured stream configuration
             specific `"mergingThreshold"` in order to be taken into account for
             linking.
+
             - "all": tries to merge all cross-correlation results. Trying to
             merge all cross-correlation results is computationally quite
             expensive.
