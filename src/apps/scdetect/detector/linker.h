@@ -12,7 +12,6 @@
 
 #include "arrival.h"
 #include "linker/association.h"
-#include "linker/event.h"
 #include "linker/strategy.h"
 #include "pot.h"
 #include "templatewaveformprocessor.h"
@@ -105,7 +104,25 @@ class Linker {
   using Processors = std::unordered_map<std::string, Processor>;
   Processors _processors;
 
-  using EventQueue = std::list<linker::Event>;
+  struct Event {
+    // The time after the event is considered as expired
+    Core::Time expired;
+    // The final association
+    linker::Association association;
+    // Time of the reference arrival pick
+    Core::Time refPickTime;
+
+    Event(const Core::Time &expired);
+    // Feeds the template result `res` to the event in order to be merged
+    void feed(const std::string &procId,
+              const linker::Association::TemplateResult &res, const POT &pot);
+    // Returns the total number of arrivals
+    size_t getArrivalCount() const;
+    // Returns `true` if the event must be considered as expired
+    bool isExpired(const Core::Time &now) const;
+  };
+
+  using EventQueue = std::list<Event>;
   EventQueue _queue;
 
   // The reference POT

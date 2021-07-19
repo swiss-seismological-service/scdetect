@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "association.h"
-#include "event.h"
 
 namespace Seiscomp {
 namespace detect {

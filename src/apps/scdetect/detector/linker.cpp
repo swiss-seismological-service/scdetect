@@ -196,7 +196,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
 
     const auto now{Core::Time::GMT()};
     // create new event
-    linker::Event event{now + _onHold};
+    Event event{now + _onHold};
     event.feed(procId, res, POT{std::vector<Arrival>{res.arrival}});
     _queue.emplace_back(event);
 
@@ -241,6 +241,39 @@ void Linker::createPot() {
   // XXX(damb): The current implementation simply recreates the POT
   _pot = POT(arrivals);
   _potValid = true;
+}
+
+/* ------------------------------------------------------------------------- */
+Linker::Event::Event(const Core::Time &expired) : expired{expired} {}
+
+void Linker::Event::feed(const std::string &procId,
+                         const linker::Association::TemplateResult &res,
+                         const POT &pot) {
+  auto &templateResults{association.results};
+  templateResults.emplace(procId, res);
+
+  std::vector<double> fits;
+  std::transform(std::begin(templateResults), std::end(templateResults),
+                 std::back_inserter(fits),
+                 [](const linker::Association::TemplateResults::value_type &p) {
+                   return p.second.matchResult->coefficient;
+                 });
+
+  // compute the overall event's score
+  association.fit = utils::cma(fits.data(), fits.size());
+  association.pot = pot;
+  if (!refPickTime || res.arrival.pick.time < refPickTime) {
+    refPickTime = res.arrival.pick.time;
+    association.refProcId = procId;
+  }
+}
+
+size_t Linker::Event::getArrivalCount() const {
+  return association.results.size();
+}
+
+bool Linker::Event::isExpired(const Core::Time &now) const {
+  return now >= expired;
 }
 
 }  // namespace detector
