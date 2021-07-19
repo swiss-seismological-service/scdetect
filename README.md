@@ -174,6 +174,9 @@ configuration parameters:
   anymore. Note that data latency is not validated if `scdetect` is run in *
   playback mode*.
 
+- `"methodId"`: The origin method identifier which will be added to declared
+  origins.
+
 - `"originId"`: Required. The origin identifier of the template origin the
   detector is referring to. The origin identifier is used for extracting
   template related data such as template waveforms, etc. Usually, the origin

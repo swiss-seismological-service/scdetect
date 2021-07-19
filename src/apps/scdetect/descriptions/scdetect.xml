@@ -8,6 +8,12 @@
           Defines the default path for the template configuration file.
         </description>
       </parameter>
+      <parameter name="methodId" type="string" default="DETECT">
+        <description>
+          Defines the default origin *methodID* label that is added to declared
+          origins.
+        </description>
+      </parameter>
       <group name="template">
         <parameter name="phase" type="string" default="Pg">
           <description>
