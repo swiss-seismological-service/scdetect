@@ -26,7 +26,8 @@ class DetectorWaveformProcessor;
 
 class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
  public:
-  DetectorBuilder(const std::string &id, const std::string &originId);
+  DetectorBuilder(const std::string &id, const std::string &originId,
+                  const std::string &originMethodId);
 
   DetectorBuilder &setConfig(const DetectorConfig &config, bool playback);
 

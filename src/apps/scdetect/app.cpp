@@ -399,6 +399,7 @@ void Application::emitDetection(const WaveformProcessor *processor,
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
   origin->setDepth(DataModel::RealQuantity(detection->depth));
   origin->setTime(DataModel::TimeQuantity(detection->time));
+  origin->setMethodID(detection->originMethodId);
   origin->setEpicenterFixed(true);
   origin->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
@@ -443,10 +444,6 @@ void Application::emitDetection(const WaveformProcessor *processor,
   originQuality.setUsedPhaseCount(detection->numChannelsUsed);
 
   origin->setQuality(originQuality);
-  origin->setMethodID(settings::kOriginMethod);
-
-  origin->setQuality(originQuality);
-  origin->setMethodID(settings::kOriginMethod);
 
   const auto createPick = [](const detector::Arrival &a) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
@@ -674,8 +671,8 @@ bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
                            tc.detectorId().c_str());
 
         auto detectorBuilder{std::move(
-            detector::DetectorWaveformProcessor::Create(tc.detectorId(),
-                                                        tc.originId())
+            detector::DetectorWaveformProcessor::Create(
+                tc.detectorId(), tc.originId(), tc.originMethodId())
                 .setConfig(tc.detectorConfig(), _config.playbackConfig.enabled)
                 .setEventParameters())};
 

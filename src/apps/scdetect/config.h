@@ -149,6 +149,7 @@ class TemplateConfig {
 
   std::string detectorId() const;
   std::string originId() const;
+  std::string originMethodId() const;
   DetectorConfig detectorConfig() const;
 
   size_type size() const noexcept { return _streamConfigs.size(); }
@@ -165,6 +166,9 @@ class TemplateConfig {
   std::string _detectorId{utils::createUUID()};
 
   std::string _originId;
+  // The origin method identifier
+  std::string _originMethodId{"DETECT"};
+
   DetectorConfig _detectorConfig;
 
   StreamConfigs _streamConfigs;
