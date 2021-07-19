@@ -6,7 +6,6 @@
 
 #include "exception.h"
 #include "log.h"
-#include "settings.h"
 #include "utils.h"
 #include "validators.h"
 
