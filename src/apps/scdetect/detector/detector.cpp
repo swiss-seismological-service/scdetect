@@ -22,8 +22,9 @@ namespace detector {
 Detector::Detector(const detect::Processor *detector,
                    const DataModel::OriginCPtr &origin)
     : Processor{detector->id()}, _origin{origin} {
-  _linker.setResultCallback(
-      [this](const Linker::Result &res) { return storeLinkerResult(res); });
+  _linker.setResultCallback([this](const linker::Association &res) {
+    return storeLinkerResult(res);
+  });
 }
 
 Detector::~Detector() {}
@@ -51,7 +52,7 @@ void Detector::disableTrigger() { _triggerDuration = boost::none; }
 
 void Detector::setTriggerThresholds(double triggerOn, double triggerOff) {
   _thresTriggerOn = triggerOn;
-  _linker.setThresResult(_thresTriggerOn);
+  _linker.setThresAssociation(_thresTriggerOn);
 
   if (_thresTriggerOn && config::validateXCorrThreshold(triggerOff)) {
     _thresTriggerOff = triggerOff;
@@ -72,6 +73,11 @@ void Detector::setMinArrivals(const boost::optional<size_t> &n) {
 
 boost::optional<size_t> Detector::minArrivals() const {
   return _linker.minArrivals();
+}
+
+void Detector::setMergingStrategy(
+    linker::MergingStrategy::Type mergingStrategyTypeId) {
+  _linker.setMergingStrategy(mergingStrategyTypeId);
 }
 
 void Detector::setMaxLatency(const boost::optional<Core::TimeSpan> &latency) {
@@ -99,7 +105,8 @@ size_t Detector::getProcessorCount() const { return _processors.size(); }
 void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
                    const std::shared_ptr<const RecordSequence> &buf,
                    const std::string &waveformStreamId, const Arrival &arrival,
-                   const Detector::SensorLocation &loc) {
+                   const Detector::SensorLocation &loc,
+                   const boost::optional<double> &mergingThreshold) {
   proc->setResultCallback(
       [this](const detect::WaveformProcessor *proc, const Record *rec,
              const detect::WaveformProcessor::ResultCPtr &res) {
@@ -114,7 +121,7 @@ void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
   Arrival pseudoArrival{arrival};
   pseudoArrival.pick.waveformStreamId = waveformStreamId;
 
-  _linker.add(proc.get(), pseudoArrival);
+  _linker.add(proc.get(), pseudoArrival, mergingThreshold);
   const auto onHoldDuration{_maxLatency.value_or(0.0) +
                             _chunkSize.value_or(0.0) + _linkerSafetyMargin};
 
@@ -223,7 +230,7 @@ void Detector::process(const std::string &waveformStreamIdHint) {
           std::transform(
               std::begin(result.results), std::end(result.results),
               std::back_inserter(contributing),
-              [](const Linker::Result::TemplateResults::value_type &p) {
+              [](const linker::Association::TemplateResults::value_type &p) {
                 return p.first;
               });
           std::for_each(std::begin(_processors), std::end(_processors),
@@ -451,7 +458,7 @@ bool Detector::feed(const TimeWindows &tws) {
   return true;
 }
 
-void Detector::prepareResult(const Linker::Result &linkerResult,
+void Detector::prepareResult(const linker::Association &linkerResult,
                              Detector::Result &result) const {
   const auto &refResult{linkerResult.results.at(linkerResult.refProcId)};
   if (!refResult.matchResult) {
@@ -599,7 +606,7 @@ void Detector::storeTemplateResult(
   _linker.feed(processor, result);
 }
 
-void Detector::storeLinkerResult(const Linker::Result &linkerResult) {
+void Detector::storeLinkerResult(const linker::Association &linkerResult) {
   _resultQueue.emplace_back(linkerResult);
 }
 

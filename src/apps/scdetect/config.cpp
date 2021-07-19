@@ -41,6 +41,7 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       wfStreamId{pt.get<std::string>("waveformId")},
       initTime{pt.get<double>("initTime", defaults.initTime)},
       filter{pt.get_optional<std::string>("filter")},
+      mergingThreshold{pt.get_optional<double>("mergingThreshold")},
       targetSamplingFrequency{
           pt.get_optional<double>("targetSamplingFrequency")} {
   templateConfig.phase =
@@ -51,6 +52,14 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("templateWaveformEnd", defaults.templateConfig.wfEnd);
   templateConfig.wfStreamId =
       pt.get<std::string>("templateWaveformId", wfStreamId);
+
+  if (!targetSamplingFrequency && defaults.targetSamplingFrequency) {
+    targetSamplingFrequency = defaults.targetSamplingFrequency;
+  }
+
+  if (!mergingThreshold && defaults.mergingThreshold) {
+    mergingThreshold = defaults.mergingThreshold;
+  }
 
   if (!filter && defaults.filter) {
     filter = defaults.filter;
@@ -75,6 +84,10 @@ bool StreamConfig::isValid() const {
     return false;
   }
 
+  if (mergingThreshold) {
+    retval = config::validateXCorrThreshold(*mergingThreshold);
+  }
+
   const auto validateFilter = [](const std::string &filterId) {
     if (filterId.empty()) {
       return true;
@@ -84,11 +97,11 @@ bool StreamConfig::isValid() const {
   };
 
   if (filter) {
-    return validateFilter(*filter);
+    retval = validateFilter(*filter);
   }
 
   if (templateConfig.filter) {
-    return validateFilter(*templateConfig.filter);
+    retval = validateFilter(*templateConfig.filter);
   }
 
   return (retval && templateConfig.wfStart < templateConfig.wfEnd &&
@@ -103,7 +116,8 @@ bool DetectorConfig::isValid(size_t numStreamConfigs) const {
             utils::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
           config::validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
           config::validateMinArrivals(minArrivals,
-                                      static_cast<int>(numStreamConfigs)));
+                                      static_cast<int>(numStreamConfigs)) &&
+          config::validateLinkerMergingStrategy(mergingStrategy));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
@@ -135,6 +149,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       "arrivalOffsetThreshold", detectorDefaults.arrivalOffsetThreshold);
   _detectorConfig.minArrivals =
       pt.get<int>("minimumArrivals", detectorDefaults.minArrivals);
+  _detectorConfig.mergingStrategy =
+      pt.get<std::string>("mergingStrategy", detectorDefaults.mergingStrategy);
   _detectorConfig.chunkSize =
       pt.get<double>("chunkSize", detectorDefaults.chunkSize);
 
@@ -145,6 +161,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   patchedStreamDefaults.filter = pt.get_optional<std::string>("filter");
   patchedStreamDefaults.targetSamplingFrequency =
       pt.get_optional<double>("targetSamplingFrequency");
+  patchedStreamDefaults.mergingThreshold =
+      pt.get_optional<double>("mergingThreshold");
   patchedStreamDefaults.templateConfig.phase =
       pt.get<std::string>("templatePhase", streamDefaults.templateConfig.phase);
   patchedStreamDefaults.templateConfig.wfStart = pt.get<double>(

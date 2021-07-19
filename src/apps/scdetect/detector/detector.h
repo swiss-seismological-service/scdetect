@@ -22,6 +22,8 @@
 #include "../waveformprocessor.h"
 #include "arrival.h"
 #include "linker.h"
+#include "linker/association.h"
+#include "linker/strategy.h"
 #include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -104,6 +106,8 @@ class Detector : public detect::Processor {
   // Returns the minimum number of arrivals required in order to declare an
   // event as a detection
   boost::optional<size_t> minArrivals() const;
+  // Sets the merging strategy applied while linking
+  void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
   // Sets the maximum data latency w.r.t. `NOW`. If configured with
   // `boost::none` latency is not taken into account and thus not validated
   void setMaxLatency(const boost::optional<Core::TimeSpan> &latency);
@@ -124,7 +128,8 @@ class Detector : public detect::Processor {
   void add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
            const std::shared_ptr<const RecordSequence> &buf,
            const std::string &waveformStreamId, const Arrival &arrival,
-           const Detector::SensorLocation &loc);
+           const Detector::SensorLocation &loc,
+           const boost::optional<double> &mergingThreshold);
   // Removes the processors processing streams identified by `waveformStreamId`
   void remove(const std::string &waveformStreamId);
 
@@ -146,7 +151,8 @@ class Detector : public detect::Processor {
   // Feed data to template processors
   bool feed(const TimeWindows &tws);
   // Prepare detection
-  void prepareResult(const Linker::Result &linkerResult, Result &result) const;
+  void prepareResult(const linker::Association &linkerResult,
+                     Result &result) const;
   // Reset the processor's processing facilities
   void resetProcessing();
   // Reset the trigger
@@ -162,7 +168,7 @@ class Detector : public detect::Processor {
       const TemplateWaveformProcessor::MatchResultCPtr &result);
 
   // Callback storing results from the linker
-  void storeLinkerResult(const Linker::Result &linkerResult);
+  void storeLinkerResult(const linker::Association &linkerResult);
 
  private:
   struct ProcessorState {
@@ -197,7 +203,7 @@ class Detector : public detect::Processor {
   Core::TimeWindow _processed;
 
   // The current linker result
-  boost::optional<Linker::Result> _currentResult;
+  boost::optional<linker::Association> _currentResult;
   // The result callback function
   boost::optional<PublishResultCallback> _resultCallback;
 
@@ -210,7 +216,7 @@ class Detector : public detect::Processor {
 
   // The linker required for associating arrivals
   Linker _linker;
-  using ResultQueue = std::deque<Linker::Result>;
+  using ResultQueue = std::deque<linker::Association>;
   ResultQueue _resultQueue;
   // Safety margin for linker on hold duration
   Core::TimeSpan _linkerSafetyMargin{1.0};

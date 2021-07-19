@@ -14,6 +14,7 @@
 #include "../builder.h"
 #include "../config.h"
 #include "../waveform.h"
+#include "linker/strategy.h"
 #include "pot.h"
 #include "templatewaveformprocessor.h"
 
@@ -49,6 +50,8 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   struct TemplateProcessorConfig {
     // Template matching processor
     std::unique_ptr<TemplateWaveformProcessor> processor;
+    // `TemplateWaveformProcessor` specific merging threshold
+    boost::optional<double> mergingThreshold;
 
     struct MetaData {
       // The template's sensor location associated
@@ -67,6 +70,9 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   using TemplateProcessorConfigs =
       std::unordered_map<std::string, TemplateProcessorConfig>;
   TemplateProcessorConfigs _processorConfigs;
+
+  static const std::unordered_map<std::string, linker::MergingStrategy::Type>
+      _mergingStrategyLookupTable;
 };
 
 }  // namespace detector

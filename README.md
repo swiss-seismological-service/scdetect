@@ -7,16 +7,15 @@
 - [About](#about)
 - [Overview](#overview)
 - [Getting started](#getting-started)
-  + [General](#general)
-  + [Template configuration](#template-configuration)
-  + [Inventory metadata, event metadata and configuration](#inventory-events-and-configuration)
-  + [Waveform data and RecordStream configuration](#waveform-data-and-recordstream-configuration)
+    + [General](#general)
+    + [Template configuration](#template-configuration)
+    + [Inventory metadata, event metadata and configuration](#inventory-events-and-configuration)
+    + [Waveform data and RecordStream configuration](#waveform-data-and-recordstream-configuration)
 - [Installation](#compiling-and-installation)
 - [Tests](#tests)
 - [Issues](#issues)
 - [Contributions](#contributions)
 - [License](#license)
-
 
 ## About
 
@@ -29,7 +28,6 @@ The module allows both single-stream and multi-stream earthquake detection.
 In case the detection parameters exceed the configured thresholds, `scdetect`
 declares a new origin.
 
-
 ## Overview
 
 <p align="center">
@@ -37,26 +35,25 @@ declares a new origin.
   title="SCDetect and SeisComP" />
 </p>
 
-Above, the modular organization of SeisComP with [messaging
-system](https://docs.gempa.de/seiscomp/current/base/concepts/messaging.html)
+Above, the modular organization of SeisComP
+with [messaging system](https://docs.gempa.de/seiscomp/current/base/concepts/messaging.html)
 (mediator),
 [RecordStream](https://docs.gempa.de/seiscomp/current/base/concepts/recordstream.html)
 interface (waveform server) and
 [database](https://docs.gempa.de/seiscomp/current/base/concepts/database.html)
 including `scdetect`'s role in the SeisComP overall architecture. In SeisComP
-language `scdetect` is a representative for a [trunk
-module](https://www.seiscomp.de/doc/base/glossary.html#term-trunk).
+language `scdetect` is a representative for
+a [trunk module](https://www.seiscomp.de/doc/base/glossary.html#term-trunk).
 
 From an architectural point of view `scdetect` is positioned somewhere between
 [scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html) and
 [scautoloc](https://docs.gempa.de/seiscomp/current/apps/scautoloc.html). That
-is, `scdetect` fetches waveform data by means of the RecordStream interface,
-but it also uses data products for template generation.
+is, `scdetect` fetches waveform data by means of the RecordStream interface, but
+it also uses data products for template generation.
 
-For further information with regards to the SeisComP architecture please refer
-to the [SeisComP
-documentation](https://docs.gempa.de/seiscomp/current/base/overview.html).
-
+For further information with regard to the SeisComP architecture please refer to
+the [SeisComP documentation](https://docs.gempa.de/seiscomp/current/base/overview.html)
+.
 
 ## Getting started
 
@@ -70,71 +67,71 @@ $ scdetect -h
 ```
 
 For a general more in-depth introduction on how to use SeisComP modules
-including their particular configuration, please refer to the [SeisComP
-documentation](https://www.seiscomp.de/doc/index.html).
+including their particular configuration, please refer to
+the [SeisComP documentation](https://www.seiscomp.de/doc/index.html).
 
-The subsequent sections are intented to provide an introduction on how to use
+The subsequent sections are intended to provide an introduction on how to use
 and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
-2. How to access [metadata and
-   configuration](#inventory-events-and-configuration) from the database or
-   from plain files
-3. How [waveform data is
-   accessed](#waveform-data-and-recordstream-configuration) including both
-   [template waveform data caching](#caching-waveform-data) and [template
-   waveform data preparation](#prepare-template-waveform-data)
+2. How to access
+   [metadata and configuration](#inventory-events-and-configuration) from the
+   database or from plain files
+3. How
+   [waveform data is accessed](#waveform-data-and-recordstream-configuration)
+   including both [template waveform data caching](#caching-waveform-data)
+   and [template waveform data preparation](#prepare-template-waveform-data)
 
 ### Template configuration
 
-In order to run `scdetect` a *template configuration* must be provided. That
-is, either by means of the `templatesJSON` configuration option in one of
-`scdetect`'s [module configuration
-files](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
+In order to run `scdetect` a *template configuration* must be provided. That is,
+either by means of the `templatesJSON` configuration option in one of
+`scdetect`'
+s [module configuration files](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
 or by means of using `scdetect`'s `--templates-json path/to/templates.json` CLI
 flag.
 
 The template configuration itself is a [JSON](https://www.json.org)
 configuration file and contains an array of *detector configuration* JSON
-objects (each detector refers to a template event identified by its
+objects (each detector refers to a template origin identified by its
 `"originId"`). An exemplary multi-stream detector configuration (for the
 streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
 
 ```json
+{
+  "detectorId": "detector-01",
+  "createArrivals": true,
+  "createTemplateArrivals": true,
+  "gapInterpolation": true,
+  "gapThreshold": 0.1,
+  "gapTolerance": 1.5,
+  "triggerDuration": -1,
+  "triggerOnThreshold": 0.98,
+  "triggerOffThreshold": 0,
+  "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+  "filter": "",
+  "templateFilter": "",
+  "streams": [
     {
-        "detectorId": "detector-01",
-        "createArrivals": true,
-        "createTemplateArrivals": true,
-        "gapInterpolation": true,
-        "gapThreshold": 0.1,
-        "gapTolerance": 1.5,
-        "triggerDuration": -1,
-        "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0,
-        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
-        "filter": "",
-        "templateFilter": "",
-        "streams": [
-              {
-                  "templateId": "template-01",
-                  "initTime": 10,
-                  "templateWaveformStart": -2,
-                  "templateWaveformEnd": 2,
-                  "waveformId": "CH.GRIMS..HHZ",
-                  "templateWaveformId": "CH.GRIMS..HHZ",
-                  "templatePhase": "Pg"
-              },
-              {
-                  "templateId": "template-02",
-                  "initTime": 10,
-                  "templateWaveformStart": -3,
-                  "templateWaveformEnd": 1,
-                  "waveformId": "CH.HASLI..HHZ",
-                  "templateWaveformId": "CH.HASLI..HHZ",
-                  "templatePhase": "Pg"
-              }
-        ]
+      "templateId": "template-01",
+      "initTime": 10,
+      "templateWaveformStart": -2,
+      "templateWaveformEnd": 2,
+      "waveformId": "CH.GRIMS..HHZ",
+      "templateWaveformId": "CH.GRIMS..HHZ",
+      "templatePhase": "Pg"
+    },
+    {
+      "templateId": "template-02",
+      "initTime": 10,
+      "templateWaveformStart": -3,
+      "templateWaveformEnd": 1,
+      "waveformId": "CH.HASLI..HHZ",
+      "templateWaveformId": "CH.HASLI..HHZ",
+      "templatePhase": "Pg"
     }
+  ]
+}
 ```
 
 That is, a detector configuration defines besides the detector specific
@@ -150,8 +147,8 @@ configuration parameters a list of stream configurations and optionally some
 
 Note that if a configuration parameter is not explicitly defined a module
 specific global default is used instead. Global defaults may be configured
-following SeisComP's standard [module
-configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
+following SeisComP's
+standard [module configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
 approach. That is, by means of either global or module specific configuration
 files (`global.cfg`, `scdetect.cfg` located at corresponding configuration
 directory paths).
@@ -168,87 +165,102 @@ configuration parameters:
 **General**:
 
 - `"detectorId"`: A string defining the detector identifier. If not defined a
-  unique indentifier will be generated, automatically. Since `scdetect`
+  unique identifier will be generated, automatically. Since `scdetect`
   implements hierarchical logging specifying the detector identifier may be of
   particular use while debugging.
 
-- `"maximumLatency"`: The maximum data latency in seconds tolerated with
-  regards to `NOW`. If data arrive later than the value specified it is not
-  used, anymore. Note that data latency is not validated if `scdetect` is run
-  in *playback mode*.
+- `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
+  to `NOW`. If data arrive later than the value specified it is not used,
+  anymore. Note that data latency is not validated if `scdetect` is run in *
+  playback mode*.
 
 - `"originId"`: Required. The origin identifier of the template origin the
   detector is referring to. The origin identifier is used for extracting
-  template related data such as template waveforms, etc. Usually, the
-  origin identifier corresponds to a *seismic metadata resource identifier*
+  template related data such as template waveforms, etc. Usually, the origin
+  identifier corresponds to a *seismic metadata resource identifier*
   (`smi`). The relationship between a detector configuration and an origin is
   one-to-one.
 
 - `"streams"`: Required. An array of stream configuration JSON objects, also
-  called a *stream set*. The stream set describes the streams to be covered by
-  a detector. In a single-stream detector configuration the stream set contains
+  called a *stream set*. The stream set describes the streams to be covered by a
+  detector. In a single-stream detector configuration the stream set contains
   just a single stream configuration, while a multi-stream detector
   configuration requires multiple stream configurations.
 
 **Gap interpolation**:
 
-- `"gapInterpolation"`: A boolean value which enables/disables gap
-  interpolation which allows interpolating gaps linearly.
+- `"gapInterpolation"`: A boolean value which enables/disables gap interpolation
+  which allows interpolating gaps linearly.
 
 - `"gapThreshold"`: Threshold in seconds to recognize a gap.
 
-- `"gapTolerance"`: Maximum gap length in seconds to tolerate and to be
-  handled.
+- `"gapTolerance"`: Maximum gap length in seconds to tolerate and to be handled.
 
 **Detections and arrivals**:
 
 - `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds (i.e. with
-  regards to the template arrival) to tolerate when associating an arrival with
-  an event. Note that the threshold is only relevant for a multi-stream
+  regard to the template arrival) to tolerate when associating an arrival with
+  an *association*. Note that the threshold is only relevant for a multi-stream
   detector setup.
 
+- `"minimumArrivals"`: Defines the minimum number of arrivals w.r.t. streams
+  within the stream set configured which must be part of an association to
+  qualify for a detection.
+
+- `"mergingStrategy"`: Defines the merging strategy applied before linking
+  cross-correlation results. Possible configuration options are:
+    + `"greaterEqualTriggerOnThreshold"`: cross-correlation results with regard
+      to the configured streams must be greater or equal to the configured
+      `"triggerOnThreshold"` in order to be taken into account for linking.
+      Results lower than the `"triggerOnThreshold"` are dropped.
+    + `"greaterEqualMergingThreshold"`: cross-correlation results with regard to
+      the configured streams must be greater or equal to the stream specific
+      configured `"mergingThreshold"` in order to be taken into account for
+      linking. Results lower than the `"mergingThreshold"` are dropped.
+    + `"all"`: all cross-correlation results with regard to the configured
+      streams are taken into account while linking. Trying to merge all incoming
+      cross-correlation results is computationally quite expensive.
+
+> **NOTE**: The configured merging strategy may have a significant performance
+> impact in a multi-stream detector setup.
+
 - `"createArrivals"`: A boolean value which defines if detections should
-  include *detected arrivals*, i.e. arrivals with regards to the streams
-  included within the stream set. If enabled, origins will be created with
-  detected arrivals being associated, else origins are created not containing
-  any reference to detected arrivals.
-  In a multi-stream detector configuration setup detections will include only
-  arrivals of those streams which contributed.
-  For further details, please refer to `"createTemplateArrivals"` and
+  include *detected arrivals*, i.e. arrivals with regard to the streams included
+  within the stream set. If enabled, origins will be created with detected
+  arrivals being associated, else origins are created not containing any
+  reference to detected arrivals. In a multi-stream detector configuration setup
+  detections will include only arrivals of those streams which contributed. For
+  further details, please refer to `"createTemplateArrivals"` and
   `"minimumArrivals"` configuration parameters.
 
-- `"createTemplateArrivals"`: A boolean value which defines if detections
-  should include so called *template arrivals*. Template arrivals refer to
-  streams which are not part of the detector configuration's stream set, but
-  contain valid picks as part of the template origin.
+- `"createTemplateArrivals"`: A boolean value which defines if detections should
+  include so called *template arrivals*. Template arrivals refer to streams
+  which are not part of the detector configuration's stream set, but contain
+  valid picks as part of the template origin.
 
-- `"minimumArrivals"`: Defines the minimum number of arrivals w.r.t. streams
-  within the stream set configured which must be part of an event to qualify
-  for a detection.
-
-- `"timeCorrection"`: Defines the time correction in seconds for both
-  detections and arrivals. That is, this allows shifting a detection in time.
+- `"timeCorrection"`: Defines the time correction in seconds for both detections
+  and arrivals. That is, this allows shifting a detection in time.
 
 **Trigger facilities**:
 
-An event is considered as a *detected event*, also called a *detection* if it
-surpasses the value specified by the `"triggerOnThreshold"` configuration
-parameter.
+An *association* is considered as a *detected association*, also called a
+*detection* if it surpasses the value specified by the `"triggerOnThreshold"`
+configuration parameter.
 
 In a multi-stream detector setup, `scdetect` uses the *mean* correlation
-coefficient of all streams within the stream set. In future, further methods
-may be provided in order to compute this *score*.
+coefficient of all streams within the stream set. In future, further methods may
+be provided in order to compute this *score*.
 
-Besides, `scdetect` implements trigger facilities, i.e. a detected event may not be
+Besides, `scdetect` implements trigger facilities, i.e. a detection may not be
 published, immediately, but put *on-hold* for the duration defined by the value
-of the `"triggerDuration"` configuration parameter. If a *better* detected
-event arrives within this period, the previous one is not used, anymore.
+of the `"triggerDuration"` configuration parameter. If a *better* detection
+arrives within this period, the previous one is not used, anymore.
 
+- `"triggerDuration"`: Defines the trigger duration in seconds. A negative value
+  disables triggering facilities.
 
-- `"triggerDuration"`: Defines the trigger duration in seconds. A negative
-  value disables triggering facilities.
-
-- `"triggerOnThreshold"`: Defines the threshold (`[-1, 1]`) to trigger the detector.
+- `"triggerOnThreshold"`: Defines the threshold (`[-1, 1]`) to trigger the
+  detector.
 
 - `"triggerOffThreshold"`: Defines the lower threshold (`[-1, 1]`) to emit a
   detection once the detector is triggered. Note that the configured value is
@@ -264,22 +276,29 @@ configuration parameters:
 **General**:
 
 - `"templateId"`: A string defining the stream related template identifier. If
-  undefined a unique indentifier will be generated, automatically. Since `scdetect`
+  undefined a unique identifier will be generated, automatically.
+  Since `scdetect`
   implements hierarchical logging specifying the template identifier may be of
   particular use while debugging.
 
 - `"waveformId"`: Required. A string defining the waveform stream identifier of
-  the stream to be processed. Usually, this refers to a [FDSN Source
-  Identifier](http://docs.fdsn.org/projects/source-identifiers/). Note that
-  the string is parsed and matched against `NET`, `STA`, `LOC`, `CHA` codes.
+  the stream to be processed. Usually, this refers to
+  a [FDSN Source Identifier](http://docs.fdsn.org/projects/source-identifiers/).
+  Note that the string is parsed and matched against `NET`, `STA`, `LOC`, `CHA`
+  codes.
+
+- `"mergingThreshold"`: Optionally defines a stream configuration specific
+  threshold (`[-1, 1]`) which is used exclusively if `"mergingStrategy"` is set
+  to `"greaterEqualMergingThreshold"`. If `"mergingThreshold"` is not configured
+  it is set to the value provided by `"triggerOnThreshold"`.
 
 **Template waveform**:
 
 - `"templateWaveformId"`: A string defining an alternative waveform stream
-  identifier referring to the stream used for the template waveform creation.
-  If not defined, the template waveform is created from the stream specified by
-  the `"waveformId"` configuration parameter.
-  While for the phase code lookup the *sensor location* is used (i.e. the `CHA`
+  identifier referring to the stream used for the template waveform creation. If
+  not defined, the template waveform is created from the stream specified by
+  the `"waveformId"` configuration parameter. While for the phase code lookup
+  the *sensor location* is used (i.e. the `CHA`
   component of the waveform stream identifier is neglected) for template
   waveform creation all waveform stream identifier components are taken into
   account.
@@ -289,15 +308,15 @@ configuration parameters:
   only the sensor location related part is used of waveform stream identifier
   configured.
 
-- `"templateWaveformStart"`: The template waveform start in seconds with
-  regards to the template pick time. A negative value refers to a template
-  waveform start *before* the template pick time, while a positive value means
+- `"templateWaveformStart"`: The template waveform start in seconds with regard
+  to the template pick time. A negative value refers to a template waveform
+  start *before* the template pick time, while a positive value means
   *after* the pick time.
 
-- `"templateWaveformEnd"`: The template waveform end in seconds with regards to
+- `"templateWaveformEnd"`: The template waveform end in seconds with regard to
   the template pick time. A negative value refers to a template waveform start
-  *before* the template pick time, while a positive value means *after* the
-  pick time.
+  *before* the template pick time, while a positive value means *after* the pick
+  time.
 
 **Filtering and resampling**:
 
@@ -306,15 +325,15 @@ configuration parameters:
   allows taking filter related artifacts during initialization into account.
 
 - `"filter"`: A string defining the filter to be applied to the processed
-  stream. The filter must be specified following the SeisComP's [filter
-  grammar](https://www.seiscomp.de/doc/base/filter-grammar.html) syntax.
-  Filtering may be disabled by means of explicitly defining the empty string
-  i.e. `""`. By default, the filter associated with the template pick is
+  stream. The filter must be specified following the
+  SeisComP's [filter grammar](https://www.seiscomp.de/doc/base/filter-grammar.html)
+  syntax. Filtering may be disabled by means of explicitly defining the empty
+  string i.e. `""`. By default, the filter associated with the template pick is
   applied.
 
-- `"templateFilter"`: A string defining the filter during the template
-  waveform generation. For further information, please refer to the description
-  of the `"filter"` configuration property.
+- `"templateFilter"`: A string defining the filter during the template waveform
+  generation. For further information, please refer to the description of
+  the `"filter"` configuration property.
 
 - `"targetSamplingFrequency"`: Optionally, defines the target sampling
   frequency. Both the template waveform and the stream to be processed may be
@@ -328,58 +347,59 @@ scope of a detector configuration:
 
 - `"filter"`
 - `"initTime"`
+- `"mergingThreshold"`
 - `"targetSamplingFrequency"`
 - `"templateFilter"`
 - `"templatePhase"`
 - `"templateWaveformStart"`
 - `"templateWaveformEnd"`
 
-That is, if not explictly overridden by stream configurations the corresponding
+That is, if not explicitly overridden by stream configurations the corresponding
 fallback values will be used.
 
 **Example**:
 
 ```json
+{
+  "detectorId": "detector-01",
+  "createArrivals": true,
+  "createTemplateArrivals": true,
+  "gapInterpolation": true,
+  "gapThreshold": 0.1,
+  "gapTolerance": 1.5,
+  "triggerDuration": -1,
+  "triggerOnThreshold": 0.98,
+  "triggerOffThreshold": 0,
+  "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+  "templatePhase": "Pg",
+  "filter": "",
+  "templateFilter": "",
+  "initTime": 0,
+  "streams": [
     {
-        "detectorId": "detector-01",
-        "createArrivals": true,
-        "createTemplateArrivals": true,
-        "gapInterpolation": true,
-        "gapThreshold": 0.1,
-        "gapTolerance": 1.5,
-        "triggerDuration": -1,
-        "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0,
-        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
-        "templatePhase": "Pg",
-        "filter": "",
-        "templateFilter": "",
-        "initTime": 0,
-        "streams": [
-              {
-                  "templateId": "template-01",
-                  "templateWaveformStart": -2,
-                  "templateWaveformEnd": 2,
-                  "waveformId": "CH.GRIMS..HHZ",
-                  "templateWaveformId": "CH.GRIMS..HHZ",
-              },
-              {
-                  "templateId": "template-02",
-                  "templateWaveformStart": -3,
-                  "templateWaveformEnd": 1,
-                  "waveformId": "CH.HASLI..HHZ",
-                  "templateWaveformId": "CH.HASLI..HHZ",
-                  "templatePhase": "Sg"
-              }
-        ]
+      "templateId": "template-01",
+      "templateWaveformStart": -2,
+      "templateWaveformEnd": 2,
+      "waveformId": "CH.GRIMS..HHZ",
+      "templateWaveformId": "CH.GRIMS..HHZ"
+    },
+    {
+      "templateId": "template-02",
+      "templateWaveformStart": -3,
+      "templateWaveformEnd": 1,
+      "waveformId": "CH.HASLI..HHZ",
+      "templateWaveformId": "CH.HASLI..HHZ",
+      "templatePhase": "Sg"
     }
+  ]
+}
 ```
 
-In the example above, the stream configuration default `"templatePhase"` is
-used indicating a default phase code `"Pg"`. While this stream configuration
-default value is used by the stream configuration object identified by the
-template identifier `"template-01"`, it is overridden by the stream
-configuration identified by `"template-02"` (i.e. it uses `"Sg"` instead).
+In the example above, the stream configuration default `"templatePhase"` is used
+indicating a default phase code `"Pg"`. While this stream configuration default
+value is used by the stream configuration object identified by the template
+identifier `"template-01"`, it is overridden by the stream configuration
+identified by `"template-02"` (i.e. it uses `"Sg"` instead).
 
 Besides, filtering is explicitly disabled for all stream configurations within
 the stream set.
@@ -387,16 +407,16 @@ the stream set.
 ### Inventory, events and configuration
 
 SeisComP stores and reads certain data (e.g.
-[inventory](https://www.seiscomp.de/doc/base/concepts/inventory.html#concepts-inventory),
-eventparameters, etc.) in and from a database. In order to connect to the
+[inventory](https://www.seiscomp.de/doc/base/concepts/inventory.html#concepts-inventory)
+, eventparameters, etc.) in and from a database. In order to connect to the
 database a *database connection URL* is required. This URL is either configured
 in
 [global.cfg](https://www.seiscomp.de/doc/base/concepts/configuration.html#global-modules-config)
 or in `scmaster.cfg` (i.e. the configuration file of SeisComP's messaging
-mediator module, [scmaster](https://www.seiscomp.de/doc/apps/scmaster.html)).
-In the latter case, it is the `scmaster` module that passes the database
-connection URL to every module connecting to the messaging system (usually at
-module startup).
+mediator module, [scmaster](https://www.seiscomp.de/doc/apps/scmaster.html)). In
+the latter case, it is the `scmaster` module that passes the database connection
+URL to every module connecting to the messaging system (usually at module
+startup).
 
 However, when running `scdetect` in offline mode (using the CLI option
 `--offline`), and the database connection URL is specified in `scmaster.cfg`,
@@ -408,11 +428,11 @@ the standard SeisComP CLI options:
 - `--inventory-db URI`
 - `--config-db URI`
 
-The non-standard `--event-db URI` option allows reading eventparameter related data
-from either a file or a database specified by `URI` (Note that the `--event-db
-URI` CLI option overrides the `-d|--database URL` CLI option.). With that, both
-inventory metadata and eventparameters might be read from plain files, making
-the database connection fully optional. E.g.
+The non-standard `--event-db URI` option allows reading eventparameter related
+data from either a file or a database specified by `URI` (Note that
+the `--event-db URI` CLI option overrides the `-d|--database URL` CLI option.).
+With that, both inventory metadata and eventparameters might be read from plain
+files, making the database connection fully optional. E.g.
 
 ```bash
 $ ls -1
@@ -429,40 +449,41 @@ $ scdetect \
   --ep=detections.scml
 ```
 
-In the example above even the [waveform
-data](#waveform-data-and-recordstream-configuration) is read from a file (i.e.
+In the example above even
+the [waveform data](#waveform-data-and-recordstream-configuration) is read from
+a file (i.e.
 `data.mseed`). Furthermore, the resulting detections are dumped
 [SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
 formatted to the `detections.scml` file.
 
 Note that as the `--config-db URI` CLI option is a standard SeisComP module CLI
 option it is mentioned for completeness, only. Since `scdetect` does not
-support [station
-bindings](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-and-bindings-configuration),
-anyway, this CLI can be neglected.
+support [station bindings](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-and-bindings-configuration)
+, anyway, this CLI can be neglected.
 
 ### Waveform data and RecordStream configuration
 
 [SeisComP](https://www.seiscomp.de/) applications access waveform data through
 the [RecordStream](https://www.seiscomp.de/doc/base/concepts/recordstream.html)
 interface. It is usually configured in
-[global.cfg](https://www.seiscomp.de/doc/base/concepts/configuration.html#global-modules-config),
-where the user is able to define the backend services in order to access either
-real-time and/or historical waveform data. A technical documentation including
-exemplary RecordStream configurations can be found
-[here](https://www.seiscomp.de/doc/apps/global_recordstream.html#global-recordstream).
+[global.cfg](https://www.seiscomp.de/doc/base/concepts/configuration.html#global-modules-config)
+, where the user is able to define the backend services in order to access
+either real-time and/or historical waveform data. A technical documentation
+including exemplary RecordStream configurations can be found
+[here](https://www.seiscomp.de/doc/apps/global_recordstream.html#global-recordstream)
+.
 
 Alternatively, the RecordStream can be defined making use of `scdetect`'s `-I [
 --record-url ] URI` CLI flag (Note that this is the standard CLI flag used for
 all SeisComP modules implementing SeisComP's `StreamApplication` interface.).
 
-In general, with regards to waveform data `scdetect` implements the following
+In general, with regard to waveform data `scdetect` implements the following
 approach:
 
 1. **Initialization**: Download template waveform data from the *archive*
-   RecordStream specified.  Cache the raw waveform data (see [Caching waveform
-   data](#caching-waveform-data)) and filter the template waveforms according
-   to the configuration.
+   RecordStream specified. Cache the raw waveform data (
+   see [Caching waveform data](#caching-waveform-data)) and filter the template
+   waveforms according to the configuration.
 
 2. **Processing**: Start processing the waveform data from either the
    *real-time* or the *archive* RecordStream configured.
@@ -483,9 +504,9 @@ $ rm -rvf ${SEISCOMP_ROOT}/var/cache/scdetect
 
 #### Prepare template waveform data
 
-Although, SeisComP allows configuring a [combined
-RecordStream](https://www.seiscomp.de/doc/apps/global_recordstream.html#combined),
-sometimes it might be useful to fetch template waveform data from a different
+Although, SeisComP allows configuring
+a [combined RecordStream](https://www.seiscomp.de/doc/apps/global_recordstream.html#combined)
+, sometimes it might be useful to fetch template waveform data from a different
 RecordStream than the RecordStream providing the data being processed. For this
 purpose, `scdetect` provides the `--templates-prepare` CLI flag. With that, an
 exemplary processing workflow might look like:
@@ -536,13 +557,12 @@ $ git clone https://github.com/damb/scdetect.git
 
 **Dependencies**:
 
-Besides of the [SeisComP core
-dependencies](https://github.com/SeisComP/seiscomp#prerequisites) the following
-packages must be installed to compile `scdetect`:
+Besides of
+the [SeisComP core dependencies](https://github.com/SeisComP/seiscomp#prerequisites)
+the following packages must be installed to compile `scdetect`:
 
 - `libsqlite3-dev` (Debian, Ubuntu), `sqlite-devel` (RedHat, Fedora, CentOS),
   `dev-db/sqlite` (Gentoo)
-
 
 For compiling SeisComP (including `scdetect`), please refer to
 https://github.com/SeisComP/seiscomp#build.
@@ -565,8 +585,9 @@ run only `scdetect` related tests, invoke
 $ ctest -R "^test_scdetect.*"
 ```
 
-For additional information, please also refer to SeisComP's [unit testing
-guide](https://docs.gempa.de/seiscomp/current/base/tests.html).
+For additional information, please also refer to
+SeisComP's [unit testing guide](https://docs.gempa.de/seiscomp/current/base/tests.html)
+.
 
 ## Issues
 

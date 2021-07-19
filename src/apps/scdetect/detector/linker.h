@@ -4,12 +4,15 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
+#include <boost/optional/optional.hpp>
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
 #include "arrival.h"
+#include "linker/association.h"
+#include "linker/strategy.h"
 #include "pot.h"
 #include "templatewaveformprocessor.h"
 
@@ -17,7 +20,7 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-// Associates template results
+// Associates `TemplateWaveformProcessor` results
 class Linker {
  public:
   Linker(const Core::TimeSpan &onHold = 0.0,
@@ -26,39 +29,14 @@ class Linker {
 
   enum class Status { kWaitingForData, kTerminated };
 
-  struct Result {
-    // The result's fit [-1,1]
-    double fit;
-    // Reference waveform processor id
-    std::string refProcId;
-
-    struct TemplateResult {
-      Arrival arrival;
-      // Reference to the original template result
-      TemplateWaveformProcessor::MatchResultCPtr matchResult;
-    };
-
-    // Associates `TemplateResult` with a processor (i.e. using the `proc_id`)
-    using TemplateResults = std::unordered_map<std::string, TemplateResult>;
-    TemplateResults results;
-
-    // The result's POT
-    POT pot;
-
-    // Returns the total number of arrivals
-    size_t getArrivalCount() const;
-    // Returns a string including debug information
-    std::string debugString() const;
-  };
-
   // Sets the arrival offset threshold
   void setThresArrivalOffset(const boost::optional<double> &thres);
   // Returns the current arrival offset threshold
   boost::optional<double> thresArrivalOffset() const;
-  // Sets the result threshold
-  void setThresResult(const boost::optional<double> &thres);
-  // Returns the result threshold
-  boost::optional<double> thresResult() const;
+  // Sets the association threshold
+  void setThresAssociation(const boost::optional<double> &thres);
+  // Returns the association threshold
+  boost::optional<double> thresAssociation() const;
   // Configures the linker with a minimum number of required arrivals before
   // issuing a result
   void setMinArrivals(const boost::optional<size_t> &n);
@@ -68,6 +46,8 @@ class Linker {
   void setOnHold(const Core::TimeSpan &duration);
   // Returns the current *on hold* duration
   Core::TimeSpan onHold() const;
+  // Sets the linker's merging strategy based on `mergingStrategyTypeId`
+  void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
   // Returns the linker's status
   Status status() const;
   // Returns the number of associated channels
@@ -77,9 +57,10 @@ class Linker {
 
   // Register the template waveform processor `proc` associated with the
   // template arrival `arrival` for linking.
-  void add(const TemplateWaveformProcessor *proc, const Arrival &arrival);
-  // Remove the processor identified by `proc_id`
-  void remove(const std::string &proc_id);
+  void add(const TemplateWaveformProcessor *proc, const Arrival &arrival,
+           const boost::optional<double> &mergingThreshold);
+  // Remove the processor identified by `procId`
+  void remove(const std::string &procId);
   // Reset the linker
   //
   // - drops all pending results
@@ -93,16 +74,17 @@ class Linker {
   void feed(const TemplateWaveformProcessor *proc,
             const TemplateWaveformProcessor::MatchResultCPtr &res);
 
-  using PublishResultCallback = std::function<void(const Result &res)>;
+  using PublishResultCallback =
+      std::function<void(const linker::Association &res)>;
   // Set the publish callback function
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
   // Processes the result `res` from `proc`
   void process(const TemplateWaveformProcessor *proc,
-               const Result::TemplateResult &res);
+               const linker::Association::TemplateResult &res);
   // Emit a result
-  void emitResult(const Result &res);
+  void emitResult(const linker::Association &res);
 
  private:
   void createPot();
@@ -114,25 +96,30 @@ class Linker {
     const TemplateWaveformProcessor *proc;
     // The template arrival associated
     Arrival arrival;
+    // The processor specific merging threshold
+    boost::optional<double> mergingThreshold;
   };
 
+  // Maps the processor id with `Processor`
   using Processors = std::unordered_map<std::string, Processor>;
   Processors _processors;
 
   struct Event {
-    // The time the event is considered as elapsed
+    // The time after the event is considered as expired
     Core::Time expired;
-    // The final result
-    Result result;
-
+    // The final association
+    linker::Association association;
     // Time of the reference arrival pick
     Core::Time refPickTime;
 
-    // Merges the template result `res` into the event
-    void mergeResult(const std::string &procId,
-                     const Result::TemplateResult &res, const POT &pot);
+    Event(const Core::Time &expired);
+    // Feeds the template result `res` to the event in order to be merged
+    void feed(const std::string &procId,
+              const linker::Association::TemplateResult &res, const POT &pot);
     // Returns the total number of arrivals
     size_t getArrivalCount() const;
+    // Returns `true` if the event must be considered as expired
+    bool isExpired(const Core::Time &now) const;
   };
 
   using EventQueue = std::list<Event>;
@@ -147,15 +134,18 @@ class Linker {
   // the maximum accuracy `scdetect` is operating when it comes to trimming
   // waveforms (1 micro second (i.e. 1 us)).
   boost::optional<double> _thresArrivalOffset{2.0e-6};
-  // The fit threshold indicating when template results are taken into
+  // The association threshold indicating when template results are taken into
   // consideration
-  boost::optional<double> _thresResult;
+  boost::optional<double> _thresAssociation;
   // The minimum number of arrivals required in order to issue a result
   boost::optional<size_t> _minArrivals;
 
   // The maximum time events are placed on hold before either being emitted or
   // dropped
   Core::TimeSpan _onHold{0.0};
+
+  // The merging strategy used while linking
+  std::unique_ptr<linker::MergingStrategy> _mergingStrategy;
 
   // The result callback function
   boost::optional<PublishResultCallback> _resultCallback;
@@ -164,16 +154,5 @@ class Linker {
 }  // namespace detector
 }  // namespace detect
 }  // namespace Seiscomp
-
-namespace std {
-
-template <>
-struct hash<Seiscomp::detect::detector::Linker::Result::TemplateResult> {
-  std::size_t operator()(
-      const Seiscomp::detect::detector::Linker::Result::TemplateResult &tr)
-      const noexcept;
-};
-
-}  // namespace std
 
 #endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_

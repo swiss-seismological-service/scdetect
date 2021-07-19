@@ -48,6 +48,9 @@ DetectorBuilder &DetectorBuilder::setConfig(const DetectorConfig &config,
 
   _product->_enabled = config.enabled;
 
+  _product->_detector.setMergingStrategy(
+      _mergingStrategyLookupTable.at(config.mergingStrategy));
+
   // configure playback related facilities
   if (playback) {
     _product->_detector.setMaxLatency(boost::none);
@@ -260,6 +263,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   SCDETECT_LOG_DEBUG_PROCESSOR(templateProc, "%s", filterMsg.c_str());
 
   TemplateProcessorConfig c{std::move(templateProc),
+                            streamConfig.mergingThreshold,
                             {stream->sensorLocation(), pick, arrival}};
 
   _processorConfigs.emplace(streamId, std::move(c));
@@ -364,7 +368,8 @@ void DetectorBuilder::finalize() {
         },
         detector::Detector::SensorLocation{
             meta.sensorLocation->latitude(), meta.sensorLocation->longitude(),
-            meta.sensorLocation->station()->publicID()});
+            meta.sensorLocation->station()->publicID()},
+        procConfig.mergingThreshold);
 
     usedPicks.emplace(meta.pick->publicID());
   }
@@ -431,6 +436,14 @@ bool DetectorBuilder::isValidArrival(const DataModel::ArrivalCPtr arrival,
   }
   return true;
 }
+
+const std::unordered_map<std::string, linker::MergingStrategy::Type>
+    DetectorBuilder::_mergingStrategyLookupTable{
+        {"all", linker::MergingStrategy::Type::kAll},
+        {"greaterEqualTriggerOnThreshold",
+         linker::MergingStrategy::Type::kGreaterEqualAssociationThres},
+        {"greaterEqualMergingThreshold",
+         linker::MergingStrategy::Type::kGreaterEqualMergingThres}};
 
 }  // namespace detector
 }  // namespace detect

@@ -23,11 +23,13 @@ boost::optional<double> Linker::thresArrivalOffset() const {
   return _thresArrivalOffset;
 }
 
-void Linker::setThresResult(const boost::optional<double> &thres) {
-  _thresResult = thres;
+void Linker::setThresAssociation(const boost::optional<double> &thres) {
+  _thresAssociation = thres;
 }
 
-boost::optional<double> Linker::thresResult() const { return _thresResult; }
+boost::optional<double> Linker::thresAssociation() const {
+  return _thresAssociation;
+}
 
 void Linker::setMinArrivals(const boost::optional<size_t> &n) {
   auto v{n};
@@ -44,6 +46,11 @@ void Linker::setOnHold(const Core::TimeSpan &duration) { _onHold = duration; }
 
 Core::TimeSpan Linker::onHold() const { return _onHold; }
 
+void Linker::setMergingStrategy(
+    linker::MergingStrategy::Type mergingStrategyTypeId) {
+  _mergingStrategy = linker::MergingStrategy::Create(mergingStrategyTypeId);
+}
+
 Linker::Status Linker::status() const { return _status; }
 
 size_t Linker::getAssociatedChannelCount() const {
@@ -57,16 +64,16 @@ size_t Linker::getAssociatedChannelCount() const {
 
 size_t Linker::getProcessorCount() const { return _processors.size(); }
 
-void Linker::add(const TemplateWaveformProcessor *proc,
-                 const Arrival &arrival) {
+void Linker::add(const TemplateWaveformProcessor *proc, const Arrival &arrival,
+                 const boost::optional<double> &mergingThreshold) {
   if (proc) {
-    _processors.emplace(proc->id(), Processor{proc, arrival});
+    _processors.emplace(proc->id(), Processor{proc, arrival, mergingThreshold});
     _potValid = false;
   }
 }
 
-void Linker::remove(const std::string &proc_id) {
-  _processors.erase(proc_id);
+void Linker::remove(const std::string &procId) {
+  _processors.erase(procId);
   _potValid = false;
 }
 
@@ -82,8 +89,8 @@ void Linker::terminate() {
   while (!_queue.empty()) {
     const auto event{_queue.front()};
     if (event.getArrivalCount() >= _minArrivals.value_or(getProcessorCount()) &&
-        (!_thresResult || event.result.fit >= *_thresResult)) {
-      emitResult(event.result);
+        (!_thresAssociation || event.association.fit >= *_thresAssociation)) {
+      emitResult(event.association);
     }
 
     _queue.pop_front();
@@ -115,7 +122,23 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
                       pickOffset};
       newArrival.pick.time = time;
 
-      process(proc, Result::TemplateResult{newArrival, res});
+      linker::Association::TemplateResult templateResult{newArrival, res};
+      // filter/drop based on merging strategy
+      if (_mergingStrategy && _thresAssociation &&
+          !_mergingStrategy->operator()(
+              templateResult, *_thresAssociation,
+              linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
+#ifdef SCDETECT_DEBUG
+        SCDETECT_LOG_DEBUG_PROCESSOR(proc,
+                                     "Dropping result due to merging strategy "
+                                     "applied: fit=%9f, lag=%10f",
+                                     templateResult.matchResult->coefficient,
+                                     templateResult.matchResult->lag);
+#endif
+        return;
+      }
+
+      process(proc, templateResult);
     }
   }
 }
@@ -125,7 +148,7 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 }
 
 void Linker::process(const TemplateWaveformProcessor *proc,
-                     const Result::TemplateResult &res) {
+                     const linker::Association::TemplateResult &res) {
   if (!_processors.empty()) {
     // update POT
     if (!_potValid) {
@@ -139,7 +162,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     for (auto eventIt = std::begin(_queue); eventIt != std::end(_queue);
          ++eventIt) {
       if (eventIt->getArrivalCount() < getProcessorCount()) {
-        auto &templResults{eventIt->result.results};
+        auto &templResults{eventIt->association.results};
         auto it{templResults.find(procId)};
         if (it == templResults.end() ||
             matchResult->coefficient > it->second.matchResult->coefficient) {
@@ -165,7 +188,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
             }
           }
 
-          eventIt->mergeResult(procId, res, pot);
+          eventIt->feed(procId, res, pot);
         }
         _pot.enable();
       }
@@ -174,7 +197,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     const auto now{Core::Time::GMT()};
     // create new event
     Event event{now + _onHold};
-    event.mergeResult(procId, res, POT{std::vector<Arrival>{res.arrival}});
+    event.feed(procId, res, POT{std::vector<Arrival>{res.arrival}});
     _queue.emplace_back(event);
 
     std::vector<EventQueue::iterator> ready;
@@ -184,8 +207,8 @@ void Linker::process(const TemplateWaveformProcessor *proc,
       if (arrivalCount == getProcessorCount() ||
           (now >= it->expired &&
            arrivalCount >= _minArrivals.value_or(getProcessorCount()))) {
-        if (!_thresResult || it->result.fit >= *_thresResult) {
-          emitResult(it->result);
+        if (!_thresAssociation || it->association.fit >= *_thresAssociation) {
+          emitResult(it->association);
         }
         ready.push_back(it);
       }
@@ -202,7 +225,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
   }
 }
 
-void Linker::emitResult(const Result &res) {
+void Linker::emitResult(const linker::Association &res) {
   if (_resultCallback) {
     _resultCallback.value()(res);
   }
@@ -221,63 +244,38 @@ void Linker::createPot() {
 }
 
 /* ------------------------------------------------------------------------- */
-size_t Linker::Result::getArrivalCount() const { return results.size(); }
+Linker::Event::Event(const Core::Time &expired) : expired{expired} {}
 
-std::string Linker::Result::debugString() const {
-  const Core::Time startTime{
-      results.at(refProcId).matchResult->timeWindow.startTime()};
-  const Core::Time endTime{startTime +
-                           Core::TimeSpan{pot.pickOffset().value_or(0)}};
-  return std::string{"(" + startTime.iso() + " - " + endTime.iso() +
-                     "): fit=" + std::to_string(fit) +
-                     ", arrival_count=" + std::to_string(getArrivalCount())};
-}
-
-/* ------------------------------------------------------------------------- */
-void Linker::Event::mergeResult(const std::string &procId,
-                                const Result::TemplateResult &res,
-                                const POT &pot) {
-  auto &templResults{result.results};
-  templResults.emplace(procId, res);
+void Linker::Event::feed(const std::string &procId,
+                         const linker::Association::TemplateResult &res,
+                         const POT &pot) {
+  auto &templateResults{association.results};
+  templateResults.emplace(procId, res);
 
   std::vector<double> fits;
-  std::transform(std::begin(templResults), std::end(templResults),
+  std::transform(std::begin(templateResults), std::end(templateResults),
                  std::back_inserter(fits),
-                 [](const Result::TemplateResults::value_type &p) {
+                 [](const linker::Association::TemplateResults::value_type &p) {
                    return p.second.matchResult->coefficient;
                  });
 
-  // XXX(damb): Currently, we use the mean in order to compute the overall
-  // event's score
-  result.fit = utils::cma(fits.data(), fits.size());
-  result.pot = pot;
+  // compute the overall event's score
+  association.fit = utils::cma(fits.data(), fits.size());
+  association.pot = pot;
   if (!refPickTime || res.arrival.pick.time < refPickTime) {
     refPickTime = res.arrival.pick.time;
-    result.refProcId = procId;
+    association.refProcId = procId;
   }
 }
 
-size_t Linker::Event::getArrivalCount() const { return result.results.size(); }
+size_t Linker::Event::getArrivalCount() const {
+  return association.results.size();
+}
+
+bool Linker::Event::isExpired(const Core::Time &now) const {
+  return now >= expired;
+}
 
 }  // namespace detector
 }  // namespace detect
 }  // namespace Seiscomp
-
-namespace std {
-
-inline std::size_t
-hash<Seiscomp::detect::detector::Linker::Result::TemplateResult>::operator()(
-    const Seiscomp::detect::detector::Linker::Result::TemplateResult &tr)
-    const noexcept {
-  std::size_t ret{0};
-  boost::hash_combine(
-      ret, std::hash<Seiscomp::detect::detector::Arrival>{}(tr.arrival));
-
-  if (tr.matchResult) {
-    boost::hash_combine(ret, std::hash<double>{}(tr.matchResult->coefficient));
-  }
-
-  return ret;
-}
-
-}  // namespace std
