@@ -210,11 +210,11 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   }
 }
 
-const std::string TemplateConfig::detectorId() const { return _detectorId; }
+std::string TemplateConfig::detectorId() const { return _detectorId; }
 
-const std::string TemplateConfig::originId() const { return _originId; }
+std::string TemplateConfig::originId() const { return _originId; }
 
-const DetectorConfig TemplateConfig::detectorConfig() const {
+DetectorConfig TemplateConfig::detectorConfig() const {
   return _detectorConfig;
 }
 

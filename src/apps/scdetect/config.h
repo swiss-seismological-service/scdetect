@@ -147,9 +147,9 @@ class TemplateConfig {
                  const DetectorConfig &detectorDefaults,
                  const StreamConfig &streamDefaults);
 
-  const std::string detectorId() const;
-  const std::string originId() const;
-  const DetectorConfig detectorConfig() const;
+  std::string detectorId() const;
+  std::string originId() const;
+  DetectorConfig detectorConfig() const;
 
   size_type size() const noexcept { return _streamConfigs.size(); }
   reference &at(const std::string &stream_id);
