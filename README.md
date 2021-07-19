@@ -200,12 +200,12 @@ configuration parameters:
 
 - `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds (i.e. with
   regard to the template arrival) to tolerate when associating an arrival with
-  an event. Note that the threshold is only relevant for a multi-stream detector
-  setup.
+  an *association*. Note that the threshold is only relevant for a multi-stream
+  detector setup.
 
 - `"minimumArrivals"`: Defines the minimum number of arrivals w.r.t. streams
-  within the stream set configured which must be part of an event to qualify for
-  a detection.
+  within the stream set configured which must be part of an association to
+  qualify for a detection.
 
 - `"mergingStrategy"`: Defines the merging strategy applied before linking
   cross-correlation results. Possible configuration options are:
@@ -243,18 +243,18 @@ configuration parameters:
 
 **Trigger facilities**:
 
-An event is considered as a *detected event*, also called a *detection* if it
-surpasses the value specified by the `"triggerOnThreshold"` configuration
-parameter.
+An *association* is considered as a *detected association*, also called a
+*detection* if it surpasses the value specified by the `"triggerOnThreshold"`
+configuration parameter.
 
 In a multi-stream detector setup, `scdetect` uses the *mean* correlation
 coefficient of all streams within the stream set. In future, further methods may
 be provided in order to compute this *score*.
 
-Besides, `scdetect` implements trigger facilities, i.e. a detected event may not
-be published, immediately, but put *on-hold* for the duration defined by the
-value of the `"triggerDuration"` configuration parameter. If a *better* detected
-event arrives within this period, the previous one is not used, anymore.
+Besides, `scdetect` implements trigger facilities, i.e. a detection may not be
+published, immediately, but put *on-hold* for the duration defined by the value
+of the `"triggerDuration"` configuration parameter. If a *better* detection
+arrives within this period, the previous one is not used, anymore.
 
 - `"triggerDuration"`: Defines the trigger duration in seconds. A negative value
   disables triggering facilities.
