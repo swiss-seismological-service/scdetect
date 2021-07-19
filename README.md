@@ -93,7 +93,7 @@ flag.
 
 The template configuration itself is a [JSON](https://www.json.org)
 configuration file and contains an array of *detector configuration* JSON
-objects (each detector refers to a template event identified by its
+objects (each detector refers to a template origin identified by its
 `"originId"`). An exemplary multi-stream detector configuration (for the
 streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
 
