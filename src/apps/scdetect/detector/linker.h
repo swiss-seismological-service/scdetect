@@ -4,7 +4,7 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <map>
 #include <memory>
 #include <string>
