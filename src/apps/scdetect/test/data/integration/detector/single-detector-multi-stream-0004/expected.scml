@@ -74,7 +74,7 @@
         <magnitude>
           <value>4.324859837</value>
         </magnitude>
-        <type>SCDETECT</type>
+        <type>DETECT</type>
         <stationCount>2</stationCount>
         <creationInfo>
           <agencyID>TEST</agencyID>
