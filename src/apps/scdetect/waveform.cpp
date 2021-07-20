@@ -37,30 +37,37 @@ T nextPowerOfTwo(T a, T min = 1, T max = 1 << 31) {
 }  // namespace
 
 bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
-  auto offset{
-      static_cast<int>(static_cast<double>(tw.startTime() - trace.startTime()) *
-                       trace.samplingFrequency())};
-  auto samples{static_cast<int>(tw.length() * trace.samplingFrequency())};
+  if (trace.timeWindow() == tw) {
+    return true;
+  }
 
-  // Not enough data at start of time window
-  if (offset < 0) {
-    SCDETECT_LOG_WARNING("%s: Need %d more samples in past.",
-                         trace.streamID().c_str(), -offset);
+  auto beginOffset{static_cast<int>(
+      std::floor(static_cast<double>(tw.startTime() - trace.startTime()) *
+                 trace.samplingFrequency()))};
+  auto endOffset{static_cast<int>(
+      std::ceil(static_cast<double>(tw.endTime() - trace.startTime()) *
+                trace.samplingFrequency()))};
+
+  // one sample tolerance
+  if (beginOffset == -1) {
+    beginOffset++;
+  }
+  if (endOffset == trace.data()->size() + 1) {
+    endOffset--;
+  }
+
+  // not enough data at start of time window
+  if (beginOffset < 0) {
+    return false;
+  }
+  // not enough data at end of time window
+  if (endOffset > trace.data()->size()) {
     return false;
   }
 
-  // Not enough data at end of time window
-  if (offset + samples > trace.data()->size()) {
-    SCDETECT_LOG_WARNING("%s: Need %d more samples past the end.",
-                         trace.streamID().c_str(),
-                         -(trace.data()->size() - samples - offset));
-    return false;
-  }
-
+  trace.setData(trace.data()->slice(beginOffset, endOffset));
   trace.setStartTime(trace.startTime() +
-                     Core::TimeSpan{offset / trace.samplingFrequency()});
-  trace.setData(trace.data()->slice(offset, offset + samples));
-
+                     Core::TimeSpan{beginOffset / trace.samplingFrequency()});
   return true;
 }
 
