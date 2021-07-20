@@ -445,32 +445,31 @@ void Application::emitDetection(const WaveformProcessor *processor,
 
   origin->setQuality(originQuality);
 
-  const auto createPick = [](const detector::Arrival &a) {
+  const auto createPick = [](const detector::Arrival &arrival) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
-
-    ret->setTime(DataModel::TimeQuantity{a.pick.time, boost::none,
-                                         a.pick.lowerUncertainty,
-                                         a.pick.upperUncertainty});
-    utils::WaveformStreamID wfStreamId{a.pick.waveformStreamId};
+    ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
+                                         arrival.pick.lowerUncertainty,
+                                         arrival.pick.upperUncertainty});
+    utils::WaveformStreamID wfStreamId{arrival.pick.waveformStreamId};
     ret->setWaveformID(DataModel::WaveformStreamID{
         wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
         wfStreamId.chaCode(), ""});
     ret->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
-    if (a.pick.phaseHint) {
-      ret->setPhaseHint(DataModel::Phase{*a.pick.phaseHint});
+    if (arrival.pick.phaseHint) {
+      ret->setPhaseHint(DataModel::Phase{*arrival.pick.phaseHint});
     }
     return ret;
   };
 
-  const auto createArrival = [&ci](const detector::Arrival &a,
+  const auto createArrival = [&ci](const detector::Arrival &arrival,
                                    const DataModel::PickCPtr &pick) {
     auto ret{utils::make_smart<DataModel::Arrival>()};
     ret->setCreationInfo(ci);
     ret->setPickID(pick->publicID());
-    ret->setPhase(a.phase);
-    if (a.weight) {
-      ret->setWeight(a.weight);
+    ret->setPhase(arrival.phase);
+    if (arrival.weight) {
+      ret->setWeight(arrival.weight);
     }
     return ret;
   };
