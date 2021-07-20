@@ -3,6 +3,7 @@
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/arrival.h>
+#include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
@@ -394,6 +395,12 @@ void Application::emitDetection(const WaveformProcessor *processor,
   magnitude->setStationCount(detection->numStationsUsed);
 
   DataModel::OriginPtr origin{DataModel::Origin::Create()};
+  {
+    auto comment{utils::make_smart<DataModel::Comment>()};
+    comment->setId("scdetectDetectorId");
+    comment->setText(processor->id());
+    origin->add(comment.get());
+  }
   origin->setCreationInfo(ci);
   origin->setLatitude(DataModel::RealQuantity(detection->latitude));
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
