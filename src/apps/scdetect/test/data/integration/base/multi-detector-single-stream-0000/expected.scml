@@ -31,7 +31,7 @@
         <value>1.436523438</value>
       </depth>
       <epicenterFixed>true</epicenterFixed>
-      <methodID>SCDETECT</methodID>
+      <methodID>DETECT</methodID>
       <quality>
         <associatedPhaseCount>1</associatedPhaseCount>
         <usedPhaseCount>1</usedPhaseCount>
@@ -84,7 +84,7 @@
         <value>1.436523438</value>
       </depth>
       <epicenterFixed>true</epicenterFixed>
-      <methodID>SCDETECT</methodID>
+      <methodID>DETECT</methodID>
       <quality>
         <associatedPhaseCount>1</associatedPhaseCount>
         <usedPhaseCount>1</usedPhaseCount>
