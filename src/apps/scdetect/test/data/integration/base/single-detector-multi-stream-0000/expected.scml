@@ -66,6 +66,10 @@
           <creationTime>2021-02-10T12:48:08.184141Z</creationTime>
         </creationInfo>
       </arrival>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
       <magnitude publicID="Magnitude/20210210124808.184216.1986">
         <magnitude>
           <value>4.324859837</value>

@@ -57,6 +57,10 @@
           <creationTime>2021-01-19T16:44:29.603262Z</creationTime>
         </creationInfo>
       </arrival>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
       <magnitude publicID="Magnitude/20210119164429.603325.5957">
         <magnitude>
           <value>4.324859837</value>
@@ -110,6 +114,10 @@
           <creationTime>2021-01-19T16:44:29.607062Z</creationTime>
         </creationInfo>
       </arrival>
+      <comment>
+        <text>detector-02</text>
+        <id>scdetectDetectorId</id>
+      </comment>
       <magnitude publicID="Magnitude/20210119164429.607092.5960">
         <magnitude>
           <value>4.324859837</value>

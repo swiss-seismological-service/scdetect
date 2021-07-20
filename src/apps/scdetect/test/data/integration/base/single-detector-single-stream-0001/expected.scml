@@ -9096,6 +9096,10 @@
           <creationTime>2021-02-25T19:53:47.253556Z</creationTime>
         </creationInfo>
       </arrival>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
       <magnitude publicID="Magnitude/20210225195347.253596.1978">
         <magnitude>
           <value>4.324859837</value>
