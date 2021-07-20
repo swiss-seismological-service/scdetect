@@ -317,6 +317,25 @@ void originCmp(const DataModel::OriginCPtr &lhs,
 
     magnitudeCmp(magResult, magExpected);
   }
+
+  // compare comments
+  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
+                                   const DataModel::CommentCPtr &rhs) {
+    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+  };
+  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+      commentPredicate)};
+  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+      commentPredicate)};
+  for (size_t j = 0; j < lhsComments.size(); ++j) {
+    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    commentCmp(commentResult, commentExpected);
+  }
 }
 
 void originQualityCmp(const DataModel::OriginQualityCPtr &lhs,
@@ -421,6 +440,19 @@ void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
 
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
     return m->creationInfo().agencyID();
+  }));
+}
+
+void commentCmp(const DataModel::CommentCPtr &lhs,
+                const DataModel::CommentCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->id() == rhs->id());
+  BOOST_TEST_CHECK(lhs->text() == rhs->text());
+
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::CommentCPtr c) {
+    return static_cast<double>(c->start());
+  }));
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::CommentCPtr c) {
+    return static_cast<double>(c->end());
   }));
 }
 

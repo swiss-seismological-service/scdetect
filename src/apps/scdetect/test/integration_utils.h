@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 
 #include <seiscomp/datamodel/arrival.h>
+#include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
@@ -184,6 +185,10 @@ void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
 // Compare `DataModel::Magnitude` element-wise
 void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs);
+
+// Compare `DataModel::Comment` element-wise
+void commentCmp(const DataModel::CommentCPtr &lhs,
+                const DataModel::CommentCPtr &rhs);
 
 /* -------------------------------------------------------------------------- */
 struct TempDirFixture {
