@@ -165,9 +165,9 @@ configuration parameters:
 **General**:
 
 - `"detectorId"`: A string defining the detector identifier. If not defined a
-  unique identifier will be generated, automatically. Declared origins will
-  contain a comment with a reference to the detector identifier. Note also that
-  since `scdetect` implements hierarchical logging explicitly defining the
+  random unique identifier will be generated, automatically. Declared origins
+  will contain a comment with a reference to the detector identifier. Note also
+  that since `scdetect` implements hierarchical logging explicitly defining the
   detector identifier may be of particular use while debugging.
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
