@@ -31,7 +31,7 @@
         <value>1.436523438</value>
       </depth>
       <epicenterFixed>true</epicenterFixed>
-      <methodID>SCDETECT</methodID>
+      <methodID>DETECT</methodID>
       <quality>
         <associatedPhaseCount>2</associatedPhaseCount>
         <usedPhaseCount>2</usedPhaseCount>
@@ -66,11 +66,15 @@
           <creationTime>2021-02-10T12:48:08.184141Z</creationTime>
         </creationInfo>
       </arrival>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
       <magnitude publicID="Magnitude/20210210124808.184216.1986">
         <magnitude>
           <value>4.324859837</value>
         </magnitude>
-        <type>SCDETECT</type>
+        <type>DETECT</type>
         <stationCount>2</stationCount>
         <creationInfo>
           <agencyID>TEST</agencyID>

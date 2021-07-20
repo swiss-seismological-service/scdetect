@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
   <EventParameters>
-    <origin publicID="Origin/20210105104407.725748.1979">
+    <pick publicID="Pick/20210112163056.225983.3964">
+      <time>
+        <value>2020-10-25T19:35:55.825641Z</value>
+      </time>
+      <waveformID networkCode="CH" stationCode="GRIMS" channelCode="HHZ"/>
+      <phaseHint>Pg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+    </pick>
+    <origin publicID="Origin/20210112163056.225948.3963">
       <time>
         <value>2020-10-25T19:35:43.383892Z</value>
       </time>
@@ -15,7 +23,7 @@
         <value>1.436523438</value>
       </depth>
       <epicenterFixed>true</epicenterFixed>
-      <methodID>DETECT</methodID>
+      <methodID>METHOD_ID</methodID>
       <quality>
         <associatedPhaseCount>1</associatedPhaseCount>
         <usedPhaseCount>1</usedPhaseCount>
@@ -30,13 +38,22 @@
       <creationInfo>
         <agencyID>TEST</agencyID>
         <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-05T10:44:07.725627Z</creationTime>
+        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
       </creationInfo>
+      <arrival>
+        <pickID>Pick/20210112163056.225983.3964</pickID>
+        <phase>Pg</phase>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora32</author>
+          <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
+        </creationInfo>
+      </arrival>
       <comment>
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
-      <magnitude publicID="Magnitude/20210105104407.725702.1978">
+      <magnitude publicID="Magnitude/20210112163056.225914.3962">
         <magnitude>
           <value>4.324859837</value>
         </magnitude>
@@ -45,7 +62,7 @@
         <creationInfo>
           <agencyID>TEST</agencyID>
           <author>scdetect@seiscomp-fedora32</author>
-          <creationTime>2021-01-05T10:44:07.725627Z</creationTime>
+          <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
         </creationInfo>
       </magnitude>
     </origin>

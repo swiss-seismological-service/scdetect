@@ -165,14 +165,18 @@ configuration parameters:
 **General**:
 
 - `"detectorId"`: A string defining the detector identifier. If not defined a
-  unique identifier will be generated, automatically. Since `scdetect`
-  implements hierarchical logging specifying the detector identifier may be of
-  particular use while debugging.
+  random unique identifier will be generated, automatically. Declared origins
+  will contain a comment with a reference to the detector identifier. Note also
+  that since `scdetect` implements hierarchical logging explicitly defining the
+  detector identifier may be of particular use while debugging.
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
   to `NOW`. If data arrive later than the value specified it is not used,
   anymore. Note that data latency is not validated if `scdetect` is run in *
   playback mode*.
+
+- `"methodId"`: The origin method identifier which will be added to declared
+  origins.
 
 - `"originId"`: Required. The origin identifier of the template origin the
   detector is referring to. The origin identifier is used for extracting

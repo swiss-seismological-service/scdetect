@@ -102,6 +102,9 @@ Samples dataset{
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0006"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
+     /*pathSample=*/"integration/base/single-detector-single-stream-0007"},
 
     // base: single detector - multi stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",

@@ -3,6 +3,7 @@
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/arrival.h>
+#include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
@@ -394,11 +395,18 @@ void Application::emitDetection(const WaveformProcessor *processor,
   magnitude->setStationCount(detection->numStationsUsed);
 
   DataModel::OriginPtr origin{DataModel::Origin::Create()};
+  {
+    auto comment{utils::make_smart<DataModel::Comment>()};
+    comment->setId("scdetectDetectorId");
+    comment->setText(processor->id());
+    origin->add(comment.get());
+  }
   origin->setCreationInfo(ci);
   origin->setLatitude(DataModel::RealQuantity(detection->latitude));
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
   origin->setDepth(DataModel::RealQuantity(detection->depth));
   origin->setTime(DataModel::TimeQuantity(detection->time));
+  origin->setMethodID(detection->originMethodId);
   origin->setEpicenterFixed(true);
   origin->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
@@ -443,37 +451,32 @@ void Application::emitDetection(const WaveformProcessor *processor,
   originQuality.setUsedPhaseCount(detection->numChannelsUsed);
 
   origin->setQuality(originQuality);
-  origin->setMethodID(settings::kOriginMethod);
 
-  origin->setQuality(originQuality);
-  origin->setMethodID(settings::kOriginMethod);
-
-  const auto createPick = [](const detector::Arrival &a) {
+  const auto createPick = [](const detector::Arrival &arrival) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
-
-    ret->setTime(DataModel::TimeQuantity{a.pick.time, boost::none,
-                                         a.pick.lowerUncertainty,
-                                         a.pick.upperUncertainty});
-    utils::WaveformStreamID wfStreamId{a.pick.waveformStreamId};
+    ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
+                                         arrival.pick.lowerUncertainty,
+                                         arrival.pick.upperUncertainty});
+    utils::WaveformStreamID wfStreamId{arrival.pick.waveformStreamId};
     ret->setWaveformID(DataModel::WaveformStreamID{
         wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
         wfStreamId.chaCode(), ""});
     ret->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
-    if (a.pick.phaseHint) {
-      ret->setPhaseHint(DataModel::Phase{*a.pick.phaseHint});
+    if (arrival.pick.phaseHint) {
+      ret->setPhaseHint(DataModel::Phase{*arrival.pick.phaseHint});
     }
     return ret;
   };
 
-  const auto createArrival = [&ci](const detector::Arrival &a,
+  const auto createArrival = [&ci](const detector::Arrival &arrival,
                                    const DataModel::PickCPtr &pick) {
     auto ret{utils::make_smart<DataModel::Arrival>()};
     ret->setCreationInfo(ci);
     ret->setPickID(pick->publicID());
-    ret->setPhase(a.phase);
-    if (a.weight) {
-      ret->setWeight(a.weight);
+    ret->setPhase(arrival.phase);
+    if (arrival.weight) {
+      ret->setWeight(arrival.weight);
     }
     return ret;
   };
@@ -674,8 +677,8 @@ bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
                            tc.detectorId().c_str());
 
         auto detectorBuilder{std::move(
-            detector::DetectorWaveformProcessor::Create(tc.detectorId(),
-                                                        tc.originId())
+            detector::DetectorWaveformProcessor::Create(
+                tc.detectorId(), tc.originId(), tc.originMethodId())
                 .setConfig(tc.detectorConfig(), _config.playbackConfig.enabled)
                 .setEventParameters())};
 

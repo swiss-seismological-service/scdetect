@@ -6,7 +6,6 @@
 
 #include "exception.h"
 #include "log.h"
-#include "settings.h"
 #include "utils.h"
 #include "validators.h"
 
@@ -124,7 +123,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
                                const DetectorConfig &detectorDefaults,
                                const StreamConfig &streamDefaults)
     : _detectorId{pt.get<std::string>("detectorId", utils::createUUID())},
-      _originId(pt.get<std::string>("originId")) {
+      _originId(pt.get<std::string>("originId")),
+      _originMethodId(pt.get<std::string>("methodId", "DETECT")) {
   _detectorConfig.triggerOn =
       pt.get<double>("triggerOnThreshold", detectorDefaults.triggerOn);
   _detectorConfig.triggerOff =
@@ -210,11 +210,13 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   }
 }
 
-const std::string TemplateConfig::detectorId() const { return _detectorId; }
+std::string TemplateConfig::detectorId() const { return _detectorId; }
 
-const std::string TemplateConfig::originId() const { return _originId; }
+std::string TemplateConfig::originId() const { return _originId; }
 
-const DetectorConfig TemplateConfig::detectorConfig() const {
+std::string TemplateConfig::originMethodId() const { return _originMethodId; }
+
+DetectorConfig TemplateConfig::detectorConfig() const {
   return _detectorConfig;
 }
 

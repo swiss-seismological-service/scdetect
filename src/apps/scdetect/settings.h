@@ -19,8 +19,7 @@ const std::string kProcessorIdSep{"::"};
 const std::string kFnameDebugInfo{"debug_info.json"};
 
 // Template specific default configuration
-const std::string kMagnitudeType{"SCDETECT"};
-const std::string kOriginMethod{kMagnitudeType};
+const std::string kMagnitudeType{"DETECT"};
 const std::string kStationMagnitudeType{kMagnitudeType};
 
 constexpr bool kCacheRawWaveforms{true};

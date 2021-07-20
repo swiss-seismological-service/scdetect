@@ -26,7 +26,8 @@ namespace detect {
 namespace detector {
 
 DetectorBuilder::DetectorBuilder(const std::string &id,
-                                 const std::string &originId)
+                                 const std::string &originId,
+                                 const std::string &originMethodId)
     : _originId{originId} {
   DataModel::OriginCPtr origin{
       EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
@@ -39,7 +40,7 @@ DetectorBuilder::DetectorBuilder(const std::string &id,
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
   _product = std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{id, origin});
+      new DetectorWaveformProcessor{id, originMethodId, origin});
 }
 
 DetectorBuilder &DetectorBuilder::setConfig(const DetectorConfig &config,
