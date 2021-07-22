@@ -15,6 +15,7 @@
 - [Tests](#tests)
 - [Issues](#issues)
 - [Contributions](#contributions)
+- [Alpha Disclaimer](#alpha-disclaimer)
 - [License](#license)
 
 ## About
@@ -601,6 +602,11 @@ Please report bugs, issues, feature requests, etc on
 ## Contributions
 
 Contributions are very welcome. Made with :two_hearts:.
+
+## Alpha Disclaimer
+
+**SCDetect is currently in alpha**. We may change or remove parts of SCDetect's
+API when making new releases.
 
 ## License
 
