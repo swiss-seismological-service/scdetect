@@ -1,5 +1,10 @@
 #include "detectorwaveformprocessor.h"
 
+#include <seiscomp/utils/files.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem/fstream.hpp>
+
 #include "../log.h"
 
 namespace Seiscomp {
@@ -147,6 +152,8 @@ void DetectorWaveformProcessor::prepareDetection(
   d->originMethodId = _originMethodId;
   d->templateResults = res.templateResults;
 
+  d->withDebugInfo = debugMode();
+
   if (timeCorrection) {
     for (auto &templateResultPair : d->templateResults) {
       templateResultPair.second.arrival.pick.time += timeCorrection;
@@ -161,6 +168,46 @@ void DetectorWaveformProcessor::prepareDetection(
       d->theoreticalTemplateArrivals.push_back(theoreticalTemplateArrival);
     }
   }
+}
+
+/* ------------------------------------------------------------------------- */
+bool dumpWaveforms(const boost::filesystem::path &pathDebugInfo,
+                   const DataModel::OriginCPtr &origin,
+                   const DetectorWaveformProcessor::DetectionCPtr &detection) {
+  std::vector<std::string> originPublicIdTokens;
+  boost::split(originPublicIdTokens, origin->publicID(),
+               [](char c) { return c == '/'; });
+  if (originPublicIdTokens.empty()) {
+    return false;
+  }
+
+  boost::filesystem::path pathDebugInfoOrigin{pathDebugInfo /
+                                              originPublicIdTokens.back()};
+  if (!Util::pathExists(pathDebugInfoOrigin.string()) &&
+      !Util::createPath(pathDebugInfoOrigin.string())) {
+    return false;
+  }
+
+  for (const auto &resultPair : detection->templateResults) {
+    const auto &debugInfo{resultPair.second.debugInfo};
+    if (!debugInfo) {
+      continue;
+    }
+
+    boost::filesystem::path pathWaveform{
+        pathDebugInfoOrigin / std::string{(*debugInfo).processorId + "_" +
+                                          (*debugInfo).waveform->streamID()}};
+
+    boost::filesystem::ofstream ofs{pathWaveform};
+    if (!waveform::write(*(*debugInfo).waveform, ofs)) {
+      return false;
+    }
+    ofs.close();
+    if (!boost::filesystem::exists(pathWaveform)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace detector

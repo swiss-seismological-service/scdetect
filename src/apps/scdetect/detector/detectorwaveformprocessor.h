@@ -8,6 +8,7 @@
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 
+#include <boost/filesystem/operations.hpp>
 #include <boost/optional.hpp>
 #include <string>
 #include <unordered_map>
@@ -57,6 +58,8 @@ class DetectorWaveformProcessor : public WaveformProcessor {
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
     TemplateResults templateResults;
+    // Indicates if `templateResults` include debug information
+    bool withDebugInfo{false};
 
     // List of theoretical template arrivals
     std::vector<Arrival> theoreticalTemplateArrivals;
@@ -112,6 +115,13 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   // List of reference theoretical template arrivals
   std::vector<Arrival> _refTheoreticalTemplateArrivals;
 };
+
+/* ------------------------------------------------------------------------- */
+// Dumps waveforms from `detection` and related to `origin` under
+// `pathDebugInfo`.
+bool dumpWaveforms(const boost::filesystem::path &pathDebugInfo,
+                   const DataModel::OriginCPtr &origin,
+                   const DetectorWaveformProcessor::DetectionCPtr &detection);
 
 }  // namespace detector
 }  // namespace detect

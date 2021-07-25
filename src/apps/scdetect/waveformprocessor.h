@@ -8,7 +8,6 @@
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/math/filter.h>
 
-#include <boost/filesystem.hpp>
 #include <functional>
 #include <memory>
 
@@ -24,8 +23,7 @@ class WaveformProcessor : public Processor {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
-  WaveformProcessor(const std::string &id,
-                    const boost::filesystem::path &debugInfoDir = "");
+  WaveformProcessor(const std::string &id);
 
   DEFINE_SMARTPOINTER(Result);
   class Result : public Core::BaseObject {
@@ -130,11 +128,10 @@ class WaveformProcessor : public Processor {
   // Returns the time window processed and correlated
   virtual const Core::TimeWindow &processed() const = 0;
 
-  // Returns the file system path to the processor's debug info directory
-  const boost::filesystem::path &debugInfoDir() const;
-
   // Returns if the processor is operated in debug mode
   bool debugMode() const;
+  // Enables/disables the processor's debug mode
+  void setDebugMode(bool debugMode);
 
   // Feed data to the processor (implies a call to the process() method).
   virtual bool feed(const Record *record);
@@ -209,8 +206,6 @@ class WaveformProcessor : public Processor {
 
   void setStatus(Status status, double value);
 
-  void setDebugInfoDir(const boost::filesystem::path &path);
-
   bool _enabled{true};
 
   // WaveformProcessor initialization time
@@ -224,7 +219,7 @@ class WaveformProcessor : public Processor {
   Status _status{Status::kWaitingForData};
   double _statusValue{0};
 
-  boost::filesystem::path _debugInfoDir;
+  bool _debugMode{false};
 };
 
 }  // namespace detect

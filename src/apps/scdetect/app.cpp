@@ -501,6 +501,19 @@ void Application::emitDetection(const WaveformProcessor *processor,
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
 
+  if (detection->withDebugInfo) {
+    Environment *env{Environment::Instance()};
+
+    boost::filesystem::path pathDebugInfo{env->installDir()};
+    pathDebugInfo /= settings::kPathTemp;
+    pathDebugInfo /= processor->id();
+
+    if (!detector::dumpWaveforms(pathDebugInfo, origin, detection)) {
+      SCDETECT_LOG_WARNING_TAGGED(processor->id(),
+                                  "Failed to dump debug info waveform data.");
+    }
+  }
+
   logObject(_outputOrigins, Core::Time::GMT());
 
   if (connection() && !_config.noPublish) {

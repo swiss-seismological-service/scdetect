@@ -122,6 +122,20 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   result->lag = tw.length() * t;
   result->timeWindow = tw;
 
+  if (debugMode()) {
+    auto debugWaveform{utils::make_smart<GenericRecord>(
+        record->networkCode(), record->stationCode(), record->locationCode(),
+        record->channelCode(), start + Core::TimeSpan{result->lag},
+        _streamState.samplingFrequency)};
+
+    const auto debugBufferIdx{(_debugWaveformBuffer.size() / 2) + matchIdx};
+    debugWaveform->setData(static_cast<int>(_crossCorrelation.templateSize()),
+                           &*_debugWaveformBuffer.begin() + debugBufferIdx,
+                           Array::DOUBLE);
+
+    result->debugInfo = MatchResult::DebugInfo{id(), debugWaveform};
+  }
+
   emitResult(record, result.get());
 }
 
@@ -129,6 +143,20 @@ void TemplateWaveformProcessor::fill(StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
   WaveformProcessor::fill(streamState, record, data);
+
+  if (debugMode()) {
+    if (_crossCorrelation.templateSize()) {
+      if (!_debugWaveformBuffer.capacity()) {
+        // init waveform debug buffer
+        _debugWaveformBuffer.set_capacity(2 * _crossCorrelation.templateSize());
+      }
+
+      for (int i = 0; i < data->size(); ++i) {
+        _debugWaveformBuffer.push_back(data->get(i));
+      }
+    }
+  }
+
   // cross-correlate filtered data
   _crossCorrelation.apply(data->size(), data->typedData());
 }

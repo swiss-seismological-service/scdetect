@@ -7,7 +7,7 @@
 #include <seiscomp/datamodel/origin.h>
 
 #include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <cmath>
 #include <deque>
 #include <functional>
@@ -72,6 +72,14 @@ class Detector : public detect::Processor {
     struct TemplateResult {
       Arrival arrival;
       SensorLocation sensorLocation;
+
+      struct DebugInfo {
+        std::string processorId;
+
+        GenericRecordCPtr waveform;
+      };
+
+      boost::optional<DebugInfo> debugInfo;
     };
 
     using TemplateResults =

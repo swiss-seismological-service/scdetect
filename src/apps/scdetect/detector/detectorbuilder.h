@@ -37,9 +37,7 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   DetectorBuilder &setStream(const std::string &streamId,
                              const StreamConfig &streamConfig,
                              WaveformHandlerIfacePtr &wfHandler,
-                             const boost::filesystem::path &pathDebugInfo = "");
-  // Set the path to the debug info directory
-  DetectorBuilder &setDebugInfoDir(const boost::filesystem::path &path);
+                             bool debugMode = false);
 
  protected:
   void finalize() override;

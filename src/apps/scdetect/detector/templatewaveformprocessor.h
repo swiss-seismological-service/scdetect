@@ -4,6 +4,7 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
+#include <boost/circular_buffer.hpp>
 #include <boost/optional.hpp>
 #include <cstdlib>
 #include <ostream>
@@ -38,6 +39,13 @@ class TemplateWaveformProcessor : public WaveformProcessor {
 
     // Time window for w.r.t. the match result
     Core::TimeWindow timeWindow;
+
+    struct DebugInfo {
+      std::string processorId;
+      // Reference to the filtered data to be cross-correlated
+      GenericRecordCPtr waveform;
+    };
+    boost::optional<DebugInfo> debugInfo;
   };
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime = 0.0) override;
@@ -72,6 +80,8 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   boost::optional<double> _targetSamplingFrequency;
   // The in-place cross-correlation filter
   filter::AdaptiveCrossCorrelation<double> _crossCorrelation;
+
+  boost::circular_buffer<double> _debugWaveformBuffer;
 };
 
 }  // namespace detector

@@ -88,10 +88,10 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
   return *this;
 }
 
-DetectorBuilder &DetectorBuilder::setStream(
-    const std::string &streamId, const StreamConfig &streamConfig,
-    WaveformHandlerIfacePtr &wfHandler,
-    const boost::filesystem::path &pathDebugInfo) {
+DetectorBuilder &DetectorBuilder::setStream(const std::string &streamId,
+                                            const StreamConfig &streamConfig,
+                                            WaveformHandlerIfacePtr &wfHandler,
+                                            bool debugMode) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   utils::WaveformStreamID templateWfStreamId{templateStreamId};
 
@@ -255,6 +255,7 @@ DetectorBuilder &DetectorBuilder::setStream(
     templateProc->setTargetSamplingFrequency(
         *streamConfig.targetSamplingFrequency);
   }
+  templateProc->setDebugMode(debugMode);
 
   auto filterMsg{logPrefix + "Filters configured: filter=\"" + rtFilterId +
                  "\""};
@@ -271,12 +272,6 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   _arrivalPicks.push_back(detector::POT::ArrivalPick{arrival, pick});
 
-  return *this;
-}
-
-DetectorBuilder &DetectorBuilder::setDebugInfoDir(
-    const boost::filesystem::path &path) {
-  _product->setDebugInfoDir(path);
   return *this;
 }
 

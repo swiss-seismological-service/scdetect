@@ -489,14 +489,14 @@ void Detector::prepareResult(const linker::Association &linkerResult,
   Detector::Result::TemplateResults templateResults;
   for (const auto &resPair : linkerResult.results) {
     const auto &procId{resPair.first};
-    const auto &templateResult{resPair.second};
+    const auto &linkerTemplateResult{resPair.second};
     const auto &proc{_processors.at(procId)};
 
-    if (templateResult.matchResult) {
+    if (linkerTemplateResult.matchResult) {
       // compute alignment correction using the POT offset (required, since
       // traces to be cross-correlated cannot be guaranteed to be aligned to
       // sub-sampling interval accuracy)
-      const auto &streamId{templateResult.arrival.pick.waveformStreamId};
+      const auto &streamId{linkerTemplateResult.arrival.pick.waveformStreamId};
       const auto n{std::find_if(std::begin(potOffsets), std::end(potOffsets),
                                 [&streamId](const PickOffsetNode &n) {
                                   return n.waveformStreamId == streamId;
@@ -507,19 +507,29 @@ void Detector::prepareResult(const linker::Association &linkerResult,
             "offset from POT"};
       }
 
-      const auto matchResult{templateResult.matchResult};
+      const auto matchResult{linkerTemplateResult.matchResult};
       const auto &startTime{matchResult->timeWindow.startTime()};
       const auto &alignmentCorrection{
           refStartTime + Core::TimeSpan{n->pickOffset} - startTime};
 
       pickOffsets.push_back(
-          static_cast<double>(templateResult.arrival.pick.time - startTime) -
+          static_cast<double>(linkerTemplateResult.arrival.pick.time -
+                              startTime) -
           alignmentCorrection - refPickOffset);
 
-      templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
-                              Detector::Result::TemplateResult{
-                                  templateResult.arrival, proc.sensorLocation});
-      usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
+      Detector::Result::TemplateResult templateResult{
+          linkerTemplateResult.arrival, proc.sensorLocation};
+
+      const auto &debugInfo{linkerTemplateResult.matchResult->debugInfo};
+      if (debugInfo) {
+        // forward debug info
+        templateResult.debugInfo = Detector::Result::TemplateResult::DebugInfo{
+            (*debugInfo).processorId, (*debugInfo).waveform};
+      }
+      templateResults.emplace(
+          linkerTemplateResult.arrival.pick.waveformStreamId, templateResult);
+
+      usedChas.emplace(linkerTemplateResult.arrival.pick.waveformStreamId);
       usedStas.emplace(proc.sensorLocation.stationId);
     }
   }
