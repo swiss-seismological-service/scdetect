@@ -121,10 +121,13 @@ bool DetectorConfig::isValid(size_t numStreamConfigs) const {
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
                                const DetectorConfig &detectorDefaults,
-                               const StreamConfig &streamDefaults)
+                               const StreamConfig &streamDefaults,
+                               const PublishConfig &publishDefaults)
     : _detectorId{pt.get<std::string>("detectorId", utils::createUUID())},
-      _originId(pt.get<std::string>("originId")),
-      _originMethodId(pt.get<std::string>("methodId", "DETECT")) {
+      _originId(pt.get<std::string>("originId")) {
+  _publishConfig.originMethodId =
+      pt.get<std::string>("methodId", publishDefaults.originMethodId);
+
   _detectorConfig.triggerOn =
       pt.get<double>("triggerOnThreshold", detectorDefaults.triggerOn);
   _detectorConfig.triggerOff =
@@ -214,11 +217,11 @@ std::string TemplateConfig::detectorId() const { return _detectorId; }
 
 std::string TemplateConfig::originId() const { return _originId; }
 
-std::string TemplateConfig::originMethodId() const { return _originMethodId; }
-
 DetectorConfig TemplateConfig::detectorConfig() const {
   return _detectorConfig;
 }
+
+PublishConfig TemplateConfig::publishConfig() const { return _publishConfig; }
 
 TemplateConfig::reference TemplateConfig::at(const std::string &stream_id) {
   return _streamConfigs.at(stream_id);

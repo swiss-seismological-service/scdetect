@@ -406,7 +406,7 @@ void Application::emitDetection(const WaveformProcessor *processor,
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
   origin->setDepth(DataModel::RealQuantity(detection->depth));
   origin->setTime(DataModel::TimeQuantity(detection->time));
-  origin->setMethodID(detection->originMethodId);
+  origin->setMethodID(detection->publishConfig.originMethodId);
   origin->setEpicenterFixed(true);
   origin->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
@@ -671,16 +671,17 @@ bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
     for (const auto &templateSettingPt : pt) {
       try {
         TemplateConfig tc{templateSettingPt.second, _config.detectorConfig,
-                          _config.streamConfig};
+                          _config.streamConfig, _config.publishConfig};
 
         SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
                            tc.detectorId().c_str());
 
-        auto detectorBuilder{std::move(
-            detector::DetectorWaveformProcessor::Create(
-                tc.detectorId(), tc.originId(), tc.originMethodId())
-                .setConfig(tc.detectorConfig(), _config.playbackConfig.enabled)
-                .setEventParameters())};
+        auto detectorBuilder{
+            std::move(detector::DetectorWaveformProcessor::Create(
+                          tc.detectorId(), tc.originId())
+                          .setConfig(tc.publishConfig(), tc.detectorConfig(),
+                                     _config.playbackConfig.enabled)
+                          .setEventParameters())};
 
         std::vector<std::string> streamIds;
         for (const auto &streamConfigPair : tc) {
@@ -766,6 +767,11 @@ Application::Config::Config() {
 void Application::Config::init(const Client::Application *app) {
   try {
     pathTemplateJson = app->configGetPath("templatesJSON");
+  } catch (...) {
+  }
+
+  try {
+    publishConfig.originMethodId = app->configGetString("methodId");
   } catch (...) {
   }
 
