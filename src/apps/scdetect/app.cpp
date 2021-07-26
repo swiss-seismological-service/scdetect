@@ -784,7 +784,7 @@ void Application::Config::init(const Client::Application *app) {
   }
 
   try {
-    publishConfig.originMethodId = app->configGetString("methodId");
+    publishConfig.originMethodId = app->configGetString("publish.methodId");
   } catch (...) {
   }
 
