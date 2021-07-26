@@ -89,6 +89,8 @@ class Application : public Client::StreamApplication {
     bool noPublish{false};
     std::string pathEp;
 
+    PublishConfig publishConfig;
+
     DetectorConfig detectorConfig;
 
     StreamConfig streamConfig;

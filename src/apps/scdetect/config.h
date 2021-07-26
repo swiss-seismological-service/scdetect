@@ -132,6 +132,11 @@ struct DetectorConfig {
   bool isValid(size_t numStreamConfigs) const;
 };
 
+struct PublishConfig {
+  // The origin method identifier
+  std::string originMethodId{"DETECT"};
+};
+
 class TemplateConfig {
   // Container for StreamConfig
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
@@ -145,12 +150,13 @@ class TemplateConfig {
 
   TemplateConfig(const boost::property_tree::ptree &pt,
                  const DetectorConfig &detectorDefaults,
-                 const StreamConfig &streamDefaults);
+                 const StreamConfig &streamDefaults,
+                 const PublishConfig &publishDefaults);
 
   std::string detectorId() const;
   std::string originId() const;
-  std::string originMethodId() const;
   DetectorConfig detectorConfig() const;
+  PublishConfig publishConfig() const;
 
   size_type size() const noexcept { return _streamConfigs.size(); }
   reference &at(const std::string &stream_id);
@@ -166,8 +172,8 @@ class TemplateConfig {
   std::string _detectorId{utils::createUUID()};
 
   std::string _originId;
-  // The origin method identifier
-  std::string _originMethodId{"DETECT"};
+
+  PublishConfig _publishConfig;
 
   DetectorConfig _detectorConfig;
 

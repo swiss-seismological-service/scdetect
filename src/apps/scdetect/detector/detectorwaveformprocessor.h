@@ -28,7 +28,6 @@ namespace detector {
 // Detector waveform processor implementation
 class DetectorWaveformProcessor : public WaveformProcessor {
   DetectorWaveformProcessor(const std::string &id,
-                            const std::string &originMethodId,
                             const DataModel::OriginCPtr &origin);
 
  public:
@@ -48,10 +47,10 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     size_t numChannelsAssociated{};
     size_t numChannelsUsed{};
 
+    PublishConfig publishConfig;
+
     // Indicates if arrivals should be appended to the detection
     bool withArrivals{false};
-    // The origin method identifier
-    std::string originMethodId;
 
     using TemplateResult = Detector::Result::TemplateResult;
     using TemplateResults =
@@ -67,8 +66,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
 
   friend class DetectorBuilder;
   static DetectorBuilder Create(const std::string &detectorId,
-                                const std::string &originId,
-                                const std::string &originMethodId);
+                                const std::string &originId);
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 
@@ -105,12 +103,11 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   Detector _detector;
   boost::optional<Detector::Result> _detection;
 
-  // The origin method identifier
-  std::string _originMethodId;
-
   DataModel::OriginCPtr _origin;
   DataModel::EventPtr _event;
   DataModel::MagnitudePtr _magnitude;
+
+  PublishConfig _publishConfig;
 
   // List of reference theoretical template arrivals
   std::vector<Arrival> _refTheoreticalTemplateArrivals;

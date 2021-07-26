@@ -26,10 +26,11 @@ class DetectorWaveformProcessor;
 
 class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
  public:
-  DetectorBuilder(const std::string &id, const std::string &originId,
-                  const std::string &originMethodId);
+  DetectorBuilder(const std::string &id, const std::string &originId);
 
-  DetectorBuilder &setConfig(const DetectorConfig &config, bool playback);
+  DetectorBuilder &setConfig(const PublishConfig &publishConfig,
+                             const DetectorConfig &detectorConfig,
+                             bool playback);
 
   DetectorBuilder &setEventParameters();
   // Set stream related template configuration where `streamId` refers to the

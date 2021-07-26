@@ -26,8 +26,7 @@ namespace detect {
 namespace detector {
 
 DetectorBuilder::DetectorBuilder(const std::string &id,
-                                 const std::string &originId,
-                                 const std::string &originMethodId)
+                                 const std::string &originId)
     : _originId{originId} {
   DataModel::OriginCPtr origin{
       EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
@@ -40,24 +39,28 @@ DetectorBuilder::DetectorBuilder(const std::string &id,
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
   _product = std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{id, originMethodId, origin});
+      new DetectorWaveformProcessor{id, origin});
 }
 
-DetectorBuilder &DetectorBuilder::setConfig(const DetectorConfig &config,
-                                            bool playback) {
-  _product->_config = config;
+DetectorBuilder &DetectorBuilder::setConfig(
+    const PublishConfig &publishConfig, const DetectorConfig &detectorConfig,
+    bool playback) {
+  _product->_publishConfig = publishConfig;
 
-  _product->_enabled = config.enabled;
+  _product->_config = detectorConfig;
+
+  _product->_enabled = detectorConfig.enabled;
 
   _product->_detector.setMergingStrategy(
-      _mergingStrategyLookupTable.at(config.mergingStrategy));
+      _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
 
   // configure playback related facilities
   if (playback) {
     _product->_detector.setMaxLatency(boost::none);
   } else {
-    if (config.maximumLatency > 0) {
-      _product->_detector.setMaxLatency(Core::TimeSpan{config.maximumLatency});
+    if (detectorConfig.maximumLatency > 0) {
+      _product->_detector.setMaxLatency(
+          Core::TimeSpan{detectorConfig.maximumLatency});
     }
   }
 
