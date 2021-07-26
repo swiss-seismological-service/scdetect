@@ -856,6 +856,11 @@ void Application::Config::init(const Client::Application *app) {
     detectorConfig.minArrivals = app->configGetInt("detector.minimumArrivals");
   } catch (...) {
   }
+  try {
+    detectorConfig.mergingStrategy =
+        app->configGetString("detector.mergingStrategy");
+  } catch (...) {
+  }
 }
 
 void Application::Config::init(const System::CommandLine &commandline) {
