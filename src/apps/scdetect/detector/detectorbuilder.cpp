@@ -375,7 +375,7 @@ void DetectorBuilder::finalize() {
   _product->setOperator(bufferingOperator.release());
 
   // attach reference theoretical template arrivals to the product
-  if (cfg.createTemplateArrivals) {
+  if (_product->_publishConfig.createTemplateArrivals) {
     std::ostringstream oss;
     for (size_t i = 0; i < _product->_origin->arrivalCount(); ++i) {
       const auto &arrival{_product->_origin->arrival(i)};
@@ -407,7 +407,7 @@ void DetectorBuilder::finalize() {
 
       const utils::WaveformStreamID wfId{pick->waveformID()};
       oss << wfId;
-      _product->_refTheoreticalTemplateArrivals.push_back(
+      _product->_publishConfig.theoreticalTemplateArrivals.push_back(
           {{pick->time().value(), oss.str(), phaseHint,
             pick->time().value() - _product->_origin->time().value(),
             lowerUncertainty, upperUncertainty},

@@ -143,25 +143,29 @@ void DetectorWaveformProcessor::prepareDetection(
   d->numStationsAssociated = res.numStationsAssociated;
   d->numStationsUsed = res.numStationsUsed;
 
-  d->publishConfig = _publishConfig;
+  d->publishConfig.createArrivals = _publishConfig.createArrivals;
+  d->publishConfig.createTemplateArrivals =
+      _publishConfig.createTemplateArrivals;
+  d->publishConfig.originMethodId = _publishConfig.originMethodId;
+
+  if (_publishConfig.createTemplateArrivals) {
+    for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {
+      auto theoreticalTemplateArrival{arrival};
+      theoreticalTemplateArrival.pick.time =
+          res.originTime + arrival.pick.offset + timeCorrection;
+      d->publishConfig.theoreticalTemplateArrivals.push_back(
+          theoreticalTemplateArrival);
+    }
+  }
+
   d->templateResults = res.templateResults;
-
-  d->withDebugInfo = debugMode();
-
   if (timeCorrection) {
     for (auto &templateResultPair : d->templateResults) {
       templateResultPair.second.arrival.pick.time += timeCorrection;
     }
   }
 
-  if (_config.createTemplateArrivals) {
-    for (const auto &arrival : _refTheoreticalTemplateArrivals) {
-      auto theoreticalTemplateArrival{arrival};
-      theoreticalTemplateArrival.pick.time =
-          res.originTime + arrival.pick.offset + timeCorrection;
-      d->theoreticalTemplateArrivals.push_back(theoreticalTemplateArrival);
-    }
-  }
+  d->withDebugInfo = debugMode();
 }
 
 /* ------------------------------------------------------------------------- */
