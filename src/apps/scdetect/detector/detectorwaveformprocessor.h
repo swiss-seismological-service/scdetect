@@ -49,9 +49,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
 
     PublishConfig publishConfig;
 
-    // Indicates if arrivals should be appended to the detection
-    bool withArrivals{false};
-
     using TemplateResult = Detector::Result::TemplateResult;
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;

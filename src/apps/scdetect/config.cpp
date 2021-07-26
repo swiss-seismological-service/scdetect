@@ -125,6 +125,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
                                const PublishConfig &publishDefaults)
     : _detectorId{pt.get<std::string>("detectorId", utils::createUUID())},
       _originId(pt.get<std::string>("originId")) {
+  _publishConfig.createArrivals =
+      pt.get<bool>("createArrivals", publishDefaults.createArrivals);
   _publishConfig.originMethodId =
       pt.get<std::string>("methodId", publishDefaults.originMethodId);
 
@@ -144,8 +146,6 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<double>("gapTolerance", detectorDefaults.gapTolerance);
   _detectorConfig.maximumLatency =
       pt.get<double>("maximumLatency", detectorDefaults.maximumLatency);
-  _detectorConfig.createArrivals =
-      pt.get<bool>("createArrivals", detectorDefaults.createArrivals);
   _detectorConfig.createTemplateArrivals = pt.get<bool>(
       "createTemplateArrivals", detectorDefaults.createTemplateArrivals);
   _detectorConfig.arrivalOffsetThreshold = pt.get<double>(

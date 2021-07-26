@@ -144,7 +144,6 @@ void DetectorWaveformProcessor::prepareDetection(
   d->numStationsUsed = res.numStationsUsed;
 
   d->publishConfig = _publishConfig;
-  d->withArrivals = _config.createArrivals;
   d->templateResults = res.templateResults;
 
   d->withDebugInfo = debugMode();
