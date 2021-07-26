@@ -11,12 +11,10 @@
 #include <boost/optional.hpp>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "../config.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
-#include "arrival.h"
 #include "detector.h"
 #include "detectorbuilder.h"
 
@@ -53,9 +51,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
     TemplateResults templateResults;
-
-    // List of theoretical template arrivals
-    std::vector<Arrival> theoreticalTemplateArrivals;
   };
 
   friend class DetectorBuilder;
@@ -102,9 +97,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   DataModel::MagnitudePtr _magnitude;
 
   PublishConfig _publishConfig;
-
-  // List of reference theoretical template arrivals
-  std::vector<Arrival> _refTheoreticalTemplateArrivals;
 };
 
 }  // namespace detector

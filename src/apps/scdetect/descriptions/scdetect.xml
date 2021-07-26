@@ -81,13 +81,6 @@
             streams.
           </description>
         </parameter>
-        <parameter name="createTemplateArrivals" type="boolean" default="false">
-          <description>
-            Defines the default value for computing and associating
-            *theoretical template arrivals* with created origins i.e.
-            detections.
-          </description>
-        </parameter>
         <parameter name="arrivalOffsetThreshold" type="double" default="2.0e-6" unit="s">
           <description>
             Maximum default inter arrival offset threshold to tolerate when
@@ -130,8 +123,14 @@
       <group name="publish">
         <parameter name="createArrivals" type="boolean" default="false">
           <description>
-            Defines the default value appending *detected arrivals* to declared
-            origins.
+            Defines the default value for appending *detected arrivals* to
+            declared origins.
+          </description>
+        </parameter>
+        <parameter name="createTemplateArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value for appending *theoretical template
+            arrivals* to declared origins.
           </description>
         </parameter>
         <parameter name="methodId" type="string" default="DETECT">

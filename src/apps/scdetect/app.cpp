@@ -493,10 +493,12 @@ void Application::emitDetection(const WaveformProcessor *processor,
   }
 
   // create theoretical template arrivals
-  for (const auto &a : detection->theoreticalTemplateArrivals) {
-    const auto pick{createPick(a)};
-    const auto arrival{createArrival(a, pick)};
-    arrivalPicks.push_back({arrival, pick});
+  if (detection->publishConfig.createTemplateArrivals) {
+    for (const auto &a : detection->publishConfig.theoreticalTemplateArrivals) {
+      const auto pick{createPick(a)};
+      const auto arrival{createArrival(a, pick)};
+      arrivalPicks.push_back({arrival, pick});
+    }
   }
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
@@ -775,6 +777,11 @@ void Application::Config::init(const Client::Application *app) {
   } catch (...) {
   }
   try {
+    publishConfig.createTemplateArrivals =
+        app->configGetBool("publish.createTemplateArrivals");
+  } catch (...) {
+  }
+  try {
     publishConfig.originMethodId = app->configGetString("publish.methodId");
   } catch (...) {
   }
@@ -832,11 +839,6 @@ void Application::Config::init(const Client::Application *app) {
   try {
     detectorConfig.timeCorrection =
         app->configGetDouble("detector.timeCorrection");
-  } catch (...) {
-  }
-  try {
-    detectorConfig.createTemplateArrivals =
-        app->configGetBool("detector.createTemplateArrivals");
   } catch (...) {
   }
   try {

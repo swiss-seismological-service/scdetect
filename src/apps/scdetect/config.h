@@ -9,7 +9,9 @@
 #include <initializer_list>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
+#include "detector/arrival.h"
 #include "exception.h"
 #include "utils.h"
 
@@ -104,9 +106,6 @@ struct DetectorConfig {
   // Maximum data latency in seconds tolerated with regards to `NOW`
   double maximumLatency{10};
 
-  // Flag indicating whether to associate template arrivals with a detection
-  bool createTemplateArrivals{false};
-
   // Maximum inter arrival offset threshold in seconds to tolerate when
   // associating an arrival to an event
   // - the threshold is only validated for multi-stream detectors
@@ -131,11 +130,16 @@ struct DetectorConfig {
 };
 
 struct PublishConfig {
-  // Indicates if arrivals should be appended to declared origins
+  // Indicates whether to append *detected arrivals* to declared origins
   bool createArrivals{false};
+  // Indicates whether to append *theoretical template arrivals* to declared
+  // origins
+  bool createTemplateArrivals{false};
 
   // The origin method identifier
   std::string originMethodId{"DETECT"};
+
+  std::vector<detector::Arrival> theoreticalTemplateArrivals;
 };
 
 class TemplateConfig {
