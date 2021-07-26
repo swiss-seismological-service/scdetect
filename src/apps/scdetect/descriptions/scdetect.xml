@@ -81,12 +81,6 @@
             streams.
           </description>
         </parameter>
-        <parameter name="createArrivals" type="boolean" default="false">
-          <description>
-            Defines the default value for computing and associating
-            *detected arrivals* with created origins i.e. detections.
-          </description>
-        </parameter>
         <parameter name="createTemplateArrivals" type="boolean" default="false">
           <description>
             Defines the default value for computing and associating
@@ -134,6 +128,12 @@
         </parameter>
       </group>
       <group name="publish">
+        <parameter name="createArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value appending *detected arrivals* to declared
+            origins.
+          </description>
+        </parameter>
         <parameter name="methodId" type="string" default="DETECT">
           <description>
             Defines the default origin *methodID* label that is added to declared

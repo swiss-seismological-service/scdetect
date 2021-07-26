@@ -104,8 +104,6 @@ struct DetectorConfig {
   // Maximum data latency in seconds tolerated with regards to `NOW`
   double maximumLatency{10};
 
-  // Flag indicating whether to compute and associate detected arrivals
-  bool createArrivals{false};
   // Flag indicating whether to associate template arrivals with a detection
   bool createTemplateArrivals{false};
 
@@ -133,6 +131,9 @@ struct DetectorConfig {
 };
 
 struct PublishConfig {
+  // Indicates if arrivals should be appended to declared origins
+  bool createArrivals{false};
+
   // The origin method identifier
   std::string originMethodId{"DETECT"};
 };

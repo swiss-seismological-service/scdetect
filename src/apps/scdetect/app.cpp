@@ -482,7 +482,7 @@ void Application::emitDetection(const WaveformProcessor *processor,
   };
 
   std::vector<ArrivalPick> arrivalPicks;
-  if (detection->withArrivals) {
+  if (detection->publishConfig.createArrivals) {
     for (const auto &resultPair : detection->templateResults) {
       const auto &res{resultPair.second};
 
@@ -771,6 +771,10 @@ void Application::Config::init(const Client::Application *app) {
   }
 
   try {
+    publishConfig.createArrivals = app->configGetBool("publish.createArrivals");
+  } catch (...) {
+  }
+  try {
     publishConfig.originMethodId = app->configGetString("publish.methodId");
   } catch (...) {
   }
@@ -828,11 +832,6 @@ void Application::Config::init(const Client::Application *app) {
   try {
     detectorConfig.timeCorrection =
         app->configGetDouble("detector.timeCorrection");
-  } catch (...) {
-  }
-  try {
-    detectorConfig.createArrivals =
-        app->configGetBool("detector.createArrivals");
   } catch (...) {
   }
   try {
