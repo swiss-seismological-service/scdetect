@@ -51,6 +51,8 @@ DetectorBuilder &DetectorBuilder::setConfig(
 
   _product->_enabled = detectorConfig.enabled;
 
+  _product->setDebugMode(detectorConfig.debugMode);
+
   _product->_detector.setMergingStrategy(
       _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
 
@@ -91,10 +93,9 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
   return *this;
 }
 
-DetectorBuilder &DetectorBuilder::setStream(const std::string &streamId,
-                                            const StreamConfig &streamConfig,
-                                            WaveformHandlerIfacePtr &wfHandler,
-                                            bool debugMode) {
+DetectorBuilder &DetectorBuilder::setStream(
+    const std::string &streamId, const StreamConfig &streamConfig,
+    WaveformHandlerIfacePtr &wfHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   utils::WaveformStreamID templateWfStreamId{templateStreamId};
 
@@ -258,7 +259,6 @@ DetectorBuilder &DetectorBuilder::setStream(const std::string &streamId,
     templateProc->setTargetSamplingFrequency(
         *streamConfig.targetSamplingFrequency);
   }
-  templateProc->setDebugMode(debugMode);
 
   auto filterMsg{logPrefix + "Filters configured: filter=\"" + rtFilterId +
                  "\""};
@@ -348,6 +348,8 @@ void DetectorBuilder::finalize() {
     bufferingOperator->add(streamId,
                            Core::TimeSpan{std::max(30.0, cfg.chunkSize) *
                                           settings::kBufferMultiplicator});
+    // debug mode
+    procConfig.processor->setDebugMode(_product->debugMode());
 
     const auto &meta{procConfig.metadata};
     boost::optional<std::string> phase_hint;

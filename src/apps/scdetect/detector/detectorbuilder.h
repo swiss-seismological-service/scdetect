@@ -37,8 +37,7 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   // waveform stream identifier of the stream to be processed.
   DetectorBuilder &setStream(const std::string &streamId,
                              const StreamConfig &streamConfig,
-                             WaveformHandlerIfacePtr &wfHandler,
-                             bool debugMode = false);
+                             WaveformHandlerIfacePtr &wfHandler);
 
  protected:
   void finalize() override;
