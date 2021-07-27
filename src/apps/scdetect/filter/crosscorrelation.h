@@ -44,6 +44,9 @@ class CrossCorrelation {
   size_t templateSize() const;
   // Returns the template duration in seconds
   double templateLength() const;
+  // Returns a pointer to the current template waveform or `nullptr` if no
+  // template waveform is available
+  const GenericRecordCPtr &templateWaveform() const;
 
   // Returns the template waveform starttime which might be different from the
   // starttime configured (due to both sampling rate accuracy and rounding)

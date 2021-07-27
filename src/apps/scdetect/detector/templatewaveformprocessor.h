@@ -12,6 +12,7 @@
 
 #include "../filter/crosscorrelation.h"
 #include "../waveformprocessor.h"
+#include "result.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -39,11 +40,6 @@ class TemplateWaveformProcessor : public WaveformProcessor {
     // Time window for w.r.t. the match result
     Core::TimeWindow timeWindow;
 
-    struct DebugInfo {
-      std::string processorId;
-      // Reference to the filtered data to be cross-correlated
-      GenericRecordCPtr waveform;
-    };
     boost::optional<DebugInfo> debugInfo;
   };
 

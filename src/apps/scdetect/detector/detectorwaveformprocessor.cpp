@@ -1,5 +1,6 @@
 #include "detectorwaveformprocessor.h"
 
+#include <seiscomp/core/genericrecord.h>
 #include <seiscomp/utils/files.h>
 
 #include <boost/algorithm/string.hpp>
@@ -184,23 +185,41 @@ bool dumpWaveforms(const boost::filesystem::path &pathDebugInfo,
     return false;
   }
 
+  const auto writeWaveform = [](const GenericRecordCPtr &trace,
+                                const boost::filesystem::path &path) {
+    boost::filesystem::ofstream ofs{path};
+    if (!waveform::write(*trace, ofs)) {
+      return false;
+    }
+    ofs.close();
+    if (!boost::filesystem::exists(path)) {
+      return false;
+    }
+    return true;
+  };
+
   for (const auto &resultPair : detection->templateResults) {
     const auto &debugInfo{resultPair.second.debugInfo};
     if (!debugInfo) {
       continue;
     }
 
+    // template waveform
+    boost::filesystem::path pathTemplateWaveform{
+        pathDebugInfoOrigin /
+        std::string{(*debugInfo).processorId + "_" +
+                    (*debugInfo).waveform->streamID() + "_template.mseed"}};
+    if (!writeWaveform((*debugInfo).templateWaveform, pathTemplateWaveform)) {
+      return false;
+    }
+
+    // processed waveform
     boost::filesystem::path pathWaveform{
         pathDebugInfoOrigin /
         std::string{(*debugInfo).processorId + "_" +
                     (*debugInfo).waveform->streamID() + ".mseed"}};
 
-    boost::filesystem::ofstream ofs{pathWaveform};
-    if (!waveform::write(*(*debugInfo).waveform, ofs)) {
-      return false;
-    }
-    ofs.close();
-    if (!boost::filesystem::exists(pathWaveform)) {
+    if (!writeWaveform((*debugInfo).waveform, pathWaveform)) {
       return false;
     }
   }

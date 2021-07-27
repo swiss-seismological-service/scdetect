@@ -517,17 +517,11 @@ void Detector::prepareResult(const linker::Association &linkerResult,
                               startTime) -
           alignmentCorrection - refPickOffset);
 
-      Detector::Result::TemplateResult templateResult{
-          linkerTemplateResult.arrival, proc.sensorLocation};
-
-      const auto &debugInfo{linkerTemplateResult.matchResult->debugInfo};
-      if (debugInfo) {
-        // forward debug info
-        templateResult.debugInfo = Detector::Result::TemplateResult::DebugInfo{
-            (*debugInfo).processorId, (*debugInfo).waveform};
-      }
       templateResults.emplace(
-          linkerTemplateResult.arrival.pick.waveformStreamId, templateResult);
+          linkerTemplateResult.arrival.pick.waveformStreamId,
+          Detector::Result::TemplateResult{
+              linkerTemplateResult.arrival, proc.sensorLocation,
+              linkerTemplateResult.matchResult->debugInfo});
 
       usedChas.emplace(linkerTemplateResult.arrival.pick.waveformStreamId);
       usedStas.emplace(proc.sensorLocation.stationId);

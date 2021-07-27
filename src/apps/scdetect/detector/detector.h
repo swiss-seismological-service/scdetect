@@ -24,6 +24,7 @@
 #include "linker.h"
 #include "linker/association.h"
 #include "linker/strategy.h"
+#include "result.h"
 #include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -72,12 +73,6 @@ class Detector : public detect::Processor {
     struct TemplateResult {
       Arrival arrival;
       SensorLocation sensorLocation;
-
-      struct DebugInfo {
-        std::string processorId;
-
-        GenericRecordCPtr waveform;
-      };
 
       boost::optional<DebugInfo> debugInfo;
     };

@@ -133,7 +133,8 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
                            &*_debugWaveformBuffer.begin() + debugBufferIdx,
                            Array::DOUBLE);
 
-    result->debugInfo = MatchResult::DebugInfo{id(), debugWaveform};
+    result->debugInfo =
+        DebugInfo{id(), debugWaveform, _crossCorrelation.templateWaveform()};
   }
 
   emitResult(record, result.get());

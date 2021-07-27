@@ -93,6 +93,10 @@ template <typename TData>
 double CrossCorrelation<TData>::templateLength() const {
   return _initialized ? _templateWaveform->timeWindow().length() : 0;
 }
+template <typename TData>
+const GenericRecordCPtr &CrossCorrelation<TData>::templateWaveform() const {
+  return _templateWaveform;
+}
 
 template <typename TData>
 boost::optional<const Core::Time> CrossCorrelation<TData>::templateStartTime()
