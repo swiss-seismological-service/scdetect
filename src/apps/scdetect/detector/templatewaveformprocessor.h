@@ -9,7 +9,6 @@
 #include <ostream>
 #include <string>
 
-#include "../builder.h"
 #include "../filter/crosscorrelation.h"
 #include "../waveformprocessor.h"
 
