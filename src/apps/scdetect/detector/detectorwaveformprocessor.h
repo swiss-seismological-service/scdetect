@@ -52,8 +52,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
     TemplateResults templateResults;
-    // Indicates if `templateResults` include debug information
-    bool withDebugInfo{false};
   };
 
   friend class DetectorBuilder;

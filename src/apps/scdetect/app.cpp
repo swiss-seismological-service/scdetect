@@ -503,7 +503,7 @@ void Application::emitDetection(const WaveformProcessor *processor,
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
 
-  if (detection->withDebugInfo) {
+  if (processor->debugMode()) {
     Environment *env{Environment::Instance()};
 
     boost::filesystem::path pathDebugInfo{env->installDir()};

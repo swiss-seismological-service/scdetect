@@ -164,8 +164,6 @@ void DetectorWaveformProcessor::prepareDetection(
       templateResultPair.second.arrival.pick.time += timeCorrection;
     }
   }
-
-  d->withDebugInfo = debugMode();
 }
 
 /* ------------------------------------------------------------------------- */
