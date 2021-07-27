@@ -37,8 +37,9 @@
         </parameter>
         <parameter name="gapInterpolation" type="boolean" default="false">
           <description>
-            Interpolate gaps linearly? This is valid for gaps shorter
-            than maxGapLength.
+            Defines if by default gaps should be interpolated linearly. This is
+            valid for gaps shorter than *maxGapLength* and larger than
+            *minGapLength*.
           </description>
         </parameter>
         <parameter name="minGapLength" type="double" default="0.1" unit="s">
