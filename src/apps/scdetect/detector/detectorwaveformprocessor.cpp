@@ -191,8 +191,9 @@ bool dumpWaveforms(const boost::filesystem::path &pathDebugInfo,
     }
 
     boost::filesystem::path pathWaveform{
-        pathDebugInfoOrigin / std::string{(*debugInfo).processorId + "_" +
-                                          (*debugInfo).waveform->streamID()}};
+        pathDebugInfoOrigin /
+        std::string{(*debugInfo).processorId + "_" +
+                    (*debugInfo).waveform->streamID() + ".mseed"}};
 
     boost::filesystem::ofstream ofs{pathWaveform};
     if (!waveform::write(*(*debugInfo).waveform, ofs)) {
