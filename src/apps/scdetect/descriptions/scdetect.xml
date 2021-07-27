@@ -56,6 +56,12 @@
         </parameter>
       </group>
       <group name="detector">
+        <parameter name="debugMode" type="bool" default="false">
+          <description>
+            Defines if detectors should by default run with debug mode enabled
+            (i.e. dumping waveform data, etc.).
+          </description>
+        </parameter>
         <parameter name="timeCorrection" type="double" default="0" unit="s">
           <description>
             Default time correction applied for an origin issued.

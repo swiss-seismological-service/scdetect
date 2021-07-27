@@ -835,6 +835,10 @@ void Application::Config::init(const Client::Application *app) {
   }
 
   try {
+    detectorConfig.debugMode = app->configGetBool("detector.debugMode");
+  } catch (...) {
+  }
+  try {
     detectorConfig.triggerOn =
         app->configGetDouble("detector.triggerOnThreshold");
   } catch (...) {

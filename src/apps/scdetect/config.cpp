@@ -154,6 +154,8 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<int>("minimumArrivals", detectorDefaults.minArrivals);
   _detectorConfig.mergingStrategy =
       pt.get<std::string>("mergingStrategy", detectorDefaults.mergingStrategy);
+  _detectorConfig.debugMode =
+      pt.get<bool>("debugMode", detectorDefaults.debugMode);
   _detectorConfig.chunkSize =
       pt.get<double>("chunkSize", detectorDefaults.chunkSize);
 

@@ -92,9 +92,12 @@ struct DetectorConfig {
   // emitted.
   double timeCorrection{0};
 
-  // Flag indicating whether the detector is enabled (true) or disabled
-  // (false).
+  // Flag indicating whether the detector is enabled (`true`) or disabled
+  // (`false`).
   bool enabled{true};
+  // Flag indicating whether the detector is operating in debug mode (`true`)
+  // or not (`false`).
+  bool debugMode{false};
 
   // Flag indicating whether to interpolate gaps linearly. Valid for `gaps <=
   // gapTolerance`.
