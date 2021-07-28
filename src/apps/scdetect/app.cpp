@@ -846,20 +846,25 @@ bool Application::loadEvents(const std::string &eventDb,
   bool loaded{false};
   if (!eventDb.empty()) {
     SCDETECT_LOG_INFO("Loading events from %s", eventDb.c_str());
+
+    auto loadFromFile = [this, &loaded](const std::string &path) {
+      try {
+        EventStore::Instance().load(path);
+        loaded = true;
+      } catch (std::exception &e) {
+        auto msg{Core::stringify("Failed to load events: %s", e.what())};
+        if (isDatabaseEnabled()) {
+          SCDETECT_LOG_WARNING("%s", msg.c_str());
+        } else {
+          SCDETECT_LOG_ERROR("%s", msg.c_str());
+        }
+      }
+    };
+
     if (eventDb.find("://") == std::string::npos) {
-      try {
-        EventStore::Instance().load(eventDb);
-        loaded = true;
-      } catch (std::exception &e) {
-        SCDETECT_LOG_ERROR("%s", e.what());
-      }
+      loadFromFile(eventDb);
     } else if (eventDb.find("file://") == 0) {
-      try {
-        EventStore::Instance().load(eventDb.substr(7));
-        loaded = true;
-      } catch (std::exception &e) {
-        SCDETECT_LOG_ERROR("%s", e.what());
-      }
+      loadFromFile(eventDb.substr(7));
     } else {
       SCDETECT_LOG_INFO("Trying to connect to %s", eventDb.c_str());
       IO::DatabaseInterfacePtr db{IO::DatabaseInterface::Open(eventDb.c_str())};
@@ -881,7 +886,7 @@ bool Application::loadEvents(const std::string &eventDb,
       EventStore::Instance().load(query());
       loaded = true;
     } catch (std::exception &e) {
-      SCDETECT_LOG_ERROR("%s", e.what());
+      SCDETECT_LOG_ERROR("Failed to load events: %s", e.what());
     }
   }
 
