@@ -406,7 +406,7 @@ void Application::emitDetection(const WaveformProcessor *processor,
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
   origin->setDepth(DataModel::RealQuantity(detection->depth));
   origin->setTime(DataModel::TimeQuantity(detection->time));
-  origin->setMethodID(detection->originMethodId);
+  origin->setMethodID(detection->publishConfig.originMethodId);
   origin->setEpicenterFixed(true);
   origin->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
@@ -482,7 +482,7 @@ void Application::emitDetection(const WaveformProcessor *processor,
   };
 
   std::vector<ArrivalPick> arrivalPicks;
-  if (detection->withArrivals) {
+  if (detection->publishConfig.createArrivals) {
     for (const auto &resultPair : detection->templateResults) {
       const auto &res{resultPair.second};
 
@@ -493,10 +493,12 @@ void Application::emitDetection(const WaveformProcessor *processor,
   }
 
   // create theoretical template arrivals
-  for (const auto &a : detection->theoreticalTemplateArrivals) {
-    const auto pick{createPick(a)};
-    const auto arrival{createArrival(a, pick)};
-    arrivalPicks.push_back({arrival, pick});
+  if (detection->publishConfig.createTemplateArrivals) {
+    for (const auto &a : detection->publishConfig.theoreticalTemplateArrivals) {
+      const auto pick{createPick(a)};
+      const auto arrival{createArrival(a, pick)};
+      arrivalPicks.push_back({arrival, pick});
+    }
   }
 
   // TODO(damb): Attach StationMagnitudeContribution related stuff.
@@ -671,16 +673,17 @@ bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
     for (const auto &templateSettingPt : pt) {
       try {
         TemplateConfig tc{templateSettingPt.second, _config.detectorConfig,
-                          _config.streamConfig};
+                          _config.streamConfig, _config.publishConfig};
 
         SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
                            tc.detectorId().c_str());
 
-        auto detectorBuilder{std::move(
-            detector::DetectorWaveformProcessor::Create(
-                tc.detectorId(), tc.originId(), tc.originMethodId())
-                .setConfig(tc.detectorConfig(), _config.playbackConfig.enabled)
-                .setEventParameters())};
+        auto detectorBuilder{
+            std::move(detector::DetectorWaveformProcessor::Create(
+                          tc.detectorId(), tc.originId())
+                          .setConfig(tc.publishConfig(), tc.detectorConfig(),
+                                     _config.playbackConfig.enabled)
+                          .setEventParameters())};
 
         std::vector<std::string> streamIds;
         for (const auto &streamConfigPair : tc) {
@@ -770,6 +773,20 @@ void Application::Config::init(const Client::Application *app) {
   }
 
   try {
+    publishConfig.createArrivals = app->configGetBool("publish.createArrivals");
+  } catch (...) {
+  }
+  try {
+    publishConfig.createTemplateArrivals =
+        app->configGetBool("publish.createTemplateArrivals");
+  } catch (...) {
+  }
+  try {
+    publishConfig.originMethodId = app->configGetString("publish.methodId");
+  } catch (...) {
+  }
+
+  try {
     streamConfig.templateConfig.phase = app->configGetString("template.phase");
   } catch (...) {
   }
@@ -825,22 +842,17 @@ void Application::Config::init(const Client::Application *app) {
   } catch (...) {
   }
   try {
-    detectorConfig.createArrivals =
-        app->configGetBool("detector.createArrivals");
-  } catch (...) {
-  }
-  try {
-    detectorConfig.createTemplateArrivals =
-        app->configGetBool("detector.createTemplateArrivals");
-  } catch (...) {
-  }
-  try {
     detectorConfig.arrivalOffsetThreshold =
         app->configGetDouble("detector.arrivalOffsetThreshold");
   } catch (...) {
   }
   try {
     detectorConfig.minArrivals = app->configGetInt("detector.minimumArrivals");
+  } catch (...) {
+  }
+  try {
+    detectorConfig.mergingStrategy =
+        app->configGetString("detector.mergingStrategy");
   } catch (...) {
   }
 }

@@ -9,7 +9,9 @@
 #include <initializer_list>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
+#include "detector/arrival.h"
 #include "exception.h"
 #include "utils.h"
 
@@ -104,11 +106,6 @@ struct DetectorConfig {
   // Maximum data latency in seconds tolerated with regards to `NOW`
   double maximumLatency{10};
 
-  // Flag indicating whether to compute and associate detected arrivals
-  bool createArrivals{false};
-  // Flag indicating whether to associate template arrivals with a detection
-  bool createTemplateArrivals{false};
-
   // Maximum inter arrival offset threshold in seconds to tolerate when
   // associating an arrival to an event
   // - the threshold is only validated for multi-stream detectors
@@ -132,6 +129,19 @@ struct DetectorConfig {
   bool isValid(size_t numStreamConfigs) const;
 };
 
+struct PublishConfig {
+  // Indicates whether to append *detected arrivals* to declared origins
+  bool createArrivals{false};
+  // Indicates whether to append *theoretical template arrivals* to declared
+  // origins
+  bool createTemplateArrivals{false};
+
+  // The origin method identifier
+  std::string originMethodId{"DETECT"};
+
+  std::vector<detector::Arrival> theoreticalTemplateArrivals;
+};
+
 class TemplateConfig {
   // Container for StreamConfig
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
@@ -145,12 +155,13 @@ class TemplateConfig {
 
   TemplateConfig(const boost::property_tree::ptree &pt,
                  const DetectorConfig &detectorDefaults,
-                 const StreamConfig &streamDefaults);
+                 const StreamConfig &streamDefaults,
+                 const PublishConfig &publishDefaults);
 
   std::string detectorId() const;
   std::string originId() const;
-  std::string originMethodId() const;
   DetectorConfig detectorConfig() const;
+  PublishConfig publishConfig() const;
 
   size_type size() const noexcept { return _streamConfigs.size(); }
   reference &at(const std::string &stream_id);
@@ -166,8 +177,8 @@ class TemplateConfig {
   std::string _detectorId{utils::createUUID()};
 
   std::string _originId;
-  // The origin method identifier
-  std::string _originMethodId{"DETECT"};
+
+  PublishConfig _publishConfig;
 
   DetectorConfig _detectorConfig;
 

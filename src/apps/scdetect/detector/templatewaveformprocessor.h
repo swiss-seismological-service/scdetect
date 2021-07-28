@@ -3,16 +3,12 @@
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/eventparameters.h>
-#include <seiscomp/datamodel/pick.h>
-#include <seiscomp/datamodel/stream.h>
 
 #include <boost/optional.hpp>
 #include <cstdlib>
 #include <ostream>
 #include <string>
 
-#include "../builder.h"
 #include "../filter/crosscorrelation.h"
 #include "../waveformprocessor.h"
 

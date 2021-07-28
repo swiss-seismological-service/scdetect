@@ -7,17 +7,12 @@ namespace detect {
 namespace detector {
 
 DetectorWaveformProcessor::DetectorWaveformProcessor(
-    const std::string &id, const std::string &originMethodId,
-    const DataModel::OriginCPtr &origin)
-    : WaveformProcessor{id},
-      _detector{this, origin},
-      _originMethodId{originMethodId},
-      _origin{origin} {}
+    const std::string &id, const DataModel::OriginCPtr &origin)
+    : WaveformProcessor{id}, _detector{this, origin}, _origin{origin} {}
 
-DetectorBuilder DetectorWaveformProcessor::Create(
-    const std::string &detectorId, const std::string &originId,
-    const std::string &originMethodId) {
-  return DetectorBuilder(detectorId, originId, originMethodId);
+DetectorBuilder DetectorWaveformProcessor::Create(const std::string &detectorId,
+                                                  const std::string &originId) {
+  return DetectorBuilder(detectorId, originId);
 }
 
 void DetectorWaveformProcessor::setFilter(Filter *filter,
@@ -143,22 +138,25 @@ void DetectorWaveformProcessor::prepareDetection(
   d->numStationsAssociated = res.numStationsAssociated;
   d->numStationsUsed = res.numStationsUsed;
 
-  d->withArrivals = _config.createArrivals;
-  d->originMethodId = _originMethodId;
-  d->templateResults = res.templateResults;
+  d->publishConfig.createArrivals = _publishConfig.createArrivals;
+  d->publishConfig.createTemplateArrivals =
+      _publishConfig.createTemplateArrivals;
+  d->publishConfig.originMethodId = _publishConfig.originMethodId;
 
-  if (timeCorrection) {
-    for (auto &templateResultPair : d->templateResults) {
-      templateResultPair.second.arrival.pick.time += timeCorrection;
-    }
-  }
-
-  if (_config.createTemplateArrivals) {
-    for (const auto &arrival : _refTheoreticalTemplateArrivals) {
+  if (_publishConfig.createTemplateArrivals) {
+    for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {
       auto theoreticalTemplateArrival{arrival};
       theoreticalTemplateArrival.pick.time =
           res.originTime + arrival.pick.offset + timeCorrection;
-      d->theoreticalTemplateArrivals.push_back(theoreticalTemplateArrival);
+      d->publishConfig.theoreticalTemplateArrivals.push_back(
+          theoreticalTemplateArrival);
+    }
+  }
+
+  d->templateResults = res.templateResults;
+  if (timeCorrection) {
+    for (auto &templateResultPair : d->templateResults) {
+      templateResultPair.second.arrival.pick.time += timeCorrection;
     }
   }
 }

@@ -11,12 +11,10 @@
 #include <boost/optional.hpp>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "../config.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
-#include "arrival.h"
 #include "detector.h"
 #include "detectorbuilder.h"
 
@@ -27,7 +25,6 @@ namespace detector {
 // Detector waveform processor implementation
 class DetectorWaveformProcessor : public WaveformProcessor {
   DetectorWaveformProcessor(const std::string &id,
-                            const std::string &originMethodId,
                             const DataModel::OriginCPtr &origin);
 
  public:
@@ -47,25 +44,18 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     size_t numChannelsAssociated{};
     size_t numChannelsUsed{};
 
-    // Indicates if arrivals should be appended to the detection
-    bool withArrivals{false};
-    // The origin method identifier
-    std::string originMethodId;
+    PublishConfig publishConfig;
 
     using TemplateResult = Detector::Result::TemplateResult;
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
     TemplateResults templateResults;
-
-    // List of theoretical template arrivals
-    std::vector<Arrival> theoreticalTemplateArrivals;
   };
 
   friend class DetectorBuilder;
   static DetectorBuilder Create(const std::string &detectorId,
-                                const std::string &originId,
-                                const std::string &originMethodId);
+                                const std::string &originId);
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 
@@ -102,15 +92,11 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   Detector _detector;
   boost::optional<Detector::Result> _detection;
 
-  // The origin method identifier
-  std::string _originMethodId;
-
   DataModel::OriginCPtr _origin;
   DataModel::EventPtr _event;
   DataModel::MagnitudePtr _magnitude;
 
-  // List of reference theoretical template arrivals
-  std::vector<Arrival> _refTheoreticalTemplateArrivals;
+  PublishConfig _publishConfig;
 };
 
 }  // namespace detector

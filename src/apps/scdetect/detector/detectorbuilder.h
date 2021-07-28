@@ -26,20 +26,18 @@ class DetectorWaveformProcessor;
 
 class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
  public:
-  DetectorBuilder(const std::string &id, const std::string &originId,
-                  const std::string &originMethodId);
+  DetectorBuilder(const std::string &id, const std::string &originId);
 
-  DetectorBuilder &setConfig(const DetectorConfig &config, bool playback);
+  DetectorBuilder &setConfig(const PublishConfig &publishConfig,
+                             const DetectorConfig &detectorConfig,
+                             bool playback);
 
   DetectorBuilder &setEventParameters();
   // Set stream related template configuration where `streamId` refers to the
   // waveform stream identifier of the stream to be processed.
   DetectorBuilder &setStream(const std::string &streamId,
                              const StreamConfig &streamConfig,
-                             WaveformHandlerIfacePtr &wfHandler,
-                             const boost::filesystem::path &pathDebugInfo = "");
-  // Set the path to the debug info directory
-  DetectorBuilder &setDebugInfoDir(const boost::filesystem::path &path);
+                             WaveformHandlerIfacePtr &wfHandler);
 
  protected:
   void finalize() override;

@@ -8,12 +8,6 @@
           Defines the default path for the template configuration file.
         </description>
       </parameter>
-      <parameter name="methodId" type="string" default="DETECT">
-        <description>
-          Defines the default origin *methodID* label that is added to declared
-          origins.
-        </description>
-      </parameter>
       <group name="template">
         <parameter name="phase" type="string" default="Pg">
           <description>
@@ -43,8 +37,9 @@
         </parameter>
         <parameter name="gapInterpolation" type="boolean" default="false">
           <description>
-            Interpolate gaps linearly? This is valid for gaps shorter
-            than maxGapLength.
+            Defines if by default gaps should be interpolated linearly. This is
+            valid for gaps shorter than *maxGapLength* and larger than
+            *minGapLength*.
           </description>
         </parameter>
         <parameter name="minGapLength" type="double" default="0.1" unit="s">
@@ -87,19 +82,6 @@
             streams.
           </description>
         </parameter>
-        <parameter name="createArrivals" type="boolean" default="false">
-          <description>
-            Defines the default value for computing and associating
-            *detected arrivals* with created origins i.e. detections.
-          </description>
-        </parameter>
-        <parameter name="createTemplateArrivals" type="boolean" default="false">
-          <description>
-            Defines the default value for computing and associating
-            *theoretical template arrivals* with created origins i.e.
-            detections.
-          </description>
-        </parameter>
         <parameter name="arrivalOffsetThreshold" type="double" default="2.0e-6" unit="s">
           <description>
             Maximum default inter arrival offset threshold to tolerate when
@@ -136,6 +118,26 @@
 
             Note that the configured merging strategy may have a significant
             performance impact in a multi-stream detector setup.
+          </description>
+        </parameter>
+      </group>
+      <group name="publish">
+        <parameter name="createArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value for appending *detected arrivals* to
+            declared origins.
+          </description>
+        </parameter>
+        <parameter name="createTemplateArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value for appending *theoretical template
+            arrivals* to declared origins.
+          </description>
+        </parameter>
+        <parameter name="methodId" type="string" default="DETECT">
+          <description>
+            Defines the default origin *methodID* label that is added to declared
+            origins.
           </description>
         </parameter>
       </group>

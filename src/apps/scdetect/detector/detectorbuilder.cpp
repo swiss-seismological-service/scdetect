@@ -26,8 +26,7 @@ namespace detect {
 namespace detector {
 
 DetectorBuilder::DetectorBuilder(const std::string &id,
-                                 const std::string &originId,
-                                 const std::string &originMethodId)
+                                 const std::string &originId)
     : _originId{originId} {
   DataModel::OriginCPtr origin{
       EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
@@ -40,24 +39,28 @@ DetectorBuilder::DetectorBuilder(const std::string &id,
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
   _product = std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{id, originMethodId, origin});
+      new DetectorWaveformProcessor{id, origin});
 }
 
-DetectorBuilder &DetectorBuilder::setConfig(const DetectorConfig &config,
-                                            bool playback) {
-  _product->_config = config;
+DetectorBuilder &DetectorBuilder::setConfig(
+    const PublishConfig &publishConfig, const DetectorConfig &detectorConfig,
+    bool playback) {
+  _product->_publishConfig = publishConfig;
 
-  _product->_enabled = config.enabled;
+  _product->_config = detectorConfig;
+
+  _product->_enabled = detectorConfig.enabled;
 
   _product->_detector.setMergingStrategy(
-      _mergingStrategyLookupTable.at(config.mergingStrategy));
+      _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
 
   // configure playback related facilities
   if (playback) {
     _product->_detector.setMaxLatency(boost::none);
   } else {
-    if (config.maximumLatency > 0) {
-      _product->_detector.setMaxLatency(Core::TimeSpan{config.maximumLatency});
+    if (detectorConfig.maximumLatency > 0) {
+      _product->_detector.setMaxLatency(
+          Core::TimeSpan{detectorConfig.maximumLatency});
     }
   }
 
@@ -90,8 +93,7 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
 
 DetectorBuilder &DetectorBuilder::setStream(
     const std::string &streamId, const StreamConfig &streamConfig,
-    WaveformHandlerIfacePtr &wfHandler,
-    const boost::filesystem::path &pathDebugInfo) {
+    WaveformHandlerIfacePtr &wfHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   utils::WaveformStreamID templateWfStreamId{templateStreamId};
 
@@ -274,12 +276,6 @@ DetectorBuilder &DetectorBuilder::setStream(
   return *this;
 }
 
-DetectorBuilder &DetectorBuilder::setDebugInfoDir(
-    const boost::filesystem::path &path) {
-  _product->setDebugInfoDir(path);
-  return *this;
-}
-
 void DetectorBuilder::finalize() {
   // use a POT to determine the max relative pick offset
   detector::PickOffsetTable pot{_arrivalPicks};
@@ -377,7 +373,7 @@ void DetectorBuilder::finalize() {
   _product->setOperator(bufferingOperator.release());
 
   // attach reference theoretical template arrivals to the product
-  if (cfg.createTemplateArrivals) {
+  if (_product->_publishConfig.createTemplateArrivals) {
     std::ostringstream oss;
     for (size_t i = 0; i < _product->_origin->arrivalCount(); ++i) {
       const auto &arrival{_product->_origin->arrival(i)};
@@ -409,7 +405,7 @@ void DetectorBuilder::finalize() {
 
       const utils::WaveformStreamID wfId{pick->waveformID()};
       oss << wfId;
-      _product->_refTheoreticalTemplateArrivals.push_back(
+      _product->_publishConfig.theoreticalTemplateArrivals.push_back(
           {{pick->time().value(), oss.str(), phaseHint,
             pick->time().value() - _product->_origin->time().value(),
             lowerUncertainty, upperUncertainty},
