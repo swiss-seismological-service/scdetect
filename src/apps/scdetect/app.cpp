@@ -25,6 +25,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
+#include <exception>
 #include <ios>
 #include <memory>
 #include <stdexcept>
@@ -1025,6 +1026,20 @@ bool Application::initDetectors(std::ifstream &ifs,
     SCDETECT_LOG_ERROR(
         "Failed to parse JSON template configuration file (%s): %s",
         _config.pathTemplateJson.c_str(), e.what());
+    return false;
+  } catch (std::ifstream::failure &e) {
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template configuration file (%s): %s",
+        _config.pathTemplateJson.c_str(), e.what());
+    return false;
+  } catch (std::exception &e) {
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template configuration file (%s): %s",
+        _config.pathTemplateJson.c_str(), e.what());
+    return false;
+  } catch (...) {
+    SCDETECT_LOG_ERROR("Failed to parse JSON template configuration file (%s)",
+                       _config.pathTemplateJson.c_str());
     return false;
   }
   return true;
