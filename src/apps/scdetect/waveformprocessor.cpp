@@ -9,9 +9,7 @@
 namespace Seiscomp {
 namespace detect {
 
-WaveformProcessor::WaveformProcessor(
-    const std::string &id, const boost::filesystem::path &debugInfoDir)
-    : Processor{id}, _debugInfoDir{debugInfoDir} {}
+WaveformProcessor::WaveformProcessor(const std::string &id) : Processor{id} {}
 
 WaveformProcessor::Result::~Result() {}
 
@@ -54,12 +52,6 @@ bool WaveformProcessor::finished() const {
   return Status::kInProgress < _status;
 }
 
-const boost::filesystem::path &WaveformProcessor::debugInfoDir() const {
-  return _debugInfoDir;
-}
-
-bool WaveformProcessor::debugMode() const { return !_debugInfoDir.empty(); }
-
 bool WaveformProcessor::feed(const Record *record) {
   if (record->sampleCount() == 0) return false;
 
@@ -89,8 +81,6 @@ void WaveformProcessor::terminate() {
 }
 
 void WaveformProcessor::close() const {}
-
-std::string WaveformProcessor::debugString() const { return ""; }
 
 WaveformProcessor::StreamState::~StreamState() {
   if (filter) {
@@ -217,10 +207,6 @@ void WaveformProcessor::setupStream(StreamState &streamState,
 void WaveformProcessor::setStatus(Status status, double value) {
   _status = status;
   _statusValue = value;
-}
-
-void WaveformProcessor::setDebugInfoDir(const boost::filesystem::path &path) {
-  _debugInfoDir = path;
 }
 
 }  // namespace detect
