@@ -29,7 +29,6 @@ class WaveformProcessor : public Processor {
   class Result : public Core::BaseObject {
    public:
     virtual ~Result();
-    /* virtual void Publish() = 0; */
   };
 
   using PublishResultCallback = std::function<void(
