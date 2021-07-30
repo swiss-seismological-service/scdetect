@@ -3,6 +3,7 @@
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
+#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/origin.h>
 
