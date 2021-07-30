@@ -163,6 +163,9 @@ class WaveformProcessor : public Processor {
     double samplingFrequency{0};
     // The filter (if used)
     Filter *filter{nullptr};
+
+    // The stream specific minimum gap length to detect a gap
+    Core::TimeSpan gapThreshold;
   };
 
   virtual StreamState &streamState(const Record *record) = 0;
