@@ -158,20 +158,19 @@ void WaveformProcessor::reset(StreamState &streamState, const Record *record) {
   streamState.lastRecord.reset();
 }
 
-bool WaveformProcessor::handleGap(StreamState &streamState,
-                                  const Record *record, DoubleArrayPtr &data) {
-  return true;
-}
+bool WaveformProcessor::fill(detect::StreamState &streamState,
+                             const Record *record, DoubleArrayPtr &data) {
+  auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
 
-void WaveformProcessor::fill(StreamState &streamState, const Record *record,
-                             DoubleArrayPtr &data) {
   const auto n{static_cast<size_t>(data->size())};
-  streamState.receivedSamples += n;
+  s.receivedSamples += n;
 
-  if (streamState.filter) {
+  if (s.filter) {
     auto samples{data->typedData()};
-    streamState.filter->apply(n, samples);
+    s.filter->apply(n, samples);
   }
+
+  return true;
 }
 
 bool WaveformProcessor::enoughDataReceived(

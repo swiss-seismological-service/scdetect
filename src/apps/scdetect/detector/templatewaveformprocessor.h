@@ -59,7 +59,7 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
-  void fill(StreamState &streamState, const Record *record,
+  bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   void setupStream(StreamState &streamState, const Record *record) override;

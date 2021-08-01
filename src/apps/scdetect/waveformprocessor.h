@@ -10,7 +10,9 @@
 #include <functional>
 #include <memory>
 
+#include "mixin/gapinterpolate.h"
 #include "processor.h"
+#include "stream.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -18,7 +20,8 @@ namespace detect {
 class WaveformOperator;
 
 // Abstract interface for waveform processors
-class WaveformProcessor : public Processor {
+class WaveformProcessor : public Processor,
+                          public InterpolateGaps<WaveformProcessor> {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
@@ -142,10 +145,8 @@ class WaveformProcessor : public Processor {
 
  protected:
   // Describes the current state of a stream
-  struct StreamState {
-    ~StreamState();
-    // Value of the last sample
-    double lastSample{0};
+  struct StreamState : public detect::StreamState {
+    ~StreamState() override;
 
     // Number of samples required to finish initialization
     size_t neededSamples{0};
@@ -154,18 +155,8 @@ class WaveformProcessor : public Processor {
     // Initialization state
     bool initialized{false};
 
-    // The last received record of the stream
-    RecordCPtr lastRecord;
-    // The complete processed data time window so far
-    Core::TimeWindow dataTimeWindow;
-
-    // The sampling frequency of the stream
-    double samplingFrequency{0};
     // The filter (if used)
     Filter *filter{nullptr};
-
-    // The stream specific minimum gap length to detect a gap
-    Core::TimeSpan gapThreshold;
   };
 
   virtual StreamState &streamState(const Record *record) = 0;
@@ -181,13 +172,9 @@ class WaveformProcessor : public Processor {
   // `record`.
   virtual void reset(StreamState &streamState, const Record *record);
 
-  // Handles gaps. Returns whether the gap has been handled or not.
-  virtual bool handleGap(StreamState &streamState, const Record *record,
-                         DoubleArrayPtr &data);
-
   // Fill data and perform filtering (if required)
-  virtual void fill(StreamState &streamState, const Record *record,
-                    DoubleArrayPtr &data);
+  bool fill(detect::StreamState &streamState, const Record *record,
+            DoubleArrayPtr &data) override;
 
   // Initially check if the `WaveformProcessor` received enough data in order to
   // execute the `process` method.

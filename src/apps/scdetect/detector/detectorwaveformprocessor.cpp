@@ -96,12 +96,15 @@ void DetectorWaveformProcessor::reset(StreamState &streamState,
   WaveformProcessor::reset(streamState, record);
 }
 
-void DetectorWaveformProcessor::fill(StreamState &streamState,
+bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
   // XXX(damb): `DetectorWaveformProcessor` does not implement filtering
   // facilities
-  streamState.receivedSamples += data->size();
+  auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
+  s.receivedSamples += data->size();
+
+  return true;
 }
 
 bool DetectorWaveformProcessor::enoughDataReceived(
