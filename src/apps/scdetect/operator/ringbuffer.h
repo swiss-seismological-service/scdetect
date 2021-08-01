@@ -10,7 +10,9 @@
 #include <string>
 #include <unordered_map>
 
+#include "../mixin/gapinterpolate.h"
 #include "../settings.h"
+#include "../stream.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
 
@@ -21,7 +23,8 @@ namespace waveform_operator {
 // `WaveformOperator` implementation providing buffering facilities for `N`
 // streams
 // - implements gap interpolation facilities
-class RingBufferOperator : public WaveformOperator {
+class RingBufferOperator : public WaveformOperator,
+                           public InterpolateGaps<RingBufferOperator> {
  public:
   using WaveformStreamID = std::string;
   using RingBuffer = Seiscomp::RingBuffer;
@@ -33,21 +36,10 @@ class RingBufferOperator : public WaveformOperator {
                      Core::TimeSpan bufferSize,
                      const std::vector<WaveformStreamID> &wfStreamIds);
 
-  // Enables/disables the linear interpolation of missing samples
-  // if the gap is smaller than the configured gap tolerance
-  void setGapInterpolation(bool gapInterpolation);
-  // Returns if gap interpolation is enabled or disabled, respectively
-  bool gapInterpolation() const;
   // Sets the threshold (i.e. the minimum gap length) for gap interpolation
   //
   // - may imply resetting streams including the related buffer
-  void setGapThreshold(const Core::TimeSpan &duration);
-  // Returns the gap threshold configured
-  const Core::TimeSpan gapThreshold() const;
-  // Sets the maximum gap length to be tolerated
-  void setGapTolerance(const Core::TimeSpan &duration);
-  // Returns the gap tolerance configured
-  const Core::TimeSpan gapTolerance() const;
+  void setGapThreshold(const Core::TimeSpan &duration) override;
 
   WaveformProcessor::Status feed(const Record *record) override;
 
@@ -63,37 +55,16 @@ class RingBufferOperator : public WaveformOperator {
   const std::shared_ptr<RingBuffer> &get(WaveformStreamID wfStreamId);
 
  protected:
-  struct StreamState {
-    // Value of the last sample
-    double lastSample{0};
-    // The last record received
-    RecordCPtr lastRecord;
-    // The overall time window received
-    Core::TimeWindow dataTimeWindow;
-    // The sampling frequency of the stream
-    double samplingFrequency{0};
-    // The stream specific minimum gap length to detect a gap
-    Core::TimeSpan gapThreshold;
-  };
-
   bool store(StreamState &streamState, const Record *record);
 
-  bool handleGap(StreamState &streamState, const Record *record,
-                 DoubleArrayPtr &data);
-
   bool fill(StreamState &streamState, const Record *record,
-            DoubleArrayPtr &data);
+            DoubleArrayPtr &data) override;
 
   void setupStream(StreamState &streamState, const Record *record);
 
   void reset(StreamState &streamState);
 
  private:
-  // Fill gaps
-  bool fillGap(StreamState &streamState, const Record *record,
-               const Core::TimeSpan &duration, double nextSample,
-               size_t missingSamples);
-
   struct StreamConfig {
     StreamState streamState;
 
@@ -105,13 +76,6 @@ class RingBufferOperator : public WaveformOperator {
   StreamConfigs _streamConfigs;
 
   Core::TimeSpan _bufferSize{30.0 * settings::kBufferMultiplicator};
-
-  // Indicates if gap interpolation is enabled/disabled
-  bool _gapInterpolation{false};
-  // The configured minimum gap length to detect a gap
-  Core::TimeSpan _gapThreshold;
-  // The maximum gap length to tolerate
-  Core::TimeSpan _gapTolerance;
 
   // Reference to the processor using the operator
   WaveformProcessor *_processor;

@@ -40,6 +40,7 @@ set(SOURCES_integration
   ../operator/ringbuffer.cpp
   ../processor.cpp
   ../resamplerstore.cpp
+  ../stream.cpp
   ../utils.cpp
   ../validators.cpp
   ../waveform.cpp
