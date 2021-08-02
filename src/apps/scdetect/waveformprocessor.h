@@ -19,13 +19,18 @@ namespace detect {
 
 class WaveformOperator;
 
-// Abstract interface for waveform processors
+// Abstract interface for waveform processors. The interface is similar to the
+// one from `Seiscomp::Processing::WaveformProcessor`, but it additionally
+// simplifies the implementation of *hierarchical* and *composite* waveform
+// processors.
+//
+// - implements gap interpolation
 class WaveformProcessor : public Processor,
                           public InterpolateGaps<WaveformProcessor> {
  public:
-  using Filter = Math::Filtering::InPlaceFilter<double>;
-
   WaveformProcessor(const std::string &id);
+
+  using Filter = Math::Filtering::InPlaceFilter<double>;
 
   DEFINE_SMARTPOINTER(Result);
   class Result : public Core::BaseObject {
