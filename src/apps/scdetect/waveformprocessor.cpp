@@ -175,7 +175,7 @@ bool WaveformProcessor::fill(detect::StreamState &streamState,
 
 bool WaveformProcessor::enoughDataReceived(
     const StreamState &streamState) const {
-  return streamState.receivedSamples > streamState.neededSamples;
+  return streamState.receivedSamples >= streamState.neededSamples;
 }
 
 void WaveformProcessor::emitResult(const Record *record,
