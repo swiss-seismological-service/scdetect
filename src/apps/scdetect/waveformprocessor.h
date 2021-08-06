@@ -19,12 +19,17 @@ namespace detect {
 
 class WaveformOperator;
 
-// Abstract interface for waveform processors. The interface is similar to the
-// one from `Seiscomp::Processing::WaveformProcessor`, but it additionally
-// simplifies the implementation of *hierarchical* and *composite* waveform
-// processors.
+// Abstract interface for waveform processors.
 //
 // - implements gap interpolation
+//
+// - The interface is similar to the one from
+// `Seiscomp::Processing::WaveformProcessor`, but it additionally simplifies
+// the implementation of *hierarchical* and *composite* waveform processors.
+// It is designed in a way that it does neither force implementations to use
+// just a single stream nor does it introduce the *concept of a station* (e.g.
+// by means of limiting the usage of maximum three channels).
+//
 class WaveformProcessor : public Processor,
                           public InterpolateGaps<WaveformProcessor> {
  public:
@@ -104,6 +109,10 @@ class WaveformProcessor : public Processor,
     kInvalidStream
   };
 
+  // Sets the filter to apply; the filter pointer passed is owned by the
+  // `WaveformProcessor`
+  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
+
   void enable();
   void disable();
   bool enabled() const;
@@ -117,9 +126,6 @@ class WaveformProcessor : public Processor,
   // Returns the value associated with the status
   double statusValue() const;
 
-  // Sets the filter to apply; the filter pointer passed is owned by the
-  // `WaveformProcessor`
-  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
   // Configures a `WaveformProcessor` with `op`. `op` is applied to all records
   // fed. `op` sits between `feed` and `store`. The pointer ownership goes to
   // the processor.

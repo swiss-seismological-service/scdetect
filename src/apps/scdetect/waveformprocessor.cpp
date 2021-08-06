@@ -137,8 +137,8 @@ bool WaveformProcessor::store(const Record *record) {
         // streamState.initialized = true;
         process(currentStreamState, record, *data);
         // NOTE: To allow derived classes to notice modification of the variable
-        // streamState.initialized, it is necessary to set this after calling
-        // process.
+        // currentStreamState.initialized, it is necessary to set this after
+        // calling process.
         currentStreamState.initialized = true;
       }
     } else {
