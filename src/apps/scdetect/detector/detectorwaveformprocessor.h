@@ -70,7 +70,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
-  void reset(StreamState &streamState, const Record *record) override;
+  void reset(StreamState &streamState) override;
 
   bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;

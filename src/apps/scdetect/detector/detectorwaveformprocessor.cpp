@@ -88,12 +88,11 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
   }
 }
 
-void DetectorWaveformProcessor::reset(StreamState &streamState,
-                                      const Record *record) {
+void DetectorWaveformProcessor::reset(StreamState &streamState) {
   // XXX(damb): drops all pending events
   _detector.reset();
 
-  WaveformProcessor::reset(streamState, record);
+  WaveformProcessor::reset(streamState);
 }
 
 bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,

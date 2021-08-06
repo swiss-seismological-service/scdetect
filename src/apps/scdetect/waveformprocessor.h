@@ -173,9 +173,8 @@ class WaveformProcessor : public Processor,
   // Store the record
   virtual bool store(const Record *record);
 
-  // Resets the `WaveformProcessor` with regards to `streamState` and
-  // `record`.
-  virtual void reset(StreamState &streamState, const Record *record);
+  // Resets the `WaveformProcessor` with regard to `streamState`
+  virtual void reset(StreamState &streamState);
 
   // Fill data and perform filtering (if required)
   bool fill(detect::StreamState &streamState, const Record *record,
