@@ -132,19 +132,7 @@ bool WaveformProcessor::store(const Record *record) {
     fill(currentStreamState, record, data);
     if (Status::kInProgress < status()) return false;
 
-    if (!currentStreamState.initialized) {
-      if (enoughDataReceived(currentStreamState)) {
-        // streamState.initialized = true;
-        process(currentStreamState, record, *data);
-        // NOTE: To allow derived classes to notice modification of the variable
-        // currentStreamState.initialized, it is necessary to set this after
-        // calling process.
-        currentStreamState.initialized = true;
-      }
-    } else {
-      // Call process to cause a derived processor to work on the data.
-      process(currentStreamState, record, *data);
-    }
+    processIfEnoughDataReceived(currentStreamState, record, *data);
 
     currentStreamState.lastRecord = record;
 
@@ -171,6 +159,28 @@ bool WaveformProcessor::fill(detect::StreamState &streamState,
   }
 
   return true;
+}
+
+bool WaveformProcessor::processIfEnoughDataReceived(
+    StreamState &streamState, const Record *record,
+    const DoubleArray &filteredData) {
+  bool processed{false};
+  if (!streamState.initialized) {
+    if (enoughDataReceived(streamState)) {
+      // streamState.initialized = true;
+      process(streamState, record, filteredData);
+      // NOTE: To allow derived classes to notice modification of the variable
+      // streamState.initialized, it is necessary to set this after calling
+      // process().
+      streamState.initialized = true;
+      processed = true;
+    }
+  } else {
+    // Call process to cause a derived processor to work on the data.
+    process(streamState, record, filteredData);
+    processed = true;
+  }
+  return processed;
 }
 
 bool WaveformProcessor::enoughDataReceived(

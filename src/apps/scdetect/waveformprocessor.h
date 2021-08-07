@@ -186,8 +186,14 @@ class WaveformProcessor : public Processor,
   bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
+  // Wrapper method for both `enoughDataReceived()` and `process()`. Returns
+  // `true` if `process` was called, else `false`
+  virtual bool processIfEnoughDataReceived(StreamState &streamState,
+                                           const Record *record,
+                                           const DoubleArray &filteredData);
+
   // Initially check if the `WaveformProcessor` received enough data in order to
-  // execute the `process` method.
+  // execute the `process()` method.
   virtual bool enoughDataReceived(const StreamState &streamState) const;
 
   virtual void emitResult(const Record *record, const ResultCPtr &result);
