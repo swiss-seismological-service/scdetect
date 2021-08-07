@@ -109,8 +109,9 @@ class WaveformProcessor : public Processor,
     kInvalidStream
   };
 
-  // Sets the filter to apply; the filter pointer passed is owned by the
-  // `WaveformProcessor`
+  // Sets the filter to apply
+  //
+  // - the `filter` pointer passed is owned by the `WaveformProcessor`
   virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
 
   void enable();
@@ -127,14 +128,16 @@ class WaveformProcessor : public Processor,
   double statusValue() const;
 
   // Configures a `WaveformProcessor` with `op`. `op` is applied to all records
-  // fed. `op` sits between `feed` and `store`. The pointer ownership goes to
-  // the processor.
+  // fed.
+  //
+  // - `op` sits between `feed` and `store`
+  // - the pointer ownership goes to the processor
   void setOperator(WaveformOperator *op);
   // Returns the processor's initialization time
   virtual const Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
-  // Status::kInProgress.
+  // `Status::kInProgress`.
   virtual bool finished() const;
 
   // Returns the time window processed and correlated
@@ -150,7 +153,7 @@ class WaveformProcessor : public Processor,
   // Terminates the processor ignoring its current status
   virtual void terminate();
 
-  // Closes the processor meaning that no more records are going to be fed in.
+  // Closes the processor meaning that no more records are going to be fed.
   // The processing has been finished.
   virtual void close() const;
 
