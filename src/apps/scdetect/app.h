@@ -3,6 +3,7 @@
 
 #include <seiscomp/client/application.h>
 #include <seiscomp/client/streamapplication.h>
+#include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/system/commandline.h>
@@ -109,8 +110,10 @@ class Application : public Client::StreamApplication {
 
   void handleRecord(Record *rec) override;
 
-  void emitDetection(const WaveformProcessor *processor, const Record *record,
-                     const WaveformProcessor::ResultCPtr &result);
+  void emitDetection(
+      const detector::DetectorWaveformProcessor *processor,
+      const Record *record,
+      const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
 
  protected:
   // Load events either from `eventDb` or `db`

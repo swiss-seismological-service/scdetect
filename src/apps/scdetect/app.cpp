@@ -20,6 +20,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <ios>
 #include <unordered_map>
 #include <unordered_set>
@@ -28,6 +29,7 @@
 #include "builder.h"
 #include "config.h"
 #include "detector/arrival.h"
+#include "detector/detectorbuilder.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "eventstore.h"
 #include "log.h"
@@ -372,12 +374,9 @@ void Application::handleRecord(Record *rec) {
   }
 }
 
-void Application::emitDetection(const WaveformProcessor *processor,
-                                const Record *record,
-                                const WaveformProcessor::ResultCPtr &result) {
-  const auto detection{boost::dynamic_pointer_cast<
-      const detector::DetectorWaveformProcessor::Detection>(result)};
-
+void Application::emitDetection(
+    const detector::DetectorWaveformProcessor *processor, const Record *record,
+    const detector::DetectorWaveformProcessor::DetectionCPtr &detection) {
   SCDETECT_LOG_DEBUG_TAGGED(
       processor->id(), "Creating origin (time=%s, detected_arrivals=%d) ...",
       detection->time.iso().c_str(), detection->templateResults.size());
@@ -732,7 +731,13 @@ bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
         detectorPtr->setResultCallback(
             [this](const WaveformProcessor *proc, const Record *rec,
                    const WaveformProcessor::ResultCPtr &res) {
-              emitDetection(proc, rec, res);
+              emitDetection(
+                  dynamic_cast<const detector::DetectorWaveformProcessor *>(
+                      proc),
+                  rec,
+                  boost::dynamic_pointer_cast<
+                      const detector::DetectorWaveformProcessor::Detection>(
+                      res));
             });
         for (const auto &streamId : streamIds)
           _detectors.emplace(streamId, detectorPtr);
