@@ -33,6 +33,11 @@ class RMSAmplitude : public ReducingAmplitudeProcessor {
                                       const std::vector<NoiseInfo> &noiseInfos,
                                       const IndexRange &idxRange) override;
 
+  boost::optional<double> reduceNoiseData(
+      const std::vector<DoubleArrayCPtr> &data,
+      const std::vector<IndexRange> &idxRanges,
+      const std::vector<NoiseInfo> &noiseInfos) override;
+
   void computeAmplitude(const DoubleArray &data, const IndexRange &idxRange,
                         Amplitude &amplitude) override;
 };

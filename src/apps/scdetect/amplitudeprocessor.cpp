@@ -180,6 +180,13 @@ void ReducingAmplitudeProcessor::add(const Processing::Stream &streamConfig) {
   }
 }
 
+boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
+    const std::vector<DoubleArrayCPtr> &data,
+    const std::vector<IndexRange> &idxRanges,
+    const std::vector<NoiseInfo> &noiseInfos) {
+  return boost::none;
+}
+
 WaveformProcessor::StreamState &ReducingAmplitudeProcessor::streamState(
     const Record *record) {
   return _streams.at(record->streamID()).streamState;

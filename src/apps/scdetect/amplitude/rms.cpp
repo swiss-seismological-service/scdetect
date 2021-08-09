@@ -1,6 +1,7 @@
 #include "rms.h"
 
 #include <algorithm>
+#include <boost/optional/optional.hpp>
 #include <cmath>
 #include <stdexcept>
 #include <unordered_map>
@@ -69,6 +70,14 @@ DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
 
   return utils::make_smart<DoubleArray>(static_cast<int>(samples.size()),
                                         samples.data());
+}
+
+boost::optional<double> RMSAmplitude::reduceNoiseData(
+    const std::vector<DoubleArrayCPtr> &data,
+    const std::vector<IndexRange> &idxRanges,
+    const std::vector<NoiseInfo> &noiseInfos) {
+  // TODO(damb): to be implemented
+  return boost::none;
 }
 
 void RMSAmplitude::computeAmplitude(const DoubleArray &data,
