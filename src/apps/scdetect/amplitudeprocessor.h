@@ -170,7 +170,9 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
  protected:
   // Reduce `data` regarding an amplitude calculation where `noiseInfos`
-  // corresponds the individual noise offset. Return the reduced result.
+  // corresponds the individual noise offset.
+  //
+  // - returns the reduced result
   virtual DoubleArrayCPtr reduceAmplitudeData(
       const std::vector<DoubleArrayCPtr> &data,
       const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) = 0;
