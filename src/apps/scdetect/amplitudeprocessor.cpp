@@ -1,0 +1,373 @@
+#include "amplitudeprocessor.h"
+
+#include <seiscomp/core/genericrecord.h>
+#include <seiscomp/math/filter/iirdifferentiate.h>
+#include <seiscomp/math/mean.h>
+
+#include <algorithm>
+#include <boost/algorithm/string/join.hpp>
+#include <cstddef>
+#include <stdexcept>
+
+#include "settings.h"
+#include "utils.h"
+#include "waveform.h"
+#include "waveformoperator.h"
+
+namespace Seiscomp {
+namespace detect {
+
+AmplitudeProcessor::AmplitudeProcessor(const std::string &id)
+    : TimeWindowProcessor{id} {}
+
+void AmplitudeProcessor::setSignalBegin(
+    const boost::optional<Core::TimeSpan> &signalBegin) {
+  if (!signalBegin) {
+    _config.signalBegin = signalBegin;
+    return;
+  }
+
+  if (*signalBegin > Core::TimeSpan{0.0} &&
+      safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0) >
+          safetyTimeWindow().startTime() + *signalBegin) {
+    _config.signalBegin = signalBegin;
+  }
+}
+
+Core::Time AmplitudeProcessor::signalBegin() const {
+  return safetyTimeWindow().startTime() + _config.signalBegin.value_or(0.0);
+}
+
+void AmplitudeProcessor::setSignalEnd(
+    const boost::optional<Core::TimeSpan> &signalEnd) {
+  if (!signalEnd) {
+    _config.signalEnd = signalEnd;
+    return;
+  }
+
+  if (*signalEnd > Core::TimeSpan{0.0} &&
+      safetyTimeWindow().endTime() - *signalEnd >
+          safetyTimeWindow().startTime() + _config.signalBegin.value_or(0.0)) {
+    _config.signalEnd = signalEnd;
+  }
+}
+
+Core::Time AmplitudeProcessor::signalEnd() const {
+  return safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0);
+}
+
+void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
+
+void AmplitudeProcessor::preprocessData(
+    StreamState &streamState, Processing::Sensor *sensor,
+    const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
+
+bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
+                                      const IndexRange &idxRange,
+                                      NoiseInfo &noiseInfo) {
+  // compute offset and rms within the time window
+  size_t beginIdx{idxRange.begin}, endIdx{idxRange.end};
+  if (beginIdx < 0) beginIdx = 0;
+  if (endIdx < 0) return false;
+  if (endIdx > static_cast<size_t>(data.size()))
+    endIdx = static_cast<size_t>(data.size());
+
+  // If noise window is zero return an amplitude and offset of zero as well.
+  if (endIdx - beginIdx == 0) {
+    noiseInfo.offset = 0;
+    noiseInfo.amplitude = 0;
+    return true;
+  }
+
+  DoubleArrayPtr sliced{
+      static_cast<DoubleArray *>(data.slice(beginIdx, endIdx))};
+  if (!sliced) {
+    return false;
+  }
+
+  // compute noise offset as the median
+  double offset{sliced->median()};
+  // compute rms while removing offset
+  double amplitude{2 * sliced->rms(offset)};
+
+  if (offset) noiseInfo.offset = offset;
+  if (amplitude) noiseInfo.amplitude = amplitude;
+
+  return true;
+}
+
+bool AmplitudeProcessor::deconvolveData(StreamState &streamState,
+                                        Processing::Response *resp,
+                                        const DeconvolutionConfig &config,
+                                        int numberOfIntegrations,
+                                        DoubleArray &data) {
+  double m, n;
+  // remove linear trend
+  Math::Statistics::computeLinearTrend(data.size(), data.typedData(), m, n);
+  Math::Statistics::detrend(data.size(), data.typedData(), m, n);
+
+  // XXX(damb): integration is implemented by means of deconvolution i.e. by
+  // means of adding an additional zero to the nominator of the rational
+  // transfer function
+  if (!resp->deconvolveFFT(
+          data, streamState.samplingFrequency, config.responseTaperLength,
+          config.minimumResponseTaperFrequency,
+          config.maximumResponseTaperFrequency,
+          numberOfIntegrations < 0 ? 0 : numberOfIntegrations)) {
+    return false;
+  }
+
+  if (numberOfIntegrations < 0) {
+    if (!deriveData(streamState, abs(numberOfIntegrations), data)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool AmplitudeProcessor::deriveData(StreamState &streamState,
+                                    int numberOfDerivations,
+                                    DoubleArray &data) {
+  while (numberOfDerivations > 0) {
+    Math::Filtering::IIRDifferentiate<double> diff;
+    diff.setSamplingFrequency(streamState.samplingFrequency);
+    diff.apply(data.size(), data.typedData());
+    --numberOfDerivations;
+  }
+
+  return true;
+}
+
+/* ------------------------------------------------------------------------- */
+ReducingAmplitudeProcessor::ReducingAmplitudeProcessor(const std::string &id)
+    : AmplitudeProcessor{id} {}
+
+void ReducingAmplitudeProcessor::setFilter(Filter *filter,
+                                           const Core::TimeSpan &initTime) {
+  if (!_recordFed) {
+    _filter.reset(filter);
+  }
+}
+
+bool ReducingAmplitudeProcessor::feed(const Record *record) {
+  if (!_recordFed) {
+    _recordFed = true;
+  }
+
+  return WaveformProcessor::feed(record);
+}
+
+void ReducingAmplitudeProcessor::reset() {
+  for (auto &streamPair : _streams) {
+    auto &stream{streamPair.second};
+    WaveformProcessor::reset(stream.streamState);
+    stream.buffer.clear();
+  }
+
+  _recordFed = false;
+}
+
+void ReducingAmplitudeProcessor::add(const Processing::Stream &streamConfig) {
+  if (!_recordFed) {
+    DeconvolutionConfig deconvolutionConfig;
+    deconvolutionConfig.enabled = true;
+
+    StreamItem stream;
+    stream.streamConfig = streamConfig;
+    stream.deconvolutionConfig = deconvolutionConfig;
+    _streams.emplace(streamConfig.code(), stream);
+  }
+}
+
+WaveformProcessor::StreamState &ReducingAmplitudeProcessor::streamState(
+    const Record *record) {
+  return _streams.at(record->streamID()).streamState;
+}
+
+void ReducingAmplitudeProcessor::process(StreamState &streamState,
+                                         const Record *record,
+                                         const DoubleArray &filteredData) {
+  // TODO(damb):
+  //
+  // - call compute()
+  // - compute noise from reduced data;
+
+  setStatus(Status::kInProgress, 1);
+
+  std::vector<DoubleArrayCPtr> data;
+  for (auto &streamPair : _streams) {
+    auto &stream{streamPair.second};
+    preprocessData(stream.streamState, stream.streamConfig.sensor(),
+                   stream.deconvolutionConfig, stream.buffer);
+    if (finished()) {
+      return;
+    }
+    data.push_back(&stream.buffer);
+  }
+
+  // buffers are aligned regarding starttime
+  const auto bufferBeginTime{
+      _streams.cbegin()->second.streamState.dataTimeWindow.startTime()};
+
+  const auto itEarliestEndTime{std::min_element(
+      _streams.cbegin(), _streams.cend(),
+      [](const StreamMap::value_type &lhs, const StreamMap::value_type &rhs) {
+        return lhs.second.streamState.dataTimeWindow.endTime() <
+               rhs.second.streamState.dataTimeWindow.endTime();
+      })};
+  const auto bufferEndTime{
+      itEarliestEndTime->second.streamState.dataTimeWindow.endTime()};
+
+  // TODO(damb):
+  //
+  // - implement resampling; currently we assume a common sampling frequency
+  // for all streams
+  const auto commonSamplingFrequency{
+      _streams.cbegin()->second.streamState.samplingFrequency};
+
+  // compute signal offsets
+  Core::Time signalStartTime{bufferBeginTime};
+  size_t signalBeginIdx{0};
+  if (bufferBeginTime < signalBegin()) {
+    signalBeginIdx = static_cast<size_t>((signalBegin() - bufferBeginTime) *
+                                         commonSamplingFrequency);
+    signalStartTime = signalBegin();
+  }
+  if (signalEnd() < bufferBeginTime) {
+    setSignalEnd(bufferEndTime);
+  }
+  const auto computeSignalEndIdx =
+      [&commonSamplingFrequency, &bufferBeginTime](const Core::Time signalEnd) {
+        return static_cast<size_t>(
+            static_cast<double>(signalEnd - bufferBeginTime) *
+            commonSamplingFrequency);
+      };
+  Core::Time signalEndTime;
+  size_t signalEndIdx;
+  if (signalEnd() < bufferEndTime) {
+    signalEndIdx = computeSignalEndIdx(signalEnd());
+    signalEndTime = signalEnd();
+  } else {
+    signalEndIdx = computeSignalEndIdx(bufferEndTime);
+    signalEndTime = bufferEndTime;
+  }
+
+  // TODO(damb):
+  //
+  // - pass noise infos
+  std::vector<NoiseInfo> noiseInfos{data.size()};
+  auto reduced{reduceAmplitudeData(data, noiseInfos,
+                                   IndexRange{signalBeginIdx, signalEndIdx})};
+  if (!reduced || reduced->size() <= 0) {
+    setStatus(Status::kError, 0);
+    return;
+  }
+
+  auto amplitude{utils::make_smart<Amplitude>()};
+  computeAmplitude(*reduced,
+                   IndexRange{0, static_cast<size_t>(reduced->size()) - 1},
+                   *amplitude);
+  if (finished()) {
+    return;
+  }
+
+  amplitude->waveformStreamId = boost::algorithm::join(
+      utils::map_keys(_streams), settings::kWaveformStreamIdSep);
+  amplitude->amplitudeTimeWindow.setStartTime(signalStartTime);
+  amplitude->amplitudeTimeWindow.setEndTime(signalEndTime);
+
+  setStatus(Status::kFinished, 100);
+  emitResult(record, amplitude);
+}
+
+bool ReducingAmplitudeProcessor::store(const Record *record) {
+  bool isFirstStreamRecord{false};
+  // check if stream is known
+  try {
+    isFirstStreamRecord = !static_cast<bool>(streamState(record).lastRecord);
+  } catch (std::out_of_range &) {
+    setStatus(Status::kInvalidStream, 0);
+    return false;
+  }
+
+  // make sure the record does fullfil the `TimeWindowProcessor`'s window
+  // requirements
+  if (!record->timeWindow().overlaps(safetyTimeWindow()) ||
+      (isFirstStreamRecord &&
+       (record->timeWindow().startTime() > safetyTimeWindow().startTime()))) {
+    return false;
+  }
+
+  // trim the first incoming stream records equally at the front to the same
+  // start time
+  if (isFirstStreamRecord &&
+      record->timeWindow().startTime() < safetyTimeWindow().startTime()) {
+    auto firstRecord{utils::make_unique<GenericRecord>(*record)};
+    waveform::trim(
+        *firstRecord,
+        Core::TimeWindow{safetyTimeWindow().startTime(), record->endTime()});
+    return WaveformProcessor::store(firstRecord.release());
+  }
+
+  return WaveformProcessor::store(record);
+}
+
+bool ReducingAmplitudeProcessor::fill(detect::StreamState &streamState,
+                                      const Record *record,
+                                      DoubleArrayPtr &data) {
+  auto retval{WaveformProcessor::fill(streamState, record, data)};
+  if (retval) {
+    const auto &s{dynamic_cast<WaveformProcessor::StreamState &>(streamState)};
+    // only buffer samples once the filter is initialized
+    if (s.receivedSamples >= s.neededSamples) {
+      size_t offset{0};
+      if (!s.initialized) {
+        // check if processing start lies within the record
+        offset = std::max(
+            0, static_cast<int>(data->size()) -
+                   static_cast<int>(s.receivedSamples - s.neededSamples));
+      }
+
+      _streams.at(record->streamID())
+          .buffer.append(data->size() - offset, data->typedData() + offset);
+    }
+  }
+  return retval;
+}
+
+bool ReducingAmplitudeProcessor::processIfEnoughDataReceived(
+    StreamState &streamState, const Record *record,
+    const DoubleArray &filteredData) {
+  bool processed{false};
+  if (enoughDataReceived(streamState)) {
+    process(streamState, record, filteredData);
+    processed = true;
+  }
+
+  if (!streamState.initialized &&
+      (streamState.receivedSamples >= streamState.neededSamples)) {
+    streamState.initialized = true;
+  }
+  return processed;
+}
+
+bool ReducingAmplitudeProcessor::enoughDataReceived(
+    const StreamState &streamState) const {
+  return std::all_of(_streams.cbegin(), _streams.cend(),
+                     [](const StreamMap::value_type &streamPair) {
+                       return streamPair.second.streamState.receivedSamples >=
+                              streamPair.second.neededSamples;
+                     });
+}
+
+void ReducingAmplitudeProcessor::setupStream(StreamState &streamState,
+                                             const Record *record) {
+  WaveformProcessor::setupStream(streamState, record);
+
+  _streams.at(record->streamID()).neededSamples = static_cast<size_t>(
+      safetyTimeWindow().length() * streamState.samplingFrequency + 0.5);
+}
+
+}  // namespace detect
+}  // namespace Seiscomp

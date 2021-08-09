@@ -6,7 +6,6 @@
 #include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <initializer_list>
 #include <string>
 #include <unordered_map>
 #include <vector>

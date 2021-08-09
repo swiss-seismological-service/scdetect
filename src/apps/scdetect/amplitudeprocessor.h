@@ -1,0 +1,237 @@
+#ifndef SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_
+#define SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_
+
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/defs.h>
+#include <seiscomp/core/record.h>
+#include <seiscomp/core/timewindow.h>
+#include <seiscomp/core/typedarray.h>
+#include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/processing/response.h>
+#include <seiscomp/processing/stream.h>
+
+#include <boost/optional/optional.hpp>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
+#include "timewindowprocessor.h"
+#include "waveformoperator.h"
+
+namespace Seiscomp {
+namespace detect {
+
+// Base class for amplitude processors
+//
+// - alternative implementation to `Processing::AmplitudeProcessor`
+class AmplitudeProcessor : public TimeWindowProcessor {
+ public:
+  AmplitudeProcessor(const std::string &id);
+
+  struct Config {
+    // Defines the beginning of the time window used for amplitude analysis
+    // with regard to the beginning of the overall time window
+    boost::optional<Core::TimeSpan> signalBegin;
+    // Defines the end of the time window used for amplitude analysis with
+    // regard to the end of the overall time window
+    boost::optional<Core::TimeSpan> signalEnd;
+  };
+
+  struct DeconvolutionConfig {
+    // Indicates whether deconvolution is enabled `true` or not `false`
+    bool enabled{false};
+    // Taper length in seconds when deconvolving the data
+    double responseTaperLength{5};
+    // Defines the end of the left-hand side cosine-taper in Hz applied to the
+    // frequency spectrum. I.e. the spectrum is tapered between 0Hz and
+    // `minimumResponseTaperFrequency`. A value less than or equal to zero
+    // disables tapering.
+    double minimumResponseTaperFrequency{0.00833333};  // 120 seconds
+    // Defines the beginning of the right-hand side cosine-taper in Hz applied
+    // to the frequency spectrum. I.e. the spectrum is tapered between
+    // `maximumResponseTaperFrequency` and the Nyquist frequency. A value less
+    // than or equal to zero disables tapering.
+    double maximumResponseTaperFrequency{0};
+  };
+
+  struct AmplitudeValue {
+    double value;
+    boost::optional<double> lowerUncertainty;
+    boost::optional<double> upperUncertainty;
+  };
+
+  DEFINE_SMARTPOINTER(Amplitude);
+  struct Amplitude : WaveformProcessor::Result {
+    AmplitudeValue amplitude;
+    // The time window used for amplitude analysis
+    Core::TimeWindow amplitudeTimeWindow;
+    // Waveform stream identifier(s) used for amplitude analysis
+    std::string waveformStreamId;
+
+    // Dominant period in samples (NOT seconds) w.r.t. the time window the
+    // amplitude was measured
+    boost::optional<double> dominantPeriod;
+    // The signal-to-noise ratio w.r.t. the time window the amplitude was
+    // measured
+    boost::optional<double> snr;
+  };
+
+  // Configures the beginning of the time window used for amplitude calculation
+  void setSignalBegin(const boost::optional<Core::TimeSpan> &signalBegin);
+  // Returns the beginning of the time window used for amplitude calculation
+  Core::Time signalBegin() const;
+  // Configures the beginning of the time window used for amplitude calculation
+  void setSignalEnd(const boost::optional<Core::TimeSpan> &signalEnd);
+  // Returns the end of the time window used for amplitude calculation
+  Core::Time signalEnd() const;
+
+  virtual void finalize(DataModel::Amplitude *amplitude) const;
+
+ protected:
+  struct NoiseInfo {
+    // The noise offset
+    double offset{0};
+    // The noise amplitude
+    double amplitude{0};
+  };
+
+  struct IndexRange {
+    size_t begin;
+    size_t end;
+  };
+
+  // Compute the amplitude from `data` in `idxRange`
+  virtual void computeAmplitude(const DoubleArray &data,
+                                const IndexRange &idxRange,
+                                Amplitude &amplitude) = 0;
+
+  // Compute the noise from `data` in the window defined by `idxRange`. While
+  // `noiseOffset` refers to an offset applied when computing the noise the
+  // `noiseAmplitude` refers to the noise amplitude computed.
+  //
+  // - The default implementation returns the median of `data` (sliced regarding
+  // `idxRange`) as `noiseOffset` and twice the rms regarding `noiseOffset` as
+  // `noiseAmplitude`
+  virtual bool computeNoise(const DoubleArray &data, const IndexRange &idxRange,
+                            NoiseInfo &NoiseInfo);
+
+  // Preprocess `data`
+  //
+  // - called just before the noise and amplitude calculation is performed
+  // - the default implementation does nothing
+  virtual void preprocessData(StreamState &streamState,
+                              Processing::Sensor *sensor,
+                              const DeconvolutionConfig &deconvolutionConfig,
+                              DoubleArray &data);
+
+  // Deconvolve `data` using the sensor response `resp`. Implies both
+  // integrating and deriving `data` in order to *convert* `data` into the
+  // desired unit.
+  //
+  // - `numberOfIntegrations` is an integer where a `data` is integrated if
+  // greater than zero and derived if less than zero
+  virtual bool deconvolveData(StreamState &streamState,
+                              Processing::Response *resp,
+                              const DeconvolutionConfig &config,
+                              int numberOfIntegrations, DoubleArray &data);
+
+  // Derives `data` `numberOfDerivations` times
+  virtual bool deriveData(StreamState &streamState, int numberOfDerivations,
+                          DoubleArray &data);
+
+  // Amplitude processor configuration
+  Config _config;
+};
+
+/* ------------------------------------------------------------------------- */
+// Base class for reducing amplitude processors
+//
+// - handles multiple streams which are reduced to a single amplitude
+// - TODO(damb): implement SNR facilities
+class ReducingAmplitudeProcessor : public AmplitudeProcessor {
+ public:
+  ReducingAmplitudeProcessor(const std::string &id);
+
+  // Sets the `filter` for all registered streams
+  //
+  // - configuring the `filter` can be done only before the first record was
+  // fed
+  void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
+
+  bool feed(const Record *record) override;
+
+  void reset() override;
+
+  // Registers a new stream with `streamConfig`
+  //
+  // - adding additional streams can be done only before the first record was
+  // fed
+  virtual void add(const Processing::Stream &streamConfig);
+
+ protected:
+  // Reduce `data` regarding an amplitude calculation where `noiseInfos`
+  // corresponds the individual noise offset. Return the reduced result.
+  virtual DoubleArrayCPtr reduceAmplitudeData(
+      const std::vector<DoubleArrayCPtr> &data,
+      const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) = 0;
+
+  // Compute an overall signal-to-noise ratio
+  virtual double reduceNoiseData(const std::vector<DoubleArrayCPtr> &data,
+                                 const std::vector<IndexRange> &idxRanges,
+                                 const std::vector<NoiseInfo> &noiseInfos) = 0;
+
+  StreamState &streamState(const Record *record) override;
+
+  void process(StreamState &streamState, const Record *record,
+               const DoubleArray &filteredData) override;
+
+  bool store(const Record *record) override;
+
+  bool fill(detect::StreamState &streamState, const Record *record,
+            DoubleArrayPtr &data) override;
+
+  bool processIfEnoughDataReceived(StreamState &streamState,
+                                   const Record *record,
+                                   const DoubleArray &filteredData) override;
+
+  bool enoughDataReceived(const StreamState &streamState) const override;
+
+  void setupStream(StreamState &streamState, const Record *record) override;
+
+  using Buffer = DoubleArray;
+
+  struct StreamItem {
+    // Stream configuration including sensor response etc.
+    Processing::Stream streamConfig;
+    // Current stream state
+    WaveformProcessor::StreamState streamState;
+    // Time window buffer
+    Buffer buffer;
+
+    DeconvolutionConfig deconvolutionConfig;
+
+    // Defines the needed samples (including to both `_initTime` (i.e. used for
+    // filter initialization) and the number of samples needed to enable
+    // noise/amplitude analysis.
+    size_t neededSamples{0};
+
+    // stream specific noise offset
+    boost::optional<double> noiseOffset;
+  };
+
+  using WaveformStreamId = std::string;
+  using StreamMap = std::unordered_map<WaveformStreamId, StreamItem>;
+  StreamMap _streams;
+
+ private:
+  // Keeps track if a record was fed
+  bool _recordFed{false};
+
+  // Pointer to the configured filter
+  std::unique_ptr<Filter> _filter;
+};
+
+}  // namespace detect
+}  // namespace Seiscomp
+
+#endif  // SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_

@@ -5,8 +5,7 @@
 #include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/timewindow.h>
 
-#include <boost/none.hpp>
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <cmath>
 #include <memory>
 #include <numeric>

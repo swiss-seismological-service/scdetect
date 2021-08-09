@@ -19,6 +19,8 @@ set(SOURCES_utils_cma
 )
 
 set(SOURCES_integration
+  ../amplitude/rms.cpp
+  ../amplitudeprocessor.cpp
   ../app.cpp
   ../builder.cpp
   ../config.cpp
@@ -41,6 +43,7 @@ set(SOURCES_integration
   ../processor.cpp
   ../resamplerstore.cpp
   ../stream.cpp
+  ../timewindowprocessor.cpp
   ../utils.cpp
   ../validators.cpp
   ../waveform.cpp

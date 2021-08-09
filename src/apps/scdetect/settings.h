@@ -18,6 +18,10 @@ const std::string kProcessorIdSep{"::"};
 // Filename for processor debug information
 const std::string kFnameDebugInfo{"debug_info.json"};
 
+// Separator for waveform stream identifiers (if multiple waveform stream
+// identifiers are concatenated)
+const std::string kWaveformStreamIdSep{","};
+
 // Template specific default configuration
 const std::string kMagnitudeType{"DETECT"};
 const std::string kStationMagnitudeType{kMagnitudeType};

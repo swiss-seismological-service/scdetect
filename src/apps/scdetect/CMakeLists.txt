@@ -2,6 +2,8 @@ set(DETECT_TARGET scdetect)
 
 set(
   DETECT_SOURCES
+    amplitude/rms.cpp
+    amplitudeprocessor.cpp
     app.cpp
     config.cpp
     datamodel/ddl.cpp
@@ -24,6 +26,7 @@ set(
     processor.cpp
     resamplerstore.cpp
     stream.cpp
+    timewindowprocessor.cpp
     utils.cpp
     validators.cpp
     waveform.cpp
