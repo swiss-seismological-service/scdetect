@@ -5,6 +5,10 @@
 #define SEISCOMP_COMPONENT DETECT
 #include <seiscomp/logging/log.h>
 
+// XXX(damb): Avoid unused macro overriding method definition from
+// <boost/property_tree/json_parser.hpp>
+#undef expect
+
 #define SCDETECT_LOG_DEBUG SEISCOMP_DEBUG
 #define SCDETECT_LOG_INFO SEISCOMP_INFO
 #define SCDETECT_LOG_WARNING SEISCOMP_WARNING
