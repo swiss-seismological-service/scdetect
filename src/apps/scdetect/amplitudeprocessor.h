@@ -63,13 +63,14 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   DEFINE_SMARTPOINTER(Amplitude);
   struct Amplitude : WaveformProcessor::Result {
     AmplitudeValue amplitude;
-    // The time window used for amplitude analysis
-    Core::TimeWindow amplitudeTimeWindow;
     // Waveform stream identifier(s) used for amplitude analysis
     std::string waveformStreamId;
 
+    // The time window used for amplitude analysis; used for duration
+    // magnitudes
+    Core::TimeWindow amplitudeTimeWindow;
     // Dominant period in samples (NOT seconds) w.r.t. the time window the
-    // amplitude was measured
+    // amplitude was measured; not used for so-called *duration magnitudes*
     boost::optional<double> dominantPeriod;
     // The signal-to-noise ratio w.r.t. the time window the amplitude was
     // measured
