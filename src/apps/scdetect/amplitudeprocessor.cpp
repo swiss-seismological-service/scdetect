@@ -56,6 +56,8 @@ Core::Time AmplitudeProcessor::signalEnd() const {
   return safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0);
 }
 
+const std::string &AmplitudeProcessor::unit() const { return _unit; }
+
 void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
 
 void AmplitudeProcessor::preprocessData(

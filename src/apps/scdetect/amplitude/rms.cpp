@@ -13,7 +13,9 @@ namespace detect {
 namespace amplitude {
 
 RMSAmplitude::RMSAmplitude(const std::string &id)
-    : ReducingAmplitudeProcessor{id} {}
+    : ReducingAmplitudeProcessor{id} {
+  _unit = "M/S";
+}
 
 void RMSAmplitude::preprocessData(
     StreamState &streamState, Processing::Sensor *sensor,
