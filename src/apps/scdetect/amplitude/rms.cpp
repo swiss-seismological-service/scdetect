@@ -14,6 +14,7 @@ namespace amplitude {
 
 RMSAmplitude::RMSAmplitude(const std::string &id)
     : ReducingAmplitudeProcessor{id} {
+  _type = "Mrms";
   _unit = "M/S";
 }
 
