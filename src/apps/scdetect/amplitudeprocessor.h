@@ -86,8 +86,9 @@ class AmplitudeProcessor : public TimeWindowProcessor {
     AmplitudeValue value;
     AmplitudeTime time;
 
-    // Waveform stream identifier the amplitude is referencing
-    boost::optional<std::string> waveformStreamId;
+    using WaveformStreamIds = std::vector<std::string>;
+    // Waveform stream identifiers the amplitude is referencing
+    boost::optional<WaveformStreamIds> waveformStreamIds;
     // Dominant period in samples (NOT seconds) w.r.t. the time window the
     // amplitude was measured; not used for so-called *duration magnitudes*
     boost::optional<double> dominantPeriod;
