@@ -92,8 +92,11 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   Detector _detector;
   boost::optional<Detector::Result> _detection;
 
+  // Reference to the *template* origin
   DataModel::OriginCPtr _origin;
+  // Reference to the *template* event
   DataModel::EventPtr _event;
+  // Reference to the *template* magnitude
   DataModel::MagnitudePtr _magnitude;
 
   PublishConfig _publishConfig;
