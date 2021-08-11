@@ -59,6 +59,19 @@ const std::string &AmplitudeProcessor::type() const { return _type; }
 
 const std::string &AmplitudeProcessor::unit() const { return _unit; }
 
+void AmplitudeProcessor::setEnvironment(
+    const DataModel::OriginCPtr &hypocenter,
+    const DataModel::SensorLocationCPtr &receiver,
+    const std::vector<DataModel::PickCPtr> &picks) {
+  _environment.hypocenter = hypocenter;
+  _environment.receiver = receiver;
+  _environment.picks = picks;
+}
+
+const AmplitudeProcessor::Environment &AmplitudeProcessor::environment() const {
+  return _environment;
+}
+
 void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
 
 void AmplitudeProcessor::preprocessData(

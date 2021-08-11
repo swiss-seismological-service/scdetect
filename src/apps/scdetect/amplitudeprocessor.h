@@ -7,6 +7,9 @@
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
 #include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/processing/response.h>
 #include <seiscomp/processing/stream.h>
 
@@ -60,6 +63,12 @@ class AmplitudeProcessor : public TimeWindowProcessor {
     boost::optional<double> upperUncertainty;
   };
 
+  struct Environment {
+    DataModel::OriginCPtr hypocenter;
+    DataModel::SensorLocationCPtr receiver;
+    std::vector<DataModel::PickCPtr> picks;
+  };
+
   DEFINE_SMARTPOINTER(Amplitude);
   struct Amplitude : WaveformProcessor::Result {
     AmplitudeValue amplitude;
@@ -89,6 +98,13 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   const std::string &type() const;
   // Returns the amplitude unit
   const std::string &unit() const;
+
+  // Sets the *environment* of the amplitude processor
+  virtual void setEnvironment(const DataModel::OriginCPtr &hypocenter,
+                              const DataModel::SensorLocationCPtr &receiver,
+                              const std::vector<DataModel::PickCPtr> &picks);
+  // Returns the `AmplitudeProcessor`'s environment
+  const Environment &environment() const;
 
   virtual void finalize(DataModel::Amplitude *amplitude) const;
 
@@ -146,6 +162,8 @@ class AmplitudeProcessor : public TimeWindowProcessor {
 
   // Amplitude processor configuration
   Config _config;
+  // Amplitude processor *environment*
+  Environment _environment;
 
   // The amplitude type
   std::string _type;
