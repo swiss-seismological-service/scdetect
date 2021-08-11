@@ -5,7 +5,6 @@
 #include <seiscomp/math/mean.h>
 
 #include <algorithm>
-#include <boost/algorithm/string/join.hpp>
 #include <cstddef>
 #include <stdexcept>
 
@@ -283,8 +282,6 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
     return;
   }
 
-  amplitude->waveformStreamId = boost::algorithm::join(
-      utils::map_keys(_streams), settings::kWaveformStreamIdSep);
   amplitude->amplitudeTimeWindow.setStartTime(signalStartTime);
   amplitude->amplitudeTimeWindow.setEndTime(signalEndTime);
 
