@@ -295,8 +295,9 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
     return;
   }
 
-  amplitude->amplitudeTimeWindow.setStartTime(signalStartTime);
-  amplitude->amplitudeTimeWindow.setEndTime(signalEndTime);
+  // time window based amplitude time
+  amplitude->time.reference = signalStartTime;
+  amplitude->time.end = static_cast<double>(signalEndTime - signalStartTime);
 
   setStatus(Status::kFinished, 100);
   emitResult(record, amplitude);

@@ -63,6 +63,16 @@ class AmplitudeProcessor : public TimeWindowProcessor {
     boost::optional<double> upperUncertainty;
   };
 
+  // Amplitude time / time window
+  struct AmplitudeTime {
+    // The amplitude reference time
+    Core::Time reference;
+    // Duration in seconds before `reference`. Must be positive.
+    double begin{0};
+    // Duration in seconds after `reference`. Must be positive.
+    double end{0};
+  };
+
   struct Environment {
     DataModel::OriginCPtr hypocenter;
     DataModel::SensorLocationCPtr receiver;
@@ -72,10 +82,8 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   DEFINE_SMARTPOINTER(Amplitude);
   struct Amplitude : WaveformProcessor::Result {
     AmplitudeValue amplitude;
+    AmplitudeTime time;
 
-    // The time window used for amplitude analysis; used for duration
-    // magnitudes
-    Core::TimeWindow amplitudeTimeWindow;
     // Waveform stream identifier the amplitude is referencing
     boost::optional<std::string> waveformStreamId;
     // Dominant period in samples (NOT seconds) w.r.t. the time window the
