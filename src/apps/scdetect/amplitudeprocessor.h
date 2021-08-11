@@ -27,6 +27,8 @@ namespace detect {
 // Base class for amplitude processors
 //
 // - alternative implementation to `Processing::AmplitudeProcessor`
+// - XXX(damb): currently, the concept of a *trigger* is not provided. Instead,
+// amplitudes are computed based on the `TimeWindowProcessor`'s time window.
 class AmplitudeProcessor : public TimeWindowProcessor {
  public:
   AmplitudeProcessor(const std::string &id);
