@@ -2,7 +2,6 @@
 #define SCDETECT_APPS_SCDETECT_SETTINGS_H_
 
 #include <string>
-#include <vector>
 
 namespace Seiscomp {
 namespace detect {
