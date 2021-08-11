@@ -69,6 +69,9 @@ Application::BaseException::BaseException()
 Application::ConfigError::ConfigError()
     : BaseException{"application configuration error"} {}
 
+Application::DuplicatePublicObjectId::DuplicatePublicObjectId()
+    : BaseException{"dubplicate public object identifier"} {}
+
 const char *Application::version() { return kVersion; }
 
 void Application::createCommandLineDescription() {
@@ -460,6 +463,10 @@ void Application::emitDetection(
 
   const auto createPick = [](const detector::Arrival &arrival) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
+    if (!ret) {
+      throw DuplicatePublicObjectId{"duplicate pick identifier"};
+    }
+
     ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
                                          arrival.pick.lowerUncertainty,
                                          arrival.pick.upperUncertainty});
@@ -478,6 +485,9 @@ void Application::emitDetection(
   const auto createArrival = [&ci](const detector::Arrival &arrival,
                                    const DataModel::PickCPtr &pick) {
     auto ret{utils::make_smart<DataModel::Arrival>()};
+    if (!ret) {
+      throw DuplicatePublicObjectId{"duplicate arrival identifier"};
+    }
     ret->setCreationInfo(ci);
     ret->setPickID(pick->publicID());
     ret->setPhase(arrival.phase);
@@ -492,18 +502,30 @@ void Application::emitDetection(
     for (const auto &resultPair : detection->templateResults) {
       const auto &res{resultPair.second};
 
-      const auto pick{createPick(res.arrival)};
-      const auto arrival{createArrival(res.arrival, pick)};
-      arrivalPicks.push_back({arrival, pick});
+      try {
+        const auto pick{createPick(res.arrival)};
+        const auto arrival{createArrival(res.arrival, pick)};
+        arrivalPicks.push_back({arrival, pick});
+      } catch (DuplicatePublicObjectId &e) {
+        SCDETECT_LOG_WARNING_PROCESSOR(processor, "Internal error: %s",
+                                       e.what());
+        continue;
+      }
     }
   }
 
   // create theoretical template arrivals
   if (detection->publishConfig.createTemplateArrivals) {
     for (const auto &a : detection->publishConfig.theoreticalTemplateArrivals) {
-      const auto pick{createPick(a)};
-      const auto arrival{createArrival(a, pick)};
-      arrivalPicks.push_back({arrival, pick});
+      try {
+        const auto pick{createPick(a)};
+        const auto arrival{createArrival(a, pick)};
+        arrivalPicks.push_back({arrival, pick});
+      } catch (DuplicatePublicObjectId &e) {
+        SCDETECT_LOG_WARNING_PROCESSOR(processor, "Internal error: %s",
+                                       e.what());
+        continue;
+      }
     }
   }
 

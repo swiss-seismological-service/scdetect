@@ -40,6 +40,12 @@ class Application : public Client::StreamApplication {
     ConfigError();
   };
 
+  class DuplicatePublicObjectId : public BaseException {
+   public:
+    using BaseException::BaseException;
+    DuplicatePublicObjectId();
+  };
+
   struct Config {
     Config();
 
