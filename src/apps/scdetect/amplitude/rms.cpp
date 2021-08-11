@@ -1,11 +1,17 @@
 #include "rms.h"
 
+#include <seiscomp/datamodel/comment.h>
+
 #include <algorithm>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/optional/optional.hpp>
 #include <cmath>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
+#include "../settings.h"
 #include "../utils.h"
 
 namespace Seiscomp {
@@ -99,6 +105,30 @@ void RMSAmplitude::computeAmplitude(const DoubleArray &data,
   amplitude.amplitude.value = *it;
 
   // TODO(damb): compute SNR
+}
+
+void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
+  std::vector<std::string> publicIds;
+  for (const auto &pick : _environment.picks) {
+    publicIds.push_back(pick->publicID());
+  }
+
+  // pick public identifiers
+  {
+    auto comment{utils::make_smart<DataModel::Comment>()};
+    comment->setId("scdetectRMSAmplitudePicks");
+    comment->setText(boost::algorithm::join(publicIds, settings::kPublicIdSep));
+    amplitude->add(comment.get());
+  }
+
+  // waveform stream identifiers
+  {
+    auto comment{utils::make_smart<DataModel::Comment>()};
+    comment->setId("scdetectRMSAmplitudeStreams");
+    comment->setText(boost::algorithm::join(utils::map_keys(_streams),
+                                            settings::kWaveformStreamIdSep));
+    amplitude->add(comment.get());
+  }
 }
 
 /* ------------------------------------------------------------------------- */

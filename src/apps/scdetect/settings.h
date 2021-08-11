@@ -19,8 +19,10 @@ const std::string kProcessorIdSep{"::"};
 const std::string kFnameDebugInfo{"debug_info.json"};
 
 // Separator for waveform stream identifiers (if multiple waveform stream
-// identifiers are concatenated)
-const std::string kWaveformStreamIdSep{","};
+// identifiers need to be concatenated)
+const std::string kWaveformStreamIdSep{"||"};
+// Separator for public identifiers (i.e. publicIDs)
+const std::string kPublicIdSep{"||"};
 
 // Template specific default configuration
 const std::string kMagnitudeType{"DETECT"};

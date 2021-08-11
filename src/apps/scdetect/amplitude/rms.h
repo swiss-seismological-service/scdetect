@@ -40,6 +40,12 @@ class RMSAmplitude : public ReducingAmplitudeProcessor {
 
   void computeAmplitude(const DoubleArray &data, const IndexRange &idxRange,
                         Amplitude &amplitude) override;
+
+  // Finalizes `amplitude`
+  //
+  // - attaches both pick and stream related identifiers by means of
+  // `DataModel::Comment`s
+  void finalize(DataModel::Amplitude *amplitude) const override;
 };
 
 RMSAmplitude::SignalUnit signalUnitFromString(const std::string &signalUnit);
