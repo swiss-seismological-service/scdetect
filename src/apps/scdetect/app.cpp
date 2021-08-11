@@ -500,8 +500,6 @@ void Application::emitDetection(
     }
   }
 
-  // TODO(damb): Attach StationMagnitudeContribution related stuff.
-
   logObject(_outputOrigins, Core::Time::GMT());
 
   if (connection() && !_config.noPublish) {
