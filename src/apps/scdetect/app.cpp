@@ -245,6 +245,8 @@ bool Application::initConfiguration() {
 bool Application::init() {
   if (!StreamApplication::init()) return false;
 
+  _outputOrigins = addOutputObjectLog("origin", primaryMessagingGroup());
+
   if (_config.playbackConfig.enabled) {
     SCDETECT_LOG_INFO("Playback mode enabled");
   }
@@ -273,8 +275,6 @@ bool Application::init() {
 
   // free memory after initialization
   EventStore::Instance().reset();
-
-  _outputOrigins = addOutputObjectLog("origin", primaryMessagingGroup());
 
   return true;
 }
