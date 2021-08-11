@@ -377,9 +377,10 @@ void Application::handleRecord(Record *rec) {
 void Application::emitDetection(
     const detector::DetectorWaveformProcessor *processor, const Record *record,
     const detector::DetectorWaveformProcessor::DetectionCPtr &detection) {
-  SCDETECT_LOG_DEBUG_TAGGED(
-      processor->id(), "Creating origin (time=%s, detected_arrivals=%d) ...",
+  SCDETECT_LOG_DEBUG_PROCESSOR(
+      processor, "Creating origin (time=%s, detected_arrivals=%d) ...",
       detection->time.iso().c_str(), detection->templateResults.size());
+
   Core::Time now{Core::Time::GMT()};
 
   DataModel::CreationInfo ci;
@@ -394,6 +395,12 @@ void Application::emitDetection(
   magnitude->setStationCount(detection->numStationsUsed);
 
   DataModel::OriginPtr origin{DataModel::Origin::Create()};
+  if (!origin) {
+    SCDETECT_LOG_WARNING_PROCESSOR(
+        processor, "Internal error: duplicate origin identifier");
+    return;
+  }
+
   {
     auto comment{utils::make_smart<DataModel::Comment>()};
     comment->setId("scdetectDetectorId");
@@ -503,7 +510,7 @@ void Application::emitDetection(
   logObject(_outputOrigins, Core::Time::GMT());
 
   if (connection() && !_config.noPublish) {
-    SCDETECT_LOG_DEBUG_TAGGED(processor->id(), "Sending event parameters ...");
+    SCDETECT_LOG_DEBUG_PROCESSOR(processor, "Sending event parameters ...");
 
     auto notifierMsg{utils::make_smart<DataModel::NotifierMessage>()};
 
@@ -537,8 +544,8 @@ void Application::emitDetection(
     }
 
     if (!connection()->send(notifierMsg.get())) {
-      SCDETECT_LOG_ERROR_TAGGED(processor->id(),
-                                "Sending of event parameters failed.");
+      SCDETECT_LOG_ERROR_PROCESSOR(processor,
+                                   "Sending of event parameters failed.");
     }
   }
 
