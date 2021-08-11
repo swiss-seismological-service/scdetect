@@ -76,17 +76,6 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
     throw builder::BaseException{msg};
   }
 
-  _product->_magnitude = EventStore::Instance().get<DataModel::Magnitude>(
-      _product->_event->preferredMagnitudeID());
-  if (!_product->_magnitude) {
-    auto msg{std::string{"No magnitude associated with event: "} +
-             _product->_event->publicID() + std::string{" (origin="} +
-             _originId + std::string{")"}};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::BaseException{msg};
-  }
-
   return *this;
 }
 

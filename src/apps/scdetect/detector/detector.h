@@ -68,7 +68,6 @@ class Detector : public detect::Processor {
   struct Result {
     Core::Time originTime;
     double fit;
-    boost::optional<double> magnitude;
 
     struct TemplateResult {
       Arrival arrival;

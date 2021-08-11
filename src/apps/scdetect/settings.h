@@ -23,10 +23,6 @@ const std::string kWaveformStreamIdSep{"||"};
 // Separator for public identifiers (i.e. publicIDs)
 const std::string kPublicIdSep{"||"};
 
-// Template specific default configuration
-const std::string kMagnitudeType{"DETECT"};
-const std::string kStationMagnitudeType{kMagnitudeType};
-
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};
 constexpr double kTemplateWaveformResampleMargin{2};

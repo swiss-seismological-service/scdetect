@@ -391,12 +391,6 @@ void Application::emitDetection(
   ci.setAuthor(author());
   ci.setCreationTime(now);
 
-  DataModel::MagnitudePtr magnitude{DataModel::Magnitude::Create()};
-  magnitude->setCreationInfo(ci);
-  magnitude->setType(settings::kMagnitudeType);
-  magnitude->setMagnitude(DataModel::RealQuantity(detection->magnitude));
-  magnitude->setStationCount(detection->numStationsUsed);
-
   DataModel::OriginPtr origin{DataModel::Origin::Create()};
   if (!origin) {
     SCDETECT_LOG_WARNING_PROCESSOR(
@@ -444,7 +438,6 @@ void Application::emitDetection(
                   : azGap;
 
     originQuality.setAzimuthalGap(azGap);
-    magnitude->setAzimuthalGap(azGap);
   }
 
   if (!distances.empty()) {
@@ -541,13 +534,6 @@ void Application::emitDetection(
         "EventParameters", DataModel::OP_ADD, origin.get())};
     notifierMsg->attach(notifier.get());
 
-    // magnitude
-    {
-      auto notifier{utils::make_smart<DataModel::Notifier>(
-          origin->publicID(), DataModel::OP_ADD, magnitude.get())};
-      notifierMsg->attach(notifier.get());
-    }
-
     for (auto &arrivalPick : arrivalPicks) {
       // pick
       {
@@ -573,8 +559,6 @@ void Application::emitDetection(
 
   if (_ep) {
     _ep->add(origin.get());
-
-    origin->add(magnitude.get());
 
     for (auto &arrivalPick : arrivalPicks) {
       origin->add(arrivalPick.arrival.get());

@@ -5,10 +5,9 @@
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/event.h>
-#include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -36,8 +35,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     double latitude{};
     double longitude{};
     double depth{};
-
-    double magnitude{};
 
     size_t numStationsAssociated{};
     size_t numStationsUsed{};
@@ -96,8 +93,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   DataModel::OriginCPtr _origin;
   // Reference to the *template* event
   DataModel::EventPtr _event;
-  // Reference to the *template* magnitude
-  DataModel::MagnitudePtr _magnitude;
 
   PublishConfig _publishConfig;
 };

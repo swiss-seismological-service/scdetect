@@ -132,9 +132,6 @@ void DetectorWaveformProcessor::prepareDetection(
   d->longitude = _origin->longitude().value();
   d->depth = _origin->depth().value();
 
-  const auto &mag{res.magnitude};
-  d->magnitude = mag.value_or(_magnitude->magnitude().value());
-
   d->numChannelsAssociated = res.numChannelsAssociated;
   d->numChannelsUsed = res.numChannelsUsed;
   d->numStationsAssociated = res.numStationsAssociated;
