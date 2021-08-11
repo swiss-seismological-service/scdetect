@@ -61,18 +61,6 @@
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
-      <magnitude publicID="Magnitude/20210119164429.603325.5957">
-        <magnitude>
-          <value>4.324859837</value>
-        </magnitude>
-        <type>DETECT</type>
-        <stationCount>1</stationCount>
-        <creationInfo>
-          <agencyID>TEST</agencyID>
-          <author>scdetect@seiscomp-fedora32</author>
-          <creationTime>2021-01-19T16:44:29.603262Z</creationTime>
-        </creationInfo>
-      </magnitude>
     </origin>
     <origin publicID="Origin/20210119164429.607131.5961">
       <time>
@@ -118,18 +106,6 @@
         <text>detector-02</text>
         <id>scdetectDetectorId</id>
       </comment>
-      <magnitude publicID="Magnitude/20210119164429.607092.5960">
-        <magnitude>
-          <value>4.324859837</value>
-        </magnitude>
-        <type>DETECT</type>
-        <stationCount>1</stationCount>
-        <creationInfo>
-          <agencyID>TEST</agencyID>
-          <author>scdetect@seiscomp-fedora32</author>
-          <creationTime>2021-01-19T16:44:29.607062Z</creationTime>
-        </creationInfo>
-      </magnitude>
     </origin>
   </EventParameters>
 </seiscomp>
