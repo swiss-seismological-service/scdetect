@@ -83,7 +83,7 @@ class AmplitudeProcessor : public TimeWindowProcessor {
 
   DEFINE_SMARTPOINTER(Amplitude);
   struct Amplitude : WaveformProcessor::Result {
-    AmplitudeValue amplitude;
+    AmplitudeValue value;
     AmplitudeTime time;
 
     // Waveform stream identifier the amplitude is referencing

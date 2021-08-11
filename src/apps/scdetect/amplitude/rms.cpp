@@ -102,7 +102,7 @@ void RMSAmplitude::computeAmplitude(const DoubleArray &data,
     setStatus(Status::kError, 0);
     return;
   }
-  amplitude.amplitude.value = *it;
+  amplitude.value.value = *it;
 
   // TODO(damb): compute SNR
 }
