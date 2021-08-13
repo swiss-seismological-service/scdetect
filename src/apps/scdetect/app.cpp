@@ -254,11 +254,26 @@ bool Application::init() {
     SCDETECT_LOG_INFO("Playback mode enabled");
   }
 
+  // load event related data
+  if (!loadEvents(_config.urlEventDb, query())) {
+    SCDETECT_LOG_ERROR("Failed to load events");
+    return false;
+  }
+
   // TODO(damb): Check if std::unique_ptr wouldn't be sufficient, here.
   WaveformHandlerIfacePtr waveformHandler{
       utils::make_smart<WaveformHandler>(recordStreamURL())};
   if (!_config.templatesNoCache) {
     // cache template waveforms on filesystem
+    _config.pathFilesystemCache =
+        boost::filesystem::path(_config.pathFilesystemCache).string();
+    if (!Util::pathExists(_config.pathFilesystemCache) &&
+        !Util::createPath(_config.pathFilesystemCache)) {
+      SCDETECT_LOG_ERROR("Failed to create path (waveform cache): %s",
+                         _config.pathFilesystemCache.c_str());
+      return false;
+    }
+
     waveformHandler = utils::make_smart<FileSystemCache>(
         waveformHandler, _config.pathFilesystemCache,
         settings::kCacheRawWaveforms);
@@ -268,13 +283,26 @@ bool Application::init() {
   waveformHandler =
       utils::make_smart<InMemoryCache>(waveformHandler, /*raw=*/false);
 
-  // load event related data
-  if (!loadEvents(_config.urlEventDb, query())) {
-    SCDETECT_LOG_ERROR("Failed to load events");
+  // load template related data
+  // TODO(damb):
+  //
+  // - Allow parsing template configuration from profiles
+  if (_config.pathTemplateJson.empty()) {
+    SCDETECT_LOG_ERROR("Missing template configuration file.");
     return false;
   }
 
-  if (!initDetectors(waveformHandler.get())) return false;
+  try {
+    std::ifstream ifs{_config.pathTemplateJson};
+    if (!initDetectors(ifs, waveformHandler.get())) {
+      return false;
+    }
+  } catch (std::ifstream::failure &e) {
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template configuration file (%s): %s",
+        _config.pathTemplateJson.c_str(), e.what());
+    return false;
+  }
 
   // free memory after initialization
   EventStore::Instance().reset();
@@ -619,23 +647,8 @@ bool Application::loadEvents(const std::string &eventDb,
   return loaded;
 }
 
-bool Application::initDetectors(WaveformHandlerIface *waveformHandler) {
-  _config.pathFilesystemCache =
-      boost::filesystem::path(_config.pathFilesystemCache).string();
-  if (!Util::pathExists(_config.pathFilesystemCache) &&
-      !Util::createPath(_config.pathFilesystemCache)) {
-    SCDETECT_LOG_ERROR("Failed to create path: %s",
-                       _config.pathFilesystemCache.c_str());
-    return false;
-  }
-
-  // load template related data
-  // TODO(damb): Allow parsing template configuration from profiles
-  if (_config.pathTemplateJson.empty()) {
-    SCDETECT_LOG_ERROR("Missing template configuration file.");
-    return false;
-  }
-
+bool Application::initDetectors(std::ifstream &ifs,
+                                WaveformHandlerIface *waveformHandler) {
   // initialize detectors
   struct TemplateProcessorIds {
     bool complete{false};
@@ -676,7 +689,6 @@ bool Application::initDetectors(WaveformHandlerIface *waveformHandler) {
     SCDETECT_LOG_INFO("Loading template configuration from %s",
                       _config.pathTemplateJson.c_str());
 
-    std::ifstream ifs{_config.pathTemplateJson};
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
 
@@ -760,11 +772,6 @@ bool Application::initDetectors(WaveformHandlerIface *waveformHandler) {
       }
     }
   } catch (boost::property_tree::json_parser::json_parser_error &e) {
-    SCDETECT_LOG_ERROR(
-        "Failed to parse JSON template configuration file (%s): %s",
-        _config.pathTemplateJson.c_str(), e.what());
-    return false;
-  } catch (std::ifstream::failure &e) {
     SCDETECT_LOG_ERROR(
         "Failed to parse JSON template configuration file (%s): %s",
         _config.pathTemplateJson.c_str(), e.what());

@@ -8,6 +8,7 @@
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/system/commandline.h>
 
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <memory>
@@ -128,7 +129,9 @@ class Application : public Client::StreamApplication {
 
  private:
   // Initialize detectors
-  bool initDetectors(WaveformHandlerIface *waveformHandler);
+  //
+  // - `ifs` references a template configuration input file stream
+  bool initDetectors(std::ifstream &ifs, WaveformHandlerIface *waveformHandler);
 
   Config _config;
   ObjectLog *_outputOrigins;
