@@ -274,7 +274,7 @@ bool Application::init() {
     return false;
   }
 
-  if (!initDetectors(waveformHandler)) return false;
+  if (!initDetectors(waveformHandler.get())) return false;
 
   // free memory after initialization
   EventStore::Instance().reset();
@@ -619,7 +619,7 @@ bool Application::loadEvents(const std::string &eventDb,
   return loaded;
 }
 
-bool Application::initDetectors(WaveformHandlerIfacePtr waveformHandler) {
+bool Application::initDetectors(WaveformHandlerIface *waveformHandler) {
   _config.pathFilesystemCache =
       boost::filesystem::path(_config.pathFilesystemCache).string();
   if (!Util::pathExists(_config.pathFilesystemCache) &&

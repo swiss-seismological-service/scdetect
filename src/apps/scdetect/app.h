@@ -127,7 +127,8 @@ class Application : public Client::StreamApplication {
                           DataModel::DatabaseQueryPtr db);
 
  private:
-  bool initDetectors(WaveformHandlerIfacePtr waveformHandler);
+  // Initialize detectors
+  bool initDetectors(WaveformHandlerIface *waveformHandler);
 
   Config _config;
   ObjectLog *_outputOrigins;

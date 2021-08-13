@@ -81,7 +81,7 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
 
 DetectorBuilder &DetectorBuilder::setStream(
     const std::string &streamId, const StreamConfig &streamConfig,
-    WaveformHandlerIfacePtr &wfHandler) {
+    WaveformHandlerIface *waveformHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   utils::WaveformStreamID templateWfStreamId{templateStreamId};
 
@@ -223,7 +223,7 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   GenericRecordCPtr templateWfChunk;
   try {
-    templateWfChunk = wfHandler->get(
+    templateWfChunk = waveformHandler->get(
         templateWfStreamId.netCode(), templateWfStreamId.staCode(),
         templateWfStreamId.locCode(), templateWfStreamId.chaCode(),
         templateWfChunkStartTime, templateWfChunkEndTime, templateWfConfig);
