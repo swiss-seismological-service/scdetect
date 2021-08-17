@@ -44,6 +44,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     PublishConfig publishConfig;
 
     using TemplateResult = Detector::Result::TemplateResult;
+    // Maps the waveform stream identifier with the template result
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
