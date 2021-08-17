@@ -55,6 +55,12 @@ struct Arrival {
 namespace std {
 
 template <>
+struct hash<Seiscomp::detect::detector::Pick> {
+  std::size_t operator()(
+      const Seiscomp::detect::detector::Pick &p) const noexcept;
+};
+
+template <>
 struct hash<Seiscomp::detect::detector::Arrival> {
   std::size_t operator()(
       const Seiscomp::detect::detector::Arrival &a) const noexcept;
