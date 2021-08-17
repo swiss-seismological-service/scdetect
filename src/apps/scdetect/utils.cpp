@@ -69,6 +69,10 @@ const std::string &WaveformStreamID::staCode() const { return _staCode; }
 const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
+std::string WaveformStreamID::sensorLocationId() const {
+  return _netCode + _delimiter + _staCode + _delimiter + _locCode;
+}
+
 bool WaveformStreamID::isValid() const {
   return !(_netCode.empty() || _staCode.empty() || _chaCode.empty());
 }
