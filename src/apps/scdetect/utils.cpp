@@ -69,7 +69,7 @@ const std::string &WaveformStreamID::staCode() const { return _staCode; }
 const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
-std::string WaveformStreamID::sensorLocationId() const {
+std::string WaveformStreamID::sensorLocationStreamId() const {
   return _netCode + _delimiter + _staCode + _delimiter + _locCode;
 }
 

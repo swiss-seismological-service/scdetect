@@ -146,7 +146,7 @@ class WaveformStreamID {
   // Returns the channel code
   const std::string &chaCode() const;
 
-  std::string sensorLocationId() const;
+  std::string sensorLocationStreamId() const;
 
   // Returns `true` if the waveform stream identifier is valid, `false`
   // otherwise.
