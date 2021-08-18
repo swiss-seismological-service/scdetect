@@ -72,6 +72,9 @@ class Detector : public detect::Processor {
     struct TemplateResult {
       Arrival arrival;
       SensorLocation sensorLocation;
+
+      // The template waveform duration
+      Core::TimeSpan templateWaveformDuration;
     };
 
     using TemplateResults =
