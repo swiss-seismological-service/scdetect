@@ -75,6 +75,10 @@ boost::optional<const Core::Time> TemplateWaveformProcessor::templateEndTime()
   return _crossCorrelation.templateEndTime();
 }
 
+Core::TimeSpan TemplateWaveformProcessor::templateDuration() const {
+  return Core::TimeSpan{_crossCorrelation.templateLength()};
+}
+
 WaveformProcessor::StreamState &TemplateWaveformProcessor::streamState(
     const Record *record) {
   return _streamState;

@@ -52,6 +52,8 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   boost::optional<const Core::Time> templateStartTime() const;
   // Returns the template waveform endtime
   boost::optional<const Core::Time> templateEndTime() const;
+  // Returns the template waveform duration
+  Core::TimeSpan templateDuration() const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
