@@ -196,6 +196,10 @@ void ReducingAmplitudeProcessor::add(const Processing::Stream &streamConfig) {
   }
 }
 
+std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
+  return utils::map_keys(_streams);
+}
+
 boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
     const std::vector<DoubleArrayCPtr> &data,
     const std::vector<IndexRange> &idxRanges,

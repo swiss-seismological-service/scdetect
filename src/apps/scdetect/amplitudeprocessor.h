@@ -209,6 +209,9 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
   // fed
   virtual void add(const Processing::Stream &streamConfig);
 
+  // Returns a the registered stream identifiers
+  std::vector<std::string> waveformStreamIds() const;
+
  protected:
   // Reduce `data` regarding an amplitude calculation where `noiseInfos`
   // corresponds the individual noise offset.
