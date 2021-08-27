@@ -233,7 +233,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
     data.push_back(&stream.buffer);
   }
 
-  // buffers are aligned regarding starttime
+  // buffers are already aligned regarding starttime
   const auto bufferBeginTime{
       _streams.cbegin()->second.streamState.dataTimeWindow.startTime()};
 
@@ -324,7 +324,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
     return false;
   }
 
-  // trim the first incoming stream records equally at the front to the same
+  // trim the first incoming stream records equally at the front to a common
   // start time
   if (isFirstStreamRecord &&
       record->timeWindow().startTime() < safetyTimeWindow().startTime()) {

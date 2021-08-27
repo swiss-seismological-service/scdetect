@@ -196,7 +196,7 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
   // Sets the `filter` for all registered streams
   //
   // - configuring the `filter` can be done only before the first record was
-  // fed
+  // fed or after resetting the processor
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 
   bool feed(const Record *record) override;
