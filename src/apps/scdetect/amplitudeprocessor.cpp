@@ -161,17 +161,26 @@ ReducingAmplitudeProcessor::ReducingAmplitudeProcessor(const std::string &id)
 
 void ReducingAmplitudeProcessor::setFilter(Filter *filter,
                                            const Core::TimeSpan &initTime) {
-  if (!_recordFed) {
+  if (!locked()) {
     _filter.reset(filter);
   }
 }
 
 bool ReducingAmplitudeProcessor::feed(const Record *record) {
-  if (!_recordFed) {
-    _recordFed = true;
+  if (_commonSamplingFrequency &&
+      *_commonSamplingFrequency != record->samplingFrequency()) {
+    // TODO(damb):
+    //
+    // - implement resampling; currently we assume a common sampling frequency
+    // for all streams
+    setStatus(Status::kInvalidSamplingFreq, record->samplingFrequency());
+    return false;
   }
 
-  return WaveformProcessor::feed(record);
+  if (WaveformProcessor::feed(record)) {
+    _commonSamplingFrequency = record->samplingFrequency();
+  }
+  return false;
 }
 
 void ReducingAmplitudeProcessor::reset() {
@@ -181,11 +190,11 @@ void ReducingAmplitudeProcessor::reset() {
     stream.buffer.clear();
   }
 
-  _recordFed = false;
+  _commonSamplingFrequency = boost::none;
 }
 
 void ReducingAmplitudeProcessor::add(const Processing::Stream &streamConfig) {
-  if (!_recordFed) {
+  if (!locked()) {
     DeconvolutionConfig deconvolutionConfig;
     deconvolutionConfig.enabled = true;
 
@@ -246,13 +255,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   const auto bufferEndTime{
       itEarliestEndTime->second.streamState.dataTimeWindow.endTime()};
 
-  // TODO(damb):
-  //
-  // - implement resampling; currently we assume a common sampling frequency
-  // for all streams
-  const auto commonSamplingFrequency{
-      _streams.cbegin()->second.streamState.samplingFrequency};
-
+  double commonSamplingFrequency{_commonSamplingFrequency.value_or(0)};
   // compute signal offsets
   Core::Time signalStartTime{bufferBeginTime};
   size_t signalBeginIdx{0};
@@ -278,6 +281,11 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   } else {
     signalEndIdx = computeSignalEndIdx(bufferEndTime);
     signalEndTime = bufferEndTime;
+  }
+
+  if (signalBeginIdx == signalEndIdx) {
+    setStatus(Status::kError, 0);
+    return;
   }
 
   // TODO(damb):
@@ -392,6 +400,10 @@ void ReducingAmplitudeProcessor::setupStream(StreamState &streamState,
 
   _streams.at(record->streamID()).neededSamples = static_cast<size_t>(
       safetyTimeWindow().length() * streamState.samplingFrequency + 0.5);
+}
+
+bool ReducingAmplitudeProcessor::locked() const {
+  return static_cast<bool>(_commonSamplingFrequency);
 }
 
 }  // namespace detect

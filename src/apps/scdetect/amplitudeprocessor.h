@@ -271,8 +271,10 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
   StreamMap _streams;
 
  private:
-  // Keeps track if a record was fed
-  bool _recordFed{false};
+  // Returns if streams may be added to the processor
+  bool locked() const;
+  // The common sampling frequency
+  boost::optional<double> _commonSamplingFrequency;
 
   // Pointer to the configured filter
   std::unique_ptr<Filter> _filter;
