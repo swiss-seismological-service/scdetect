@@ -7,8 +7,6 @@ TimeWindowProcessor::TimeWindowProcessor(const std::string &id)
     : WaveformProcessor{id} {}
 
 void TimeWindowProcessor::setTimeWindow(const Core::TimeWindow &tw) {
-  auto currentTimeWindow = _timeWindow;
-
   if (!tw) {
     _timeWindow = Core::TimeWindow{};
     _safetyTimeWindow = Core::TimeWindow{};
