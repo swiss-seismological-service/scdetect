@@ -1,6 +1,8 @@
 #ifndef SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPOLATE_IPP_
 #define SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPOLATE_IPP_
 
+#include <seiscomp/core/genericrecord.h>
+
 #include "../log.h"
 #include "../utils.h"
 
@@ -107,6 +109,27 @@ bool InterpolateGaps<TGapInterpolateable>::fillGap(
   }
 
   return false;
+}
+
+template <typename TGapInterpolateable>
+void InterpolateGaps<TGapInterpolateable>::setMinimumGapThreshold(
+    StreamState &streamState, const Record *record, const std::string &logTag) {
+  streamState.gapThreshold = _gapThreshold;
+
+  const Core::TimeSpan minThres{2 * 1.0 / record->samplingFrequency()};
+  if (minThres > streamState.gapThreshold) {
+    const auto &tag{logTag.empty() ? record->streamID() : logTag};
+    SCDETECT_LOG_WARNING_TAGGED(
+        tag,
+        "Gap threshold smaller than twice the sampling interval: %ld.%06lds > "
+        "%ld.%06lds. "
+        "Resetting gap threshold.",
+        minThres.seconds(), minThres.microseconds(),
+        streamState.gapThreshold.seconds(),
+        streamState.gapThreshold.microseconds());
+
+    streamState.gapThreshold = minThres;
+  }
 }
 
 }  // namespace detect

@@ -2,7 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPLATE_H_
 
 #include <seiscomp/core/datetime.h>
-#include <seiscomp/core/genericrecord.h>
+#include <seiscomp/core/record.h>
 #include <seiscomp/core/typedarray.h>
 
 #include "../stream.h"
@@ -41,6 +41,10 @@ class InterpolateGaps {
   virtual bool fillGap(StreamState &streamState, const Record *record,
                        const Core::TimeSpan &duration, double nextSample,
                        size_t missingSamples);
+
+  // Sets the `streamState` specific minimum gap length
+  void setMinimumGapThreshold(StreamState &streamState, const Record *record,
+                              const std::string &logTag = "");
 
   // The configured minimum gap length to detect a gap
   Core::TimeSpan _gapThreshold;

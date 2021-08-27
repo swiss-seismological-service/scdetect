@@ -197,21 +197,8 @@ void WaveformProcessor::setupStream(StreamState &streamState,
                                     const Record *record) {
   const auto &f{record->samplingFrequency()};
   streamState.samplingFrequency = f;
-  streamState.gapThreshold = _gapThreshold;
 
-  const Core::TimeSpan minThres{2 * 1.0 / f};
-  if (minThres > streamState.gapThreshold) {
-    SCDETECT_LOG_WARNING_PROCESSOR(
-        this,
-        "Gap threshold smaller than twice the sampling interval: %ld.%06lds > "
-        "%ld.%06lds. "
-        "Resetting gap threshold.",
-        minThres.seconds(), minThres.microseconds(),
-        streamState.gapThreshold.seconds(),
-        streamState.gapThreshold.microseconds());
-
-    streamState.gapThreshold = minThres;
-  }
+  setMinimumGapThreshold(streamState, record, id());
 
   streamState.neededSamples = static_cast<size_t>(_initTime * f + 0.5);
   if (streamState.filter) {
