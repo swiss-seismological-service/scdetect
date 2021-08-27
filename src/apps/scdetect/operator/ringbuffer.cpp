@@ -48,7 +48,7 @@ WaveformProcessor::Status RingBufferOperator::feed(const Record *record) {
 
   auto it{_streamConfigs.find(record->streamID())};
   if (it == _streamConfigs.end()) {
-    return WaveformProcessor::Status::kInvalidStream;
+    return WaveformProcessor::Status::kWaitingForData;
   }
 
   if (store(it->second.streamState, record)) {

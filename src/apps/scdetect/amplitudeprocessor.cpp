@@ -309,7 +309,6 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   try {
     isFirstStreamRecord = !static_cast<bool>(streamState(record).lastRecord);
   } catch (std::out_of_range &) {
-    setStatus(Status::kInvalidStream, 0);
     return false;
   }
 

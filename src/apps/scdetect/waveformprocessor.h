@@ -104,9 +104,6 @@ class WaveformProcessor : public Processor,
     kRayPathOutOfRegions,
     // Travel time table lookup failed
     kTravelTimeEstimateFailed,
-    // ----
-    // Processor cannot handle/process record with streamID
-    kInvalidStream
   };
 
   // Sets the filter to apply
