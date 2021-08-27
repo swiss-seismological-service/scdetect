@@ -20,10 +20,6 @@ void DetectorWaveformProcessor::setFilter(Filter *filter,
   // XXX(damb): `DetectorWaveformProcessor` doesn't implement filter facilities
 }
 
-const Core::TimeWindow &DetectorWaveformProcessor::processed() const {
-  return _detector.processed();
-}
-
 void DetectorWaveformProcessor::reset() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
 

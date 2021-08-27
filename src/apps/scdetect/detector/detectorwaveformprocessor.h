@@ -57,8 +57,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 
-  const Core::TimeWindow &processed() const override;
-
   void reset() override;
   void terminate() override;
 

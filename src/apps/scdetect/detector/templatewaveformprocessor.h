@@ -41,7 +41,8 @@ class TemplateWaveformProcessor : public WaveformProcessor {
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime = 0.0) override;
 
-  const Core::TimeWindow &processed() const override;
+  // Returns the time window processed and correlated
+  const Core::TimeWindow &processed() const;
 
   void reset() override;
 

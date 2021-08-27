@@ -137,9 +137,6 @@ class WaveformProcessor : public Processor,
   // `Status::kInProgress`.
   virtual bool finished() const;
 
-  // Returns the time window processed and correlated
-  virtual const Core::TimeWindow &processed() const = 0;
-
   // Feed data to the processor (implies a call to the process() method).
   virtual bool feed(const Record *record);
 
