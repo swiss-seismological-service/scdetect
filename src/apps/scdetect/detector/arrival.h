@@ -68,4 +68,6 @@ struct hash<Seiscomp::detect::detector::Arrival> {
 
 }  // namespace std
 
+#include "arrival.ipp"
+
 #endif  // SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
