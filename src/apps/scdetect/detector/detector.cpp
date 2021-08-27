@@ -185,8 +185,8 @@ void Detector::process(const std::string &waveformStreamIdHint) {
     // XXX(damb): A side-note on trigger facilities when it comes to the
     // linker:
     // - The linker processes only those template results which are fed to the
-    // linker i.e. the linker is not aware of the the fact if a template
-    // processor is enabled or disabled, respectively.
+    // linker i.e. the linker is not aware of the the fact whether a template
+    // waveform processor is enabled or disabled, respectively.
     // - Thus, the detector processor can force the linker into a *triggered
     // state* by only feeding data to those processors which are part of the
     // triggering event.
