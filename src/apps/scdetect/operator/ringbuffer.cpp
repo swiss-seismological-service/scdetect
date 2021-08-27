@@ -151,13 +151,16 @@ void RingBufferOperator::setupStream(StreamState &streamState,
   streamState.samplingFrequency = f;
   streamState.gapThreshold = _gapThreshold;
 
-  const auto minThres{2 * 1.0 / f};
+  const Core::TimeSpan minThres{2 * 1.0 / f};
   if (minThres > streamState.gapThreshold) {
     SCDETECT_LOG_WARNING_PROCESSOR(
         _processor,
-        "Gap threshold smaller than twice the sampling interval: %fs > %fs. "
+        "Gap threshold smaller than twice the sampling interval: %ld.%06lds > "
+        "%ld.%06lds. "
         "Resetting gap threshold.",
-        minThres, static_cast<double>(streamState.gapThreshold));
+        minThres.seconds(), minThres.microseconds(),
+        streamState.gapThreshold.seconds(),
+        streamState.gapThreshold.microseconds());
 
     streamState.gapThreshold = minThres;
   }
