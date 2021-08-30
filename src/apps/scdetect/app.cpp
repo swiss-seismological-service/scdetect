@@ -71,7 +71,7 @@ Application::ConfigError::ConfigError()
     : BaseException{"application configuration error"} {}
 
 Application::DuplicatePublicObjectId::DuplicatePublicObjectId()
-    : BaseException{"dubplicate public object identifier"} {}
+    : BaseException{"duplicate public object identifier"} {}
 
 const char *Application::version() { return kVersion; }
 
