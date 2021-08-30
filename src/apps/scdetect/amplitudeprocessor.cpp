@@ -163,6 +163,9 @@ void ReducingAmplitudeProcessor::setFilter(Filter *filter,
                                            const Core::TimeSpan &initTime) {
   if (!locked()) {
     _filter.reset(filter);
+    _initTime = initTime;
+
+    setTimeWindow(timeWindow());
   }
 }
 
