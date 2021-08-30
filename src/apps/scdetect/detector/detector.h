@@ -37,9 +37,9 @@ class Detector : public detect::Processor {
            const DataModel::OriginCPtr &origin);
   virtual ~Detector();
 
-  class BaseException : public Exception {
+  class BaseException : public Processor::BaseException {
    public:
-    using Exception::Exception;
+    using Processor::BaseException::BaseException;
     BaseException();
   };
 

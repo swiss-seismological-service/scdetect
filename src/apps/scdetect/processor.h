@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "exception.h"
 #include "log.h"
 
 namespace Seiscomp {
@@ -26,6 +27,13 @@ class Processor {
  public:
   Processor(const std::string &id);
   virtual ~Processor();
+
+  // Base class for all processor related exceptions
+  class BaseException : public Exception {
+   public:
+    using Exception::Exception;
+    BaseException();
+  };
 
   // Returns the processor's identifier
   const std::string &id() const;
