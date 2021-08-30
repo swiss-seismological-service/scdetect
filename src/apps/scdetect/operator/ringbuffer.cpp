@@ -150,7 +150,9 @@ void RingBufferOperator::setupStream(StreamState &streamState,
   const auto &f{record->samplingFrequency()};
   streamState.samplingFrequency = f;
 
-  setMinimumGapThreshold(streamState, record, _processor->id());
+  if (gapInterpolation()) {
+    setMinimumGapThreshold(streamState, record, _processor->id());
+  }
 
   // update the received data timewindow
   streamState.dataTimeWindow = record->timeWindow();

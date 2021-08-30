@@ -198,7 +198,9 @@ void WaveformProcessor::setupStream(StreamState &streamState,
   const auto &f{record->samplingFrequency()};
   streamState.samplingFrequency = f;
 
-  setMinimumGapThreshold(streamState, record, id());
+  if (gapInterpolation()) {
+    setMinimumGapThreshold(streamState, record, id());
+  }
 
   streamState.neededSamples = static_cast<size_t>(_initTime * f + 0.5);
   if (streamState.filter) {
