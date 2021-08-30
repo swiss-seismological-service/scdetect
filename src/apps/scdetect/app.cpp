@@ -563,7 +563,8 @@ void Application::emitDetection(
   logObject(_outputOrigins, Core::Time::GMT());
 
   if (connection() && !_config.noPublish) {
-    SCDETECT_LOG_DEBUG_PROCESSOR(processor, "Sending event parameters ...");
+    SCDETECT_LOG_DEBUG_PROCESSOR(processor,
+                                 "Sending event parameters (detection) ...");
 
     auto notifierMsg{utils::make_smart<DataModel::NotifierMessage>()};
 
@@ -590,8 +591,8 @@ void Application::emitDetection(
     }
 
     if (!connection()->send(notifierMsg.get())) {
-      SCDETECT_LOG_ERROR_PROCESSOR(processor,
-                                   "Sending of event parameters failed.");
+      SCDETECT_LOG_ERROR_PROCESSOR(
+          processor, "Sending of event parameters (detection) failed.");
     }
   }
 
