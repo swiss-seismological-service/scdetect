@@ -122,8 +122,7 @@ void InterpolateGaps<TGapInterpolateable>::setMinimumGapThreshold(
     SCDETECT_LOG_WARNING_TAGGED(
         tag,
         "Gap threshold smaller than twice the sampling interval: %ld.%06lds > "
-        "%ld.%06lds. "
-        "Resetting gap threshold.",
+        "%ld.%06lds. Resetting gap threshold.",
         minThres.seconds(), minThres.microseconds(),
         streamState.gapThreshold.seconds(),
         streamState.gapThreshold.microseconds());
