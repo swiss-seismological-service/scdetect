@@ -2,6 +2,7 @@
 
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
+#include <seiscomp/core/strings.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/magnitude.h>
@@ -525,6 +526,15 @@ void Application::emitDetection(
 
       try {
         const auto pick{createPick(res.arrival)};
+        {
+          auto comment{utils::make_smart<DataModel::Comment>()};
+          comment->setId(settings::kTemplateWaveformDurationPickCommentId);
+          comment->setText(
+              Core::stringify("%lu.%lu", res.templateWaveformDuration.seconds(),
+                              res.templateWaveformDuration.microseconds()));
+          pick->add(comment.get());
+        }
+
         const auto arrival{createArrival(res.arrival, pick)};
         arrivalPicks.push_back({arrival, pick});
       } catch (DuplicatePublicObjectId &e) {
