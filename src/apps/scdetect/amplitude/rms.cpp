@@ -1,5 +1,7 @@
 #include "rms.h"
 
+#include <seiscomp/core/datetime.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/comment.h>
 
 #include <algorithm>
@@ -22,6 +24,45 @@ RMSAmplitude::RMSAmplitude(const std::string &id)
     : ReducingAmplitudeProcessor{id} {
   _type = "Mrms";
   _unit = "M/S";
+}
+
+void RMSAmplitude::computeTimeWindow() {
+  if (_environment.picks.empty()) {
+    throw Processor::BaseException(
+        "failed to compute time window: missing picks");
+  }
+
+  std::vector<Core::Time> pickTimes;
+  Core::TimeSpan maxTemplateWaveformDuration;
+  for (const auto &pick : _environment.picks) {
+    pickTimes.push_back(pick->time().value());
+    for (int i = 0; i < pick->commentCount(); ++i) {
+      const auto comment{pick->comment(i)};
+      if (comment &&
+          comment->id() == settings::kTemplateWaveformDurationPickCommentId) {
+        try {
+          auto converted{std::stod(comment->text())};
+          if (converted > maxTemplateWaveformDuration) {
+            maxTemplateWaveformDuration = converted;
+          }
+        } catch (std::invalid_argument &) {
+          continue;
+        } catch (std::out_of_range &) {
+          continue;
+        }
+      }
+    }
+  }
+
+  if (!maxTemplateWaveformDuration) {
+    throw Processor::BaseException{"failed to determine required time window"};
+  }
+
+  auto bounds{std::minmax_element(std::begin(pickTimes), std::end(pickTimes))};
+  // XXX(damb): Use twice the template waveform duration as time window for
+  // amplitude calculation plus the time span included by all available picks.
+  setTimeWindow(Core::TimeWindow{*bounds.first - maxTemplateWaveformDuration,
+                                 *bounds.second + maxTemplateWaveformDuration});
 }
 
 void RMSAmplitude::preprocessData(

@@ -28,6 +28,9 @@ class TimeWindowProcessor : public WaveformProcessor {
   void setMargin(const Core::TimeSpan &margin);
   const Core::TimeSpan &margin() const;
 
+  // Allows derived classes to compute the required time window
+  virtual void computeTimeWindow();
+
  protected:
   bool store(const Record *record) override;
 

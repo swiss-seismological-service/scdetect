@@ -42,6 +42,10 @@ const Core::TimeSpan &TimeWindowProcessor::margin() const {
   return _safetyMargin;
 }
 
+void TimeWindowProcessor::computeTimeWindow() {
+  throw Processor::BaseException{"failed to compute time window"};
+}
+
 bool TimeWindowProcessor::store(const Record *record) {
   if (!record->timeWindow().overlaps(_safetyTimeWindow)) {
     if (status() > Status::kInProgress) {

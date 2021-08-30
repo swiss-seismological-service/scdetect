@@ -23,6 +23,9 @@ const std::string kWaveformStreamIdSep{"||"};
 // Separator for public identifiers (i.e. publicIDs)
 const std::string kPublicIdSep{"||"};
 
+const std::string kTemplateWaveformDurationPickCommentId{
+    "scdetectTemplateWaveformDuration"};
+
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};
 constexpr double kTemplateWaveformResampleMargin{2};

@@ -23,6 +23,9 @@ class RMSAmplitude : public ReducingAmplitudeProcessor {
     kMeterPerSecondsSquared,
   };
 
+  // Computes time time window based on environment picks
+  void computeTimeWindow() override;
+
  protected:
   // Preprocess `data` by means of deconvolution
   void preprocessData(StreamState &streamState, Processing::Sensor *sensor,
