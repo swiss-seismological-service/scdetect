@@ -47,6 +47,10 @@ void DetectorWaveformProcessor::terminate() {
   WaveformProcessor::terminate();
 }
 
+const PublishConfig &DetectorWaveformProcessor::publishConfig() const {
+  return _publishConfig;
+}
+
 WaveformProcessor::StreamState &DetectorWaveformProcessor::streamState(
     const Record *record) {
   return _streamStates.at(record->streamID());

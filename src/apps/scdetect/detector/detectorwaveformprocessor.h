@@ -60,6 +60,8 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   void reset() override;
   void terminate() override;
 
+  const PublishConfig &publishConfig() const;
+
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
 
