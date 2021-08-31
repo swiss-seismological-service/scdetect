@@ -30,7 +30,7 @@ Detector::Detector(const detect::Processor *detector,
 Detector::~Detector() {}
 
 Detector::BaseException::BaseException()
-    : Processor::BaseException{"base processing strategy exception"} {}
+    : Processor::BaseException{"base detector exception"} {}
 
 Detector::ProcessingError::ProcessingError()
     : BaseException{"error while processing"} {}
