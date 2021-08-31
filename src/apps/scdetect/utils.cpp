@@ -26,6 +26,12 @@ void replaceEscapedXMLFilterIdChars(std::string &str) {
 }
 
 /* ------------------------------------------------------------------------- */
+std::string to_string(const WaveformStreamID &waveformStreamId) {
+  std::ostringstream oss;
+  oss << waveformStreamId;
+  return oss.str();
+}
+
 const std::string WaveformStreamID::_delimiter{"."};
 
 WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {

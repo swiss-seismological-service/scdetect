@@ -130,6 +130,9 @@ bool lessThan(TFloatingPoint lhs, TFloatingPoint rhs, TFloatingPoint epsilon) {
 }
 
 /* ------------------------------------------------------------------------- */
+class WaveformStreamID;
+std::string to_string(const WaveformStreamID &waveformStreamId);
+
 class WaveformStreamID {
  public:
   explicit WaveformStreamID(const std::string &netStaLocCha);
