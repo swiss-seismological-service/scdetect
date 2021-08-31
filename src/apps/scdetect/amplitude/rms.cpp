@@ -36,7 +36,7 @@ void RMSAmplitude::computeTimeWindow() {
   Core::TimeSpan maxTemplateWaveformDuration;
   for (const auto &pick : _environment.picks) {
     pickTimes.push_back(pick->time().value());
-    for (int i = 0; i < pick->commentCount(); ++i) {
+    for (size_t i = 0; i < pick->commentCount(); ++i) {
       const auto comment{pick->comment(i)};
       if (comment &&
           comment->id() == settings::kTemplateWaveformDurationPickCommentId) {
