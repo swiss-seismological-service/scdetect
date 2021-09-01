@@ -181,7 +181,10 @@ bool ReducingAmplitudeProcessor::feed(const Record *record) {
   }
 
   if (WaveformProcessor::feed(record)) {
-    _commonSamplingFrequency = record->samplingFrequency();
+    if (!_commonSamplingFrequency) {
+      _commonSamplingFrequency = record->samplingFrequency();
+    }
+    return true;
   }
   return false;
 }
@@ -236,8 +239,11 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
                                          const DoubleArray &filteredData) {
   // TODO(damb):
   //
-  // - call compute()
   // - compute noise from reduced data;
+
+  if (!_commonSamplingFrequency) {
+    return;
+  }
 
   setStatus(Status::kInProgress, 1);
 
@@ -265,7 +271,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   const auto bufferEndTime{
       itEarliestEndTime->second.streamState.dataTimeWindow.endTime()};
 
-  double commonSamplingFrequency{_commonSamplingFrequency.value_or(0)};
+  const double commonSamplingFrequency{*_commonSamplingFrequency};
   // compute signal offsets
   Core::Time signalStartTime{bufferBeginTime};
   size_t signalBeginIdx{0};
