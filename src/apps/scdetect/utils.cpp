@@ -1,6 +1,8 @@
 #include "utils.h"
 
+#include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/strings.h>
+#include <seiscomp/datamodel/stream.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -87,6 +89,112 @@ std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
   os << id._netCode << id._delimiter << id._staCode << id._delimiter
      << id._locCode << id._delimiter << id._chaCode;
   return os;
+}
+
+/* ------------------------------------------------------------------------- */
+ThreeComponents::ThreeComponents(Client::Inventory *inventory,
+                                 const std::string &netCode,
+                                 const std::string &staCode,
+                                 const std::string &locCode,
+                                 const std::string &chaCode,
+                                 const Core::Time &time)
+    : _networkCode{netCode}, _stationCode{staCode}, _locationCode{locCode} {
+  try {
+    _threeComponents =
+        inventory->getThreeComponents(netCode, staCode, locCode, chaCode, time);
+  } catch (Core::ValueException &e) {
+    throw Exception{"failed to load components: " + std::string{e.what()}};
+  }
+
+  if (size() != 3) {
+    reset();
+    throw Exception{"failed to load components: missing components"};
+  }
+}
+
+void ThreeComponents::reset() {
+  for (int i = 0; i < 3; ++i) {
+    _threeComponents.comps[i] = nullptr;
+  }
+};
+
+size_t ThreeComponents::size() const {
+  size_t retval{3};
+  for (int i = 0; i < 3; ++i) {
+    if (!_threeComponents.comps[i]) {
+      --retval;
+    }
+  }
+  return retval;
+}
+
+std::vector<std::string> ThreeComponents::streamCodes() const {
+  std::vector<std::string> retval;
+  for (int i = 0; i < 3; ++i) {
+    if (_threeComponents.comps[i]) {
+      retval.push_back(_threeComponents.comps[i]->code());
+    }
+  }
+  return retval;
+}
+
+std::string ThreeComponents::sensorLocationStreamId() const {
+  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
+         _locationCode;
+}
+
+std::vector<utils::WaveformStreamID> ThreeComponents::waveformStreamIds()
+    const {
+  std::vector<utils::WaveformStreamID> retval;
+  for (const auto &streamCode : streamCodes()) {
+    retval.push_back(utils::WaveformStreamID{_networkCode, _stationCode,
+                                             _locationCode, streamCode});
+  }
+  return retval;
+}
+
+bool operator==(const ThreeComponents &lhs, const ThreeComponents &rhs) {
+  if (lhs._networkCode != rhs._networkCode) {
+    return false;
+  }
+  if (lhs._stationCode != rhs._stationCode) {
+    return false;
+  }
+  if (lhs._locationCode != rhs._locationCode) {
+    return false;
+  }
+  if ((lhs._threeComponents.vertical() && !rhs._threeComponents.vertical()) ||
+      (!lhs._threeComponents.vertical() && rhs._threeComponents.vertical()) ||
+      (lhs._threeComponents.vertical() && rhs._threeComponents.vertical() &&
+       lhs._threeComponents.vertical() != rhs._threeComponents.vertical())) {
+    return false;
+  }
+  if ((lhs._threeComponents.firstHorizontal() &&
+       !rhs._threeComponents.firstHorizontal()) ||
+      (!lhs._threeComponents.firstHorizontal() &&
+       rhs._threeComponents.firstHorizontal()) ||
+      (lhs._threeComponents.firstHorizontal() &&
+       rhs._threeComponents.firstHorizontal() &&
+       lhs._threeComponents.firstHorizontal() !=
+           rhs._threeComponents.firstHorizontal())) {
+    return false;
+  }
+  if ((lhs._threeComponents.secondHorizontal() &&
+       !rhs._threeComponents.secondHorizontal()) ||
+      (!lhs._threeComponents.secondHorizontal() &&
+       rhs._threeComponents.secondHorizontal()) ||
+      (lhs._threeComponents.secondHorizontal() &&
+       rhs._threeComponents.secondHorizontal() &&
+       lhs._threeComponents.secondHorizontal() !=
+           rhs._threeComponents.secondHorizontal())) {
+    return false;
+  }
+
+  return true;
+}
+
+bool operator!=(const ThreeComponents &lhs, const ThreeComponents &rhs) {
+  return !(lhs == rhs);
 }
 
 }  // namespace utils

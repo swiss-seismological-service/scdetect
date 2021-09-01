@@ -134,6 +134,9 @@ struct PublishConfig {
   // Indicates whether to append *theoretical template arrivals* to declared
   // origins
   bool createTemplateArrivals{false};
+  // Indicates whether to both compute and create amplitudes for a declared
+  // origin
+  bool createAmplitudes{false};
 
   // The origin method identifier
   std::string originMethodId{"DETECT"};

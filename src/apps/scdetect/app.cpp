@@ -3,17 +3,20 @@
 #include <seiscomp/core/arrayfactory.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/strings.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/notifier.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/phase.h>
-#include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/realquantity.h>
 #include <seiscomp/datamodel/timequantity.h>
+#include <seiscomp/datamodel/timewindow.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
+#include <seiscomp/processing/stream.h>
 #include <seiscomp/utils/files.h>
 
 #include <algorithm>
@@ -23,10 +26,14 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <ios>
+#include <memory>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "amplitude/rms.h"
+#include "amplitudeprocessor.h"
 #include "builder.h"
 #include "config.h"
 #include "detector/arrival.h"
@@ -250,6 +257,8 @@ bool Application::init() {
   if (!StreamApplication::init()) return false;
 
   _outputOrigins = addOutputObjectLog("origin", primaryMessagingGroup());
+  _outputAmplitudes =
+      addOutputObjectLog("amplitude", _config.amplitudeMessagingGroup);
 
   if (_config.playbackConfig.enabled) {
     SCDETECT_LOG_INFO("Playback mode enabled");
@@ -320,25 +329,74 @@ bool Application::run() {
     return true;
   }
 
-  if (commandline().hasOption("ep")) {
-    _ep = utils::make_smart<DataModel::EventParameters>();
-  }
+  if (!_detectors.empty()) {
+    if (commandline().hasOption("ep")) {
+      _ep = utils::make_smart<DataModel::EventParameters>();
+    }
 
-  // subscribe to streams
-  for (const auto &detectorPair : _detectors) {
-    utils::WaveformStreamID wfStreamId{detectorPair.first};
+    SCDETECT_LOG_DEBUG(
+        "Subscribing to streams required for detection processing");
+    std::vector<utils::ThreeComponents> uniqueThreeComponents;
+    Core::Time amplitudeStreamsSubscriptionTime{
+        _config.playbackConfig.startTimeStr.empty()
+            ? Core::Time::GMT()
+            : _config.playbackConfig.startTime};
+    for (const auto &detectorPair : _detectors) {
+      utils::WaveformStreamID waveformStreamId{detectorPair.first};
 
-    recordStream()->addStream(wfStreamId.netCode(), wfStreamId.staCode(),
-                              wfStreamId.locCode(), wfStreamId.chaCode());
-  }
+      recordStream()->addStream(
+          waveformStreamId.netCode(), waveformStreamId.staCode(),
+          waveformStreamId.locCode(), waveformStreamId.chaCode());
 
-  if (!_config.playbackConfig.startTimeStr.empty()) {
-    recordStream()->setStartTime(_config.playbackConfig.startTime);
-    _config.playbackConfig.enabled = true;
-  }
-  if (!_config.playbackConfig.endTimeStr.empty()) {
-    recordStream()->setEndTime(_config.playbackConfig.endTime);
-    _config.playbackConfig.enabled = true;
+      if (detectorPair.second->publishConfig().createAmplitudes) {
+        try {
+          utils::ThreeComponents lhs{
+              Client::Inventory::Instance(), waveformStreamId.netCode(),
+              waveformStreamId.staCode(),    waveformStreamId.locCode(),
+              waveformStreamId.chaCode(),    amplitudeStreamsSubscriptionTime};
+
+          if (std::find_if(
+                  std::begin(uniqueThreeComponents),
+                  std::end(uniqueThreeComponents),
+                  [&lhs](
+                      const decltype(uniqueThreeComponents)::value_type &rhs) {
+                    return lhs == rhs;
+                  }) == uniqueThreeComponents.end()) {
+            uniqueThreeComponents.push_back(lhs);
+          }
+        } catch (Exception &e) {
+          SCDETECT_LOG_WARNING(
+              "%s.%s.%s.%s: %s. Skipping amplitude calculation.",
+              waveformStreamId.netCode().c_str(),
+              waveformStreamId.staCode().c_str(),
+              waveformStreamId.locCode().c_str(),
+              waveformStreamId.chaCode().c_str(), e.what());
+          continue;
+        }
+      }
+    }
+
+    if (!uniqueThreeComponents.empty()) {
+      SCDETECT_LOG_DEBUG(
+          "Subscribing to streams required for amplitude calculation");
+      for (const auto &threeComponents : uniqueThreeComponents) {
+        for (const auto &waveformStreamId :
+             threeComponents.waveformStreamIds()) {
+          recordStream()->addStream(
+              waveformStreamId.netCode(), waveformStreamId.staCode(),
+              waveformStreamId.locCode(), waveformStreamId.chaCode());
+        }
+      }
+    }
+
+    if (!_config.playbackConfig.startTimeStr.empty()) {
+      recordStream()->setStartTime(_config.playbackConfig.startTime);
+      _config.playbackConfig.enabled = true;
+    }
+    if (!_config.playbackConfig.endTimeStr.empty()) {
+      recordStream()->setEndTime(_config.playbackConfig.endTime);
+      _config.playbackConfig.enabled = true;
+    }
   }
 
   return StreamApplication::run();
@@ -377,8 +435,10 @@ void Application::done() {
 void Application::handleRecord(Record *rec) {
   if (!rec->data()) return;
 
-  auto range{_detectors.equal_range(std::string{rec->streamID()})};
-  for (auto it = range.first; it != range.second; ++it) {
+  if (!_waveformBuffer.feed(rec)) return;
+
+  auto detectorRange{_detectors.equal_range(std::string{rec->streamID()})};
+  for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
     auto &detector{it->second};
     if (detector->enabled()) {
       if (!detector->feed(rec)) {
@@ -403,6 +463,52 @@ void Application::handleRecord(Record *rec) {
           "%s: Skip feeding record into detector (id=%s). Reason: Disabled.",
           it->first.c_str(), detector->id().c_str());
     }
+  }
+
+  _registrationBlocked = true;
+
+  auto amplitudeProcessorRange{
+      _amplitudeProcessors.equal_range(rec->streamID())};
+  for (auto it = amplitudeProcessorRange.first;
+       it != amplitudeProcessorRange.second; ++it) {
+    const auto &proc{it->second};
+    // the amplitude processor must not be already on the removal list
+    if (std::find_if(
+            std::begin(_amplitudeProcessorRemovalQueue),
+            std::end(_amplitudeProcessorRemovalQueue),
+            [&proc](const decltype(_amplitudeProcessorRemovalQueue)::value_type
+                        &item) { return item.amplitudeProcessor == proc; }) !=
+        _amplitudeProcessorRemovalQueue.end()) {
+      continue;
+    }
+
+    // schedule the amplitude processor for deletion when finished
+    if (it->second->finished()) {
+      removeAmplitudeProcessor(it->second);
+    } else {
+      it->second->feed(rec);
+      if (it->second->finished()) {
+        removeAmplitudeProcessor(it->second);
+      }
+    }
+  }
+
+  _registrationBlocked = false;
+
+  // remove outdated amplitude processors
+  while (!_amplitudeProcessorRemovalQueue.empty()) {
+    const auto amplitudeProcessor{
+        _amplitudeProcessorRemovalQueue.front().amplitudeProcessor};
+    _amplitudeProcessorRemovalQueue.pop_front();
+    removeAmplitudeProcessor(amplitudeProcessor);
+  }
+
+  // register pending amplitude processors
+  while (!_amplitudeProcessorQueue.empty()) {
+    const auto &amplitudeProcessor{
+        _amplitudeProcessorQueue.front().amplitudeProcessor};
+    _amplitudeProcessorQueue.pop_front();
+    registerAmplitudeProcessor(amplitudeProcessor);
   }
 }
 
@@ -520,7 +626,11 @@ void Application::emitDetection(
   };
 
   std::vector<ArrivalPick> arrivalPicks;
-  if (detection->publishConfig.createArrivals) {
+  std::vector<DataModel::PickCPtr> amplitudePicks;
+
+  auto createPicks{detection->publishConfig.createArrivals ||
+                   detection->publishConfig.createAmplitudes};
+  if (createPicks) {
     for (const auto &resultPair : detection->templateResults) {
       const auto &res{resultPair.second};
 
@@ -536,7 +646,12 @@ void Application::emitDetection(
         }
 
         const auto arrival{createArrival(res.arrival, pick)};
-        arrivalPicks.push_back({arrival, pick});
+        if (detection->publishConfig.createArrivals) {
+          arrivalPicks.push_back({arrival, pick});
+        }
+        if (detection->publishConfig.createAmplitudes) {
+          amplitudePicks.push_back(pick);
+        }
       } catch (DuplicatePublicObjectId &e) {
         SCDETECT_LOG_WARNING_PROCESSOR(processor, "Internal error: %s",
                                        e.what());
@@ -604,6 +719,84 @@ void Application::emitDetection(
 
       _ep->add(arrivalPick.pick.get());
     }
+  }
+
+  if (detection->publishConfig.createAmplitudes) {
+    initAmplitudeProcessors(processor, detection, origin, amplitudePicks);
+  }
+}
+
+void Application::emitAmplitude(
+    const AmplitudeProcessor *processor, const Record *record,
+    const AmplitudeProcessor::AmplitudeCPtr &amplitude) {
+  Core::TimeWindow tw{
+      amplitude->time.reference - Core::TimeSpan{amplitude->time.begin},
+      amplitude->time.reference + Core::TimeSpan{amplitude->time.end}};
+  SCDETECT_LOG_DEBUG_TAGGED(
+      processor->id(),
+      "Creating amplitude (value=%f, starttime=%s, endtime=%s) ...",
+      amplitude->value.value, tw.startTime().iso().c_str(),
+      tw.endTime().iso().c_str());
+
+  Core::Time now{Core::Time::GMT()};
+
+  DataModel::AmplitudePtr amp{DataModel::Amplitude::Create()};
+  if (!amp) {
+    SCDETECT_LOG_WARNING_PROCESSOR(
+        processor, "Internal error: duplicate amplitude identifier");
+    return;
+  }
+
+  DataModel::CreationInfo ci;
+  ci.setAgencyID(agencyID());
+  ci.setAuthor(author());
+  ci.setCreationTime(now);
+
+  amp->setCreationInfo(ci);
+  amp->setType(processor->type());
+  amp->setUnit(processor->unit());
+  if (amplitude->waveformStreamIds) {
+    if (amplitude->waveformStreamIds.value().size() == 1) {
+      const utils::WaveformStreamID waveformStreamId{
+          amplitude->waveformStreamIds.value()[0]};
+      amp->setWaveformID(DataModel::WaveformStreamID{
+          waveformStreamId.netCode(), waveformStreamId.staCode(),
+          waveformStreamId.locCode(), waveformStreamId.chaCode(), ""});
+    }
+  }
+
+  amp->setAmplitude(DataModel::RealQuantity{
+      amplitude->value.value, boost::none, amplitude->value.lowerUncertainty,
+      amplitude->value.upperUncertainty, boost::none});
+  amp->setTimeWindow(DataModel::TimeWindow{
+      amplitude->time.reference, amplitude->time.begin, amplitude->time.end});
+
+  amp->setSnr(amplitude->snr);
+  if (amplitude->dominantPeriod) {
+    amp->setPeriod(DataModel::RealQuantity{*amplitude->dominantPeriod});
+  }
+  processor->finalize(amp.get());
+
+  logObject(_outputAmplitudes, Core::Time::GMT());
+
+  if (connection() && !_config.noPublish) {
+    SCDETECT_LOG_DEBUG_PROCESSOR(processor,
+                                 "Sending event parameters (amplitude) ...");
+
+    auto notifierMsg{utils::make_smart<DataModel::NotifierMessage>()};
+    auto notifier{utils::make_smart<DataModel::Notifier>(
+        "EventParameters", DataModel::OP_ADD, amp.get())};
+    notifierMsg->attach(notifier.get());
+
+    if (!connection()->send(_config.amplitudeMessagingGroup,
+                            notifierMsg.get())) {
+      SCDETECT_LOG_ERROR_PROCESSOR(
+          processor, "Sending of event parameters (amplitude) failed.");
+    }
+  }
+
+  if (_ep) {
+    _ep->add(amp.get());
   }
 }
 
@@ -791,6 +984,200 @@ bool Application::initDetectors(std::ifstream &ifs,
   return true;
 }
 
+bool Application::initAmplitudeProcessors(
+    const detector::DetectorWaveformProcessor *processor,
+    const detector::DetectorWaveformProcessor::DetectionCPtr &detection,
+    const DataModel::OriginCPtr &origin, const Picks &picks) {
+  struct ThreeComponentItem {
+    utils::ThreeComponents threeComponents;
+    // Picks which are going to be associated with the `AmplitudeProcessor`;
+    // note that the pick order is not relevant.
+    Picks picks;
+  };
+
+  std::vector<ThreeComponentItem> uniqueThreeComponentsItems;
+  for (const auto &pick : picks) {
+    const utils::WaveformStreamID waveformStreamId{pick->waveformID()};
+    try {
+      const utils::ThreeComponents threeComponents{
+          Client::Inventory::Instance(), waveformStreamId.netCode(),
+          waveformStreamId.staCode(),    waveformStreamId.locCode(),
+          waveformStreamId.chaCode(),    pick->time().value()};
+
+      auto it{std::find_if(std::begin(uniqueThreeComponentsItems),
+                           std::end(uniqueThreeComponentsItems),
+                           [&threeComponents](const ThreeComponentItem &item) {
+                             return item.threeComponents == threeComponents;
+                           })};
+
+      if (it != uniqueThreeComponentsItems.end()) {
+        it->picks.push_back(pick);
+        continue;
+      }
+
+      uniqueThreeComponentsItems.push_back({threeComponents, {pick}});
+    } catch (Exception &e) {
+      SCDETECT_LOG_WARNING("%s.%s.%s.%s: %s (pick_time=%s)",
+                           waveformStreamId.netCode().c_str(),
+                           waveformStreamId.staCode().c_str(),
+                           waveformStreamId.locCode().c_str(),
+                           waveformStreamId.chaCode().c_str(), e.what(),
+                           pick->time().value().iso().c_str());
+      continue;
+    }
+  }
+
+  for (const auto &threeComponentsItem : uniqueThreeComponentsItems) {
+    const auto &threeComponents{threeComponentsItem.threeComponents};
+    const auto sensorLocationStreamId{threeComponents.sensorLocationStreamId()};
+    auto rmsAmplitudeProcessor{utils::make_unique<amplitude::RMSAmplitude>(
+        sensorLocationStreamId + settings::kProcessorIdSep +
+        utils::createUUID())};
+    // XXX(damb): do not provide a sensor location (currently not required)
+    rmsAmplitudeProcessor->setEnvironment(origin, nullptr,
+                                          threeComponentsItem.picks);
+    rmsAmplitudeProcessor->computeTimeWindow();
+    rmsAmplitudeProcessor->setGapInterpolation(processor->gapInterpolation());
+    rmsAmplitudeProcessor->setGapThreshold(processor->gapThreshold());
+    rmsAmplitudeProcessor->setGapTolerance(processor->gapTolerance());
+
+    rmsAmplitudeProcessor->setResultCallback(
+        [this](const WaveformProcessor *proc, const Record *rec,
+               const WaveformProcessor::ResultCPtr &res) {
+          emitAmplitude(
+              dynamic_cast<const AmplitudeProcessor *>(proc), rec,
+              boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
+                  res));
+        });
+
+    // TODO(damb):
+    // - configure filter
+    // - the filter must be configurable on sensor location granularity
+
+    for (size_t i = 0; i < threeComponents.size(); ++i) {
+      const auto component{
+          threeComponentsItem.threeComponents._threeComponents.comps[i]};
+      if (component) {
+        Processing::Stream stream;
+        stream.init(component);
+        rmsAmplitudeProcessor->add(threeComponents._networkCode,
+                                   threeComponents._stationCode,
+                                   threeComponents._locationCode, stream);
+      }
+    }
+
+    try {
+      registerAmplitudeProcessor(std::move(rmsAmplitudeProcessor));
+    } catch (Exception &e) {
+      SCDETECT_LOG_WARNING("Failed to register amplitude processor: %s",
+                           e.what());
+      continue;
+    }
+  }
+
+  return true;
+}
+
+void Application::registerAmplitudeProcessor(
+    const std::shared_ptr<ReducingAmplitudeProcessor> &processor) {
+  if (_registrationBlocked) {
+    _amplitudeProcessorQueue.emplace_back(
+        AmplitudeProcessorQueueItem{processor});
+    return;
+  }
+
+  const auto &waveformStreamIds{processor->waveformStreamIds()};
+  for (const auto &waveformStreamId : waveformStreamIds) {
+    _amplitudeProcessors.emplace(waveformStreamId, processor);
+    SCDETECT_LOG_DEBUG("%s: Added amplitude processor with id: %s",
+                       waveformStreamId.c_str(), processor->id().c_str());
+    SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
+                       _amplitudeProcessors.size());
+  }
+
+  for (const auto &waveformStreamId : waveformStreamIds) {
+    if (!processor->finished()) {
+      utils::WaveformStreamID converted{waveformStreamId};
+      auto sequence{
+          _waveformBuffer.sequence(Processing::StreamBuffer::WaveformID{
+              converted.netCode(), converted.staCode(), converted.locCode(),
+              converted.chaCode()})};
+      if (!sequence) return;
+
+      const auto tw{processor->safetyTimeWindow()};
+      if (tw.startTime() < sequence->timeWindow().startTime()) {
+        // TODO:
+        // - fetch historical data
+
+        // actually feed as much data as possible
+        for (auto it = sequence->begin(); it != sequence->end(); ++it) {
+          if ((*it)->startTime() > tw.endTime()) break;
+          processor->feed((*it).get());
+        }
+      } else {
+        // find the position in the record sequence to fill the requested
+        // time window
+        auto rit{sequence->rbegin()};
+        while (rit != sequence->rend()) {
+          if ((*rit)->endTime() < tw.startTime()) break;
+          ++rit;
+        }
+
+        RecordSequence::iterator it;
+        if (rit == sequence->rend()) {
+          it = sequence->begin();
+        } else {
+          it = --rit.base();
+        }
+        while (it != sequence->end() && (*it)->startTime() <= tw.endTime()) {
+          processor->feed((*it).get());
+          ++it;
+        }
+      }
+    }
+  }
+
+  if (processor->finished()) {
+    removeAmplitudeProcessor(processor);
+  }
+}
+
+void Application::removeAmplitudeProcessor(
+    const std::shared_ptr<ReducingAmplitudeProcessor> &processor) {
+  if (_registrationBlocked) {
+    _amplitudeProcessorRemovalQueue.emplace_back(
+        AmplitudeProcessorQueueItem{processor});
+    return;
+  }
+
+  const auto waveformStreamIds{processor->waveformStreamIds()};
+  for (const auto &waveformStreamId : waveformStreamIds) {
+    auto range{_amplitudeProcessors.equal_range(waveformStreamId)};
+    auto it{range.first};
+    while (it != range.second) {
+      if (it->second == processor) {
+        SCDETECT_LOG_DEBUG("%s: Removed amplitude processor with id: %s",
+                           waveformStreamId.c_str(), processor->id().c_str());
+        it = _amplitudeProcessors.erase(it);
+        SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
+                           _amplitudeProcessors.size());
+      } else {
+        ++it;
+      }
+    }
+  }
+
+  // check pending registration queue
+  auto it{std::begin(_amplitudeProcessorQueue)};
+  while (it != _amplitudeProcessorQueue.end()) {
+    if (it->amplitudeProcessor == processor) {
+      it = _amplitudeProcessorQueue.erase(it);
+      continue;
+    }
+    ++it;
+  }
+}
+
 Application::Config::Config() {
   Environment *env{Environment::Instance()};
 
@@ -817,6 +1204,11 @@ void Application::Config::init(const Client::Application *app) {
   }
   try {
     publishConfig.originMethodId = app->configGetString("publish.methodId");
+  } catch (...) {
+  }
+  try {
+    publishConfig.createAmplitudes =
+        app->configGetBool("amplitude.calculateAmplitudes");
   } catch (...) {
   }
 

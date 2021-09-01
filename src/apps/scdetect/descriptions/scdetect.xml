@@ -141,6 +141,15 @@
           </description>
         </parameter>
       </group>
+      <group name="amplitude">
+        <parameter name="calculateAmplitudes" type="boolean" default="false">
+          <description>
+            Defines the default value whether amplitude calculation is enabled
+            or disabled. Amplitudes are calculated right after an origin has
+            been declared.
+          </description>
+        </parameter>
+      </group>
     </configuration>
 
     <command-line>

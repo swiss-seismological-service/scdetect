@@ -1,11 +1,14 @@
 #ifndef SCDETECT_APPS_SCDETECT_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_UTILS_H_
 
+#include <seiscomp/client/inventory.h>
 #include <seiscomp/core/defs.h>
+#include <seiscomp/datamodel/utils.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -165,6 +168,41 @@ class WaveformStreamID {
   std::string _staCode;
   std::string _locCode;
   std::string _chaCode;
+};
+
+/* ------------------------------------------------------------------------- */
+struct ThreeComponents {
+  // Load components identified by `netCode`, `staCode`, `locCode`, `chaCode`
+  // and `time` from `inventory`.
+  //
+  // - It is a bug to pass an invalid pointer as `inventory`.
+  // - Raises an `detect::Exception` if loading streams from inventory failed.
+  ThreeComponents(Client::Inventory *inventory, const std::string &netCode,
+                  const std::string &staCode, const std::string &locCode,
+                  const std::string &chaCode, const Core::Time &time);
+
+  // Reset all components
+  void reset();
+  // Returns the *real size* i.e. the number of components actually available
+  size_t size() const;
+  // Returns the sensor location stream identifier i.e. in the form
+  // `NET.STA.LOC`
+  std::string sensorLocationStreamId() const;
+  // Returns the stream code identifiers for all components
+  std::vector<std::string> streamCodes() const;
+  // Returns the waveform stream identifiers for all components
+  std::vector<utils::WaveformStreamID> waveformStreamIds() const;
+
+  friend bool operator==(const ThreeComponents &lhs,
+                         const ThreeComponents &rhs);
+  friend bool operator!=(const ThreeComponents &lhs,
+                         const ThreeComponents &rhs);
+
+  std::string _networkCode;
+  std::string _stationCode;
+  std::string _locationCode;
+
+  DataModel::ThreeComponents _threeComponents;
 };
 
 }  // namespace utils

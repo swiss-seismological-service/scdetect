@@ -141,6 +141,7 @@ void DetectorWaveformProcessor::prepareDetection(
   d->publishConfig.createTemplateArrivals =
       _publishConfig.createTemplateArrivals;
   d->publishConfig.originMethodId = _publishConfig.originMethodId;
+  d->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
 
   if (_publishConfig.createTemplateArrivals) {
     for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {
