@@ -32,7 +32,7 @@ std::string to_string(const WaveformStreamID &waveformStreamId) {
   return oss.str();
 }
 
-const std::string WaveformStreamID::_delimiter{"."};
+const std::string WaveformStreamID::_delimiter{settings::kSNCLSep};
 
 WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {
   std::vector<std::string> tokens;
