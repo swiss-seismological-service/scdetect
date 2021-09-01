@@ -352,11 +352,16 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   // start time
   if (isFirstStreamRecord &&
       record->timeWindow().startTime() < safetyTimeWindow().startTime()) {
-    auto firstRecord{utils::make_unique<GenericRecord>(*record)};
+    auto firstRecord{utils::make_smart<GenericRecord>(*record)};
+    // the caller is required to copy the data
+    // https://github.com/SeisComP/common/issues/38
+    firstRecord->setData(
+        dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE)));
+
     waveform::trim(
         *firstRecord,
         Core::TimeWindow{safetyTimeWindow().startTime(), record->endTime()});
-    return WaveformProcessor::store(firstRecord.release());
+    return WaveformProcessor::store(firstRecord.get());
   }
 
   return WaveformProcessor::store(record);
