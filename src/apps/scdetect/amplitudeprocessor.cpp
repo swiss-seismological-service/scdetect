@@ -220,7 +220,7 @@ std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
 }
 
 boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
-    const std::vector<DoubleArrayCPtr> &data,
+    const std::vector<DoubleArray const *> &data,
     const std::vector<IndexRange> &idxRanges,
     const std::vector<NoiseInfo> &noiseInfos) {
   return boost::none;
@@ -241,7 +241,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
   setStatus(Status::kInProgress, 1);
 
-  std::vector<DoubleArrayCPtr> data;
+  std::vector<DoubleArray const *> data;
   for (auto &streamPair : _streams) {
     auto &stream{streamPair.second};
     preprocessData(stream.streamState, stream.streamConfig.sensor(),

@@ -101,7 +101,7 @@ void RMSAmplitude::preprocessData(
 }
 
 DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
-    const std::vector<DoubleArrayCPtr> &data,
+    const std::vector<DoubleArray const *> &data,
     const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) {
   if (data.size() != noiseInfos.size()) {
     return nullptr;
@@ -124,7 +124,7 @@ DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
 }
 
 boost::optional<double> RMSAmplitude::reduceNoiseData(
-    const std::vector<DoubleArrayCPtr> &data,
+    const std::vector<DoubleArray const *> &data,
     const std::vector<IndexRange> &idxRanges,
     const std::vector<NoiseInfo> &noiseInfos) {
   // TODO(damb): to be implemented

@@ -220,12 +220,12 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
   //
   // - returns the reduced result
   virtual DoubleArrayCPtr reduceAmplitudeData(
-      const std::vector<DoubleArrayCPtr> &data,
+      const std::vector<DoubleArray const *> &data,
       const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) = 0;
 
   // Compute an overall signal-to-noise ratio
   virtual boost::optional<double> reduceNoiseData(
-      const std::vector<DoubleArrayCPtr> &data,
+      const std::vector<DoubleArray const *> &data,
       const std::vector<IndexRange> &idxRanges,
       const std::vector<NoiseInfo> &noiseInfos);
 
