@@ -103,44 +103,42 @@ ThreeComponents::ThreeComponents(Client::Inventory *inventory,
     _threeComponents =
         inventory->getThreeComponents(netCode, staCode, locCode, chaCode, time);
   } catch (Core::ValueException &e) {
+    reset();
     throw Exception{"failed to load components: " + std::string{e.what()}};
   }
 
-  if (size() != 3) {
+  if (realSize() != 3) {
     reset();
     throw Exception{"failed to load components: missing components"};
   }
+
+  const auto &streamCode{_threeComponents.comps[0]->code()};
+  _channelCode = streamCode.substr(0, 2);
 }
 
-void ThreeComponents::reset() {
-  for (int i = 0; i < 3; ++i) {
-    _threeComponents.comps[i] = nullptr;
-  }
-};
+const std::string &ThreeComponents::netCode() const { return _networkCode; }
 
-size_t ThreeComponents::size() const {
-  size_t retval{3};
-  for (int i = 0; i < 3; ++i) {
-    if (!_threeComponents.comps[i]) {
-      --retval;
-    }
-  }
-  return retval;
+const std::string &ThreeComponents::staCode() const { return _stationCode; }
+
+const std::string &ThreeComponents::locCode() const { return _locationCode; }
+
+const std::string &ThreeComponents::chaCode() const { return _channelCode; }
+
+std::string ThreeComponents::sensorLocationStreamId() const {
+  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
+         _locationCode;
 }
 
 std::vector<std::string> ThreeComponents::streamCodes() const {
   std::vector<std::string> retval;
   for (int i = 0; i < 3; ++i) {
-    if (_threeComponents.comps[i]) {
-      retval.push_back(_threeComponents.comps[i]->code());
-    }
+    retval.push_back(_threeComponents.comps[i]->code());
   }
   return retval;
 }
 
-std::string ThreeComponents::sensorLocationStreamId() const {
-  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
-         _locationCode;
+const DataModel::ThreeComponents &ThreeComponents::threeComponents() const {
+  return _threeComponents;
 }
 
 std::vector<utils::WaveformStreamID> ThreeComponents::waveformStreamIds()
@@ -151,6 +149,11 @@ std::vector<utils::WaveformStreamID> ThreeComponents::waveformStreamIds()
                                              _locationCode, streamCode});
   }
   return retval;
+}
+
+std::string ThreeComponents::waveformStreamId() const {
+  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
+         _locationCode + settings::kSNCLSep + _channelCode;
 }
 
 bool operator==(const ThreeComponents &lhs, const ThreeComponents &rhs) {
@@ -196,6 +199,27 @@ bool operator==(const ThreeComponents &lhs, const ThreeComponents &rhs) {
 bool operator!=(const ThreeComponents &lhs, const ThreeComponents &rhs) {
   return !(lhs == rhs);
 }
+
+size_t ThreeComponents::realSize() const {
+  size_t retval{3};
+  for (int i = 0; i < 3; ++i) {
+    if (!_threeComponents.comps[i]) {
+      --retval;
+    }
+  }
+  return retval;
+}
+
+void ThreeComponents::reset() {
+  _networkCode.clear();
+  _stationCode.clear();
+  _locationCode.clear();
+  _channelCode.clear();
+
+  for (size_t i = 0; i < 3; ++i) {
+    _threeComponents.comps[i] = nullptr;
+  }
+};
 
 }  // namespace utils
 }  // namespace detect

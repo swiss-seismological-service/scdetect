@@ -1029,10 +1029,9 @@ bool Application::initAmplitudeProcessors(
 
   for (const auto &threeComponentsItem : uniqueThreeComponentsItems) {
     const auto &threeComponents{threeComponentsItem.threeComponents};
-    const auto sensorLocationStreamId{threeComponents.sensorLocationStreamId()};
+    const auto waveformStreamId{threeComponents.waveformStreamId()};
     auto rmsAmplitudeProcessor{utils::make_unique<amplitude::RMSAmplitude>(
-        sensorLocationStreamId + settings::kProcessorIdSep +
-        utils::createUUID())};
+        waveformStreamId + settings::kProcessorIdSep + utils::createUUID())};
     // XXX(damb): do not provide a sensor location (currently not required)
     rmsAmplitudeProcessor->setEnvironment(origin, nullptr,
                                           threeComponentsItem.picks);
@@ -1054,16 +1053,14 @@ bool Application::initAmplitudeProcessors(
     // - configure filter
     // - the filter must be configurable on sensor location granularity
 
-    for (size_t i = 0; i < threeComponents.size(); ++i) {
+    for (size_t i = 0; i < 3; ++i) {
       const auto component{
-          threeComponentsItem.threeComponents._threeComponents.comps[i]};
-      if (component) {
-        Processing::Stream stream;
-        stream.init(component);
-        rmsAmplitudeProcessor->add(threeComponents._networkCode,
-                                   threeComponents._stationCode,
-                                   threeComponents._locationCode, stream);
-      }
+          threeComponentsItem.threeComponents.threeComponents().comps[i]};
+      Processing::Stream stream;
+      stream.init(component);
+      rmsAmplitudeProcessor->add(threeComponents.netCode(),
+                                 threeComponents.staCode(),
+                                 threeComponents.locCode(), stream);
     }
 
     try {
