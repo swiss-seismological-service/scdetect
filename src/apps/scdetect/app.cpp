@@ -1189,6 +1189,14 @@ void Application::Config::init(const Client::Application *app) {
     pathTemplateJson = app->configGetPath("templatesJSON");
   } catch (...) {
   }
+  try {
+    const auto messagingGroup{
+        app->configGetString("amplitudes.messagingGroup")};
+    if (!messagingGroup.empty()) {
+      amplitudeMessagingGroup = messagingGroup;
+    }
+  } catch (...) {
+  }
 
   try {
     publishConfig.createArrivals = app->configGetBool("publish.createArrivals");
@@ -1205,7 +1213,7 @@ void Application::Config::init(const Client::Application *app) {
   }
   try {
     publishConfig.createAmplitudes =
-        app->configGetBool("amplitude.calculateAmplitudes");
+        app->configGetBool("amplitudes.calculateAmplitudes");
   } catch (...) {
   }
 

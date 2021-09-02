@@ -141,7 +141,12 @@
           </description>
         </parameter>
       </group>
-      <group name="amplitude">
+      <group name="amplitudes">
+        <parameter name="messagingGroup" type="string" default="AMPLITUDE">
+          <description>
+            Defines the messaging group amplitudes are sent to.
+          </description>
+        </parameter>
         <parameter name="calculateAmplitudes" type="boolean" default="false">
           <description>
             Defines the default value whether amplitude calculation is enabled
