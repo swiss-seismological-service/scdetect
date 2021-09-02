@@ -245,8 +245,6 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
   bool enoughDataReceived(const StreamState &streamState) const override;
 
-  void setupStream(StreamState &streamState, const Record *record) override;
-
   using Buffer = DoubleArray;
 
   struct StreamItem {

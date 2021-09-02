@@ -408,19 +408,15 @@ bool ReducingAmplitudeProcessor::processIfEnoughDataReceived(
 
 bool ReducingAmplitudeProcessor::enoughDataReceived(
     const StreamState &streamState) const {
+  auto neededSamples{static_cast<size_t>(
+      safetyTimeWindow().length() *
+          _commonSamplingFrequency.value_or(streamState.samplingFrequency) +
+      0.5)};
   return std::all_of(_streams.cbegin(), _streams.cend(),
-                     [](const StreamMap::value_type &streamPair) {
+                     [&neededSamples](const StreamMap::value_type &streamPair) {
                        return streamPair.second.streamState.receivedSamples >=
-                              streamPair.second.neededSamples;
+                              neededSamples;
                      });
-}
-
-void ReducingAmplitudeProcessor::setupStream(StreamState &streamState,
-                                             const Record *record) {
-  WaveformProcessor::setupStream(streamState, record);
-
-  _streams.at(record->streamID()).neededSamples = static_cast<size_t>(
-      safetyTimeWindow().length() * streamState.samplingFrequency + 0.5);
 }
 
 bool ReducingAmplitudeProcessor::locked() const {
