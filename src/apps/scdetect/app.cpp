@@ -1086,7 +1086,7 @@ void Application::registerAmplitudeProcessor(
   const auto &waveformStreamIds{processor->waveformStreamIds()};
   for (const auto &waveformStreamId : waveformStreamIds) {
     _amplitudeProcessors.emplace(waveformStreamId, processor);
-    SCDETECT_LOG_DEBUG("%s: Added amplitude processor with id: %s",
+    SCDETECT_LOG_DEBUG("[%s] Added amplitude processor with id: %s",
                        waveformStreamId.c_str(), processor->id().c_str());
     SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
                        _amplitudeProcessors.size());
@@ -1153,7 +1153,7 @@ void Application::removeAmplitudeProcessor(
     auto it{range.first};
     while (it != range.second) {
       if (it->second == processor) {
-        SCDETECT_LOG_DEBUG("%s: Removed amplitude processor with id: %s",
+        SCDETECT_LOG_DEBUG("[%s] Removed amplitude processor with id: %s",
                            waveformStreamId.c_str(), processor->id().c_str());
         it = _amplitudeProcessors.erase(it);
         SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
