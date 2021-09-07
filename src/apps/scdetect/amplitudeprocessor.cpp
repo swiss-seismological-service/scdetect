@@ -474,10 +474,12 @@ bool ReducingAmplitudeProcessor::processIfEnoughDataReceived(
 
 bool ReducingAmplitudeProcessor::enoughDataReceived(
     const StreamState &streamState) const {
+  if (!_commonSamplingFrequency) {
+    return false;
+  }
+
   auto neededSamples{static_cast<size_t>(
-      safetyTimeWindow().length() *
-          _commonSamplingFrequency.value_or(streamState.samplingFrequency) +
-      0.5)};
+      safetyTimeWindow().length() * *_commonSamplingFrequency + 0.5)};
   return std::all_of(_streams.cbegin(), _streams.cend(),
                      [&neededSamples](const StreamMap::value_type &streamPair) {
                        return streamPair.second.streamState.receivedSamples >=
