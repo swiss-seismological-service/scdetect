@@ -7,6 +7,7 @@
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <cmath>
 #include <cstddef>
 #include <memory>
@@ -21,6 +22,8 @@ namespace utils {
 
 const std::string createUUID();
 void replaceEscapedXMLFilterIdChars(std::string &filter_id);
+// Safely create the directory path `p`
+bool createDirectory(const boost::filesystem::path &p);
 
 template <typename T>
 bool isGeZero(const T num) {

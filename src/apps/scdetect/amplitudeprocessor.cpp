@@ -3,9 +3,13 @@
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/math/filter/iirdifferentiate.h>
 #include <seiscomp/math/mean.h>
+#include <seiscomp/system/environment.h>
+#include <seiscomp/utils/files.h>
 
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <cstddef>
+#include <ostream>
 #include <stdexcept>
 
 #include "settings.h"
@@ -222,6 +226,26 @@ std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
   return utils::map_keys(_streams);
 }
 
+void ReducingAmplitudeProcessor::dumpBufferedData(std::ostream &out) {
+  for (const auto &streamPair : _streams) {
+    const auto &buffer{streamPair.second.buffer};
+    if (!buffer.size()) {
+      continue;
+    }
+
+    const utils::WaveformStreamID waveformStreamId{streamPair.first};
+    GenericRecord trace{waveformStreamId.netCode(), waveformStreamId.staCode(),
+                        waveformStreamId.locCode(), waveformStreamId.chaCode(),
+                        /*stime=*/safetyTimeWindow().startTime() + _initTime,
+                        /*fsamp=*/
+                        _commonSamplingFrequency.value_or(
+                            streamPair.second.streamState.samplingFrequency)};
+    trace.setData(dynamic_cast<DoubleArray *>(buffer.copy(Array::DOUBLE)));
+
+    waveform::write(trace, out);
+  }
+}
+
 boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
     const std::vector<DoubleArray const *> &data,
     const std::vector<IndexRange> &idxRanges,
@@ -247,6 +271,20 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
   setStatus(Status::kInProgress, 1);
 
+#ifdef SCDETECT_DEBUG
+  const auto *env{Seiscomp::Environment::Instance()};
+  boost::filesystem::path scInstallDir{env->installDir()};
+  boost::filesystem::path pathTemp{scInstallDir / settings::kPathTemp / id()};
+
+  if (utils::createDirectory(pathTemp)) {
+    // dump buffered filtered (raw) data
+    const auto p{pathTemp / "filtered.mseed"};
+    std::ofstream ofs{p.string()};
+    dumpBufferedData(ofs);
+    ofs.close();
+  }
+#endif
+
   std::vector<DoubleArray const *> data;
   for (auto &streamPair : _streams) {
     auto &stream{streamPair.second};
@@ -257,6 +295,16 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
     }
     data.push_back(&stream.buffer);
   }
+
+#ifdef SCDETECT_DEBUG
+  if (utils::createDirectory(pathTemp)) {
+    // dump buffered preprocessed data
+    const auto p{pathTemp / "preprocessed.mseed"};
+    std::ofstream ofs{p.string()};
+    dumpBufferedData(ofs);
+    ofs.close();
+  }
+#endif
 
   // buffers are already aligned regarding starttime
   const auto bufferBeginTime{
@@ -314,6 +362,21 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
     setStatus(Status::kError, 0);
     return;
   }
+
+#ifdef SCDETECT_DEBUG
+  if (_commonSamplingFrequency) {
+    if (utils::createDirectory(pathTemp)) {
+      GenericRecord trace{
+          "N", "S", "L", "C", signalStartTime, *_commonSamplingFrequency};
+      trace.setData(dynamic_cast<DoubleArray *>(reduced->copy(Array::DOUBLE)));
+
+      const auto p{pathTemp / "reduced.mseed"};
+      std::ofstream ofs{p.string()};
+      waveform::write(trace, ofs);
+      ofs.close();
+    }
+  }
+#endif
 
   auto amplitude{utils::make_smart<Amplitude>()};
   computeAmplitude(*reduced,

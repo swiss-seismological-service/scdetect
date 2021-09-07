@@ -3,6 +3,7 @@
 #include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/strings.h>
 #include <seiscomp/datamodel/stream.h>
+#include <seiscomp/utils/files.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -25,6 +26,13 @@ const std::string createUUID() {
 
 void replaceEscapedXMLFilterIdChars(std::string &str) {
   boost::replace_all(str, "&gt;", ">");
+}
+
+bool createDirectory(const boost::filesystem::path &p) {
+  if (!Util::pathExists(p.string()) && !Util::createPath(p.string())) {
+    return false;
+  }
+  return true;
 }
 
 /* ------------------------------------------------------------------------- */

@@ -15,6 +15,7 @@
 
 #include <boost/optional/optional.hpp>
 #include <memory>
+#include <ostream>
 #include <unordered_map>
 #include <vector>
 
@@ -215,6 +216,9 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
   // Returns a the registered waveform stream identifiers
   std::vector<std::string> waveformStreamIds() const;
+
+  // Dump the buffered data to `out`
+  void dumpBufferedData(std::ostream &out);
 
  protected:
   // Reduce `data` regarding an amplitude calculation where `noiseInfos`
