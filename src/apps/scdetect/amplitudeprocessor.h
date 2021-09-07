@@ -263,7 +263,7 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
     DeconvolutionConfig deconvolutionConfig;
 
-    // Defines the needed samples (including to both `_initTime` (i.e. used for
+    // Defines the needed samples (including both `_initTime` (i.e. used for
     // filter initialization) and the number of samples needed to enable
     // noise/amplitude analysis.
     size_t neededSamples{0};
