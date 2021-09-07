@@ -1052,6 +1052,7 @@ bool Application::initAmplitudeProcessors(
     // TODO(damb):
     // - configure filter
     // - the filter must be configurable on sensor location granularity
+    // - call setSignalBegin() in order to take filter initTime into account
 
     for (size_t i = 0; i < 3; ++i) {
       const auto component{
