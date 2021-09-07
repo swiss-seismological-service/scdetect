@@ -266,6 +266,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   // - compute noise from reduced data;
 
   if (!_commonSamplingFrequency) {
+    setStatus(WaveformProcessor::Status::kInvalidSamplingFreq, -1);
     return;
   }
 
