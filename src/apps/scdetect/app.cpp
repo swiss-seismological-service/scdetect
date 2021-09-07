@@ -63,7 +63,7 @@ Application::Application(int argc, char **argv)
     : StreamApplication(argc, argv) {
   setLoadStationsEnabled(true);
   setLoadInventoryEnabled(true);
-  setLoadConfigModuleEnabled(true);
+  setLoadConfigModuleEnabled(false);
   setMessagingEnabled(true);
 
   setPrimaryMessagingGroup("LOCATION");
