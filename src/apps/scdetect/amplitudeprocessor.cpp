@@ -308,7 +308,8 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
   // buffers are already aligned regarding starttime
   const auto bufferBeginTime{
-      _streams.cbegin()->second.streamState.dataTimeWindow.startTime()};
+      _streams.cbegin()->second.streamState.dataTimeWindow.startTime() +
+      _initTime};
 
   const auto itEarliestEndTime{std::min_element(
       _streams.cbegin(), _streams.cend(),
@@ -323,20 +324,22 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   // compute signal offsets
   Core::Time signalStartTime{bufferBeginTime};
   size_t signalBeginIdx{0};
-  if (bufferBeginTime < signalBegin()) {
-    signalBeginIdx = static_cast<size_t>((signalBegin() - bufferBeginTime) *
-                                         commonSamplingFrequency);
-    signalStartTime = signalBegin();
+  if (bufferBeginTime < signalBegin() + _initTime) {
+    signalBeginIdx =
+        static_cast<size_t>((signalBegin() + _initTime - bufferBeginTime) *
+                            commonSamplingFrequency);
+    signalStartTime = signalBegin() + _initTime;
   }
+
   if (signalEnd() < bufferBeginTime) {
     setSignalEnd(bufferEndTime);
   }
-  const auto computeSignalEndIdx =
-      [&commonSamplingFrequency, &bufferBeginTime](const Core::Time signalEnd) {
-        return static_cast<size_t>(
-            static_cast<double>(signalEnd - bufferBeginTime) *
-            commonSamplingFrequency);
-      };
+  const auto computeSignalEndIdx = [&commonSamplingFrequency, &bufferBeginTime](
+                                       const Core::Time &signalEnd) {
+    return static_cast<size_t>(
+        static_cast<double>(signalEnd - bufferBeginTime) *
+        commonSamplingFrequency);
+  };
   Core::Time signalEndTime;
   size_t signalEndIdx;
   if (signalEnd() < bufferEndTime) {
