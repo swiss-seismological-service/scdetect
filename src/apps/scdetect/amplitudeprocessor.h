@@ -119,6 +119,8 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   // Returns the `AmplitudeProcessor`'s environment
   const Environment &environment() const;
 
+  // Allows to finalize the `amplitude` which was previously created by client
+  // code
   virtual void finalize(DataModel::Amplitude *amplitude) const;
 
  protected:
