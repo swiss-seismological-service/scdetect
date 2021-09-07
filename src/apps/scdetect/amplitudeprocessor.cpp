@@ -79,7 +79,7 @@ const AmplitudeProcessor::Environment &AmplitudeProcessor::environment() const {
 void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
 
 void AmplitudeProcessor::preprocessData(
-    StreamState &streamState, Processing::Sensor *sensor,
+    StreamState &streamState, const Processing::Stream &streamConfig,
     const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
 
 bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
@@ -289,11 +289,12 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   std::vector<DoubleArray const *> data;
   for (auto &streamPair : _streams) {
     auto &stream{streamPair.second};
-    preprocessData(stream.streamState, stream.streamConfig.sensor(),
+    preprocessData(stream.streamState, stream.streamConfig,
                    stream.deconvolutionConfig, stream.buffer);
     if (finished()) {
       return;
     }
+
     data.push_back(&stream.buffer);
   }
 

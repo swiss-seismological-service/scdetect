@@ -28,7 +28,8 @@ class RMSAmplitude : public ReducingAmplitudeProcessor {
 
  protected:
   // Preprocess `data` by means of deconvolution
-  void preprocessData(StreamState &streamState, Processing::Sensor *sensor,
+  void preprocessData(StreamState &streamState,
+                      const Processing::Stream &streamConfig,
                       const DeconvolutionConfig &deconvolutionConfig,
                       DoubleArray &data) override;
 

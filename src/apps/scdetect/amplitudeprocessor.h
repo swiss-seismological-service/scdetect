@@ -157,7 +157,7 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   // - called just before the noise and amplitude calculation is performed
   // - the default implementation does nothing
   virtual void preprocessData(StreamState &streamState,
-                              Processing::Sensor *sensor,
+                              const Processing::Stream &streamConfig,
                               const DeconvolutionConfig &deconvolutionConfig,
                               DoubleArray &data);
 

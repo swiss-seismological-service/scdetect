@@ -67,10 +67,16 @@ void RMSAmplitude::computeTimeWindow() {
 }
 
 void RMSAmplitude::preprocessData(
-    StreamState &streamState, Processing::Sensor *sensor,
+    StreamState &streamState, const Processing::Stream &streamConfig,
     const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {
+  auto sensor{streamConfig.sensor()};
   if (!sensor || !sensor->response()) {
     setStatus(Status::kMissingResponse, 0);
+    return;
+  }
+
+  if (streamConfig.gain == 0) {
+    setStatus(Status::kMissingGain, -1);
     return;
   }
 
@@ -98,6 +104,9 @@ void RMSAmplitude::preprocessData(
       deriveData(streamState, std::abs(numberOfIntegrations), data);
     }
   }
+
+  // XXX(damb): `streamConfig` is not modified
+  const_cast<Processing::Stream &>(streamConfig).applyGain(data);
 }
 
 DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
