@@ -103,6 +103,7 @@ class Application : public Client::StreamApplication {
 
     std::string amplitudeMessagingGroup{"AMPLITUDE"};
 
+    // default configurations
     PublishConfig publishConfig;
 
     DetectorConfig detectorConfig;
