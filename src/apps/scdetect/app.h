@@ -123,6 +123,8 @@ class Application : public Client::StreamApplication {
 
   void handleRecord(Record *rec) override;
 
+  bool isEventDatabaseEnabled() const;
+
   void emitDetection(
       const detector::DetectorWaveformProcessor *processor,
       const Record *record,

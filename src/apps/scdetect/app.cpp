@@ -154,7 +154,7 @@ bool Application::validateParameters() {
   }
 
   // disable the database if required
-  if (!isInventoryDatabaseEnabled()) {
+  if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled()) {
     SCDETECT_LOG_INFO("Disable database connection");
     setDatabaseEnabled(false, false);
   }
@@ -510,6 +510,10 @@ void Application::handleRecord(Record *rec) {
     _amplitudeProcessorQueue.pop_front();
     registerAmplitudeProcessor(amplitudeProcessor);
   }
+}
+
+bool Application::isEventDatabaseEnabled() const {
+  return _config.urlEventDb.empty();
 }
 
 void Application::emitDetection(
