@@ -251,10 +251,6 @@
         <optionReference>database#database</optionReference>
         <optionReference>database#config-module</optionReference>
         <optionReference>database#inventory-db</optionReference>
-        <option flag="" long-flag="db-disable" argument=""
-                publicID="database#db-disable">
-          <description>Do not use the database at all</description>
-        </option>
         <option flag="" long-flag="event-db" argument="">
           <description>
             Load events from the given database or file, format:
