@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "amplitudeprocessor.h"
+#include "binding.h"
 #include "config.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
@@ -109,6 +110,9 @@ class Application : public Client::StreamApplication {
     DetectorConfig detectorConfig;
 
     StreamConfig streamConfig;
+
+    // binding default configurations
+    binding::SensorLocationConfig sensorLocationBindings;
   };
 
   const char *version() override;
@@ -160,6 +164,7 @@ class Application : public Client::StreamApplication {
       const std::shared_ptr<ReducingAmplitudeProcessor> &processor);
 
   Config _config;
+  binding::Bindings _bindings;
 
   ObjectLog *_outputOrigins;
   ObjectLog *_outputAmplitudes;

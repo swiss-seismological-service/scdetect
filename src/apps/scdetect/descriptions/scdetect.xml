@@ -301,4 +301,63 @@
       </group>
     </command-line>
   </module>
+  <!--
+    The basic binding description. This could also go into a separate file, but it's integrated
+    into the core description to have everything in one place.
+  -->
+  <binding module="scdetect">
+    <description>
+      Configures a station for amplitude calculation. A station without a
+      binding assigned will not be used for amplitude calculation.
+    </description>
+    <configuration>
+      <parameter name="amplitudeProfiles" type="list:string" default="">
+        <description>
+          Defines a list of amplitude profiles for amplitude calculation.
+        </description>
+      </parameter>
+
+      <group name="amplitudes">
+        <description>
+          Each amplitude profile is a configuration set used for
+          amplitude calculation and allows configuration on sensor location
+          granularity. An amplitude profile is only taken into consideration
+          if a corresponding stream is part of a detector configuration.
+        </description>
+        <struct type="amplitudeProfile" link="scdetect.amplitudeProfiles">
+          <parameter name="locationCode" type="string" default="">
+            <description>
+              Defines profile's location code regarding amplitude calculation.
+            </description>
+          </parameter>
+          <parameter name="channelCode" type="string" default="">
+            <description>
+              Defines profile's channel code regarding amplitude calculation.
+            </description>
+          </parameter>
+          <parameter name="enable" type="boolean" default="true">
+            <description>
+              Enables/disables amplitude calculation for this profile.
+            </description>
+          </parameter>
+          <parameter name="filter" type="string"
+                     default="&quot;BW_BP(4,10,30)&quot;">
+            <description>
+              Defines the profile's filter to be used for amplitude
+              calculation. Filtering may be disabled by means of explicitly
+              defining the empty string i.e. "". If no filter has been
+              specified the module default is taken as a fallback.
+            </description>
+          </parameter>
+          <parameter name="initTime" type="double" default="60" unit="s">
+            <description>
+              Defines the profile's time span in seconds in order to
+              initialize the amplitude processor's filter. The initialization
+              time is configured only in case filtering is enabled.
+            </description>
+          </parameter>
+        </struct>
+      </group>
+    </configuration>
+  </binding>
 </seiscomp>

@@ -24,6 +24,8 @@ const std::string kWaveformStreamIdSep{"||"};
 const std::string kPublicIdSep{"||"};
 // Separator for so called SNCLs
 const std::string kSNCLSep{"."};
+// Separator for configuration lists
+const std::string kConfigListSep{","};
 
 const std::string kTemplateWaveformDurationPickCommentId{
     "scdetectTemplateWaveformDuration"};

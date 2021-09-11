@@ -22,6 +22,7 @@ set(SOURCES_integration
   ../amplitude/rms.cpp
   ../amplitudeprocessor.cpp
   ../app.cpp
+  ../binding.cpp
   ../builder.cpp
   ../config.cpp
   ../datamodel/ddl.cpp

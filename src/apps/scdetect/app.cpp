@@ -46,6 +46,7 @@
 #include "utils.h"
 #include "validators.h"
 #include "version.h"
+#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -63,7 +64,7 @@ Application::Application(int argc, char **argv)
     : StreamApplication(argc, argv) {
   setLoadStationsEnabled(true);
   setLoadInventoryEnabled(true);
-  setLoadConfigModuleEnabled(false);
+  setLoadConfigModuleEnabled(true);
   setMessagingEnabled(true);
 
   setPrimaryMessagingGroup("LOCATION");
@@ -154,7 +155,8 @@ bool Application::validateParameters() {
   }
 
   // disable the database if required
-  if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled()) {
+  if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled() &&
+      !isConfigDatabaseEnabled()) {
     SCDETECT_LOG_INFO("Disable database connection");
     setDatabaseEnabled(false, false);
   }
@@ -242,6 +244,13 @@ bool Application::validateParameters() {
     return false;
   }
 
+  auto &amplitudeProcessingConfig{
+      _config.sensorLocationBindings.amplitudeProcessingConfig};
+  if (!amplitudeProcessingConfig.isValid()) {
+    SCDETECT_LOG_ERROR("Invalid configuration: 'amplitude processing config'");
+    return false;
+  }
+
   return true;
 }
 
@@ -312,6 +321,13 @@ bool Application::init() {
         "Failed to parse JSON template configuration file (%s): %s",
         _config.pathTemplateJson.c_str(), e.what());
     return false;
+  }
+
+  // load bindings
+  _bindings.setDefault(_config.sensorLocationBindings);
+  if (configModule()) {
+    SCDETECT_LOG_DEBUG("Loading binding configuration");
+    _bindings.load(&configuration(), configModule(), name());
   }
 
   // free memory after initialization
@@ -1034,6 +1050,28 @@ bool Application::initAmplitudeProcessors(
   for (const auto &threeComponentsItem : uniqueThreeComponentsItems) {
     const auto &threeComponents{threeComponentsItem.threeComponents};
     const auto waveformStreamId{threeComponents.waveformStreamId()};
+
+    binding::SensorLocationConfig sensorLocationConfig;
+    try {
+      sensorLocationConfig =
+          _bindings.at(threeComponents.netCode(), threeComponents.staCode(),
+                       threeComponents.locCode(), threeComponents.chaCode());
+    } catch (std::out_of_range &e) {
+      SCDETECT_LOG_DEBUG(
+          "%s: failed to look up bindings required for amplitude processor "
+          "configuration (%s)",
+          waveformStreamId.c_str(), e.what());
+      continue;
+    }
+
+    auto &amplitudeProcessingConfig{
+        sensorLocationConfig.amplitudeProcessingConfig};
+    if (!amplitudeProcessingConfig.enabled) {
+      SCDETECT_LOG_DEBUG("%s: skipping amplitude calculation (disabled)",
+                         waveformStreamId.c_str());
+      continue;
+    }
+
     auto rmsAmplitudeProcessor{utils::make_unique<amplitude::RMSAmplitude>(
         waveformStreamId + settings::kProcessorIdSep + utils::createUUID())};
     // XXX(damb): do not provide a sensor location (currently not required)
@@ -1053,9 +1091,26 @@ bool Application::initAmplitudeProcessors(
                   res));
         });
 
+    // configure amplitude processing filter
+    if (!amplitudeProcessingConfig.filter.empty()) {
+      utils::replaceEscapedXMLFilterIdChars(amplitudeProcessingConfig.filter);
+      std::unique_ptr<WaveformProcessor::Filter> amplitudeProcessingFilter{
+          nullptr};
+
+      std::string err;
+      amplitudeProcessingFilter.reset(WaveformProcessor::Filter::Create(
+          amplitudeProcessingConfig.filter, &err));
+      if (!amplitudeProcessingFilter) {
+        auto msg{waveformStreamId + ": compiling filter (" +
+                 amplitudeProcessingConfig.filter + ") failed: " + err};
+        throw BaseException{msg};
+      }
+
+      rmsAmplitudeProcessor->setFilter(amplitudeProcessingFilter.release(),
+                                       amplitudeProcessingConfig.initTime);
+    }
+
     // TODO(damb):
-    // - configure filter
-    // - the filter must be configurable on sensor location granularity
     // - call setSignalBegin() in order to take filter initTime into account
 
     for (size_t i = 0; i < 3; ++i) {
@@ -1289,6 +1344,17 @@ void Application::Config::init(const Client::Application *app) {
   try {
     detectorConfig.mergingStrategy =
         app->configGetString("detector.mergingStrategy");
+  } catch (...) {
+  }
+
+  try {
+    sensorLocationBindings.amplitudeProcessingConfig.filter =
+        app->configGetString("amplitudes.filter");
+  } catch (...) {
+  }
+  try {
+    sensorLocationBindings.amplitudeProcessingConfig.initTime =
+        app->configGetDouble("amplitudes.initTime");
   } catch (...) {
   }
 }
