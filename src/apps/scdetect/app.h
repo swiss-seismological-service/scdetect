@@ -121,6 +121,7 @@ class Application : public Client::StreamApplication {
   void createCommandLineDescription() override;
   bool validateParameters() override;
   bool initConfiguration() override;
+  bool handleCommandLineOptions() override;
 
   bool init() override;
   bool run() override;

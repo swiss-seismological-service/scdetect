@@ -139,28 +139,6 @@ void Application::createCommandLineDescription() {
 bool Application::validateParameters() {
   if (!StreamApplication::validateParameters()) return false;
 
-  _config.init(commandline());
-
-  // TODO(damb): Disable messaging (offline mode) with certain command line
-  // options
-  if (_config.offlineMode) {
-    SCDETECT_LOG_INFO("Disable messaging");
-    setMessagingEnabled(false);
-
-    _config.noPublish = true;
-  }
-
-  if (!_config.noPublish && commandline().hasOption("ep")) {
-    _config.noPublish = true;
-  }
-
-  // disable the database if required
-  if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled() &&
-      !isConfigDatabaseEnabled()) {
-    SCDETECT_LOG_INFO("Disable database connection");
-    setDatabaseEnabled(false, false);
-  }
-
   // validate paths
   if (!_config.pathTemplateJson.empty() &&
       !Util::fileExists(_config.pathTemplateJson)) {
@@ -252,6 +230,30 @@ bool Application::validateParameters() {
   }
 
   return true;
+}
+
+bool Application::handleCommandLineOptions() {
+  _config.init(commandline());
+
+  if (_config.offlineMode) {
+    SCDETECT_LOG_INFO("Disable messaging");
+    setMessagingEnabled(false);
+
+    _config.noPublish = true;
+  }
+
+  if (!_config.noPublish && commandline().hasOption("ep")) {
+    _config.noPublish = true;
+  }
+
+  // disable the database if required
+  if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled() &&
+      !isConfigDatabaseEnabled()) {
+    SCDETECT_LOG_INFO("Disable database connection");
+    setDatabaseEnabled(false, false);
+  }
+
+  return false;
 }
 
 bool Application::initConfiguration() {
