@@ -226,24 +226,6 @@
         <optionReference>messaging#subscribe-group</optionReference>
         <optionReference>messaging#content-type</optionReference>
         <optionReference>messaging#start-stop-msg</optionReference>
-        <option flag="" long-flag="offline">
-          <description>
-            Do not connect to the messaging system.
-          </description>
-        </option>
-        <option flag="" long-flag="no-publish">
-          <description>
-            Runs the module as usual but does not send any messages.
-            This can be useful to test the module within a running system.
-          </description>
-        </option>
-        <option flag="" long-flag="ep">
-          <description>
-            Same as --no-publish, but outputs all event parameters
-            scml formatted; specifying the output path as '-' (a single dash)
-            will force the output to be redirected to stdout.
-          </description>
-        </option>
       </group>
 
       <group name="Database">
@@ -281,6 +263,24 @@
       </group>
 
       <group name="Mode">
+        <option flag="" long-flag="offline">
+          <description>
+            Do not connect to the messaging system.
+          </description>
+        </option>
+        <option flag="" long-flag="no-publish">
+          <description>
+            Runs the module as usual but does not send any messages.
+            This can be useful to test the module within a running system.
+          </description>
+        </option>
+        <option flag="" long-flag="ep">
+          <description>
+            Same as --no-publish, but outputs all event parameters
+            scml formatted; specifying the output path as '-' (a single dash)
+            will force the output to be redirected to stdout.
+          </description>
+        </option>
         <option flag="" long-flag="playback" default="false">
           <description>
             Use playback mode that does not restrict the maximum
