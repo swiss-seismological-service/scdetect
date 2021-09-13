@@ -324,6 +324,9 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
   const double commonSamplingFrequency{*_commonSamplingFrequency};
   // compute signal offsets
+  //
+  // - XXX(damb): note that signalBegin() includes the processor's (leading)
+  // initialization time
   Core::Time signalStartTime{bufferBeginTime};
   size_t signalBeginIdx{0};
   if (bufferBeginTime < signalBegin() + _initTime) {

@@ -20,13 +20,8 @@ class TimeWindowProcessor : public WaveformProcessor {
   // Returns the configured time window of the data to be fed
   const Core::TimeWindow &timeWindow() const;
 
-  // Returns the time window including the safety margin.
+  // Returns the time window including the safety margin
   const Core::TimeWindow &safetyTimeWindow() const;
-
-  // Sets the leading time window margin added to the time window when feeding
-  // the data into the processor.
-  void setMargin(const Core::TimeSpan &margin);
-  const Core::TimeSpan &margin() const;
 
   // Allows derived classes to compute the required time window
   virtual void computeTimeWindow();
@@ -37,11 +32,9 @@ class TimeWindowProcessor : public WaveformProcessor {
  private:
   // Time window for the data to be fed
   Core::TimeWindow _timeWindow;
-  // Time window for the data to be fed including both the (safety) margin and
-  // the filter initialization time
+  // Time window for the data to be fed including the (filter) initialization
+  // time
   Core::TimeWindow _safetyTimeWindow;
-  // Time window (safety) margin
-  Core::TimeSpan _safetyMargin{60.0};
 };
 
 }  // namespace detect

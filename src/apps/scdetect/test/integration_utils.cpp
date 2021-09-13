@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 
+#include "../settings.h"
 #include "../utils.h"
 
 namespace fs = boost::filesystem;
@@ -108,7 +109,7 @@ FlagPlugins::FlagPlugins(const std::string &plugin) : ArgFlag{plugin} {
   // TODO(damb): Must not contain comma
 }
 FlagPlugins::FlagPlugins(const std::vector<std::string> &plugins)
-    : ArgFlag{boost::algorithm::join(plugins, ",")} {}
+    : ArgFlag{boost::algorithm::join(plugins, settings::kConfigListSep)} {}
 
 const std::string FlagPlugins::flag() const { return "--plugins"; }
 

@@ -59,7 +59,6 @@ void RMSAmplitude::computeTimeWindow() {
   }
 
   auto bounds{std::minmax_element(std::begin(pickTimes), std::end(pickTimes))};
-  setMargin(0.0);
   // XXX(damb): Use twice the template waveform duration as time window for
   // amplitude calculation plus the time span included by all available picks.
   setTimeWindow(Core::TimeWindow{*bounds.first - maxTemplateWaveformDuration,

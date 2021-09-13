@@ -14,8 +14,7 @@ void TimeWindowProcessor::setTimeWindow(const Core::TimeWindow &tw) {
     return;
   }
   _timeWindow = tw;
-  _safetyTimeWindow.setStartTime(_timeWindow.startTime() - _initTime -
-                                 _safetyMargin);
+  _safetyTimeWindow.setStartTime(_timeWindow.startTime() - _initTime);
   _safetyTimeWindow.setEndTime(_timeWindow.endTime());
   reset();
 }
@@ -26,20 +25,6 @@ const Core::TimeWindow &TimeWindowProcessor::timeWindow() const {
 
 const Core::TimeWindow &TimeWindowProcessor::safetyTimeWindow() const {
   return _safetyTimeWindow;
-}
-
-void TimeWindowProcessor::setMargin(const Core::TimeSpan &margin) {
-  _safetyMargin = margin;
-
-  if (_timeWindow) {
-    _safetyTimeWindow.setStartTime(_timeWindow.startTime() - _initTime -
-                                   _safetyMargin);
-    reset();
-  }
-}
-
-const Core::TimeSpan &TimeWindowProcessor::margin() const {
-  return _safetyMargin;
 }
 
 void TimeWindowProcessor::computeTimeWindow() {

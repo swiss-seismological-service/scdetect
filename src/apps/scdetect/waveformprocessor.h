@@ -130,7 +130,8 @@ class WaveformProcessor : public Processor,
   // - `op` sits between `feed` and `store`
   // - the pointer ownership goes to the processor
   void setOperator(WaveformOperator *op);
-  // Returns the processor's initialization time
+  // Returns the processor's initialization time; by default this corresponds
+  // to the processor's filter initialization time
   virtual const Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
