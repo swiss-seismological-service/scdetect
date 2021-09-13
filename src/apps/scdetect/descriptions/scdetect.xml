@@ -287,8 +287,17 @@
             allowed data latency.
           </description>
         </option>
-        <option flag="" long-flag="load-templates">
-          <description>Load templates and exit.</description>
+        <option flag="" long-flag="templates-prepare">
+          <description>
+            Load template waveform data from the configured recordstream and
+            save it in the module's caching directory, then exit.
+          </description>
+        </option>
+        <option flag="" long-flag="templates-reload">
+          <description>
+            Force reloading template waveform data and omit cached waveform
+            data.
+          </description>
         </option>
       </group>
 
