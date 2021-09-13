@@ -90,6 +90,11 @@ const std::string FlagDebug::flag() const { return "--debug"; }
 
 const std::string FlagConsole::flag() const { return "--console"; }
 
+FlagAmplitudesForce::FlagAmplitudesForce(bool enabled) : BooleanFlag{enabled} {}
+const std::string FlagAmplitudesForce::flag() const {
+  return "--amplitudes-force";
+}
+
 const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
 const std::string FlagPlayback::flag() const {
