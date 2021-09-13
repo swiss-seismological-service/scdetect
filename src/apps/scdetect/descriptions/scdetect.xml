@@ -368,7 +368,7 @@
             <description>
               Defines the profile's time span in seconds in order to
               initialize the amplitude processor's filter. The initialization
-              time is configured only in case filtering is enabled.
+              time is used only in case filtering is enabled.
             </description>
           </parameter>
         </struct>
