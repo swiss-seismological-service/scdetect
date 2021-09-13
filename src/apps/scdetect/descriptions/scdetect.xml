@@ -299,6 +299,12 @@
             data.
           </description>
         </option>
+        <option flag="" long-flag="amplitudes-force">
+          <description>
+            Enables/disables the calculation of amplitudes regardless of the
+            configuration provided on detector configuration level granularity.
+          </description>
+        </option>
       </group>
 
       <group name="Input">

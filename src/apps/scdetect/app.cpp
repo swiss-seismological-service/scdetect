@@ -128,6 +128,11 @@ void Application::createCommandLineDescription() {
   commandline().addOption(
       "Mode", "templates-reload",
       "force reloading template waveform data and omit cached waveform data");
+  commandline().addOption(
+      "Mode", "amplitudes-force",
+      "enables/disables the calculation of amplitudes regardless of the "
+      "configuration provided on detector configuration level granularity",
+      &_config.amplitudesForceMode, false);
 
   commandline().addGroup("Input");
   commandline().addOption(
@@ -246,9 +251,11 @@ bool Application::handleCommandLineOptions() {
     _config.noPublish = true;
   }
 
+  bool amplitudesForcedDisabled{_config.amplitudesForceMode &&
+                                !*_config.amplitudesForceMode};
   // disable the database if required
   if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled() &&
-      !isConfigDatabaseEnabled()) {
+      (amplitudesForcedDisabled || !isConfigDatabaseEnabled())) {
     SCDETECT_LOG_INFO("Disable database connection");
     setDatabaseEnabled(false, false);
   }
@@ -743,7 +750,13 @@ void Application::emitDetection(
     }
   }
 
-  if (detection->publishConfig.createAmplitudes) {
+  auto amplitudeForcedEnabled{_config.amplitudesForceMode &&
+                              *_config.amplitudesForceMode};
+  auto amplitudeForcedDisabled{_config.amplitudesForceMode &&
+                               !*_config.amplitudesForceMode};
+
+  if (amplitudeForcedEnabled ||
+      (!amplitudeForcedDisabled && detection->publishConfig.createAmplitudes)) {
     initAmplitudeProcessors(processor, detection, origin, amplitudePicks);
   }
 }

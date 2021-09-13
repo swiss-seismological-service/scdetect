@@ -11,6 +11,7 @@
 #include <seiscomp/processing/streambuffer.h>
 #include <seiscomp/system/commandline.h>
 
+#include <boost/optional/optional.hpp>
 #include <fstream>
 #include <iostream>
 #include <list>
@@ -63,6 +64,10 @@ class Application : public Client::StreamApplication {
 
     bool templatesPrepare{false};
     bool templatesNoCache{false};
+    // Global flag indicating whether to enable `true` or disable `false`
+    // calculating amplitudes (regardless of the configuration provided on
+    // detector configuration level granularity).
+    boost::optional<bool> amplitudesForceMode;
 
     // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
