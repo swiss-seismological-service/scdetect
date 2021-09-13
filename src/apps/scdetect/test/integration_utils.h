@@ -51,6 +51,7 @@ class ArgFlag : public Flag {
 class BooleanFlag : public ArgFlag {
  public:
   BooleanFlag();
+  explicit BooleanFlag(bool enabled);
   void enable();
   void disable();
 };

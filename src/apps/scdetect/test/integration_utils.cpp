@@ -82,6 +82,7 @@ void ArgFlag::to_string(std::ostream &os) const { os << flag() << "=" << _arg; }
 void ArgFlag::setArg(const std::string &arg) { _arg = arg; }
 
 BooleanFlag::BooleanFlag() : ArgFlag{"1"} {}
+BooleanFlag::BooleanFlag(bool enabled) : ArgFlag{enabled ? "1" : "0"} {}
 void BooleanFlag::enable() { setArg("1"); }
 void BooleanFlag::disable() { setArg("0"); }
 
