@@ -128,10 +128,23 @@ class FlagDB : public ArgFlag {
   const std::string flag() const override;
 };
 
+class FlagConfigModule : public ArgFlag {
+ public:
+  explicit FlagConfigModule(const std::string &configModule);
+  const std::string flag() const override;
+};
+
 class FlagInventoryDB : public ArgFlag {
  public:
   explicit FlagInventoryDB(const std::string &uri);
   explicit FlagInventoryDB(const fs::path &fpath);
+  const std::string flag() const override;
+};
+
+class FlagConfigDB : public ArgFlag {
+ public:
+  explicit FlagConfigDB(const std::string &uri);
+  explicit FlagConfigDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 

@@ -138,6 +138,15 @@ FlagInventoryDB::FlagInventoryDB(const fs::path &fpath)
     : FlagInventoryDB{std::string{"file://" + fpath.string()}} {}
 const std::string FlagInventoryDB::flag() const { return "--inventory-db"; }
 
+FlagConfigModule::FlagConfigModule(const std::string &configModule)
+    : ArgFlag{configModule} {}
+const std::string FlagConfigModule::flag() const { return "--config-module"; }
+
+FlagConfigDB::FlagConfigDB(const std::string &uri) : ArgFlag{uri} {}
+FlagConfigDB::FlagConfigDB(const fs::path &fpath)
+    : FlagConfigDB{std::string{"file://" + fpath.string()}} {}
+const std::string FlagConfigDB::flag() const { return "--config-db"; }
+
 FlagEventDB::FlagEventDB(const std::string &uri) : ArgFlag{std::string{uri}} {}
 FlagEventDB::FlagEventDB(const fs::path &fpath)
     : FlagEventDB{std::string{"file://" + fpath.string()}} {}
