@@ -24,11 +24,15 @@ jobs:
     steps:
     - name: Checkout scdetect
       uses: actions/checkout@v2
+    - name: Install dependencies
+      run: >
+        sudo apt-get -y install
+        clang-format-12
     - name: Run clang-format
       run: >
         find ${{github.workspace}}
         -type f \( -name '*.cpp' -o -name '*.ipp' -o -name '*.h' \) |
-        xargs clang-format --dry-run --Werror
+        xargs clang-format-12 --dry-run --Werror
 
   build:
     needs: clang-format
