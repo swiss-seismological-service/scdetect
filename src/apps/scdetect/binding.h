@@ -3,8 +3,10 @@
 
 #include <seiscomp/config/config.h>
 #include <seiscomp/datamodel/configmodule.h>
+#include <seiscomp/processing/processor.h>
 #include <seiscomp/utils/keyvalues.h>
 
+#include <boost/optional/optional.hpp>
 #include <map>
 #include <string>
 
@@ -13,6 +15,12 @@
 namespace Seiscomp {
 namespace detect {
 namespace binding {
+
+// Parse the saturation threshold from `settings` identified by `parameter`
+//
+// - returns `boost::none` if no parameter could be found
+boost::optional<double> parseSaturationThreshold(
+    const Processing::Settings &settings, const std::string &parameter);
 
 struct SensorLocationConfig {
   // Amplitude processing configuration
@@ -23,8 +31,33 @@ struct SensorLocationConfig {
     std::string filter;
     // The filter's initialization time in seconds
     double initTime{60};
+    // Defines the saturation threshold for the saturation check. If unset, no
+    // saturation check is performed.
+    boost::optional<double> saturationThreshold;
 
-    bool isValid() const;
+    // Savely sets the filter
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setFilter(const std::string &filter);
+    // Savely sets the initialization time
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setInitTime(double initTime);
+    // Savely sets the filter and initialization time from `settings` identified
+    // by `parameterFilter` and `parameterInitTime`
+    //
+    // - if a lookup wasn't successful values are taken from `defaultConfig`
+    // - throws a `ValueException` if the values are invalid
+    void setFilter(const Processing::Settings &settings,
+                   const std::string &parameterFilter,
+                   const std::string &parameterInitTime,
+                   const AmplitudeProcessingConfig &defaultConfig);
+    // Savely sets the saturation threshold from `settings` identified by
+    // `parameter`
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setSaturationThreshold(const Processing::Settings &settings,
+                                const std::string &parameter);
   };
 
   AmplitudeProcessingConfig amplitudeProcessingConfig;

@@ -30,6 +30,11 @@ void WaveformProcessor::setResultCallback(
   _resultCallback = callback;
 }
 
+void WaveformProcessor::setSaturationThreshold(
+    const boost::optional<double> &threshold) {
+  _saturationThreshold = threshold;
+}
+
 WaveformProcessor::Status WaveformProcessor::status() const { return _status; }
 
 double WaveformProcessor::statusValue() const { return _statusValue; }
@@ -153,12 +158,28 @@ bool WaveformProcessor::fill(detect::StreamState &streamState,
   const auto n{static_cast<size_t>(data->size())};
   s.receivedSamples += n;
 
+  if (_saturationThreshold && checkIfSaturated(data)) {
+    return false;
+  }
+
   if (s.filter) {
     auto samples{data->typedData()};
     s.filter->apply(n, samples);
   }
 
   return true;
+}
+
+bool WaveformProcessor::checkIfSaturated(DoubleArrayPtr &data) {
+  const auto samples{data->typedData()};
+  for (int i = 0; i < data->size(); ++i) {
+    if (fabs(samples[i]) >= *_saturationThreshold) {
+      setStatus(Status::kDataClipped, samples[i]);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool WaveformProcessor::processIfEnoughDataReceived(

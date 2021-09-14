@@ -5,8 +5,10 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/timewindow.h>
+#include <seiscomp/core/typedarray.h>
 #include <seiscomp/math/filter.h>
 
+#include <boost/optional/optional.hpp>
 #include <functional>
 #include <memory>
 
@@ -118,6 +120,13 @@ class WaveformProcessor : public Processor,
   // Sets the result callback in order to publish processing results
   void setResultCallback(const PublishResultCallback &callback);
 
+  // Enables/disables validating whether data is saturated.
+  //
+  // - If set a saturation check is performed where it is checked whether the
+  // data exceeds `threshold`.
+  // - The saturation check may be disabled if `boost::none` is passed.
+  void setSaturationThreshold(const boost::optional<double> &threshold);
+
   // Returns the current status of the processor
   Status status() const;
 
@@ -184,6 +193,12 @@ class WaveformProcessor : public Processor,
   bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
+  // Check whether data exceeds saturation threshold. The default
+  // implementation does not perform any check
+  //
+  // - returns `true` in case `data` is saturated, else `false`
+  virtual bool checkIfSaturated(DoubleArrayPtr &data);
+
   // Wrapper method for both `enoughDataReceived()` and `process()`. Returns
   // `true` if `process` was called, else `false`
   virtual bool processIfEnoughDataReceived(StreamState &streamState,
@@ -208,6 +223,9 @@ class WaveformProcessor : public Processor,
   PublishResultCallback _resultCallback;
 
   std::unique_ptr<WaveformOperator> _waveformOperator;
+
+  // Threshold used for the saturation check
+  boost::optional<double> _saturationThreshold;
 
  private:
   Status _status{Status::kWaitingForData};

@@ -355,6 +355,23 @@
               Enables/disables amplitude calculation for this profile.
             </description>
           </parameter>
+          <parameter name="saturationThreshold" type="double" unit="counts; %">
+            <description>
+              Enables a saturation check before calculating amplitudes. If data
+              exceeds the configured threshold no amplitude is going to be
+              calculated.
+
+              This value can either be an absolute value of counts such
+              as &quot;100000&quot; counts or a relative value
+              (optionally in percent) with respect to the number of
+              effective bits, e.g. &quot;0.8@23&quot; or &quot;80%@23&quot;.
+              The first version uses 1**23 * 0.8 whereas the latter
+              uses 1**23 * 80/100.
+
+              The boolean value &quot;false&quot; explicitly disables
+              the check.
+            </description>
+          </parameter>
           <parameter name="filter" type="string"
                      default="&quot;BW_BP(4,10,30)&quot;">
             <description>

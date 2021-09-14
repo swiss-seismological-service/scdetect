@@ -1,18 +1,18 @@
 #include "binding.h"
 
-#include <seiscomp/core/strings.h>
 #include <seiscomp/datamodel/configstation.h>
 #include <seiscomp/datamodel/parameter.h>
 #include <seiscomp/datamodel/parameterset.h>
 #include <seiscomp/datamodel/setup.h>
 #include <seiscomp/datamodel/utils.h>
-#include <seiscomp/processing/processor.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <string>
 #include <vector>
 
+#include "exception.h"
 #include "log.h"
 #include "settings.h"
 #include "utils.h"
@@ -22,10 +22,152 @@ namespace Seiscomp {
 namespace detect {
 namespace binding {
 
-bool SensorLocationConfig::AmplitudeProcessingConfig::isValid() const {
+boost::optional<double> parseSaturationThreshold(
+    const Processing::Settings &settings, const std::string &parameter) {
+  std::string saturationThresholdStr;
+  if (!settings.getValue(saturationThresholdStr, parameter)) {
+    return boost::none;
+  }
+
+  boost::trim(saturationThresholdStr);
+
+  if (saturationThresholdStr == "false") {
+    return boost::none;
+  }
+
+  size_t atPosition{saturationThresholdStr.find('@')};
+  double saturationThreshold{0};
+  if (atPosition == std::string::npos) {
+    // value given as absolute value
+    if (!Core::fromString(saturationThreshold, saturationThresholdStr)) {
+      throw ValueException{"invalid saturation threshold: " +
+                           saturationThresholdStr};
+    }
+    return saturationThreshold;
+
+  } else {
+    std::string bitsStr{saturationThresholdStr.substr(atPosition + 1)};
+    int bits;
+    double value;
+
+    if (bitsStr.empty()) {
+      throw ValueException{
+          "invalid saturation threshold: no effective bits specified: " +
+          saturationThresholdStr};
+    }
+
+    if (!Core::fromString(bits, bitsStr)) {
+      throw ValueException{
+          "invalid saturation threshold: invalid saturation threshold bits "
+          "specified: " +
+          saturationThresholdStr};
+    }
+
+    if (bits <= 0 || bits > 64) {
+      throw ValueException{
+          "invalid saturation threshold: number of effective bits out of "
+          "range: " +
+          saturationThresholdStr};
+    }
+
+    std::string valueStr{saturationThresholdStr.substr(0, atPosition)};
+    boost::trim(valueStr);
+
+    if (valueStr.empty()) {
+      throw ValueException{
+          "invalid saturation threshold: saturation threshold relative value "
+          "is empty: " +
+          saturationThresholdStr};
+    }
+
+    bool isPercent{false};
+    if (*valueStr.rbegin() == '%') {
+      isPercent = true;
+      valueStr.resize(valueStr.size() - 1);
+    }
+
+    if (valueStr.empty()) {
+      throw ValueException{
+          "invalid saturation threshold: saturation threshold relative value "
+          "is empty: " +
+          saturationThresholdStr};
+    }
+
+    if (!Core::fromString(value, valueStr)) {
+      throw ValueException{
+          "invalid saturation threshold: invalid saturation threshold relative "
+          "value: " +
+          saturationThresholdStr};
+    }
+
+    if (isPercent) value *= 0.01;
+
+    if (value < 0 || value > 1) {
+      throw ValueException{
+          "invalid saturation threshold: number of relative value out of range "
+          "[0,1]: " +
+          saturationThresholdStr};
+    }
+
+    return (1 << bits) * value;
+  }
+  return boost::none;
+}
+
+void SensorLocationConfig::AmplitudeProcessingConfig::setFilter(
+    const std::string &filterStr) {
+  if (filterStr.empty()) {
+    filter = filterStr;
+    return;
+  }
+
   std::string err;
-  return (filter.empty() || config::validateFilter(filter, err)) &&
-         utils::isGeZero(initTime);
+  if (!config::validateFilter(filterStr, err)) {
+    throw ValueException{"invalid filter string identifier: " + err};
+  }
+  filter = filterStr;
+}
+
+void SensorLocationConfig::AmplitudeProcessingConfig::setInitTime(double t) {
+  if (!utils::isGeZero(t)) {
+    throw ValueException{"invalid init time: " + std::to_string(t) +
+                         " Must be >= 0."};
+  }
+  initTime = t;
+}
+
+void SensorLocationConfig::AmplitudeProcessingConfig::setFilter(
+    const Processing::Settings &settings, const std::string &parameterFilter,
+    const std::string &parameterInitTime,
+    const SensorLocationConfig::AmplitudeProcessingConfig &defaultConfig) {
+  std::string filterStr;
+  if (!settings.getValue(filterStr, parameterFilter)) {
+    filterStr = defaultConfig.filter;
+  }
+
+  if (!filterStr.empty()) {
+    std::string err;
+    if (!config::validateFilter(filterStr, err)) {
+      throw ValueException{"invalid filter string identifier: " + err};
+    }
+  }
+
+  double t;
+  if (!settings.getValue(t, parameterInitTime)) {
+    t = defaultConfig.initTime;
+  }
+  if (!utils::isGeZero(t)) {
+    throw ValueException{"invalid filter initialization time: " +
+                         std::to_string(t)};
+  }
+
+  filter = filterStr;
+  initTime = t;
+}
+
+void SensorLocationConfig::AmplitudeProcessingConfig::setSaturationThreshold(
+    const Processing::Settings &settings, const std::string &parameter) {
+  saturationThreshold = parseSaturationThreshold(settings, parameter);
 }
 
 StationConfig::const_iterator StationConfig::begin() const {
@@ -143,22 +285,20 @@ const StationConfig &Bindings::load(
         amplitudeProcessingConfig.enabled =
             _defaultSensorLocationConfig.amplitudeProcessingConfig.enabled;
       }
-      if (!settings.getValue(amplitudeProcessingConfig.filter,
-                             prefix + ".filter")) {
-        amplitudeProcessingConfig.filter =
-            _defaultSensorLocationConfig.amplitudeProcessingConfig.filter;
-      }
-      if (!settings.getValue(amplitudeProcessingConfig.initTime,
-                             prefix + ".initTime")) {
-        amplitudeProcessingConfig.initTime =
-            _defaultSensorLocationConfig.amplitudeProcessingConfig.initTime;
-      }
 
-      if (!amplitudeProcessingConfig.isValid()) {
+      try {
+        amplitudeProcessingConfig.setFilter(
+            settings, prefix + ".filter", prefix + ".initTime",
+            _defaultSensorLocationConfig.amplitudeProcessingConfig);
+
+        amplitudeProcessingConfig.setSaturationThreshold(
+            settings, prefix + ".saturationThreshold");
+      } catch (ValueException &e) {
         SCDETECT_LOG_WARNING(
-            "Invalid configuration: failed to load amplitude profile with id: "
-            "%s",
-            amplitudeProfileId.c_str());
+            "Invalid configuration: failed to load amplitude profile with "
+            "id: "
+            "%s (reason: %s)",
+            amplitudeProfileId.c_str(), e.what());
         continue;
       }
     }

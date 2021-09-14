@@ -108,6 +108,7 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   void setSignalEnd(const boost::optional<Core::TimeSpan> &signalEnd);
   // Returns the end of the time window used for amplitude calculation
   Core::Time signalEnd() const;
+
   // Returns the amplitude type
   const std::string &type() const;
   // Returns the amplitude unit

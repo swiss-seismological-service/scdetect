@@ -227,13 +227,6 @@ bool Application::validateParameters() {
     return false;
   }
 
-  auto &amplitudeProcessingConfig{
-      _config.sensorLocationBindings.amplitudeProcessingConfig};
-  if (!amplitudeProcessingConfig.isValid()) {
-    SCDETECT_LOG_ERROR("Invalid configuration: 'amplitude processing config'");
-    return false;
-  }
-
   return true;
 }
 
@@ -266,7 +259,12 @@ bool Application::handleCommandLineOptions() {
 bool Application::initConfiguration() {
   if (!StreamApplication::initConfiguration()) return false;
 
-  _config.init(this);
+  try {
+    _config.init(this);
+  } catch (ValueException &e) {
+    SCDETECT_LOG_ERROR("Failed to initialize configuration: %s", e.what());
+    return false;
+  }
 
   return true;
 }
@@ -1105,6 +1103,8 @@ bool Application::initAmplitudeProcessors(
               boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                   res));
         });
+    rmsAmplitudeProcessor->setSaturationThreshold(
+        amplitudeProcessingConfig.saturationThreshold);
 
     // configure amplitude processing filter
     if (!amplitudeProcessingConfig.filter.empty()) {
@@ -1363,13 +1363,17 @@ void Application::Config::init(const Client::Application *app) {
   }
 
   try {
-    sensorLocationBindings.amplitudeProcessingConfig.filter =
-        app->configGetString("amplitudes.filter");
+    sensorLocationBindings.amplitudeProcessingConfig.setFilter(
+        app->configGetString("amplitudes.filter"));
+  } catch (ValueException &e) {
+    throw;
   } catch (...) {
   }
   try {
-    sensorLocationBindings.amplitudeProcessingConfig.initTime =
-        app->configGetDouble("amplitudes.initTime");
+    sensorLocationBindings.amplitudeProcessingConfig.setInitTime(
+        app->configGetDouble("amplitudes.initTime"));
+  } catch (ValueException &e) {
+    throw;
   } catch (...) {
   }
 }
