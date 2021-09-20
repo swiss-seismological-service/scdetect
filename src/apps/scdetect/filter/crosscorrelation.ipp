@@ -60,8 +60,7 @@ void CrossCorrelation<TData>::reset() {
   _sumSquaredTemplateWaveform = 0;
   for (int i = 0; i < n; ++i) {
     _sumTemplateWaveform += samples_template_wf[i];
-    _sumSquaredTemplateWaveform +=
-        samples_template_wf[i] * samples_template_wf[i];
+    _sumSquaredTemplateWaveform += utils::square(samples_template_wf[i]);
   }
 
   _denominatorTemplateWaveform =
@@ -176,7 +175,7 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
     const TData newSample{data[i]};
     const TData lastSample{_buffer.front()};
     _sumData += newSample - lastSample;
-    _sumSquaredData += newSample * newSample - lastSample * lastSample;
+    _sumSquaredData += utils::square(newSample) - utils::square(lastSample);
     const double denominatorData{
         std::sqrt(n * _sumSquaredData - _sumData * _sumData)};
 

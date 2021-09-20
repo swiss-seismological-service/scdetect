@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -88,6 +89,13 @@ double cma(T *samples, size_t n) {
     cma += (samples[i] - cma) / (i + 1);
   }
   return cma;
+}
+
+// Compute the square of `n`
+template <typename T, typename = typename std::enable_if<
+                          std::is_arithmetic<T>::value, T>::type>
+inline T square(T n) {
+  return n * n;
 }
 
 // Returns `true` if the difference between two floating point numbers is

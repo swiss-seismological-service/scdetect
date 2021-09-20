@@ -121,8 +121,7 @@ DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
   for (size_t i = idxRange.begin; i <= idxRange.end; ++i) {
     double rms{0};
     for (size_t j = 0; j < numberOfStreams; ++j) {
-      rms += (data[j]->get(i) - noiseInfos[j].offset) *
-             (data[j]->get(i) - noiseInfos[j].offset);
+      rms += utils::square(data[j]->get(i) - noiseInfos[j].offset);
     }
     samples.push_back(sqrt(rms));
   }
