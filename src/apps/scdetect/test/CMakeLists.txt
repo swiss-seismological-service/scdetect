@@ -1,6 +1,7 @@
 set(TESTS
   filter_crosscorrelation.cpp
   integration.cpp
+  reducingamplitudeprocessor.cpp
   utils_cma.cpp
 )
 
@@ -52,6 +53,19 @@ set(SOURCES_integration
   ../waveformprocessor.cpp
   integration_utils.cpp
 )
+
+set(SOURCES_reducingamplitudeprocessor
+  ../amplitudeprocessor.cpp
+  ../exception.cpp
+  ../processor.cpp
+  ../stream.cpp
+  ../timewindowprocessor.cpp
+  ../resamplerstore.cpp
+  ../utils.cpp
+  ../waveform.cpp
+  ../waveformoperator.cpp
+  ../waveformprocessor.cpp
+  utils.cpp)
 
 
 add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
