@@ -184,13 +184,7 @@ bool ReducingAmplitudeProcessor::feed(const Record *record) {
     return false;
   }
 
-  if (WaveformProcessor::feed(record)) {
-    if (!_commonSamplingFrequency) {
-      _commonSamplingFrequency = record->samplingFrequency();
-    }
-    return true;
-  }
-  return false;
+  return WaveformProcessor::feed(record);
 }
 
 void ReducingAmplitudeProcessor::reset() {
@@ -264,11 +258,6 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   // TODO(damb):
   //
   // - compute noise from reduced data;
-
-  if (!_commonSamplingFrequency) {
-    setStatus(WaveformProcessor::Status::kInvalidSamplingFreq, -1);
-    return;
-  }
 
   setStatus(Status::kInProgress, 1);
 
@@ -464,6 +453,10 @@ bool ReducingAmplitudeProcessor::fill(detect::StreamState &streamState,
 bool ReducingAmplitudeProcessor::processIfEnoughDataReceived(
     StreamState &streamState, const Record *record,
     const DoubleArray &filteredData) {
+  if (!_commonSamplingFrequency) {
+    _commonSamplingFrequency = streamState.samplingFrequency;
+  }
+
   bool processed{false};
   if (enoughDataReceived(streamState)) {
     process(streamState, record, filteredData);
