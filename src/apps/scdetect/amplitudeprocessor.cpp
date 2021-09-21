@@ -332,7 +332,8 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
                                        const Core::Time &signalEnd) {
     return static_cast<size_t>(
         static_cast<double>(signalEnd - bufferBeginTime) *
-        commonSamplingFrequency);
+            commonSamplingFrequency -
+        0.5);
   };
   Core::Time signalEndTime;
   size_t signalEndIdx;
