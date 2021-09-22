@@ -22,7 +22,6 @@
 
 namespace utf = boost::unit_test;
 namespace utf_data = utf::data;
-namespace utf_tt = boost::test_tools;
 namespace fs = boost::filesystem;
 
 constexpr double testUnitTolerance{0.000001};
