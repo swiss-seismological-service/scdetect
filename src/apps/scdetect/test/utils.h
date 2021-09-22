@@ -1,3 +1,6 @@
+#ifndef SCDETECT_APPS_SCDETECT_TEST_UTILS_H_
+#define SCDETECT_APPS_SCDETECT_TEST_UTILS_H_
+
 #include <seiscomp/core/array.h>
 #include <seiscomp/core/genericrecord.h>
 
@@ -43,21 +46,10 @@ GenericRecordPtr makeRecord(
     std::string chaCode = "C", std::string locCode = "",
     std::string staCode = "S", std::string netCode = "N");
 
-/* ------------------------------------------------------------------------- */
-// Fixture implementing CLI parsing facilities
-struct CLIParserFixture {
-  CLIParserFixture();
-  ~CLIParserFixture();
-
-  void setup();
-  void teardown();
-
-  static fs::path pathData;
-  static bool keepTempdir;
-};
-
 }  // namespace test
 }  // namespace detect
 }  // namespace Seiscomp
 
 #include "utils.ipp"
+
+#endif  // SCDETECT_APPS_SCDETECT_TEST_UTILS_H_
