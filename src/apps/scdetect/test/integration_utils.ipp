@@ -1,6 +1,10 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
 
+namespace Seiscomp {
+namespace detect {
+namespace test {
+
 #include <algorithm>
 #include <iterator>
 
@@ -28,5 +32,9 @@ template <typename TApp>
 int ApplicationWrapper<TApp>::operator()() {
   return TApp(static_cast<int>(_argv.size()), _argv.data())();
 }
+
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp
 
 #endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_

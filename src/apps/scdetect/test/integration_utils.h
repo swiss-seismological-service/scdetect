@@ -247,10 +247,10 @@ class ApplicationWrapper {
   std::vector<char *> _argv;
 };
 
-#include "integration_utils.ipp"
-
 }  // namespace test
 }  // namespace detect
 }  // namespace Seiscomp
+
+#include "integration_utils.ipp"
 
 #endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
