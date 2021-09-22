@@ -273,7 +273,7 @@ class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
 // samples for parameterized testing
 using Samples = std::vector<ds::Sample>;
 Samples dataset{
-    {/*description=*/"single stream, single record, constant value",
+    {/*description=*/"single stream, single record (constant sample values)",
      /*validatorCallback=*/
      [](const WaveformProcessor *proc, const Record *record,
         const WaveformProcessor::ResultCPtr &result) {
@@ -290,7 +290,243 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished}};
+     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+    {/*description=*/
+     "single stream, single record (too short, constant sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {},
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       const auto startTime{
+           Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       auto record{makeRecord<Array::INT>(120, 1, startTime, 1)};
+       auto &buffer{buffers[record->streamID()]};
+       if (!buffer.feed(record.get())) {
+         BOOST_FAIL("Failed to feed record");
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
+     /*timeWindow=*/
+     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
+                      180}},
+    {/*description=*/
+     "single stream, multi records (equal length, constant sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {
+       auto amplitude{
+           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
+               result)};
+       BOOST_TEST_CHECK(amplitude->value.value == 2.0);
+     },
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       size_t sampleCount{60};
+       double samplingFrequency{1};
+       Core::TimeSpan recordDuration{sampleCount / samplingFrequency};
+       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       for (int i = 0; i < 3; ++i) {
+         auto record{makeRecord<Array::INT>(sampleCount, 2, startTime,
+                                            samplingFrequency)};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+         startTime += recordDuration;
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+    {/*description=*/"single stream, multi records (not equal length, constant "
+                     "sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {
+       auto amplitude{
+           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
+               result)};
+       BOOST_TEST_CHECK(amplitude->value.value == 2.0);
+     },
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       double samplingFrequency{1};
+       for (int i = 0; i < 3; ++i) {
+         auto sampleCount{static_cast<size_t>(60 * (i + 1))};
+         auto record{makeRecord<Array::INT>(sampleCount, 2, startTime,
+                                            samplingFrequency)};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+
+         Core::TimeSpan recordDuration{sampleCount / samplingFrequency};
+         startTime += recordDuration;
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*timeWindow=*/
+     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
+                      360}},
+    {/*description=*/"multi streams, single record (constant sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {
+       auto amplitude{
+           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
+               result)};
+       BOOST_TEST_CHECK(amplitude->value.value == 15.0);
+     },
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       const auto now{Core::Time::GMT()};
+       // load three streams (each with a single record)
+       for (int i = 0; i < 3; ++i) {
+         auto record{makeRecord<Array::INT>(
+             120, 5, now, /*samplingFrequency=*/1, "C" + std::to_string(i))};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+    {/*description=*/"multi streams, multi records (equal length, constant "
+                     "sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {
+       auto amplitude{
+           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
+               result)};
+       BOOST_TEST_CHECK(amplitude->value.value == 15.0);
+     },
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       size_t countSamples{60};
+       double samplingFrequency{1};
+       const Core::TimeSpan recordDuration{countSamples / samplingFrequency};
+       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       // load three streams (each with three records)
+       for (int j = 0; j < 3; ++j) {
+         for (int i = 0; i < 3; ++i) {
+           auto record{makeRecord<Array::INT>(countSamples, 5, startTime,
+                                              samplingFrequency,
+                                              "C" + std::to_string(i))};
+           auto &buffer{buffers[record->streamID()]};
+           if (!buffer.feed(record.get())) {
+             BOOST_FAIL("Failed to feed record");
+           }
+         }
+         startTime += recordDuration;
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*timeWindow=*/
+     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
+                      180}},
+    {/*description=*/"multi streams, single record (one of them is too short, "
+                     "constant sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {},
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       double samplingFrequency{1};
+       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       // load streams
+       {
+         auto record{makeRecord<Array::INT>(180, 5, startTime,
+                                            samplingFrequency, "C0")};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+       {
+         auto record{makeRecord<Array::INT>(179, 5, startTime,
+                                            samplingFrequency, "C1")};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
+     /*timeWindow=*/
+     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
+                      180}},
+    {/*description=*/"multi streams, single record (different sampling "
+                     "frequency, constant sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {},
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       // load streams
+       {
+         auto record{makeRecord<Array::INT>(120, 1, startTime, 10, "C0")};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+       {
+         auto record{makeRecord<Array::INT>(120, 2, startTime, 20, "C1")};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kInvalidSamplingFreq,
+     /*timeWindow=*/
+     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
+                      120}},
+    {/*description=*/"multi streams, single record (different record start "
+                     "time, constant sample values)",
+     /*validatorCallback=*/
+     [](const WaveformProcessor *proc, const Record *record,
+        const WaveformProcessor::ResultCPtr &result) {
+       auto amplitude{
+           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
+               result)};
+       BOOST_TEST_CHECK(amplitude->value.value == 3.0);
+       BOOST_TEST_CHECK(
+           amplitude->time.reference.iso() ==
+           Core::Time::FromString("2020-01-01T00:01:00", "%FT%T").iso());
+       BOOST_TEST_CHECK(amplitude->time.begin == 0.0);
+       BOOST_TEST_CHECK(amplitude->time.end == 120.0);
+     },
+     /*waveformLoader=*/
+     [](ds::Sample::WaveformBuffers &buffers) {
+       double samplingFrequency{1};
+       // load streams
+       {
+         auto startTime{Core::Time::FromString("2020-01-01T00:01:00", "%FT%T")};
+         auto record{makeRecord<Array::INT>(120, 1, startTime,
+                                            samplingFrequency, "C0")};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+       {
+         auto startTime{Core::Time::FromString("2020-01-01T00:00:59", "%FT%T")};
+         auto record{makeRecord<Array::INT>(121, 2, startTime,
+                                            samplingFrequency, "C1")};
+         auto &buffer{buffers[record->streamID()]};
+         if (!buffer.feed(record.get())) {
+           BOOST_FAIL("Failed to feed record");
+         }
+       }
+     },
+     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*timeWindow=*/
+     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:01:00", "%FT%T"),
+                      120}},
+};
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
