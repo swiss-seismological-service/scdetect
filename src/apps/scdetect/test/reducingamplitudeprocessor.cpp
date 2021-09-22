@@ -63,19 +63,23 @@ struct Sample {
   Sample(const std::string &description,
          const WaveformProcessor::PublishResultCallback &validatorCallback,
          const fs::path &pathDataSource,
-         WaveformProcessor::Status expectedStatus)
+         WaveformProcessor::Status expectedStatus,
+         const boost::optional<Core::TimeWindow> &timeWindow = boost::none)
       : description{description},
         waveformDataSource{pathDataSource},
         validatorCallback{validatorCallback},
-        expectedStatus{expectedStatus} {}
+        expectedStatus{expectedStatus},
+        timeWindow{timeWindow} {}
   Sample(const std::string &description,
          const WaveformProcessor::PublishResultCallback &validatorCallback,
          const WaveformLoader &waveformLoader,
-         WaveformProcessor::Status expectedStatus)
+         WaveformProcessor::Status expectedStatus,
+         const boost::optional<Core::TimeWindow> &timeWindow = boost::none)
       : description{description},
         waveformDataSource{waveformLoader},
         validatorCallback{validatorCallback},
-        expectedStatus{expectedStatus} {}
+        expectedStatus{expectedStatus},
+        timeWindow{timeWindow} {}
 
   // The sample's description
   std::string description;
