@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "../app.h"
+#include "fixture.h"
 #include "integration_utils.h"
 
 namespace utf = boost::unit_test;

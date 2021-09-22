@@ -51,6 +51,7 @@ set(SOURCES_integration
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp
+  fixture.cpp
   integration_utils.cpp
 )
 
@@ -65,7 +66,8 @@ set(SOURCES_reducingamplitudeprocessor
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp
-  utils.cpp)
+  fixture.cpp
+)
 
 
 add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")

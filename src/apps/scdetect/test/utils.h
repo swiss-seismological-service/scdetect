@@ -4,10 +4,6 @@
 #include <seiscomp/core/array.h>
 #include <seiscomp/core/genericrecord.h>
 
-#include <boost/filesystem.hpp>
-
-namespace fs = boost::filesystem;
-
 namespace Seiscomp {
 namespace detect {
 namespace test {

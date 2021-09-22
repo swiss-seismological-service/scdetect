@@ -27,6 +27,7 @@
 #include "../amplitudeprocessor.h"
 #include "../utils.h"
 #include "../waveformprocessor.h"
+#include "fixture.h"
 #include "utils.h"
 
 namespace utf = boost::unit_test;

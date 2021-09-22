@@ -235,18 +235,6 @@ struct TempDirFixture {
 };
 
 /* -------------------------------------------------------------------------- */
-struct CLIParserFixture {
-  CLIParserFixture();
-  ~CLIParserFixture();
-
-  void setup();
-  void teardown();
-
-  static fs::path pathData;
-  static bool keepTempdir;
-};
-
-/* -------------------------------------------------------------------------- */
 template <typename TApp>
 class ApplicationWrapper {
  public:
