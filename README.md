@@ -173,8 +173,8 @@ configuration parameters:
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
   to `NOW`. If data arrive later than the value specified it is not used,
-  anymore. Note that data latency is not validated if `scdetect` is run in *
-  playback mode*.
+  anymore. Note that data latency is not validated if `scdetect` is run in
+  *playback mode*.
 
 - `"methodId"`: The origin method identifier which will be added to declared
   origins.
