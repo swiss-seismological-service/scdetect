@@ -201,6 +201,16 @@ configuration parameters:
 
 - `"gapTolerance"`: Maximum gap length in seconds to tolerate and to be handled.
 
+**Amplitude calculation**:
+
+`scdetect` implements the calculation of amplitudes required for
+amplitude-magnitude regression. Within a detector configuration the following
+amplitude related configuration parameters may be provided:
+
+- `"calculateAmplitudes"`: Enables (`true`) or disables (`false`) amplitude
+  calculation for this detector configuration. Note that amplitudes are
+  calculated only for those streams where bindings configuration is provided.
+
 **Detections and arrivals**:
 
 - `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds (i.e. with
@@ -344,7 +354,6 @@ configuration parameters:
   frequency. Both the template waveform and the stream to be processed may be
   required to be resampled to the sampling frequency specified. Note that data
   is resampled **before** being filtered.
-
 #### Stream configuration defaults
 
 The following stream configuration default parameters may be defined within the
