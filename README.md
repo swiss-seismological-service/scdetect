@@ -9,6 +9,7 @@
 - [Getting started](#getting-started)
     + [General](#general)
     + [Template configuration](#template-configuration)
+    + [Amplitude calculation](#amplitude-calculation)
     + [Inventory metadata, event metadata and configuration](#inventory-events-and-configuration)
     + [Waveform data and RecordStream configuration](#waveform-data-and-recordstream-configuration)
 - [Installation](#compiling-and-installation)
@@ -75,10 +76,12 @@ The subsequent sections are intended to provide an introduction on how to use
 and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
-2. How to access
+2. How to enable [amplitude calculation](#amplitude-calculation) (required for
+   a magnitude estimation based on amplitude-magnitude regression)
+3. How to access
    [metadata and configuration](#inventory-events-and-configuration) from the
    database or from plain files
-3. How
+4. How
    [waveform data is accessed](#waveform-data-and-recordstream-configuration)
    including both [template waveform data caching](#caching-waveform-data)
    and [template waveform data preparation](#prepare-template-waveform-data)
@@ -139,13 +142,6 @@ That is, a detector configuration defines besides the detector specific
 configuration parameters a list of stream configurations and optionally some
 [stream configuration defaults](#stream-configuration-defaults).
 
-> **NOTE**: `scdetect` is operating strictly stream based. For this reason station
-> [bindings](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
-> are not supported (in contrast to other
-> [SeisComP](https://github.com/SeisComP) modules such as e.g.
-> [scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html),
-> etc.)
-
 Note that if a configuration parameter is not explicitly defined a module
 specific global default is used instead. Global defaults may be configured
 following SeisComP's
@@ -203,13 +199,17 @@ configuration parameters:
 
 **Amplitude calculation**:
 
-`scdetect` implements the calculation of amplitudes required for
-amplitude-magnitude regression. Within a detector configuration the following
-amplitude related configuration parameters may be provided:
+`scdetect` implements the calculation of amplitudes required for a magnitude
+estimation based on an amplitude-magnitude regression. Within a detector
+configuration the following amplitude related configuration parameters may be
+provided:
 
-- `"calculateAmplitudes"`: Enables (`true`) or disables (`false`) amplitude
-  calculation for this detector configuration. Note that amplitudes are
-  calculated only for those streams where bindings configuration is provided.
+- `"calculateAmplitudes"`: Boolean value which enables/disables
+  [amplitude calculation](#amplitude-calculation) for this detector
+  configuration. Note also that amplitudes are calculated only for those sensor
+  locations
+  where [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+  is supplied.
 
 **Detections and arrivals**:
 
@@ -418,6 +418,86 @@ identified by `"template-02"` (i.e. it uses `"Sg"` instead).
 Besides, filtering is explicitly disabled for all stream configurations within
 the stream set.
 
+### Amplitude calculation
+
+`scdetect` implements the calculation of amplitudes which are a prerequisite in
+order to perform a so called *amplitude-magnitude regression*. The
+implementation follows the approach outlined
+in https://doi.org/10.1029/2019JB017468 (section 3.3.3 Magnitude Estimation).
+Amplitudes are calculated once an origin has been declared.
+
+This section contains a detailed description how to setup the configuration
+required for amplitude calculation.
+
+Amplitudes used for the amplitude-magnitude regression are so called *sensor
+location RMS (root-mean-square) amplitudes* (i.e. the maximum RMS regarding all
+streams for a certain sensor location w.r.t. velocity seismograms). In order to
+provide dedicated configuration for different sensor locations `scdetect` makes
+use of
+SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+concept. Amplitudes are calculated only for those sensor locations with
+bindings configuration available.
+
+For those users already familiar with
+SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+an important note:
+
+> **NOTE**: At the time being, SeisComP's
+> [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+> allows configuration to be provided for stations, only. In order to allow
+> users to supply configuration on sensor location granularity, `scdetect`
+> makes use of so called *amplitude profiles*.
+
+In general, bindings are configured the easiest with SeisComP's configuration
+and system management
+frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+. Alternatively, *key files* may be created manually.
+
+**Creating key files** (`scconfig`):
+1. Create an *amplitude profile* for a sensor location. As a bare minimum
+   specify at least the `locationCode` and `channelCode` attributes.
+
+   **Tip**: Although not strictly required, it is recommended to use sensible
+   profile names. E.g. for an amplitude profile with `locationCode` `00`
+   and `channelCode` `HH` naming the profile with e.g. `00_HH` is recommended.
+2. Add the profile's name to the list of known `amplitudeProfiles`. Only those
+   profiles are taken into account with a corresponding list entry.
+3. (Optional): in case of creating a *binding profile* assign the bindings
+   configuration to the corresponding stations.
+4. Save the configuration. With that, the bindings configuration is written to
+   so called *key files*.
+
+**Dump bindings configurations**:
+
+`scdetect` (and
+SeisComP [trunk modules](https://www.seiscomp.de/doc/base/glossary.html#term-trunk)
+in general) do not work with key files directly. Therefore, key files need to be
+dumped either to a database or into
+a [SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
+formatted configuration file (depending on whether a file-based approach is
+desired or not). This is done the easiest with
+SeisComP's [bindings2cfg](https://www.seiscomp.de/doc/apps/bindings2cfg.html)
+utility. E.g.
+
+```bash
+$ bindings2cfg --key-dir ./etc/key -o config.scml
+```
+
+will dump the configuration into
+a [SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
+formatted `config.scml` file, while
+
+```bash
+$ bindings2cfg --key-dir ./etc/key \
+  --plugins dbpostgresql -d postgresql://user:password@localhost/seiscomp
+```
+
+will dump the configuration to a database named `seiscomp`
+([PostgreSQL](https://www.postgresql.org/) backend) on `localhost`. For further
+information, please refer to
+the [bindings2cfg](https://www.seiscomp.de/doc/apps/bindings2cfg.html)
+documentation.
+
 ### Inventory, events and configuration
 
 SeisComP stores and reads certain data (e.g.
@@ -445,8 +525,8 @@ the standard SeisComP CLI options:
 The non-standard `--event-db URI` option allows reading eventparameter related
 data from either a file or a database specified by `URI` (Note that
 the `--event-db URI` CLI option overrides the `-d|--database URL` CLI option.).
-With that, both inventory metadata and eventparameters might be read from plain
-files, making the database connection fully optional. E.g.
+With that, inventory metadata, configuration data and eventparameters might be
+read from plain files, making the database connection fully optional. E.g.
 
 ```bash
 $ ls -1
@@ -457,6 +537,7 @@ templates.json
 $ scdetect \
   --templates-json templates.json \
   --inventory-db file://$(realpath inventory.scml) \
+  --config-db file://$(realpath config.scml) \
   --event-db file://$(realpath catalog.scml) \
   -I file://$(realpath data.mseed) \
   --offline \
@@ -470,10 +551,12 @@ a file (i.e.
 [SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
 formatted to the `detections.scml` file.
 
-Note that as the `--config-db URI` CLI option is a standard SeisComP module CLI
-option it is mentioned for completeness, only. Since `scdetect` does not
-support [station bindings](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-and-bindings-configuration)
-, anyway, this CLI can be neglected.
+For calculating amplitudes `scdetect` makes use of
+SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+concept (see also [calculating amplitudes](#amplitude-calculation)). In order to
+inject [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+the standard SeisComP `--config-db URI` CLI flag may be used (as an alternative
+to `-d|--database URL`).
 
 ### Waveform data and RecordStream configuration
 
