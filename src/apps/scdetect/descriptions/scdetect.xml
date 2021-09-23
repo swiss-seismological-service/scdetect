@@ -348,6 +348,8 @@
           <parameter name="channelCode" type="string" default="">
             <description>
               Defines profile's channel code regarding amplitude calculation.
+              Note that only the band and source code is taken into account
+              (i.e. the two leading characters).
             </description>
           </parameter>
           <parameter name="enable" type="boolean" default="true">

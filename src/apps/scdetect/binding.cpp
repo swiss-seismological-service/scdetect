@@ -272,12 +272,12 @@ const StationConfig &Bindings::load(
       settings.getValue(locCode, prefix + ".locationCode");
       // a non-empty channel code is required to be specified
       if (!settings.getValue(chaCode, prefix + ".channelCode") ||
-          chaCode.empty()) {
+          chaCode.empty() || chaCode.size() < 2) {
         continue;
       }
 
-      auto &sensorLocationConfig{
-          stationConfig._sensorLocationConfigs[{locCode, chaCode}]};
+      auto &sensorLocationConfig{stationConfig._sensorLocationConfigs[{
+          locCode, chaCode.substr(0, 2)}]};
       auto &amplitudeProcessingConfig{
           sensorLocationConfig.amplitudeProcessingConfig};
       if (!settings.getValue(amplitudeProcessingConfig.enabled,
