@@ -554,7 +554,8 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
     Processing::Stream stream;
     stream.setCode(waveformStreamId.chaCode());
     proc.add(waveformStreamId.netCode(), waveformStreamId.staCode(),
-             waveformStreamId.locCode(), stream);
+             waveformStreamId.locCode(), stream,
+             AmplitudeProcessor::DeconvolutionConfig{});
   }
   proc.setResultCallback(sample.validatorCallback);
 

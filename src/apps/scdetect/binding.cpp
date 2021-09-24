@@ -114,6 +114,68 @@ boost::optional<double> parseSaturationThreshold(
   return boost::none;
 }
 
+StreamConfig::DeconvolutionConfig::operator AmplitudeProcessor::
+    DeconvolutionConfig() const {
+  AmplitudeProcessor::DeconvolutionConfig retval;
+  retval.enabled = enabled;
+  retval.responseTaperLength = responseTaperLength;
+  retval.minimumResponseTaperFrequency = minimumResponseTaperFrequency;
+  retval.maximumResponseTaperFrequency = maximumResponseTaperFrequency;
+  return retval;
+}
+
+void StreamConfig::DeconvolutionConfig::setResponseTaperLength(double length) {
+  if (length <= 0) {
+    throw ValueException{"invalid response taper length: " +
+                         std::to_string(length) + " Must be > 0."};
+  }
+  responseTaperLength = length;
+}
+
+void StreamConfig::DeconvolutionConfig::setResponseTaperLength(
+    const Processing::Settings &settings, const std::string &parameter,
+    const StreamConfig::DeconvolutionConfig &defaultConfig) {
+  double length;
+  if (!settings.getValue(length, parameter)) {
+    length = defaultConfig.responseTaperLength;
+  }
+  setResponseTaperLength(length);
+}
+
+void StreamConfig::DeconvolutionConfig::setMinimumResponseTaperFrequency(
+    double f) {
+  minimumResponseTaperFrequency = f;
+}
+
+void StreamConfig::DeconvolutionConfig::setMinimumResponseTaperFrequency(
+    const Processing::Settings &settings, const std::string &parameter,
+    const DeconvolutionConfig &defaultConfig) {
+  double f;
+  if (!settings.getValue(f, parameter)) {
+    f = defaultConfig.minimumResponseTaperFrequency;
+  }
+  setMinimumResponseTaperFrequency(f);
+}
+
+void StreamConfig::DeconvolutionConfig::setMaximumResponseTaperFrequency(
+    double f) {
+  maximumResponseTaperFrequency = f;
+}
+
+void StreamConfig::DeconvolutionConfig::setMaximumResponseTaperFrequency(
+    const Processing::Settings &settings, const std::string &parameter,
+    const DeconvolutionConfig &defaultConfig) {
+  double f;
+  if (!settings.getValue(f, parameter)) {
+    f = defaultConfig.maximumResponseTaperFrequency;
+  }
+  setMaximumResponseTaperFrequency(f);
+}
+
+const StreamConfig &SensorLocationConfig::at(const std::string &chaCode) const {
+  return streamConfigs.at(chaCode);
+}
+
 void SensorLocationConfig::AmplitudeProcessingConfig::setFilter(
     const std::string &filterStr) {
   if (filterStr.empty()) {
@@ -271,8 +333,10 @@ const StationConfig &Bindings::load(
         continue;
       }
 
-      auto &sensorLocationConfig{stationConfig._sensorLocationConfigs[{
-          locCode, chaCode.substr(0, 2)}]};
+      // only take the band and source code identifiers into account
+      chaCode = chaCode.substr(0, 2);
+      auto &sensorLocationConfig{
+          stationConfig._sensorLocationConfigs[{locCode, chaCode}]};
       auto &amplitudeProcessingConfig{
           sensorLocationConfig.amplitudeProcessingConfig};
       if (!settings.getValue(amplitudeProcessingConfig.enabled,
@@ -291,10 +355,53 @@ const StationConfig &Bindings::load(
       } catch (ValueException &e) {
         SCDETECT_LOG_WARNING(
             "Invalid configuration: failed to load amplitude profile with "
-            "id: "
-            "%s (reason: %s)",
+            "id: %s (reason: %s)",
             amplitudeProfileId.c_str(), e.what());
         continue;
+      }
+
+      std::string responseProfileIdsStr;
+      if (settings.getValue(responseProfileIdsStr,
+                            prefix + ".responses.responseProfiles") &&
+          !responseProfileIdsStr.empty()) {
+        std::vector<std::string> responseProfileIds;
+        boost::algorithm::split(responseProfileIds, responseProfileIdsStr,
+                                boost::is_any_of(settings::kConfigListSep));
+
+        // parse response configuration profiles
+        for (const auto &responseProfileId : responseProfileIds) {
+          std::string respProfilePrefix{prefix + ".responses." +
+                                        responseProfileId};
+
+          std::string subSourceCode;
+          // a non-empty subSourceCode is required to be specified
+          if (!settings.getValue(subSourceCode,
+                                 respProfilePrefix + ".channelCode") ||
+              subSourceCode.empty() || subSourceCode.size() != 1) {
+            continue;
+          }
+
+          auto &streamConfig{
+              sensorLocationConfig.streamConfigs[chaCode + subSourceCode]};
+          auto &deconvolutionConfig{streamConfig.deconvolutionConfig};
+          try {
+            deconvolutionConfig.setResponseTaperLength(
+                settings, respProfilePrefix + ".taperLength",
+                deconvolutionConfig);
+            deconvolutionConfig.setMinimumResponseTaperFrequency(
+                settings, respProfilePrefix + ".minimumTaperFrequency",
+                deconvolutionConfig);
+            deconvolutionConfig.setMaximumResponseTaperFrequency(
+                settings, respProfilePrefix + ".maximumTaperFrequency",
+                deconvolutionConfig);
+          } catch (ValueException &e) {
+            SCDETECT_LOG_WARNING(
+                "Invalid configuration: failed to load response profile with "
+                "id: %s (reason: %s)",
+                responseProfileId.c_str(), e.what());
+            continue;
+          }
+        }
       }
     }
   }

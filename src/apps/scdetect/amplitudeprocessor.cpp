@@ -197,14 +197,11 @@ void ReducingAmplitudeProcessor::reset() {
   _commonSamplingFrequency = boost::none;
 }
 
-void ReducingAmplitudeProcessor::add(const std::string &netCode,
-                                     const std::string &staCode,
-                                     const std::string &locCode,
-                                     const Processing::Stream &streamConfig) {
+void ReducingAmplitudeProcessor::add(
+    const std::string &netCode, const std::string &staCode,
+    const std::string &locCode, const Processing::Stream &streamConfig,
+    const AmplitudeProcessor::DeconvolutionConfig &deconvolutionConfig) {
   if (!locked()) {
-    DeconvolutionConfig deconvolutionConfig;
-    deconvolutionConfig.enabled = true;
-
     StreamItem stream;
     stream.streamConfig = streamConfig;
     stream.deconvolutionConfig = deconvolutionConfig;

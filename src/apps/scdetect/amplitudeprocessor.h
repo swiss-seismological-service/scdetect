@@ -207,13 +207,14 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
   void reset() override;
 
-  // Registers a new stream with `streamConfig`
+  // Registers a new stream with `streamConfig` and `deconvolutionConfig`
   //
   // - adding additional streams can be done only before the first record was
   // fed
-  virtual void add(const std::string &netCode, const std::string &staCode,
-                   const std::string &locCode,
-                   const Processing::Stream &streamConfig);
+  virtual void add(
+      const std::string &netCode, const std::string &staCode,
+      const std::string &locCode, const Processing::Stream &streamConfig,
+      const AmplitudeProcessor::DeconvolutionConfig &deconvolutionConfig);
 
   // Returns a the registered waveform stream identifiers
   std::vector<std::string> waveformStreamIds() const;

@@ -1128,14 +1128,34 @@ bool Application::initAmplitudeProcessors(
     // TODO(damb):
     // - call setSignalBegin() in order to take filter initTime into account
 
+    bool missingDeconvolutionConfig{false};
     for (size_t i = 0; i < 3; ++i) {
       const auto component{
           threeComponentsItem.threeComponents.threeComponents().comps[i]};
       Processing::Stream stream;
       stream.init(component);
-      rmsAmplitudeProcessor->add(threeComponents.netCode(),
-                                 threeComponents.staCode(),
-                                 threeComponents.locCode(), stream);
+
+      AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
+      try {
+        deconvolutionConfig =
+            static_cast<AmplitudeProcessor::DeconvolutionConfig>(
+                sensorLocationConfig.at(component->code()).deconvolutionConfig);
+      } catch (std::out_of_range &e) {
+        SCDETECT_LOG_DEBUG(
+            "%s: failed to look up bindings required for amplitude processor "
+            "configuration (%s)",
+            waveformStreamId.c_str(), e.what());
+        missingDeconvolutionConfig = true;
+        break;
+      }
+
+      rmsAmplitudeProcessor->add(
+          threeComponents.netCode(), threeComponents.staCode(),
+          threeComponents.locCode(), stream, deconvolutionConfig);
+    }
+
+    if (missingDeconvolutionConfig) {
+      continue;
     }
 
     try {

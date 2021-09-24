@@ -9,6 +9,7 @@
 #include <boost/optional/optional.hpp>
 #include <map>
 #include <string>
+#include <unordered_map>
 
 #include "amplitudeprocessor.h"
 
@@ -21,6 +22,63 @@ namespace binding {
 // - returns `boost::none` if no parameter could be found
 boost::optional<double> parseSaturationThreshold(
     const Processing::Settings &settings, const std::string &parameter);
+
+struct StreamConfig {
+  struct DeconvolutionConfig {
+    // Indicates whether deconvolution is enabled `true` or not `false`
+    bool enabled{true};
+    // Taper length in seconds when deconvolving the data
+    double responseTaperLength{5};
+    // Defines the end of the left-hand side cosine-taper in Hz applied to the
+    // frequency spectrum. I.e. the spectrum is tapered between 0Hz and
+    // `minimumResponseTaperFrequency`. A value less than or equal to zero
+    // disables left-hand side tapering.
+    double minimumResponseTaperFrequency{0.00833333};  // 120 seconds
+    // Defines the beginning of the right-hand side cosine-taper in Hz applied
+    // to the frequency spectrum. I.e. the spectrum is tapered between
+    // `maximumResponseTaperFrequency` and the Nyquist frequency. A value less
+    // than or equal to zero disables left-hand side tapering.
+    double maximumResponseTaperFrequency{0};
+
+    explicit operator AmplitudeProcessor::DeconvolutionConfig() const;
+
+    // Savely sets the response taper length
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setResponseTaperLength(double length);
+    // Savely sets the response taper length from `settings` identified by
+    // `parameter`
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setResponseTaperLength(const Processing::Settings &settings,
+                                const std::string &parameter,
+                                const DeconvolutionConfig &defaultConfig);
+    // Savely sets the minimum response taper frequency
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setMinimumResponseTaperFrequency(double f);
+    // Savely sets the minimum response taper frequency from `settings`
+    // identified by `parameter`
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setMinimumResponseTaperFrequency(
+        const Processing::Settings &settings, const std::string &parameter,
+        const DeconvolutionConfig &defaultConfig);
+    // Savely sets the maximum response taper frequency
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setMaximumResponseTaperFrequency(double f);
+    // Savely sets the maximum response taper frequency from `settings`
+    // identified by `parameter`
+    //
+    // - throws a `ValueException` if the value is invalid
+    void setMaximumResponseTaperFrequency(
+        const Processing::Settings &settings, const std::string &parameter,
+        const DeconvolutionConfig &defaultConfig);
+  };
+
+  DeconvolutionConfig deconvolutionConfig;
+};
 
 struct SensorLocationConfig {
   // Amplitude processing configuration
@@ -60,7 +118,13 @@ struct SensorLocationConfig {
                                 const std::string &parameter);
   };
 
+  // Returns the Stream configuration for `chaCode`
+  const StreamConfig &at(const std::string &chaCode) const;
+
   AmplitudeProcessingConfig amplitudeProcessingConfig;
+
+  using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
+  StreamConfigs streamConfigs;
 };
 
 // A container for station configuration

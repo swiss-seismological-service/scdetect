@@ -390,6 +390,49 @@
               time is used only in case filtering is enabled.
             </description>
           </parameter>
+
+          <group name="responses">
+            <description>
+              Each response profile is a response related configuration set. It
+              allows the configuration of parameters on stream granularity.
+            </description>
+            <parameter name="responseProfiles" type="list:string" default="">
+              <description>
+                Defines a list of response profiles.
+              </description>
+            </parameter>
+            <struct type="responseProfile" link="scdetect.amplitudeProfiles.responseProfiles">
+              <parameter name="channelCode" type="string" default="">
+                <description>
+                  Defines profile's channel code used for response correction.
+                  Note that the value is interpreted as the subsource code i.e. a
+                  single character is allowed, only.
+                </description>
+              </parameter>
+              <parameter name="taperLength" type="double" default="5" unit="s">
+                <description>
+                  Defines the taper length when deconvolving the data.
+                </description>
+              </parameter>
+              <parameter name="minimumTaperFrequency" type="double" default="0.00833333" unit="Hz">
+                <description>
+                  Defines the end of the left-hand side cosine-taper in Hz
+                  applied to the frequency spectrum. I.e. the spectrum is tapered
+                  between 0Hz and `minimumTaperFrequency`. A value less than or
+                  equal to zero disables left-hand side tapering.
+                </description>
+              </parameter>
+              <parameter name="maximumTaperFrequency" type="double" default="0" unit="Hz">
+                <description>
+                  Defines the beginning of the right-hand side cosine-taper in Hz
+                  applied to the frequency spectrum. I.e. the spectrum is tapered
+                  between `maximumResponseTaperFrequency` and the Nyquist
+                  frequency. A value less than or equal to zero disables
+                  left-hand side tapering.
+                </description>
+              </parameter>
+            </struct>
+          </group>
         </struct>
       </group>
     </configuration>
