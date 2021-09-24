@@ -145,24 +145,19 @@ void SensorLocationConfig::AmplitudeProcessingConfig::setFilter(
     filterStr = defaultConfig.filter;
   }
 
-  if (!filterStr.empty()) {
-    std::string err;
-    if (!config::validateFilter(filterStr, err)) {
-      throw ValueException{"invalid filter string identifier: " + err};
-    }
-  }
-
   double t;
   if (!settings.getValue(t, parameterInitTime)) {
     t = defaultConfig.initTime;
   }
-  if (!utils::isGeZero(t)) {
-    throw ValueException{"invalid filter initialization time: " +
-                         std::to_string(t)};
-  }
 
-  filter = filterStr;
-  initTime = t;
+  std::string previousFilter{filter};
+  setFilter(filterStr);
+  try {
+    setInitTime(t);
+  } catch (ValueException &) {
+    filter = previousFilter;
+    throw;
+  }
 }
 
 void SensorLocationConfig::AmplitudeProcessingConfig::setSaturationThreshold(
