@@ -51,12 +51,12 @@ class AmplitudeProcessor : public TimeWindowProcessor {
     // Defines the end of the left-hand side cosine-taper in Hz applied to the
     // frequency spectrum. I.e. the spectrum is tapered between 0Hz and
     // `minimumResponseTaperFrequency`. A value less than or equal to zero
-    // disables tapering.
+    // disables left-hand side tapering.
     double minimumResponseTaperFrequency{0.00833333};  // 120 seconds
     // Defines the beginning of the right-hand side cosine-taper in Hz applied
     // to the frequency spectrum. I.e. the spectrum is tapered between
     // `maximumResponseTaperFrequency` and the Nyquist frequency. A value less
-    // than or equal to zero disables tapering.
+    // than or equal to zero disables right-hand side tapering.
     double maximumResponseTaperFrequency{0};
   };
 
