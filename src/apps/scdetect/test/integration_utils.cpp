@@ -216,6 +216,47 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
 
     originCmp(originResult, originExpected);
   }
+
+  // compare amplitudes
+  const auto amplitudePredicate = [](const DataModel::AmplitudeCPtr &lhs,
+                                     const DataModel::AmplitudeCPtr &rhs) {
+    // XXX(damb): Used to generate a pseudo total order
+    const auto amplitudeTypePredicate = [](const DataModel::AmplitudeCPtr &a) {
+      return a->type();
+    };
+    const auto amplitudeValuePredicate = [](const DataModel::AmplitudeCPtr &a) {
+      return a->amplitude().value();
+    };
+    const auto amplitudeTimeWindowBeginPredicate =
+        [](const DataModel::AmplitudeCPtr &a) {
+          return a->timeWindow().reference() +
+                 Core::TimeSpan{a->timeWindow().begin()};
+        };
+    const auto amplitudeTimeWindowEndPredicate =
+        [](const DataModel::AmplitudeCPtr &a) {
+          return a->timeWindow().reference() +
+                 Core::TimeSpan{a->timeWindow().end()};
+        };
+
+    return amplitudeTypePredicate(lhs) < amplitudeTypePredicate(rhs) &&
+           amplitudeValuePredicate(lhs) < amplitudeValuePredicate(rhs) &&
+           amplitudeTimeWindowBeginPredicate(lhs) <
+               amplitudeTimeWindowBeginPredicate(rhs) &&
+           amplitudeTimeWindowEndPredicate(lhs) <
+               amplitudeTimeWindowEndPredicate(rhs);
+  };
+  const auto lhsAmplitudes{sortByPredicate<DataModel::AmplitudeCPtr>(
+      [&lhs](size_t i) { return lhs->amplitude(i); }, lhs->amplitudeCount(),
+      amplitudePredicate)};
+  const auto rhsAmplitudes{sortByPredicate<DataModel::AmplitudeCPtr>(
+      [&rhs](size_t i) { return rhs->amplitude(i); }, rhs->amplitudeCount(),
+      amplitudePredicate)};
+  for (size_t i = 0; i < lhsAmplitudes.size(); ++i) {
+    DataModel::AmplitudeCPtr amplitudeResult{lhsAmplitudes.at(i)};
+    DataModel::AmplitudeCPtr amplitudeExpected{rhsAmplitudes.at(i)};
+
+    amplitudeCmp(amplitudeResult, amplitudeExpected);
+  }
 }
 
 void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
@@ -455,6 +496,56 @@ void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
     return m->creationInfo().agencyID();
   }));
+}
+
+void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
+                  const DataModel::AmplitudeCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->type() == rhs->type());
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->amplitude(); }));
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->timeWindow();
+  }));
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->period(); }));
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->snr(); }));
+  BOOST_TEST_CHECK(lhs->unit() == rhs->unit());
+  BOOST_TEST_CHECK(lhs->pickID() == rhs->pickID());
+  BOOST_TEST_CHECK(static_cast<std::string>(lhs->waveformID()) ==
+                   static_cast<std::string>(rhs->waveformID()));
+  BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->scalingTime();
+  }));
+  BOOST_TEST_CHECK(lhs->magnitudeHint() == rhs->magnitudeHint());
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->evaluationMode();
+  }));
+
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->creationInfo().agencyID();
+  }));
+
+  // compare comments
+  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
+                                   const DataModel::CommentCPtr &rhs) {
+    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+  };
+  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+      commentPredicate)};
+  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+      commentPredicate)};
+  for (size_t j = 0; j < lhsComments.size(); ++j) {
+    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    commentCmp(commentResult, commentExpected);
+  }
 }
 
 void commentCmp(const DataModel::CommentCPtr &lhs,

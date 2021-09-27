@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 
+#include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/eventparameters.h>
@@ -205,6 +206,10 @@ void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
 // Compare `DataModel::Magnitude` element-wise
 void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs);
+
+// Compare `DataModel::Amplitude` element-wise
+void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
+                  const DataModel::AmplitudeCPtr &rhs);
 
 // Compare `DataModel::Comment` element-wise
 void commentCmp(const DataModel::CommentCPtr &lhs,
