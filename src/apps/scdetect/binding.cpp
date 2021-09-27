@@ -125,9 +125,9 @@ StreamConfig::DeconvolutionConfig::operator AmplitudeProcessor::
 }
 
 void StreamConfig::DeconvolutionConfig::setResponseTaperLength(double length) {
-  if (length <= 0) {
+  if (!utils::isGeZero(length)) {
     throw ValueException{"invalid response taper length: " +
-                         std::to_string(length) + " Must be > 0."};
+                         std::to_string(length) + " (Must be >= 0.)"};
   }
   responseTaperLength = length;
 }
