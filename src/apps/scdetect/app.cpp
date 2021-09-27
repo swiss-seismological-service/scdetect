@@ -1125,9 +1125,6 @@ bool Application::initAmplitudeProcessors(
                                        amplitudeProcessingConfig.initTime);
     }
 
-    // TODO(damb):
-    // - call setSignalBegin() in order to take filter initTime into account
-
     bool missingDeconvolutionConfig{false};
     for (size_t i = 0; i < 3; ++i) {
       const auto component{
