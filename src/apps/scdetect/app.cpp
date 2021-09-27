@@ -1189,7 +1189,7 @@ void Application::registerAmplitudeProcessor(
           _waveformBuffer.sequence(Processing::StreamBuffer::WaveformID{
               converted.netCode(), converted.staCode(), converted.locCode(),
               converted.chaCode()})};
-      if (!sequence) return;
+      if (!sequence) continue;
 
       const auto tw{processor->safetyTimeWindow()};
       if (tw.startTime() < sequence->timeWindow().startTime()) {
