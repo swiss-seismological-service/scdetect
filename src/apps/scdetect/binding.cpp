@@ -193,7 +193,7 @@ void SensorLocationConfig::AmplitudeProcessingConfig::setFilter(
 void SensorLocationConfig::AmplitudeProcessingConfig::setInitTime(double t) {
   if (!utils::isGeZero(t)) {
     throw ValueException{"invalid init time: " + std::to_string(t) +
-                         " Must be >= 0."};
+                         " (Must be >= 0.)"};
   }
   initTime = t;
 }
