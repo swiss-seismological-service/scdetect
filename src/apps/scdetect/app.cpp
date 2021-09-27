@@ -1125,7 +1125,6 @@ bool Application::initAmplitudeProcessors(
                                        amplitudeProcessingConfig.initTime);
     }
 
-    bool missingDeconvolutionConfig{false};
     for (size_t i = 0; i < 3; ++i) {
       const auto component{
           threeComponentsItem.threeComponents.threeComponents().comps[i]};
@@ -1138,21 +1137,20 @@ bool Application::initAmplitudeProcessors(
             static_cast<AmplitudeProcessor::DeconvolutionConfig>(
                 sensorLocationConfig.at(component->code()).deconvolutionConfig);
       } catch (std::out_of_range &e) {
-        SCDETECT_LOG_DEBUG(
-            "%s: failed to look up bindings required for amplitude processor "
-            "configuration (%s)",
-            waveformStreamId.c_str(), e.what());
-        missingDeconvolutionConfig = true;
-        break;
+        binding::StreamConfig::DeconvolutionConfig fallback;
+        SCDETECT_LOG_WARNING(
+            "%s: failed to look up deconvolution configuration related "
+            "bindings (channel code: \"%s\") required for amplitude processor "
+            "configuration (%s); use fallback configuration, instead: \"%s\"",
+            waveformStreamId.c_str(), component->code().c_str(), e.what(),
+            fallback.debugString().c_str());
+        deconvolutionConfig =
+            static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
       }
 
       rmsAmplitudeProcessor->add(
           threeComponents.netCode(), threeComponents.staCode(),
           threeComponents.locCode(), stream, deconvolutionConfig);
-    }
-
-    if (missingDeconvolutionConfig) {
-      continue;
     }
 
     try {

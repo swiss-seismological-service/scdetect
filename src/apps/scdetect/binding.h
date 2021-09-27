@@ -75,6 +75,9 @@ struct StreamConfig {
     void setMaximumResponseTaperFrequency(
         const Processing::Settings &settings, const std::string &parameter,
         const DeconvolutionConfig &defaultConfig);
+
+    // Returns a string with debug information
+    std::string debugString() const;
   };
 
   DeconvolutionConfig deconvolutionConfig;

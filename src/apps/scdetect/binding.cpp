@@ -172,6 +172,15 @@ void StreamConfig::DeconvolutionConfig::setMaximumResponseTaperFrequency(
   setMaximumResponseTaperFrequency(f);
 }
 
+std::string StreamConfig::DeconvolutionConfig::debugString() const {
+  return "enabled: " + std::to_string(enabled) +
+         ", responseTaperLength: " + std::to_string(responseTaperLength) +
+         "s, minimumResponseTaperFrequency: " +
+         std::to_string(minimumResponseTaperFrequency) +
+         "Hz, maximumResponseTaperFrequency: " +
+         std::to_string(maximumResponseTaperFrequency) + "Hz";
+}
+
 const StreamConfig &SensorLocationConfig::at(const std::string &chaCode) const {
   return streamConfigs.at(chaCode);
 }
