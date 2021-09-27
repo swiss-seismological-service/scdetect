@@ -451,7 +451,7 @@ an important note:
 > [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 > allows configuration to be provided for stations, only. In order to allow
 > users to supply configuration on sensor location granularity, `scdetect`
-> makes use of so called *amplitude profiles*.
+> makes use of so called *amplitude profiles* and *response profiles*.
 
 In general, bindings are configured the easiest with SeisComP's configuration
 and system management
