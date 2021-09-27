@@ -50,8 +50,11 @@ a [trunk module](https://www.seiscomp.de/doc/base/glossary.html#term-trunk).
 From an architectural point of view `scdetect` is positioned somewhere between
 [scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html) and
 [scautoloc](https://docs.gempa.de/seiscomp/current/apps/scautoloc.html). That
-is, `scdetect` fetches waveform data by means of the RecordStream interface, but
-it also uses data products for template generation.
+is, `scdetect` fetches waveform data by means of
+the [RecordStream](https://docs.gempa.de/seiscomp/current/base/concepts/recordstream.html)
+interface, but it also uses data products for template generation. If connected
+to the messaging system, results (i.e. declared origins, picks and amplitudes)
+are sent to the messaging system.
 
 For further information with regard to the SeisComP architecture please refer to
 the [SeisComP documentation](https://docs.gempa.de/seiscomp/current/base/overview.html)
@@ -71,6 +74,8 @@ $ scdetect -h
 For a general more in-depth introduction on how to use SeisComP modules
 including their particular configuration, please refer to
 the [SeisComP documentation](https://www.seiscomp.de/doc/index.html).
+
+___
 
 The subsequent sections are intended to provide an introduction on how to use
 and configure `scdetect`. This includes:
