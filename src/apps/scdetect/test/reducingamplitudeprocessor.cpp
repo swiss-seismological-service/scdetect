@@ -314,7 +314,7 @@ Samples dataset{
        BOOST_TEST_CHECK(amplitude->value.value == 9.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
-           Core::Time::FromString("2020-01-01T00:01:00", "%FT%T").iso());
+           Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T").iso());
        BOOST_TEST_CHECK(amplitude->time.begin == 0.0);
        BOOST_TEST_CHECK(amplitude->time.end == 5.0);
      },
@@ -322,7 +322,7 @@ Samples dataset{
      [](ds::Sample::WaveformBuffers &buffers) {
        auto record{makeRecord<Array::INT>(
            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0},
-           Core::Time::FromString("2020-01-01T00:00:51", "%FT%T"), 1)};
+           Core::Time::FromString("2020-01-01T00:00:51", "%Y-%m-%dT%T"), 1)};
        auto &buffer{buffers[record->streamID()]};
        if (!buffer.feed(record.get())) {
          BOOST_FAIL("Failed to feed record");
@@ -330,8 +330,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:01:00", "%FT%T"),
-                      5},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
      /*filter=*/
      ds::Sample::Filter{"self()", Core::TimeSpan{9.0}}},
     {/*description=*/
@@ -342,7 +342,7 @@ Samples dataset{
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        const auto startTime{
-           Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+           Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T")};
        auto record{makeRecord<Array::INT>(120, 1, startTime, 1)};
        auto &buffer{buffers[record->streamID()]};
        if (!buffer.feed(record.get())) {
@@ -351,8 +351,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
-                      180}},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/
      "single stream, multi records (equal length, constant sample values)",
      /*validatorCallback=*/
@@ -368,7 +368,8 @@ Samples dataset{
        size_t sampleCount{60};
        double samplingFrequency{1};
        Core::TimeSpan recordDuration{sampleCount / samplingFrequency};
-       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       auto startTime{
+           Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T")};
        for (int i = 0; i < 3; ++i) {
          auto record{makeRecord<Array::INT>(sampleCount, 2, startTime,
                                             samplingFrequency)};
@@ -392,7 +393,8 @@ Samples dataset{
      },
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
-       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       auto startTime{
+           Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T")};
        double samplingFrequency{1};
        for (int i = 0; i < 3; ++i) {
          auto sampleCount{static_cast<size_t>(60 * (i + 1))};
@@ -409,8 +411,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
-                      360}},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 360}},
     {/*description=*/"multi streams, single record (constant sample values)",
      /*validatorCallback=*/
      [](const WaveformProcessor *proc, const Record *record,
@@ -496,7 +498,8 @@ Samples dataset{
        size_t countSamples{60};
        double samplingFrequency{1};
        const Core::TimeSpan recordDuration{countSamples / samplingFrequency};
-       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       auto startTime{
+           Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T")};
        // load three streams (each with three records)
        for (int j = 0; j < 3; ++j) {
          for (int i = 0; i < 3; ++i) {
@@ -513,8 +516,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
-                      180}},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/"multi streams, single record (one of them is too short, "
                      "constant sample values)",
      /*validatorCallback=*/
@@ -523,7 +526,8 @@ Samples dataset{
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        double samplingFrequency{1};
-       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       auto startTime{
+           Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T")};
        // load streams
        {
          auto record{makeRecord<Array::INT>(180, 5, startTime,
@@ -544,8 +548,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
-                      180}},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/"multi streams, single record (different sampling "
                      "frequency, constant sample values)",
      /*validatorCallback=*/
@@ -553,7 +557,8 @@ Samples dataset{
         const WaveformProcessor::ResultCPtr &result) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
-       auto startTime{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T")};
+       auto startTime{
+           Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T")};
        // load streams
        {
          auto record{makeRecord<Array::INT>(120, 1, startTime, 10, "C0")};
@@ -572,8 +577,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kInvalidSamplingFreq,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:00:00", "%FT%T"),
-                      120}},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 120}},
     {/*description=*/"multi streams, single record (different record start "
                      "time, constant sample values)",
      /*validatorCallback=*/
@@ -585,7 +590,7 @@ Samples dataset{
        BOOST_TEST_CHECK(amplitude->value.value == 3.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
-           Core::Time::FromString("2020-01-01T00:01:00", "%FT%T").iso());
+           Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T").iso());
        BOOST_TEST_CHECK(amplitude->time.begin == 0.0);
        BOOST_TEST_CHECK(amplitude->time.end == 120.0);
      },
@@ -594,7 +599,8 @@ Samples dataset{
        double samplingFrequency{1};
        // load streams
        {
-         auto startTime{Core::Time::FromString("2020-01-01T00:01:00", "%FT%T")};
+         auto startTime{
+             Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T")};
          auto record{makeRecord<Array::INT>(120, 1, startTime,
                                             samplingFrequency, "C0")};
          auto &buffer{buffers[record->streamID()]};
@@ -603,7 +609,8 @@ Samples dataset{
          }
        }
        {
-         auto startTime{Core::Time::FromString("2020-01-01T00:00:59", "%FT%T")};
+         auto startTime{
+             Core::Time::FromString("2020-01-01T00:00:59", "%Y-%m-%dT%T")};
          auto record{makeRecord<Array::INT>(121, 2, startTime,
                                             samplingFrequency, "C1")};
          auto &buffer{buffers[record->streamID()]};
@@ -614,8 +621,8 @@ Samples dataset{
      },
      /*expectedStatus=*/WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
-     Core::TimeWindow{Core::Time::FromString("2020-01-01T00:01:00", "%FT%T"),
-                      120}},
+     Core::TimeWindow{
+         Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 120}},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
