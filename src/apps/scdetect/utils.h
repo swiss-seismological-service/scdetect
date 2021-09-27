@@ -1,13 +1,18 @@
 #ifndef SCDETECT_APPS_SCDETECT_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_UTILS_H_
 
+#include <seiscomp/client/inventory.h>
 #include <seiscomp/core/defs.h>
+#include <seiscomp/datamodel/utils.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <cmath>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -18,6 +23,8 @@ namespace utils {
 
 const std::string createUUID();
 void replaceEscapedXMLFilterIdChars(std::string &filter_id);
+// Safely create the directory path `p`
+bool createDirectory(const boost::filesystem::path &p);
 
 template <typename T>
 bool isGeZero(const T num) {
@@ -84,6 +91,13 @@ double cma(T *samples, size_t n) {
   return cma;
 }
 
+// Compute the square of `n`
+template <typename T, typename = typename std::enable_if<
+                          std::is_arithmetic<T>::value, T>::type>
+inline T square(T n) {
+  return n * n;
+}
+
 // Returns `true` if the difference between two floating point numbers is
 // smaller than epsilon, else `false`
 template <typename TFloatingPoint>
@@ -130,6 +144,9 @@ bool lessThan(TFloatingPoint lhs, TFloatingPoint rhs, TFloatingPoint epsilon) {
 }
 
 /* ------------------------------------------------------------------------- */
+class WaveformStreamID;
+std::string to_string(const WaveformStreamID &waveformStreamId);
+
 class WaveformStreamID {
  public:
   explicit WaveformStreamID(const std::string &netStaLocCha);
@@ -146,6 +163,10 @@ class WaveformStreamID {
   // Returns the channel code
   const std::string &chaCode() const;
 
+  // Returns the sensor location stream identifier i.e. in the form
+  // `NET.STA.LOC.`.
+  std::string sensorLocationStreamId() const;
+
   // Returns `true` if the waveform stream identifier is valid, `false`
   // otherwise.
   bool isValid() const;
@@ -160,6 +181,67 @@ class WaveformStreamID {
   std::string _staCode;
   std::string _locCode;
   std::string _chaCode;
+};
+
+/* ------------------------------------------------------------------------- */
+class ThreeComponents {
+ public:
+  // Load components identified by `netCode`, `staCode`, `locCode`, `chaCode`
+  // and `time` from `inventory`.
+  //
+  // - It is a bug to pass an invalid pointer as `inventory`.
+  // - Throws a `detect::Exception` if loading streams from inventory failed.
+  ThreeComponents(Client::Inventory *inventory, const std::string &netCode,
+                  const std::string &staCode, const std::string &locCode,
+                  const std::string &chaCode, const Core::Time &time);
+
+  // Returns the network code
+  const std::string &netCode() const;
+  // Returns the station code
+  const std::string &staCode() const;
+  // Returns the location code
+  const std::string &locCode() const;
+  // Returns the channel code (i.e. the *band code* and the *source code*
+  // identifiers).
+  const std::string &chaCode() const;
+
+  // Returns the sensor location stream identifier i.e. in the form
+  // `NET.STA.LOC`.
+  //
+  // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
+  std::string sensorLocationStreamId() const;
+  // Returns the stream code identifiers for all components
+  std::vector<std::string> streamCodes() const;
+  // Returns the waveform stream identifiers for all components
+  std::vector<utils::WaveformStreamID> waveformStreamIds() const;
+  // Returns a waveform stream identifier omitting the subsource code part.
+  // I.e. the returned string is of the form `NET.STA.LOC.XY` where `X` refers
+  // to the *band code* and `Y` refers to the *source code* identifiers.
+  //
+  // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
+  std::string waveformStreamId() const;
+
+  // Returns a reference to the underlying `DataModel::ThreeComponents` object
+  const DataModel::ThreeComponents &threeComponents() const;
+
+  friend bool operator==(const ThreeComponents &lhs,
+                         const ThreeComponents &rhs);
+  friend bool operator!=(const ThreeComponents &lhs,
+                         const ThreeComponents &rhs);
+
+ protected:
+  // Returns the *real size* i.e. the number of components actually available
+  size_t realSize() const;
+  // Reset all components
+  void reset();
+
+ private:
+  std::string _networkCode;
+  std::string _stationCode;
+  std::string _locationCode;
+  std::string _channelCode;
+
+  DataModel::ThreeComponents _threeComponents;
 };
 
 }  // namespace utils

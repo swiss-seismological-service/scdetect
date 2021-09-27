@@ -7,16 +7,15 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/optional.hpp>
-#include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
 #include <ostream>
 #include <sstream>
 #include <vector>
 
+#include "../settings.h"
 #include "../utils.h"
 
 namespace fs = boost::filesystem;
-namespace po = boost::program_options;
 namespace utf = boost::unit_test;
 namespace utf_tt = boost::test_tools;
 
@@ -81,12 +80,18 @@ void ArgFlag::to_string(std::ostream &os) const { os << flag() << "=" << _arg; }
 void ArgFlag::setArg(const std::string &arg) { _arg = arg; }
 
 BooleanFlag::BooleanFlag() : ArgFlag{"1"} {}
+BooleanFlag::BooleanFlag(bool enabled) : ArgFlag{enabled ? "1" : "0"} {}
 void BooleanFlag::enable() { setArg("1"); }
 void BooleanFlag::disable() { setArg("0"); }
 
 const std::string FlagDebug::flag() const { return "--debug"; }
 
 const std::string FlagConsole::flag() const { return "--console"; }
+
+FlagAmplitudesForce::FlagAmplitudesForce(bool enabled) : BooleanFlag{enabled} {}
+const std::string FlagAmplitudesForce::flag() const {
+  return "--amplitudes-force";
+}
 
 const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
@@ -108,7 +113,7 @@ FlagPlugins::FlagPlugins(const std::string &plugin) : ArgFlag{plugin} {
   // TODO(damb): Must not contain comma
 }
 FlagPlugins::FlagPlugins(const std::vector<std::string> &plugins)
-    : ArgFlag{boost::algorithm::join(plugins, ",")} {}
+    : ArgFlag{boost::algorithm::join(plugins, settings::kConfigListSep)} {}
 
 const std::string FlagPlugins::flag() const { return "--plugins"; }
 
@@ -130,6 +135,15 @@ FlagInventoryDB::FlagInventoryDB(const std::string &uri) : ArgFlag{uri} {}
 FlagInventoryDB::FlagInventoryDB(const fs::path &fpath)
     : FlagInventoryDB{std::string{"file://" + fpath.string()}} {}
 const std::string FlagInventoryDB::flag() const { return "--inventory-db"; }
+
+FlagConfigModule::FlagConfigModule(const std::string &configModule)
+    : ArgFlag{configModule} {}
+const std::string FlagConfigModule::flag() const { return "--config-module"; }
+
+FlagConfigDB::FlagConfigDB(const std::string &uri) : ArgFlag{uri} {}
+FlagConfigDB::FlagConfigDB(const fs::path &fpath)
+    : FlagConfigDB{std::string{"file://" + fpath.string()}} {}
+const std::string FlagConfigDB::flag() const { return "--config-db"; }
 
 FlagEventDB::FlagEventDB(const std::string &uri) : ArgFlag{std::string{uri}} {}
 FlagEventDB::FlagEventDB(const fs::path &fpath)
@@ -201,6 +215,47 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
     DataModel::OriginCPtr originExpected{rhsOrigins.at(i)};
 
     originCmp(originResult, originExpected);
+  }
+
+  // compare amplitudes
+  const auto amplitudePredicate = [](const DataModel::AmplitudeCPtr &lhs,
+                                     const DataModel::AmplitudeCPtr &rhs) {
+    // XXX(damb): Used to generate a pseudo total order
+    const auto amplitudeTypePredicate = [](const DataModel::AmplitudeCPtr &a) {
+      return a->type();
+    };
+    const auto amplitudeValuePredicate = [](const DataModel::AmplitudeCPtr &a) {
+      return a->amplitude().value();
+    };
+    const auto amplitudeTimeWindowBeginPredicate =
+        [](const DataModel::AmplitudeCPtr &a) {
+          return a->timeWindow().reference() +
+                 Core::TimeSpan{a->timeWindow().begin()};
+        };
+    const auto amplitudeTimeWindowEndPredicate =
+        [](const DataModel::AmplitudeCPtr &a) {
+          return a->timeWindow().reference() +
+                 Core::TimeSpan{a->timeWindow().end()};
+        };
+
+    return amplitudeTypePredicate(lhs) < amplitudeTypePredicate(rhs) &&
+           amplitudeValuePredicate(lhs) < amplitudeValuePredicate(rhs) &&
+           amplitudeTimeWindowBeginPredicate(lhs) <
+               amplitudeTimeWindowBeginPredicate(rhs) &&
+           amplitudeTimeWindowEndPredicate(lhs) <
+               amplitudeTimeWindowEndPredicate(rhs);
+  };
+  const auto lhsAmplitudes{sortByPredicate<DataModel::AmplitudeCPtr>(
+      [&lhs](size_t i) { return lhs->amplitude(i); }, lhs->amplitudeCount(),
+      amplitudePredicate)};
+  const auto rhsAmplitudes{sortByPredicate<DataModel::AmplitudeCPtr>(
+      [&rhs](size_t i) { return rhs->amplitude(i); }, rhs->amplitudeCount(),
+      amplitudePredicate)};
+  for (size_t i = 0; i < lhsAmplitudes.size(); ++i) {
+    DataModel::AmplitudeCPtr amplitudeResult{lhsAmplitudes.at(i)};
+    DataModel::AmplitudeCPtr amplitudeExpected{rhsAmplitudes.at(i)};
+
+    amplitudeCmp(amplitudeResult, amplitudeExpected);
   }
 }
 
@@ -443,6 +498,56 @@ void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
   }));
 }
 
+void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
+                  const DataModel::AmplitudeCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->type() == rhs->type());
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->amplitude(); }));
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->timeWindow();
+  }));
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->period(); }));
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->snr(); }));
+  BOOST_TEST_CHECK(lhs->unit() == rhs->unit());
+  BOOST_TEST_CHECK(lhs->pickID() == rhs->pickID());
+  BOOST_TEST_CHECK(static_cast<std::string>(lhs->waveformID()) ==
+                   static_cast<std::string>(rhs->waveformID()));
+  BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->scalingTime();
+  }));
+  BOOST_TEST_CHECK(lhs->magnitudeHint() == rhs->magnitudeHint());
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->evaluationMode();
+  }));
+
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
+    return amp->creationInfo().agencyID();
+  }));
+
+  // compare comments
+  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
+                                   const DataModel::CommentCPtr &rhs) {
+    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+  };
+  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+      commentPredicate)};
+  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+      commentPredicate)};
+  for (size_t j = 0; j < lhsComments.size(); ++j) {
+    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    commentCmp(commentResult, commentExpected);
+  }
+}
+
 void commentCmp(const DataModel::CommentCPtr &lhs,
                 const DataModel::CommentCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->id() == rhs->id());
@@ -506,46 +611,6 @@ void TempDirFixture::createTempdir() {
     BOOST_FAIL("Failed to create temporary directory: " << e.what());
   }
 }
-
-/* ------------------------------------------------------------------------- */
-fs::path CLIParserFixture::pathData{""};
-bool CLIParserFixture::keepTempdir{false};
-
-CLIParserFixture::CLIParserFixture() {}
-CLIParserFixture::~CLIParserFixture() {}
-
-void CLIParserFixture::setup() {
-  try {
-    po::options_description desc;
-    desc.add_options()("keep-tempfiles",
-                       po::value<bool>(&keepTempdir)->default_value(false),
-                       "Keep temporary files from tests")(
-        "path-data", po::value<fs::path>(&pathData),
-        "Path to test data directory");
-
-    po::positional_options_description pdesc;
-    pdesc.add("path-data", -1);
-
-    po::variables_map vm;
-    po::store(po::command_line_parser(utf::framework::master_test_suite().argc,
-                                      utf::framework::master_test_suite().argv)
-                  .options(desc)
-                  .positional(pdesc)
-                  .run(),
-              vm);
-    po::notify(vm);
-  } catch (std::exception &e) {
-    BOOST_TEST_FAIL(e.what());
-  }
-
-  // validate
-  BOOST_TEST_REQUIRE(
-      bool{fs::is_directory(pathData) && !fs::is_empty(pathData)},
-      "Invalid path to test data directory:" << pathData);
-  pathData = fs::absolute(pathData);
-}
-
-void CLIParserFixture::teardown() {}
 
 }  // namespace test
 }  // namespace detect

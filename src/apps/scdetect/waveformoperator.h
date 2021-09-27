@@ -21,6 +21,9 @@ class WaveformOperator {
   void setStoreCallback(const StoreCallback &callback);
 
   // Feeds `record` to the operator
+  //
+  // - the returned status must be interpreted in the context of the `record`
+  // fed (i.e. not in the context of the operator itself)
   virtual WaveformProcessor::Status feed(const Record *record) = 0;
 
   // Resets the `WaveformOperator`

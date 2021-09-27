@@ -12,16 +12,17 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/tools/fpc_tolerance.hpp>
 #include <cstdlib>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
 
 #include "../app.h"
+#include "fixture.h"
 #include "integration_utils.h"
 
 namespace utf = boost::unit_test;
 namespace utf_data = utf::data;
-namespace utf_tt = boost::test_tools;
 namespace fs = boost::filesystem;
 
 constexpr double testUnitTolerance{0.000001};
@@ -44,6 +45,9 @@ struct Sample {
 
   fs::path pathSample;
 
+  using Flags = std::vector<std::shared_ptr<cli::Flag>>;
+  Flags customFlags;
+
   std::vector<std::string> AsFlags(const fs::path &path_data) const {
     std::vector<std::string> flags{
         cli::to_string(cli::FlagTemplatesJSON{path_data / pathSample /
@@ -55,6 +59,11 @@ struct Sample {
             "file://" + (path_data / pathSample / pathRecords).string()}),
         cli::to_string(cli::FlagEventDB{path_data / pathSample / pathCatalog}),
     };
+
+    // serialize custom flags
+    for (const auto &flag : customFlags) {
+      flags.push_back(cli::to_string(*flag));
+    }
 
     return flags;
   }
@@ -83,94 +92,116 @@ Samples dataset{
     // base: single detector - single stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0000"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0001"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0001",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0002"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0002",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0003"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0003",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0004"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0004",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0005"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0005",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0006"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0006",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0007"},
+     /*pathSample=*/"integration/base/single-detector-single-stream-0007",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 
     // base: single detector - multi stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-multi-stream-0000"},
+     /*pathSample=*/"integration/base/single-detector-multi-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 
     // base: multi detector - single stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/base/multi-detector-single-stream-0000"},
+     /*pathSample=*/"integration/base/multi-detector-single-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 
     // detector: single detector - multi stream
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0000"},
+     /*pathSample=*/"integration/detector/single-detector-multi-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
      /*pathSample=*/
-     "integration/detector/single-detector-multi-stream-0001"},
+     "integration/detector/single-detector-multi-stream-0001",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0002"},
+     /*pathSample=*/"integration/detector/single-detector-multi-stream-0002",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*pathSample=*/
-     "integration/detector/single-detector-multi-stream-0003"},
+     "integration/detector/single-detector-multi-stream-0003",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0004"},
+     /*pathSample=*/"integration/detector/single-detector-multi-stream-0004",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 
     // processing: resample
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
      /*pathSample=*/
-     "integration/processing/resample/single-detector-single-stream-0000"},
+     "integration/processing/resample/single-detector-single-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*pathSample=*/
-     "integration/processing/resample/single-detector-single-stream-0001"},
+     "integration/processing/resample/single-detector-single-stream-0001",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 
     // processing: changing sampling frequency
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*pathSample=*/
      "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0000"},
+     "single-detector-single-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*pathSample=*/
      "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0001"},
+     "single-detector-single-stream-0001",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*pathSample=*/
      "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0002"},
+     "single-detector-single-stream-0002",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*pathSample=*/
      "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0003"},
+     "single-detector-single-stream-0003",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T20:20:00", "expected.scml",
      /*pathSample=*/
      "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0004"},
+     "single-detector-single-stream-0004",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);

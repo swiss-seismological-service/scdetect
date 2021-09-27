@@ -3,6 +3,7 @@
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
+#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/origin.h>
 
@@ -36,9 +37,9 @@ class Detector : public detect::Processor {
            const DataModel::OriginCPtr &origin);
   virtual ~Detector();
 
-  class BaseException : public Exception {
+  class BaseException : public Processor::BaseException {
    public:
-    using Exception::Exception;
+    using Processor::BaseException::BaseException;
     BaseException();
   };
 
@@ -67,11 +68,13 @@ class Detector : public detect::Processor {
   struct Result {
     Core::Time originTime;
     double fit;
-    boost::optional<double> magnitude;
 
     struct TemplateResult {
       Arrival arrival;
       SensorLocation sensorLocation;
+
+      // The template waveform duration
+      Core::TimeSpan templateWaveformDuration;
     };
 
     using TemplateResults =

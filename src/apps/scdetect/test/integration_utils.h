@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 #define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
 
+#include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/eventparameters.h>
@@ -51,6 +52,7 @@ class ArgFlag : public Flag {
 class BooleanFlag : public ArgFlag {
  public:
   BooleanFlag();
+  explicit BooleanFlag(bool enabled);
   void enable();
   void disable();
 };
@@ -67,6 +69,12 @@ class FlagConsole : public BooleanFlag {
 
 class FlagOffline : public Flag {
  public:
+  const std::string flag() const override;
+};
+
+class FlagAmplitudesForce : public BooleanFlag {
+ public:
+  explicit FlagAmplitudesForce(bool enabled);
   const std::string flag() const override;
 };
 
@@ -121,10 +129,23 @@ class FlagDB : public ArgFlag {
   const std::string flag() const override;
 };
 
+class FlagConfigModule : public ArgFlag {
+ public:
+  explicit FlagConfigModule(const std::string &configModule);
+  const std::string flag() const override;
+};
+
 class FlagInventoryDB : public ArgFlag {
  public:
   explicit FlagInventoryDB(const std::string &uri);
   explicit FlagInventoryDB(const fs::path &fpath);
+  const std::string flag() const override;
+};
+
+class FlagConfigDB : public ArgFlag {
+ public:
+  explicit FlagConfigDB(const std::string &uri);
+  explicit FlagConfigDB(const fs::path &fpath);
   const std::string flag() const override;
 };
 
@@ -186,6 +207,10 @@ void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
 void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs);
 
+// Compare `DataModel::Amplitude` element-wise
+void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
+                  const DataModel::AmplitudeCPtr &rhs);
+
 // Compare `DataModel::Comment` element-wise
 void commentCmp(const DataModel::CommentCPtr &lhs,
                 const DataModel::CommentCPtr &rhs);
@@ -215,18 +240,6 @@ struct TempDirFixture {
 };
 
 /* -------------------------------------------------------------------------- */
-struct CLIParserFixture {
-  CLIParserFixture();
-  ~CLIParserFixture();
-
-  void setup();
-  void teardown();
-
-  static fs::path pathData;
-  static bool keepTempdir;
-};
-
-/* -------------------------------------------------------------------------- */
 template <typename TApp>
 class ApplicationWrapper {
  public:
@@ -239,10 +252,10 @@ class ApplicationWrapper {
   std::vector<char *> _argv;
 };
 
-#include "integration_utils.ipp"
-
 }  // namespace test
 }  // namespace detect
 }  // namespace Seiscomp
+
+#include "integration_utils.ipp"
 
 #endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_

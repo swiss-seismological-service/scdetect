@@ -53,18 +53,6 @@
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
-      <magnitude publicID="Magnitude/20210330080547.01261.1978">
-        <magnitude>
-          <value>4.324859837</value>
-        </magnitude>
-        <type>DETECT</type>
-        <stationCount>1</stationCount>
-        <creationInfo>
-          <agencyID>TEST</agencyID>
-          <author>scdetect@seiscomp-fedora32</author>
-          <creationTime>2021-03-30T08:05:47.012567Z</creationTime>
-        </creationInfo>
-      </magnitude>
     </origin>
   </EventParameters>
 </seiscomp>

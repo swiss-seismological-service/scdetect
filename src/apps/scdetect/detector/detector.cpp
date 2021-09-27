@@ -30,7 +30,7 @@ Detector::Detector(const detect::Processor *detector,
 Detector::~Detector() {}
 
 Detector::BaseException::BaseException()
-    : Exception{"base processing strategy exception"} {}
+    : Processor::BaseException{"base detector exception"} {}
 
 Detector::ProcessingError::ProcessingError()
     : BaseException{"error while processing"} {}
@@ -185,8 +185,8 @@ void Detector::process(const std::string &waveformStreamIdHint) {
     // XXX(damb): A side-note on trigger facilities when it comes to the
     // linker:
     // - The linker processes only those template results which are fed to the
-    // linker i.e. the linker is not aware of the the fact if a template
-    // processor is enabled or disabled, respectively.
+    // linker i.e. the linker is not aware of the the fact whether a template
+    // waveform processor is enabled or disabled, respectively.
     // - Thus, the detector processor can force the linker into a *triggered
     // state* by only feeding data to those processors which are part of the
     // triggering event.
@@ -518,7 +518,8 @@ void Detector::prepareResult(const linker::Association &linkerResult,
 
       templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
                               Detector::Result::TemplateResult{
-                                  templateResult.arrival, proc.sensorLocation});
+                                  templateResult.arrival, proc.sensorLocation,
+                                  proc.processor->templateDuration()});
       usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
       usedStas.emplace(proc.sensorLocation.stationId);
     }

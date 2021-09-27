@@ -6,7 +6,6 @@
 #include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <initializer_list>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -135,6 +134,9 @@ struct PublishConfig {
   // Indicates whether to append *theoretical template arrivals* to declared
   // origins
   bool createTemplateArrivals{false};
+  // Indicates whether to both compute and create amplitudes for a declared
+  // origin
+  bool createAmplitudes{false};
 
   // The origin method identifier
   std::string originMethodId{"DETECT"};

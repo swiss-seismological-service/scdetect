@@ -5,10 +5,9 @@
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/event.h>
-#include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -37,8 +36,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     double longitude{};
     double depth{};
 
-    double magnitude{};
-
     size_t numStationsAssociated{};
     size_t numStationsUsed{};
     size_t numChannelsAssociated{};
@@ -47,6 +44,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     PublishConfig publishConfig;
 
     using TemplateResult = Detector::Result::TemplateResult;
+    // Maps the waveform stream identifier with the template result
     using TemplateResults =
         std::unordered_multimap<std::string, TemplateResult>;
     // Template specific results
@@ -59,10 +57,10 @@ class DetectorWaveformProcessor : public WaveformProcessor {
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 
-  const Core::TimeWindow &processed() const override;
-
   void reset() override;
   void terminate() override;
+
+  const PublishConfig &publishConfig() const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
@@ -70,9 +68,9 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
-  void reset(StreamState &streamState, const Record *record) override;
+  void reset(StreamState &streamState) override;
 
-  void fill(StreamState &streamState, const Record *record,
+  bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   bool enoughDataReceived(const StreamState &streamState) const override;
@@ -92,9 +90,10 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   Detector _detector;
   boost::optional<Detector::Result> _detection;
 
+  // Reference to the *template* origin
   DataModel::OriginCPtr _origin;
+  // Reference to the *template* event
   DataModel::EventPtr _event;
-  DataModel::MagnitudePtr _magnitude;
 
   PublishConfig _publishConfig;
 };

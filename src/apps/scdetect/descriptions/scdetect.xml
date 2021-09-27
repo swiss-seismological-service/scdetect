@@ -1,143 +1,192 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp>
-  <module name="scdetect" category="Processing" inherit-global-bindings="true">
+  <module name="scdetect" category="Processing"
+          inherit-global-bindings="false">
     <description>Template matching based earthquake detection</description>
     <configuration>
-      <parameter name="templatesJSON" type="path" default="@ROOTDIR@/etc/scdetect/templates.json">
+      <parameter name="templatesJSON" type="path"
+                 default="@ROOTDIR@/etc/scdetect/templates.json">
         <description>
-          Defines the default path for the template configuration file.
+          Defines the default path for the template configuration
+          file.
         </description>
       </parameter>
       <group name="template">
         <parameter name="phase" type="string" default="Pg">
           <description>
-            Defines the default template phase. 
+            Defines the default template phase.
           </description>
         </parameter>
-        <parameter name="waveformStart" type="double" default="-2" unit="s">
+        <parameter name="waveformStart" type="double" default="-2"
+                   unit="s">
           <description>
-            Defines the default template waveform start time in seconds w.r.t.
-            the template pick.
+            Defines the default template waveform start time in
+            seconds w.r.t. the template pick.
           </description>
         </parameter>
-        <parameter name="waveformEnd" type="double" default="2" unit="s">
+        <parameter name="waveformEnd" type="double" default="2"
+                   unit="s">
           <description>
-            Defines the default template waveform end time in seconds w.r.t.
-            the template pick.
+            Defines the default template waveform end time in
+            seconds w.r.t. the template pick.
           </description>
         </parameter>
       </group>
       <group name="processing">
         <parameter name="initTime" type="int" default="60" unit="s">
           <description>
-            The default initTime defines a time span in seconds a detector is
-            blind after initialization. This time is needed to initialize the
-            template processors and depends on it.
+            The default initTime defines a time span in seconds a
+            detector is blind after initialization. This time is needed to
+            initialize the template processors and depends on it.
           </description>
         </parameter>
-        <parameter name="gapInterpolation" type="boolean" default="false">
+        <parameter name="gapInterpolation" type="boolean"
+                   default="false">
           <description>
-            Defines if by default gaps should be interpolated linearly. This is
-            valid for gaps shorter than *maxGapLength* and larger than
-            *minGapLength*.
+            Defines if by default gaps should be interpolated
+            linearly. This is valid for gaps shorter than *maxGapLength* and
+            larger than *minGapLength*.
           </description>
         </parameter>
-        <parameter name="minGapLength" type="double" default="0.1" unit="s">
+        <parameter name="minGapLength" type="double" default="0.1"
+                   unit="s">
           <description>
-            The default min gap length in seconds to handle. Gaps smaller than
-            the value specified won't be handled.
+            The default min gap length in seconds to handle. Gaps
+            smaller than the value specified won't be handled.
           </description>
         </parameter>
-        <parameter name="maxGapLength" type="double" default="4.5" unit="s">
+        <parameter name="maxGapLength" type="double" default="4.5"
+                   unit="s">
           <description>
-            The default maximum gap length in seconds to handle. Gaps larger
-            than the value specified will cause the detector to be reset.
+            The default maximum gap length in seconds to handle.
+            Gaps larger than the value specified will cause the detector to be
+            reset.
           </description>
         </parameter>
       </group>
       <group name="detector">
-        <parameter name="timeCorrection" type="double" default="0" unit="s">
+        <parameter name="timeCorrection" type="double" default="0"
+                   unit="s">
           <description>
             Default time correction applied for an origin issued.
           </description>
         </parameter>
         <parameter name="triggerOn" type="double" default="0.85">
           <description>
-            Default threshold which defines when a detector is triggered.
+            Default threshold which defines when a detector is
+            triggered.
           </description>
         </parameter>
         <parameter name="triggerOff" type="double" default="0.65">
           <description>
-            Default threshold which defines when the detector is enabled in
-            order to produce new origins, again. Note that this threshold
-            overrides the *triggerDuration* configuration parameter i.e. as
-            soon as the *triggerOff* threshold is met a detector result is
-            issued.
+            Default threshold which defines when the detector is
+            enabled in order to produce new origins, again. Note that this
+            threshold overrides the *triggerDuration* configuration parameter
+            i.e. as soon as the *triggerOff* threshold is met a detector
+            result is issued.
           </description>
         </parameter>
-        <parameter name="triggerDuration" type="double" default="2" unit="s">
+        <parameter name="triggerDuration" type="double" default="2"
+                   unit="s">
           <description>
-            Maximum default duration in seconds after reaching the *triggerOn*
-            threshold to search for the maximum correlation between configured
-            streams.
+            Maximum default duration in seconds after reaching the
+            *triggerOn* threshold to search for the maximum correlation between
+            configured streams.
           </description>
         </parameter>
-        <parameter name="arrivalOffsetThreshold" type="double" default="2.0e-6" unit="s">
+        <parameter name="arrivalOffsetThreshold" type="double"
+                   default="2.0e-6" unit="s">
           <description>
-            Maximum default inter arrival offset threshold to tolerate when
-            associating an arrival to an event. The threshold is only validated
-            in a multi-stream detector setup. Configuring a negative value
-            disables the arrival offset validation.
+            Maximum default inter arrival offset threshold to
+            tolerate when associating an arrival to an event. The threshold is
+            only validated in a multi-stream detector setup. Configuring a
+            negative value disables the arrival offset validation.
           </description>
         </parameter>
         <parameter name="minimumArrivals" type="int" default="-1">
           <description>
-            Defines the default minimum number of arrivals which must be part
-            of an event to be declared as a detection. Configuring a negative
-            value disables the validation i.e. arrivals for all streams
-            configured must be available.
+            Defines the default minimum number of arrivals which
+            must be part of an event to be declared as a detection. Configuring
+            a negative value disables the validation i.e. arrivals for all
+            streams configured must be available.
           </description>
         </parameter>
-        <parameter name="mergingStrategy" type="string" default="greaterEqualTriggerOnThreshold">
+        <parameter name="mergingStrategy" type="string"
+                   default="greaterEqualTriggerOnThreshold">
           <description>
-            Defines the default cross-correlation result merging strategy while
-            linking. Possible values are:
+            Defines the default cross-correlation result merging
+            strategy while linking. Possible values are:
 
             - "greaterEqualTriggerOnThreshold": the cross-correlation
             coefficient must be greater or equal to the configured
             "triggerOnThreshold" in order to be taken into account for linking.
 
-            - "greaterEqualMergingThreshold": the cross-correlation coefficient
-            must be greater or equal to the configured stream configuration
-            specific `"mergingThreshold"` in order to be taken into account for
-            linking.
+            - "greaterEqualMergingThreshold": the cross-correlation
+            coefficient must be greater or equal to the configured stream
+            configuration specific `"mergingThreshold"` in order to be taken
+            into
+            account for linking.
 
-            - "all": tries to merge all cross-correlation results. Trying to
-            merge all cross-correlation results is computationally quite
-            expensive.
+            - "all": tries to merge all cross-correlation results.
+            Trying to merge all cross-correlation results is computationally
+            quite expensive.
 
-            Note that the configured merging strategy may have a significant
-            performance impact in a multi-stream detector setup.
+            Note that the configured merging strategy may have a
+            significant performance impact in a multi-stream detector setup.
           </description>
         </parameter>
       </group>
       <group name="publish">
         <parameter name="createArrivals" type="boolean" default="false">
           <description>
-            Defines the default value for appending *detected arrivals* to
-            declared origins.
+            Defines the default value for appending *detected
+            arrivals* to declared origins.
           </description>
         </parameter>
-        <parameter name="createTemplateArrivals" type="boolean" default="false">
+        <parameter name="createTemplateArrivals" type="boolean"
+                   default="false">
           <description>
-            Defines the default value for appending *theoretical template
-            arrivals* to declared origins.
+            Defines the default value for appending *theoretical
+            template arrivals* to declared origins.
           </description>
         </parameter>
         <parameter name="methodId" type="string" default="DETECT">
           <description>
-            Defines the default origin *methodID* label that is added to declared
-            origins.
+            Defines the default origin *methodID* label that is
+            added to declared origins.
+          </description>
+        </parameter>
+      </group>
+      <group name="amplitudes">
+        <parameter name="messagingGroup" type="string"
+                   default="AMPLITUDE">
+          <description>
+            Defines the messaging group amplitudes are sent to.
+          </description>
+        </parameter>
+        <parameter name="calculateAmplitudes" type="boolean"
+                   default="false">
+          <description>
+            Defines the default value whether amplitude calculation
+            is enabled or disabled (on detector configuration level
+            granularity). Amplitudes are calculated right after an
+            origin has been declared.
+          </description>
+        </parameter>
+        <parameter name="filter" type="string"
+                   default="&quot;&quot;">
+          <description>
+            Defines the default filter for amplitude processing if
+            no binding filter configuration has been provided.
+            Filtering may be disabled by means of explicitly
+            defining the empty string i.e. "". By default filtering
+            is disabled.
+          </description>
+        </parameter>
+        <parameter name="initTime" type="double" default="0" unit="s">
+          <description>
+            Defines the default time span in seconds in order to
+            initialize the amplitude processor's filter.
           </description>
         </parameter>
       </group>
@@ -151,8 +200,10 @@
         <optionReference>generic#plugins</optionReference>
         <optionReference>generic#daemon</optionReference>
         <optionReference>generic#auto-shutdown</optionReference>
-        <optionReference>generic#shutdown-master-module</optionReference>
-        <optionReference>generic#shutdown-master-username</optionReference>
+        <optionReference>generic#shutdown-master-module
+        </optionReference>
+        <optionReference>generic#shutdown-master-username
+        </optionReference>
       </group>
 
       <group name="Verbosity">
@@ -175,24 +226,6 @@
         <optionReference>messaging#subscribe-group</optionReference>
         <optionReference>messaging#content-type</optionReference>
         <optionReference>messaging#start-stop-msg</optionReference>
-        <option flag="" long-flag="offline">
-          <description>
-            Do not connect to the messaging system.
-          </description>
-        </option>
-        <option flag="" long-flag="no-publish">
-          <description>
-            Runs the module as usual but does not send any messages. This can
-            be useful to test the module within a running system.
-          </description>
-        </option>
-        <option flag="" long-flag="ep">
-          <description>
-            Same as --no-publish, but outputs all event parameters scml
-            formatted; specifying the output path as '-' (a single dash) will
-            force the output to be redirected to stdout.
-          </description>
-        </option>
       </group>
 
       <group name="Database">
@@ -200,9 +233,6 @@
         <optionReference>database#database</optionReference>
         <optionReference>database#config-module</optionReference>
         <optionReference>database#inventory-db</optionReference>
-        <option flag="" long-flag="db-disable" argument="" publicID="database#db-disable">
-          <description>Do not use the database at all</description>
-        </option>
         <option flag="" long-flag="event-db" argument="">
           <description>
             Load events from the given database or file, format:
@@ -218,29 +248,62 @@
         <optionReference>records#record-type</optionReference>
         <option flag="" long-flag="record-starttime" argument="">
           <description>
-            Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
-            records from the configured archive recordstream. Implicitly
-            enables reprocessing/playback mode.
+            Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for
+            requesting records from the configured archive recordstream.
+            Implicitly enables reprocessing/playback mode.
           </description>
         </option>
         <option flag="" long-flag="record-endtime" argument="">
           <description>
             Defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
-            records from the configured archive recordstream. Implicitly
-            enables reprocessing/playback mode.
+            records from the configured archive recordstream. Implicitly enables
+            reprocessing/playback mode.
           </description>
         </option>
       </group>
 
       <group name="Mode">
-        <option flag="" long-flag="playback" default="false">
+        <option flag="" long-flag="offline">
           <description>
-            Use playback mode that does not restrict the maximum allowed
-            data latency.
+            Do not connect to the messaging system.
           </description>
         </option>
-        <option flag="" long-flag="load-templates">
-          <description>Load templates and exit.</description>
+        <option flag="" long-flag="no-publish">
+          <description>
+            Runs the module as usual but does not send any messages.
+            This can be useful to test the module within a running system.
+          </description>
+        </option>
+        <option flag="" long-flag="ep">
+          <description>
+            Same as --no-publish, but outputs all event parameters
+            scml formatted; specifying the output path as '-' (a single dash)
+            will force the output to be redirected to stdout.
+          </description>
+        </option>
+        <option flag="" long-flag="playback" default="false">
+          <description>
+            Use playback mode that does not restrict the maximum
+            allowed data latency.
+          </description>
+        </option>
+        <option flag="" long-flag="templates-prepare">
+          <description>
+            Load template waveform data from the configured recordstream and
+            save it in the module's caching directory, then exit.
+          </description>
+        </option>
+        <option flag="" long-flag="templates-reload">
+          <description>
+            Force reloading template waveform data and omit cached waveform
+            data.
+          </description>
+        </option>
+        <option flag="" long-flag="amplitudes-force">
+          <description>
+            Enables/disables the calculation of amplitudes regardless of the
+            configuration provided on detector configuration level granularity.
+          </description>
         </option>
       </group>
 
@@ -251,7 +314,127 @@
           </description>
         </option>
       </group>
-
     </command-line>
   </module>
+  <!--
+    The basic binding description. This could also go into a separate file, but it's integrated
+    into the core description to have everything in one place.
+  -->
+  <binding module="scdetect">
+    <description>
+      Configures a station for amplitude calculation. A station without a
+      binding assigned will not be used for amplitude calculation.
+    </description>
+    <configuration>
+      <parameter name="amplitudeProfiles" type="list:string" default="">
+        <description>
+          Defines a list of amplitude profiles for amplitude calculation.
+        </description>
+      </parameter>
+
+      <group name="amplitudes">
+        <description>
+          Each amplitude profile is a configuration set used for
+          amplitude calculation and allows configuration on sensor location
+          granularity. An amplitude profile is only taken into consideration
+          if a corresponding stream is part of a detector configuration.
+        </description>
+        <struct type="amplitudeProfile" link="scdetect.amplitudeProfiles">
+          <parameter name="locationCode" type="string" default="">
+            <description>
+              Defines profile's location code regarding amplitude calculation.
+            </description>
+          </parameter>
+          <parameter name="channelCode" type="string" default="">
+            <description>
+              Defines profile's channel code regarding amplitude calculation.
+              Note that only the band and source code is taken into account
+              (i.e. the two leading characters).
+            </description>
+          </parameter>
+          <parameter name="enable" type="boolean" default="true">
+            <description>
+              Enables/disables amplitude calculation for this profile.
+            </description>
+          </parameter>
+          <parameter name="saturationThreshold" type="double" unit="counts; %">
+            <description>
+              Enables a saturation check before calculating amplitudes. If data
+              exceeds the configured threshold no amplitude is going to be
+              calculated.
+
+              This value can either be an absolute value of counts such
+              as &quot;100000&quot; counts or a relative value
+              (optionally in percent) with respect to the number of
+              effective bits, e.g. &quot;0.8@23&quot; or &quot;80%@23&quot;.
+              The first version uses 1**23 * 0.8 whereas the latter
+              uses 1**23 * 80/100.
+
+              The boolean value &quot;false&quot; explicitly disables
+              the check.
+            </description>
+          </parameter>
+          <parameter name="filter" type="string"
+                     default="&quot;BW_BP(4,10,30)&quot;">
+            <description>
+              Defines the profile's filter to be used for amplitude
+              calculation. Filtering may be disabled by means of explicitly
+              defining the empty string i.e. "". If no filter has been
+              specified the module default is taken as a fallback.
+            </description>
+          </parameter>
+          <parameter name="initTime" type="double" default="60" unit="s">
+            <description>
+              Defines the profile's time span in seconds in order to
+              initialize the amplitude processor's filter. The initialization
+              time is used only in case filtering is enabled.
+            </description>
+          </parameter>
+
+          <group name="responses">
+            <description>
+              Each response profile is a response related configuration set. It
+              allows the configuration of parameters on stream granularity.
+            </description>
+            <parameter name="responseProfiles" type="list:string" default="">
+              <description>
+                Defines a list of response profiles.
+              </description>
+            </parameter>
+            <struct type="responseProfile" link="scdetect.amplitudeProfiles.responseProfiles">
+              <parameter name="channelCode" type="string" default="">
+                <description>
+                  Defines profile's channel code used for response correction.
+                  Note that the value is interpreted as the subsource code i.e. a
+                  single character is allowed, only.
+                </description>
+              </parameter>
+              <parameter name="taperLength" type="double" default="5" unit="s">
+                <description>
+                  Defines the taper length when deconvolving the data.
+                </description>
+              </parameter>
+              <parameter name="minimumTaperFrequency" type="double" default="0.00833333" unit="Hz">
+                <description>
+                  Defines the end of the left-hand side cosine-taper in Hz
+                  applied to the frequency spectrum. I.e. the spectrum is tapered
+                  between 0Hz and `minimumTaperFrequency`. A value less than or
+                  equal to zero disables left-hand side tapering.
+                </description>
+              </parameter>
+              <parameter name="maximumTaperFrequency" type="double" default="0" unit="Hz">
+                <description>
+                  Defines the beginning of the right-hand side cosine-taper in Hz
+                  applied to the frequency spectrum. I.e. the spectrum is tapered
+                  between `maximumResponseTaperFrequency` and the Nyquist
+                  frequency. A value less than or equal to zero disables
+                  left-hand side tapering.
+                </description>
+              </parameter>
+            </struct>
+          </group>
+        </struct>
+      </group>
+    </configuration>
+  </binding>
 </seiscomp>

@@ -5,8 +5,7 @@
 #include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/timewindow.h>
 
-#include <boost/none.hpp>
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <cmath>
 #include <memory>
 #include <numeric>
@@ -77,23 +76,12 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
     throw builder::BaseException{msg};
   }
 
-  _product->_magnitude = EventStore::Instance().get<DataModel::Magnitude>(
-      _product->_event->preferredMagnitudeID());
-  if (!_product->_magnitude) {
-    auto msg{std::string{"No magnitude associated with event: "} +
-             _product->_event->publicID() + std::string{" (origin="} +
-             _originId + std::string{")"}};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::BaseException{msg};
-  }
-
   return *this;
 }
 
 DetectorBuilder &DetectorBuilder::setStream(
     const std::string &streamId, const StreamConfig &streamConfig,
-    WaveformHandlerIfacePtr &wfHandler) {
+    WaveformHandlerIface *waveformHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   utils::WaveformStreamID templateWfStreamId{templateStreamId};
 
@@ -130,7 +118,7 @@ DetectorBuilder &DetectorBuilder::setStream(
     if (!templateWfSensorLocation) {
       auto msg{logPrefix +
                std::string{
-                   "Sensor location not found in inventory for time: time="} +
+                   "sensor location not found in inventory for time: time="} +
                pick->time().value().iso()};
 
       SCDETECT_LOG_WARNING("%s", msg.c_str());
@@ -150,7 +138,7 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   if (!pick) {
     arrival.reset();
-    auto msg{logPrefix + std::string{"Failed to load pick: origin="} +
+    auto msg{logPrefix + std::string{"failed to load pick: origin="} +
              _originId + std::string{", phase="} +
              streamConfig.templateConfig.phase};
 
@@ -161,7 +149,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   std::ostringstream oss;
   oss << utils::WaveformStreamID{pickWaveformId};
   SCDETECT_LOG_DEBUG(
-      "%sUsing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
+      "%susing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
       logPrefix.c_str(), _originId.c_str(), pick->time().value().iso().c_str(),
       streamConfig.templateConfig.phase.c_str(), oss.str().c_str());
 
@@ -178,7 +166,7 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   if (!stream) {
     auto msg{logPrefix +
-             std::string{"Stream not found in inventory for epoch: start="} +
+             std::string{"stream not found in inventory for epoch: start="} +
              wfStart.iso() + std::string{", end="} + wfEnd.iso()};
 
     SCDETECT_LOG_WARNING("%s", msg.c_str());
@@ -186,7 +174,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   }
 
   SCDETECT_LOG_DEBUG(
-      "%sLoaded stream from inventory for epoch: start=%s, "
+      "%sloaded stream from inventory for epoch: start=%s, "
       "end=%s",
       logPrefix.c_str(), wfStart.iso().c_str(), wfEnd.iso().c_str());
 
@@ -212,7 +200,7 @@ DetectorBuilder &DetectorBuilder::setStream(
     rtTemplateFilter.reset(WaveformProcessor::Filter::Create(rtFilterId, &err));
 
     if (!rtTemplateFilter) {
-      auto msg{logPrefix + "Compiling filter (" + rtFilterId +
+      auto msg{logPrefix + "compiling filter (" + rtFilterId +
                ") failed: " + err};
 
       SCDETECT_LOG_WARNING("%s", msg.c_str());
@@ -235,7 +223,7 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   GenericRecordCPtr templateWfChunk;
   try {
-    templateWfChunk = wfHandler->get(
+    templateWfChunk = waveformHandler->get(
         templateWfStreamId.netCode(), templateWfStreamId.staCode(),
         templateWfStreamId.locCode(), templateWfStreamId.chaCode(),
         templateWfChunkStartTime, templateWfChunkEndTime, templateWfConfig);
@@ -258,7 +246,7 @@ DetectorBuilder &DetectorBuilder::setStream(
         *streamConfig.targetSamplingFrequency);
   }
 
-  auto filterMsg{logPrefix + "Filters configured: filter=\"" + rtFilterId +
+  auto filterMsg{logPrefix + "filters configured: filter=\"" + rtFilterId +
                  "\""};
   if (rtFilterId != templateWfFilterId) {
     filterMsg += " (template_filter=\"" + templateWfFilterId + "\")";

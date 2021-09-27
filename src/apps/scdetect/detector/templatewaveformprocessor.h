@@ -41,7 +41,8 @@ class TemplateWaveformProcessor : public WaveformProcessor {
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime = 0.0) override;
 
-  const Core::TimeWindow &processed() const override;
+  // Returns the time window processed and correlated
+  const Core::TimeWindow &processed() const;
 
   void reset() override;
 
@@ -52,6 +53,8 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   boost::optional<const Core::Time> templateStartTime() const;
   // Returns the template waveform endtime
   boost::optional<const Core::Time> templateEndTime() const;
+  // Returns the template waveform duration
+  Core::TimeSpan templateDuration() const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
@@ -59,7 +62,7 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
-  void fill(StreamState &streamState, const Record *record,
+  bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   void setupStream(StreamState &streamState, const Record *record) override;

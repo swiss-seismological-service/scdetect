@@ -1,6 +1,7 @@
 set(TESTS
   filter_crosscorrelation.cpp
   integration.cpp
+  reducingamplitudeprocessor.cpp
   utils_cma.cpp
 )
 
@@ -19,7 +20,10 @@ set(SOURCES_utils_cma
 )
 
 set(SOURCES_integration
+  ../amplitude/rms.cpp
+  ../amplitudeprocessor.cpp
   ../app.cpp
+  ../binding.cpp
   ../builder.cpp
   ../config.cpp
   ../datamodel/ddl.cpp
@@ -40,12 +44,29 @@ set(SOURCES_integration
   ../operator/ringbuffer.cpp
   ../processor.cpp
   ../resamplerstore.cpp
+  ../stream.cpp
+  ../timewindowprocessor.cpp
   ../utils.cpp
   ../validators.cpp
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp
+  fixture.cpp
   integration_utils.cpp
+)
+
+set(SOURCES_reducingamplitudeprocessor
+  ../amplitudeprocessor.cpp
+  ../exception.cpp
+  ../processor.cpp
+  ../stream.cpp
+  ../timewindowprocessor.cpp
+  ../resamplerstore.cpp
+  ../utils.cpp
+  ../waveform.cpp
+  ../waveformoperator.cpp
+  ../waveformprocessor.cpp
+  fixture.cpp
 )
 
 

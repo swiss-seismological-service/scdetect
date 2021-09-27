@@ -4,32 +4,45 @@
 #include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
-#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
+#include <seiscomp/core/typedarray.h>
 #include <seiscomp/math/filter.h>
 
+#include <boost/optional/optional.hpp>
 #include <functional>
 #include <memory>
 
+#include "mixin/gapinterpolate.h"
 #include "processor.h"
+#include "stream.h"
 
 namespace Seiscomp {
 namespace detect {
 
 class WaveformOperator;
 
-// Abstract interface for waveform processors
-class WaveformProcessor : public Processor {
+// Abstract interface for waveform processors.
+//
+// - implements gap interpolation
+//
+// - The interface is similar to the one from
+// `Seiscomp::Processing::WaveformProcessor`, but it additionally simplifies
+// the implementation of *hierarchical* and *composite* waveform processors.
+// It is designed in a way that it does neither force implementations to use
+// just a single stream nor does it introduce the *concept of a station* (e.g.
+// by means of limiting the usage of maximum three channels).
+//
+class WaveformProcessor : public Processor,
+                          public InterpolateGaps<WaveformProcessor> {
  public:
-  using Filter = Math::Filtering::InPlaceFilter<double>;
-
   WaveformProcessor(const std::string &id);
+
+  using Filter = Math::Filtering::InPlaceFilter<double>;
 
   DEFINE_SMARTPOINTER(Result);
   class Result : public Core::BaseObject {
    public:
     virtual ~Result();
-    /* virtual void Publish() = 0; */
   };
 
   using PublishResultCallback = std::function<void(
@@ -93,10 +106,12 @@ class WaveformProcessor : public Processor {
     kRayPathOutOfRegions,
     // Travel time table lookup failed
     kTravelTimeEstimateFailed,
-    // ----
-    // Processor cannot handle/process record with streamID
-    kInvalidStream
   };
+
+  // Sets the filter to apply
+  //
+  // - the `filter` pointer passed is owned by the `WaveformProcessor`
+  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
 
   void enable();
   void disable();
@@ -105,28 +120,32 @@ class WaveformProcessor : public Processor {
   // Sets the result callback in order to publish processing results
   void setResultCallback(const PublishResultCallback &callback);
 
+  // Enables/disables validating whether data is saturated.
+  //
+  // - If set a saturation check is performed where it is checked whether the
+  // data exceeds `threshold`.
+  // - The saturation check may be disabled if `boost::none` is passed.
+  void setSaturationThreshold(const boost::optional<double> &threshold);
+
   // Returns the current status of the processor
   Status status() const;
 
   // Returns the value associated with the status
   double statusValue() const;
 
-  // Sets the filter to apply; the filter pointer passed is owned by the
-  // `WaveformProcessor`
-  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
   // Configures a `WaveformProcessor` with `op`. `op` is applied to all records
-  // fed. `op` sits between `feed` and `store`. The pointer ownership goes to
-  // the processor.
+  // fed.
+  //
+  // - `op` sits between `feed` and `store`
+  // - the pointer ownership goes to the processor
   void setOperator(WaveformOperator *op);
-  // Returns the processor's initialization time
+  // Returns the processor's initialization time; by default this corresponds
+  // to the processor's filter initialization time
   virtual const Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
-  // Status::kInProgress.
+  // `Status::kInProgress`.
   virtual bool finished() const;
-
-  // Returns the time window processed and correlated
-  virtual const Core::TimeWindow &processed() const = 0;
 
   // Feed data to the processor (implies a call to the process() method).
   virtual bool feed(const Record *record);
@@ -138,16 +157,14 @@ class WaveformProcessor : public Processor {
   // Terminates the processor ignoring its current status
   virtual void terminate();
 
-  // Closes the processor meaning that no more records are going to be fed in.
+  // Closes the processor meaning that no more records are going to be fed.
   // The processing has been finished.
   virtual void close() const;
 
  protected:
   // Describes the current state of a stream
-  struct StreamState {
-    ~StreamState();
-    // Value of the last sample
-    double lastSample{0};
+  struct StreamState : public detect::StreamState {
+    ~StreamState() override;
 
     // Number of samples required to finish initialization
     size_t neededSamples{0};
@@ -156,13 +173,6 @@ class WaveformProcessor : public Processor {
     // Initialization state
     bool initialized{false};
 
-    // The last received record of the stream
-    RecordCPtr lastRecord;
-    // The complete processed data time window so far
-    Core::TimeWindow dataTimeWindow;
-
-    // The sampling frequency of the stream
-    double samplingFrequency{0};
     // The filter (if used)
     Filter *filter{nullptr};
   };
@@ -176,20 +186,27 @@ class WaveformProcessor : public Processor {
   // Store the record
   virtual bool store(const Record *record);
 
-  // Resets the `WaveformProcessor` with regards to `streamState` and
-  // `record`.
-  virtual void reset(StreamState &streamState, const Record *record);
-
-  // Handles gaps. Returns whether the gap has been handled or not.
-  virtual bool handleGap(StreamState &streamState, const Record *record,
-                         DoubleArrayPtr &data);
+  // Resets the `WaveformProcessor` with regard to `streamState`
+  virtual void reset(StreamState &streamState);
 
   // Fill data and perform filtering (if required)
-  virtual void fill(StreamState &streamState, const Record *record,
-                    DoubleArrayPtr &data);
+  bool fill(detect::StreamState &streamState, const Record *record,
+            DoubleArrayPtr &data) override;
+
+  // Check whether data exceeds saturation threshold. The default
+  // implementation does not perform any check
+  //
+  // - returns `true` in case `data` is saturated, else `false`
+  virtual bool checkIfSaturated(DoubleArrayPtr &data);
+
+  // Wrapper method for both `enoughDataReceived()` and `process()`. Returns
+  // `true` if `process` was called, else `false`
+  virtual bool processIfEnoughDataReceived(StreamState &streamState,
+                                           const Record *record,
+                                           const DoubleArray &filteredData);
 
   // Initially check if the `WaveformProcessor` received enough data in order to
-  // execute the `process` method.
+  // execute the `process()` method.
   virtual bool enoughDataReceived(const StreamState &streamState) const;
 
   virtual void emitResult(const Record *record, const ResultCPtr &result);
@@ -206,6 +223,9 @@ class WaveformProcessor : public Processor {
   PublishResultCallback _resultCallback;
 
   std::unique_ptr<WaveformOperator> _waveformOperator;
+
+  // Threshold used for the saturation check
+  boost::optional<double> _saturationThreshold;
 
  private:
   Status _status{Status::kWaitingForData};

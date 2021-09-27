@@ -20,10 +20,6 @@ void DetectorWaveformProcessor::setFilter(Filter *filter,
   // XXX(damb): `DetectorWaveformProcessor` doesn't implement filter facilities
 }
 
-const Core::TimeWindow &DetectorWaveformProcessor::processed() const {
-  return _detector.processed();
-}
-
 void DetectorWaveformProcessor::reset() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
 
@@ -49,6 +45,10 @@ void DetectorWaveformProcessor::terminate() {
     _detection = boost::none;
   }
   WaveformProcessor::terminate();
+}
+
+const PublishConfig &DetectorWaveformProcessor::publishConfig() const {
+  return _publishConfig;
 }
 
 WaveformProcessor::StreamState &DetectorWaveformProcessor::streamState(
@@ -88,20 +88,22 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
   }
 }
 
-void DetectorWaveformProcessor::reset(StreamState &streamState,
-                                      const Record *record) {
+void DetectorWaveformProcessor::reset(StreamState &streamState) {
   // XXX(damb): drops all pending events
   _detector.reset();
 
-  WaveformProcessor::reset(streamState, record);
+  WaveformProcessor::reset(streamState);
 }
 
-void DetectorWaveformProcessor::fill(StreamState &streamState,
+bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
-  // XXX(damb): `DetectorWaveformProcessor` does not implement filtering
-  // facilities
-  streamState.receivedSamples += data->size();
+  // XXX(damb): `DetectorWaveformProcessor` does neither implement filtering
+  // facilities nor does it perform a saturation check
+  auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
+  s.receivedSamples += data->size();
+
+  return true;
 }
 
 bool DetectorWaveformProcessor::enoughDataReceived(
@@ -130,9 +132,6 @@ void DetectorWaveformProcessor::prepareDetection(
   d->longitude = _origin->longitude().value();
   d->depth = _origin->depth().value();
 
-  const auto &mag{res.magnitude};
-  d->magnitude = mag.value_or(_magnitude->magnitude().value());
-
   d->numChannelsAssociated = res.numChannelsAssociated;
   d->numChannelsUsed = res.numChannelsUsed;
   d->numStationsAssociated = res.numStationsAssociated;
@@ -142,6 +141,7 @@ void DetectorWaveformProcessor::prepareDetection(
   d->publishConfig.createTemplateArrivals =
       _publishConfig.createTemplateArrivals;
   d->publishConfig.originMethodId = _publishConfig.originMethodId;
+  d->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
 
   if (_publishConfig.createTemplateArrivals) {
     for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {

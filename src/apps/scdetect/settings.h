@@ -2,7 +2,6 @@
 #define SCDETECT_APPS_SCDETECT_SETTINGS_H_
 
 #include <string>
-#include <vector>
 
 namespace Seiscomp {
 namespace detect {
@@ -18,9 +17,18 @@ const std::string kProcessorIdSep{"::"};
 // Filename for processor debug information
 const std::string kFnameDebugInfo{"debug_info.json"};
 
-// Template specific default configuration
-const std::string kMagnitudeType{"DETECT"};
-const std::string kStationMagnitudeType{kMagnitudeType};
+// Separator for waveform stream identifiers (if multiple waveform stream
+// identifiers need to be concatenated)
+const std::string kWaveformStreamIdSep{"||"};
+// Separator for public identifiers (i.e. publicIDs)
+const std::string kPublicIdSep{"||"};
+// Separator for so called SNCLs
+const std::string kSNCLSep{"."};
+// Separator for configuration lists
+const std::string kConfigListSep{","};
+
+const std::string kTemplateWaveformDurationPickCommentId{
+    "scdetectTemplateWaveformDuration"};
 
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kBufferMultiplicator{2};

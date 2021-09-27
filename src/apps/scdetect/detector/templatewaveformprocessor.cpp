@@ -75,6 +75,10 @@ boost::optional<const Core::Time> TemplateWaveformProcessor::templateEndTime()
   return _crossCorrelation.templateEndTime();
 }
 
+Core::TimeSpan TemplateWaveformProcessor::templateDuration() const {
+  return Core::TimeSpan{_crossCorrelation.templateLength()};
+}
+
 WaveformProcessor::StreamState &TemplateWaveformProcessor::streamState(
     const Record *record) {
   return _streamState;
@@ -125,12 +129,15 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   emitResult(record, result.get());
 }
 
-void TemplateWaveformProcessor::fill(StreamState &streamState,
+bool TemplateWaveformProcessor::fill(detect::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
-  WaveformProcessor::fill(streamState, record, data);
-  // cross-correlate filtered data
-  _crossCorrelation.apply(data->size(), data->typedData());
+  if (WaveformProcessor::fill(streamState, record, data)) {
+    // cross-correlate filtered data
+    _crossCorrelation.apply(data->size(), data->typedData());
+    return true;
+  }
+  return false;
 }
 
 void TemplateWaveformProcessor::setupStream(StreamState &streamState,

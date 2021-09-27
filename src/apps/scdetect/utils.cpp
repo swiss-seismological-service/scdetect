@@ -1,6 +1,9 @@
 #include "utils.h"
 
+#include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/strings.h>
+#include <seiscomp/datamodel/stream.h>
+#include <seiscomp/utils/files.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -25,8 +28,21 @@ void replaceEscapedXMLFilterIdChars(std::string &str) {
   boost::replace_all(str, "&gt;", ">");
 }
 
+bool createDirectory(const boost::filesystem::path &p) {
+  if (!Util::pathExists(p.string()) && !Util::createPath(p.string())) {
+    return false;
+  }
+  return true;
+}
+
 /* ------------------------------------------------------------------------- */
-const std::string WaveformStreamID::_delimiter{"."};
+std::string to_string(const WaveformStreamID &waveformStreamId) {
+  std::ostringstream oss;
+  oss << waveformStreamId;
+  return oss.str();
+}
+
+const std::string WaveformStreamID::_delimiter{settings::kSNCLSep};
 
 WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {
   std::vector<std::string> tokens;
@@ -69,6 +85,10 @@ const std::string &WaveformStreamID::staCode() const { return _staCode; }
 const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
+std::string WaveformStreamID::sensorLocationStreamId() const {
+  return _netCode + _delimiter + _staCode + _delimiter + _locCode;
+}
+
 bool WaveformStreamID::isValid() const {
   return !(_netCode.empty() || _staCode.empty() || _chaCode.empty());
 }
@@ -78,6 +98,136 @@ std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
      << id._locCode << id._delimiter << id._chaCode;
   return os;
 }
+
+/* ------------------------------------------------------------------------- */
+ThreeComponents::ThreeComponents(Client::Inventory *inventory,
+                                 const std::string &netCode,
+                                 const std::string &staCode,
+                                 const std::string &locCode,
+                                 const std::string &chaCode,
+                                 const Core::Time &time)
+    : _networkCode{netCode}, _stationCode{staCode}, _locationCode{locCode} {
+  try {
+    _threeComponents =
+        inventory->getThreeComponents(netCode, staCode, locCode, chaCode, time);
+  } catch (Core::ValueException &e) {
+    reset();
+    throw Exception{"failed to load components: " + std::string{e.what()}};
+  }
+
+  if (realSize() != 3) {
+    reset();
+    throw Exception{"failed to load components: missing components"};
+  }
+
+  const auto &streamCode{_threeComponents.comps[0]->code()};
+  _channelCode = streamCode.substr(0, 2);
+}
+
+const std::string &ThreeComponents::netCode() const { return _networkCode; }
+
+const std::string &ThreeComponents::staCode() const { return _stationCode; }
+
+const std::string &ThreeComponents::locCode() const { return _locationCode; }
+
+const std::string &ThreeComponents::chaCode() const { return _channelCode; }
+
+std::string ThreeComponents::sensorLocationStreamId() const {
+  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
+         _locationCode;
+}
+
+std::vector<std::string> ThreeComponents::streamCodes() const {
+  std::vector<std::string> retval;
+  for (int i = 0; i < 3; ++i) {
+    retval.push_back(_threeComponents.comps[i]->code());
+  }
+  return retval;
+}
+
+const DataModel::ThreeComponents &ThreeComponents::threeComponents() const {
+  return _threeComponents;
+}
+
+std::vector<utils::WaveformStreamID> ThreeComponents::waveformStreamIds()
+    const {
+  std::vector<utils::WaveformStreamID> retval;
+  for (const auto &streamCode : streamCodes()) {
+    retval.push_back(utils::WaveformStreamID{_networkCode, _stationCode,
+                                             _locationCode, streamCode});
+  }
+  return retval;
+}
+
+std::string ThreeComponents::waveformStreamId() const {
+  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
+         _locationCode + settings::kSNCLSep + _channelCode;
+}
+
+bool operator==(const ThreeComponents &lhs, const ThreeComponents &rhs) {
+  if (lhs._networkCode != rhs._networkCode) {
+    return false;
+  }
+  if (lhs._stationCode != rhs._stationCode) {
+    return false;
+  }
+  if (lhs._locationCode != rhs._locationCode) {
+    return false;
+  }
+  if ((lhs._threeComponents.vertical() && !rhs._threeComponents.vertical()) ||
+      (!lhs._threeComponents.vertical() && rhs._threeComponents.vertical()) ||
+      (lhs._threeComponents.vertical() && rhs._threeComponents.vertical() &&
+       lhs._threeComponents.vertical() != rhs._threeComponents.vertical())) {
+    return false;
+  }
+  if ((lhs._threeComponents.firstHorizontal() &&
+       !rhs._threeComponents.firstHorizontal()) ||
+      (!lhs._threeComponents.firstHorizontal() &&
+       rhs._threeComponents.firstHorizontal()) ||
+      (lhs._threeComponents.firstHorizontal() &&
+       rhs._threeComponents.firstHorizontal() &&
+       lhs._threeComponents.firstHorizontal() !=
+           rhs._threeComponents.firstHorizontal())) {
+    return false;
+  }
+  if ((lhs._threeComponents.secondHorizontal() &&
+       !rhs._threeComponents.secondHorizontal()) ||
+      (!lhs._threeComponents.secondHorizontal() &&
+       rhs._threeComponents.secondHorizontal()) ||
+      (lhs._threeComponents.secondHorizontal() &&
+       rhs._threeComponents.secondHorizontal() &&
+       lhs._threeComponents.secondHorizontal() !=
+           rhs._threeComponents.secondHorizontal())) {
+    return false;
+  }
+
+  return true;
+}
+
+bool operator!=(const ThreeComponents &lhs, const ThreeComponents &rhs) {
+  return !(lhs == rhs);
+}
+
+size_t ThreeComponents::realSize() const {
+  size_t retval{3};
+  for (int i = 0; i < 3; ++i) {
+    if (!_threeComponents.comps[i]) {
+      --retval;
+    }
+  }
+  return retval;
+}
+
+void ThreeComponents::reset() {
+  _networkCode.clear();
+  _stationCode.clear();
+  _locationCode.clear();
+  _channelCode.clear();
+
+  for (size_t i = 0; i < 3; ++i) {
+    _threeComponents.comps[i] = nullptr;
+  }
+};
 
 }  // namespace utils
 }  // namespace detect

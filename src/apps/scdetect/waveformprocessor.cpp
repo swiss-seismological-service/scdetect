@@ -30,6 +30,11 @@ void WaveformProcessor::setResultCallback(
   _resultCallback = callback;
 }
 
+void WaveformProcessor::setSaturationThreshold(
+    const boost::optional<double> &threshold) {
+  _saturationThreshold = threshold;
+}
+
 WaveformProcessor::Status WaveformProcessor::status() const { return _status; }
 
 double WaveformProcessor::statusValue() const { return _statusValue; }
@@ -110,7 +115,7 @@ bool WaveformProcessor::store(const Record *record) {
             record->streamID().c_str(), record->samplingFrequency(),
             currentStreamState.samplingFrequency);
 
-        reset(currentStreamState, record);
+        reset(currentStreamState);
       } else if (!handleGap(currentStreamState, record, data)) {
         return false;
       }
@@ -132,19 +137,7 @@ bool WaveformProcessor::store(const Record *record) {
     fill(currentStreamState, record, data);
     if (Status::kInProgress < status()) return false;
 
-    if (!currentStreamState.initialized) {
-      if (enoughDataReceived(currentStreamState)) {
-        // streamState.initialized = true;
-        process(currentStreamState, record, *data);
-        // NOTE: To allow derived classes to notice modification of the variable
-        // streamState.initialized, it is necessary to set this after calling
-        // process.
-        currentStreamState.initialized = true;
-      }
-    } else {
-      // Call process to cause a derived processor to work on the data.
-      process(currentStreamState, record, *data);
-    }
+    processIfEnoughDataReceived(currentStreamState, record, *data);
 
     currentStreamState.lastRecord = record;
 
@@ -154,29 +147,66 @@ bool WaveformProcessor::store(const Record *record) {
   return true;
 }
 
-void WaveformProcessor::reset(StreamState &streamState, const Record *record) {
+void WaveformProcessor::reset(StreamState &streamState) {
   streamState.lastRecord.reset();
 }
 
-bool WaveformProcessor::handleGap(StreamState &streamState,
-                                  const Record *record, DoubleArrayPtr &data) {
+bool WaveformProcessor::fill(detect::StreamState &streamState,
+                             const Record *record, DoubleArrayPtr &data) {
+  auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
+
+  const auto n{static_cast<size_t>(data->size())};
+  s.receivedSamples += n;
+
+  if (_saturationThreshold && checkIfSaturated(data)) {
+    return false;
+  }
+
+  if (s.filter) {
+    auto samples{data->typedData()};
+    s.filter->apply(n, samples);
+  }
+
   return true;
 }
 
-void WaveformProcessor::fill(StreamState &streamState, const Record *record,
-                             DoubleArrayPtr &data) {
-  const auto n{static_cast<size_t>(data->size())};
-  streamState.receivedSamples += n;
-
-  if (streamState.filter) {
-    auto samples{data->typedData()};
-    streamState.filter->apply(n, samples);
+bool WaveformProcessor::checkIfSaturated(DoubleArrayPtr &data) {
+  const auto samples{data->typedData()};
+  for (int i = 0; i < data->size(); ++i) {
+    if (fabs(samples[i]) >= *_saturationThreshold) {
+      setStatus(Status::kDataClipped, samples[i]);
+      return true;
+    }
   }
+
+  return false;
+}
+
+bool WaveformProcessor::processIfEnoughDataReceived(
+    StreamState &streamState, const Record *record,
+    const DoubleArray &filteredData) {
+  bool processed{false};
+  if (!streamState.initialized) {
+    if (enoughDataReceived(streamState)) {
+      // streamState.initialized = true;
+      process(streamState, record, filteredData);
+      // NOTE: To allow derived classes to notice modification of the variable
+      // streamState.initialized, it is necessary to set this after calling
+      // process().
+      streamState.initialized = true;
+      processed = true;
+    }
+  } else {
+    // Call process to cause a derived processor to work on the data.
+    process(streamState, record, filteredData);
+    processed = true;
+  }
+  return processed;
 }
 
 bool WaveformProcessor::enoughDataReceived(
     const StreamState &streamState) const {
-  return streamState.receivedSamples > streamState.neededSamples;
+  return streamState.receivedSamples >= streamState.neededSamples;
 }
 
 void WaveformProcessor::emitResult(const Record *record,
@@ -188,6 +218,11 @@ void WaveformProcessor::setupStream(StreamState &streamState,
                                     const Record *record) {
   const auto &f{record->samplingFrequency()};
   streamState.samplingFrequency = f;
+
+  if (gapInterpolation()) {
+    setMinimumGapThreshold(streamState, record, id());
+  }
+
   streamState.neededSamples = static_cast<size_t>(_initTime * f + 0.5);
   if (streamState.filter) {
     streamState.filter->setSamplingFrequency(f);

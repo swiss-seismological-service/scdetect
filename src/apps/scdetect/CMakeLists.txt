@@ -2,7 +2,10 @@ set(DETECT_TARGET scdetect)
 
 set(
   DETECT_SOURCES
+    amplitude/rms.cpp
+    amplitudeprocessor.cpp
     app.cpp
+    binding.cpp
     config.cpp
     datamodel/ddl.cpp
     detail/sqlite.cpp
@@ -23,6 +26,8 @@ set(
     operator/ringbuffer.cpp
     processor.cpp
     resamplerstore.cpp
+    stream.cpp
+    timewindowprocessor.cpp
     utils.cpp
     validators.cpp
     waveform.cpp
@@ -34,7 +39,7 @@ set(
 #   -DSCDETECT_DEBUG
 # )
 
-if ("${CMAKE_BUILD_TYPE}" EQUAL "DEBUG")
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   add_compile_options(-fsanitize=address)
   add_link_options(-fsanitize=address)
 endif()
@@ -43,7 +48,7 @@ endif()
 sc_add_executable(DETECT ${DETECT_TARGET})
 find_package(SQLite3 REQUIRED)
 target_link_libraries(${DETECT_TARGET} ${SQLITE3_LIBRARIES})
-sc_link_libraries_internal(${DETECT_TARGET} client)
+sc_link_libraries_internal(${DETECT_TARGET} config client)
 sc_install_init(${DETECT_TARGET}
   "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py")
 
