@@ -190,7 +190,7 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
         (n * sumTemplateData - _sumTemplateWaveform * _sumData) /
         (_denominatorTemplateWaveform * denominatorData)};
 
-    int fe{fetestexcept(FE_ALL_EXCEPT)};
+    int fe{std::fetestexcept(FE_ALL_EXCEPT)};
     if ((fe & ~FE_INEXACT) != 0)  // we don't care about FE_INEXACT
     {
       std::vector<std::string> exceptions;
