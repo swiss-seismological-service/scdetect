@@ -1,8 +1,6 @@
 #include "config.h"
 
 #include <boost/property_tree/exceptions.hpp>
-#include <utility>
-#include <vector>
 
 #include "exception.h"
 #include "log.h"
