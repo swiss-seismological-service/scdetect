@@ -225,5 +225,10 @@ TemplateConfig::reference TemplateConfig::at(const std::string &stream_id) {
   return _streamConfigs.at(stream_id);
 }
 
+TemplateConfig::const_reference TemplateConfig::at(
+    const std::string &stream_id) const {
+  return _streamConfigs.at(stream_id);
+}
+
 }  // namespace detect
 }  // namespace Seiscomp

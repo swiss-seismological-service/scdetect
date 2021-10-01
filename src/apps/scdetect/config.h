@@ -147,6 +147,7 @@ class TemplateConfig {
   using size_type = StreamConfigs::size_type;
   using value_type = StreamConfigs::value_type;
   using reference = StreamConfigs::mapped_type &;
+  using const_reference = const StreamConfigs::mapped_type &;
   using iterator = StreamConfigs::iterator;
   using const_iterator = StreamConfigs::const_iterator;
 
@@ -161,7 +162,8 @@ class TemplateConfig {
   PublishConfig publishConfig() const;
 
   size_type size() const noexcept { return _streamConfigs.size(); }
-  reference &at(const std::string &stream_id);
+  reference at(const std::string &stream_id);
+  const_reference at(const std::string &stream_id) const;
 
   iterator begin() { return _streamConfigs.begin(); }
   iterator end() { return _streamConfigs.end(); }
