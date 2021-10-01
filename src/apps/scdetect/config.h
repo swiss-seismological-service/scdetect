@@ -6,6 +6,8 @@
 #include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -183,6 +185,83 @@ class TemplateConfig {
 
   StreamConfigs _streamConfigs;
 };
+
+using TemplateConfigs = std::map<std::string, TemplateConfig>;
+
+/* ------------------------------------------------------------------------- */
+class TemplateFamilyConfig {
+ public:
+  // Configuration referencing a template family member
+  struct ReferenceConfig {
+    struct StreamConfig {
+      // The phase code
+      std::string phase{"Pg"};
+
+      std::string waveformId;
+      double waveformStart{-2};
+      double waveformEnd{-2};
+
+      // Compare for order
+      bool operator<(const StreamConfig &c) const {
+        return waveformId < c.waveformId;
+      }
+    };
+
+    // The reference configuration's origin identifier
+    std::string originId;
+
+    using StreamConfigs = std::set<StreamConfig>;
+    StreamConfigs streamConfigs;
+
+    ReferenceConfig(const boost::property_tree::ptree &pt,
+                    const TemplateConfigs &templateConfigs,
+                    const ReferenceConfig::StreamConfig &streamDefaults);
+
+    // Compare for order
+    bool operator<(const ReferenceConfig &c) const {
+      return originId < c.originId;
+    }
+  };
+
+  TemplateFamilyConfig(const boost::property_tree::ptree &pt,
+                       const TemplateConfigs &templateConfigs,
+                       const ReferenceConfig::StreamConfig &streamDefaults);
+
+  using ReferencesConfigs = std::set<ReferenceConfig>;
+
+  using size_type = ReferencesConfigs::size_type;
+  using value_type = ReferencesConfigs::value_type;
+  using iterator = ReferencesConfigs::iterator;
+  using const_iterator = ReferencesConfigs::const_iterator;
+
+  size_type size() const noexcept { return _referenceConfigs.size(); }
+
+  iterator begin() { return _referenceConfigs.begin(); }
+  iterator end() { return _referenceConfigs.end(); }
+  const_iterator begin() const { return _referenceConfigs.begin(); }
+  const_iterator end() const { return _referenceConfigs.end(); }
+  const_iterator cbegin() const { return _referenceConfigs.cbegin(); }
+  const_iterator cend() const { return _referenceConfigs.cend(); }
+
+  // Returns the template family's identifier
+  const std::string &id() const;
+
+ protected:
+  // Loads the template family's reference configurations from `pt` and
+  // `templateConfigs`
+  void loadReferenceConfigs(
+      const boost::property_tree::ptree &pt,
+      const TemplateConfigs &templateConfigs,
+      const ReferenceConfig::StreamConfig &streamDefaults);
+
+ private:
+  // The template family identifier
+  std::string _id{utils::createUUID()};
+
+  ReferencesConfigs _referenceConfigs;
+};
+
+using TemplateFamilyConfigs = std::map<std::string, TemplateFamilyConfig>;
 
 }  // namespace detect
 }  // namespace Seiscomp

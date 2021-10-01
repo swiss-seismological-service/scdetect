@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <boost/property_tree/exceptions.hpp>
+#include <stdexcept>
 
 #include "exception.h"
 #include "log.h"
@@ -228,6 +229,117 @@ TemplateConfig::reference TemplateConfig::at(const std::string &stream_id) {
 TemplateConfig::const_reference TemplateConfig::at(
     const std::string &stream_id) const {
   return _streamConfigs.at(stream_id);
+}
+
+/* ------------------------------------------------------------------------- */
+TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
+    const boost::property_tree::ptree &pt,
+    const TemplateConfigs &templateConfigs,
+    const ReferenceConfig::StreamConfig &streamDefaults) {
+  const auto detectorId{pt.get_optional<std::string>("detectorId")};
+  const auto origId{pt.get_optional<std::string>("originId")};
+  if (detectorId && origId) {
+    throw config::ParserException{
+        "invalid configuration: both \"detectorId\" and \"originId\" "
+        "specified"};
+  }
+
+  if (origId && !origId.value().empty()) {
+    // explicit configuration
+    for (const auto &streamConfigPt : pt.get_child("streams")) {
+      const auto &pt{streamConfigPt.second};
+      StreamConfig streamConfig;
+      try {
+        const auto waveformId{
+            utils::WaveformStreamID{pt.get<std::string>("templateWaveformId")}};
+        streamConfig.waveformId = waveformId.sensorLocationStreamId();
+      } catch (ValueException &e) {
+        throw config::ParserException{"invalid configuration: " +
+                                      std::string{e.what()}};
+      }
+
+      streamConfig.phase =
+          pt.get<std::string>("templatePhase", streamDefaults.phase);
+      if (streamConfig.phase.empty()) {
+        streamConfig.phase = streamDefaults.phase;
+      }
+      streamConfig.waveformStart =
+          pt.get<double>("templateWaveformStart", streamDefaults.waveformStart);
+      streamConfig.waveformEnd =
+          pt.get<double>("templateWaveformEnd", streamDefaults.waveformEnd);
+
+      streamConfigs.emplace(streamConfig);
+    }
+
+    originId = *origId;
+  } else if (detectorId && !detectorId.value().empty()) {
+    // indirect configuration referencing a detector config
+    const auto it{templateConfigs.find(*detectorId)};
+    if (it == std::end(templateConfigs)) {
+      throw config::ParserException{
+          "invalid configuration: invalid \"detectorId\": " + *detectorId};
+    }
+
+    for (const auto &streamConfigPt : pt.get_child("streams")) {
+      const auto &pt{streamConfigPt.second};
+
+      StreamConfig streamConfig;
+      detect::StreamConfig detectorStreamConfig;
+      try {
+        const auto waveformId{
+            utils::WaveformStreamID{pt.get_value<std::string>()}};
+
+        detectorStreamConfig = it->second.at(utils::to_string(waveformId));
+
+        streamConfig.waveformId = waveformId.sensorLocationStreamId();
+
+      } catch (std::out_of_range &e) {
+        throw config::ParserException{
+            "invalid configuration: failed to look up stream configuration for "
+            "stream: " +
+            pt.get_value<std::string>()};
+      } catch (ValueException &e) {
+        throw config::ParserException{"invalid configuration: " +
+                                      std::string{e.what()}};
+      }
+
+      streamConfig.phase = detectorStreamConfig.templateConfig.phase;
+      streamConfig.waveformStart = detectorStreamConfig.templateConfig.wfStart;
+      streamConfig.waveformEnd = detectorStreamConfig.templateConfig.wfEnd;
+    }
+
+    if (streamConfigs.empty()) {
+      throw config::ParserException{
+          "invalid configuration: no stream configuration found"};
+    }
+
+    originId = it->second.originId();
+  } else {
+    throw config::ParserException{
+        "invalid configuration: neither \"detectorId\" nor \"originId\" "
+        "specified"};
+  }
+}
+
+TemplateFamilyConfig::TemplateFamilyConfig(
+    const boost::property_tree::ptree &pt,
+    const TemplateConfigs &templateConfigs,
+    const ReferenceConfig::StreamConfig &streamDefaults)
+    : _id{pt.get<std::string>("id", utils::createUUID())} {
+  loadReferenceConfigs(pt.get_child("references"), templateConfigs,
+                       streamDefaults);
+}
+
+void TemplateFamilyConfig::loadReferenceConfigs(
+    const boost::property_tree::ptree &pt,
+    const TemplateConfigs &templateConfigs,
+    const ReferenceConfig::StreamConfig &streamDefaults) {
+  for (const auto &referenceConfigPt : pt) {
+    const auto &pt{referenceConfigPt.second};
+
+    _referenceConfigs.emplace(
+        ReferenceConfig{pt, templateConfigs, streamDefaults});
+  }
 }
 
 }  // namespace detect
