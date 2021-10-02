@@ -40,6 +40,8 @@ set(SOURCES_integration
   ../eventstore.cpp
   ../exception.cpp
   ../filter.cpp
+  ../magnitudeprocessor.cpp
+  ../magnitude/regression.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processor.cpp

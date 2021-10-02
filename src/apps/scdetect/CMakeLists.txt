@@ -21,6 +21,8 @@ set(
     eventstore.cpp
     exception.cpp
     filter.cpp
+    magnitudeprocessor.cpp
+    magnitude/regression.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
