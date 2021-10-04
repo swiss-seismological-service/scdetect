@@ -9,7 +9,6 @@
 #include <cmath>
 #include <memory>
 #include <numeric>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -149,12 +148,11 @@ DetectorBuilder &DetectorBuilder::setStream(
     throw builder::BaseException{msg};
   }
 
-  std::ostringstream oss;
-  oss << utils::WaveformStreamID{pickWaveformId};
   SCDETECT_LOG_DEBUG(
       "%susing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
       logPrefix.c_str(), _originId.c_str(), pick->time().value().iso().c_str(),
-      streamConfig.templateConfig.phase.c_str(), oss.str().c_str());
+      streamConfig.templateConfig.phase.c_str(),
+      utils::to_string(utils::WaveformStreamID{pickWaveformId}).c_str());
 
   auto wfStart{pick->time().value() +
                Core::TimeSpan{streamConfig.templateConfig.wfStart}};
@@ -329,7 +327,6 @@ void DetectorBuilder::finalize() {
 
   // attach reference theoretical template arrivals to the product
   if (_product->_publishConfig.createTemplateArrivals) {
-    std::ostringstream oss;
     for (size_t i = 0; i < _product->_origin->arrivalCount(); ++i) {
       const auto &arrival{_product->_origin->arrival(i)};
       const auto &pick{
@@ -358,15 +355,13 @@ void DetectorBuilder::finalize() {
       } catch (Core::ValueException &e) {
       }
 
-      const utils::WaveformStreamID wfId{pick->waveformID()};
-      oss << wfId;
       _product->_publishConfig.theoreticalTemplateArrivals.push_back(
-          {{pick->time().value(), oss.str(), phaseHint,
-            pick->time().value() - _product->_origin->time().value(),
+          {{pick->time().value(),
+            utils::to_string(utils::WaveformStreamID{pick->waveformID()}),
+            phaseHint, pick->time().value() - _product->_origin->time().value(),
             lowerUncertainty, upperUncertainty},
            arrival->phase(),
            arrival->weight()});
-      oss.str("");
     }
   }
 }
