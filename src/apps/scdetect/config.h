@@ -199,7 +199,7 @@ class TemplateFamilyConfig {
 
       std::string waveformId;
       double waveformStart{-2};
-      double waveformEnd{-2};
+      double waveformEnd{2};
 
       // Compare for order
       bool operator<(const StreamConfig &c) const {
