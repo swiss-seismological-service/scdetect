@@ -184,6 +184,7 @@ class WaveformStreamID {
 };
 
 /* ------------------------------------------------------------------------- */
+// Wraps `DataModel::ThreeComponents`
 class ThreeComponents {
  public:
   // Load components identified by `netCode`, `staCode`, `locCode`, `chaCode`
