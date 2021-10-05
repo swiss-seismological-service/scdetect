@@ -39,6 +39,12 @@ class NoBindings : public BaseException {
   NoBindings();
 };
 
+class NoPick : public BaseException {
+ public:
+  using BaseException::BaseException;
+  NoPick();
+};
+
 }  // namespace builder
 
 template <typename TProduct>

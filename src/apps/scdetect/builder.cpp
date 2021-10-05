@@ -16,6 +16,8 @@ NoSensorLocation::NoSensorLocation()
 
 NoBindings::NoBindings() : BaseException{"no bindings configured"} {}
 
+NoPick::NoPick() : BaseException{"no pick available"} {}
+
 }  // namespace builder
 }  // namespace detect
 }  // namespace Seiscomp
