@@ -48,6 +48,7 @@ set(SOURCES_integration
   ../processor.cpp
   ../resamplerstore.cpp
   ../stream.cpp
+  ../templatefamily.cpp
   ../timewindowprocessor.cpp
   ../utils.cpp
   ../validators.cpp

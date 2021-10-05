@@ -330,6 +330,8 @@ TemplateFamilyConfig::TemplateFamilyConfig(
                        streamDefaults);
 }
 
+const std::string &TemplateFamilyConfig::id() const { return _id; }
+
 void TemplateFamilyConfig::loadReferenceConfigs(
     const boost::property_tree::ptree &pt,
     const TemplateConfigs &templateConfigs,

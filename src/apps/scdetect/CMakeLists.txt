@@ -30,6 +30,7 @@ set(
     processor.cpp
     resamplerstore.cpp
     stream.cpp
+    templatefamily.cpp
     timewindowprocessor.cpp
     utils.cpp
     validators.cpp
