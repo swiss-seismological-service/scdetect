@@ -21,6 +21,7 @@ set(
     eventstore.cpp
     exception.cpp
     filter.cpp
+    log.cpp
     magnitudeprocessor.cpp
     magnitude/regression.cpp
     main.cpp
