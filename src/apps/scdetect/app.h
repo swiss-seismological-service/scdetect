@@ -86,6 +86,11 @@ class Application : public Client::StreamApplication {
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
     bool skipTemplateIfNoSensorLocationData{true};
+    // Defines if a detector should be initialized although template processors
+    // could not be initialized due to a missing pick in the event parameters.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipTemplateIfNoPick{true};
 
     // Input
     std::string pathTemplateJson{};

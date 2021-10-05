@@ -87,10 +87,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   utils::WaveformStreamID templateWfStreamId{templateStreamId};
 
-  // TODO(damb): Rather go for a logging adapter approach.
-  std::string logPrefix{streamId + std::string{" ("} + templateStreamId +
-                        std::string{"): "}};
-
+  logging::TaggedMessage msg{streamId + " (" + templateStreamId + ")"};
   // configure pick from arrival
   DataModel::PickPtr pick;
   DataModel::WaveformStreamID pickWaveformId;
@@ -118,13 +115,9 @@ DetectorBuilder &DetectorBuilder::setStream(
             templateWfStreamId.netCode(), templateWfStreamId.staCode(),
             templateWfStreamId.locCode(), pick->time().value())};
     if (!templateWfSensorLocation) {
-      auto msg{logPrefix +
-               std::string{
-                   "sensor location not found in inventory for time: time="} +
-               pick->time().value().iso()};
-
-      SCDETECT_LOG_WARNING("%s", msg.c_str());
-      throw builder::NoSensorLocation{msg};
+      msg.setText("sensor location not found in inventory for time: " +
+                  pick->time().value().iso());
+      throw builder::NoSensorLocation{logging::to_string(msg)};
     }
     pickWaveformId = pick->waveformID();
     auto pickWfSensorLocation{Client::Inventory::Instance()->getSensorLocation(
@@ -140,19 +133,16 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   if (!pick) {
     arrival.reset();
-    auto msg{logPrefix + std::string{"failed to load pick: origin="} +
-             _originId + std::string{", phase="} +
-             streamConfig.templateConfig.phase};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::BaseException{msg};
+    msg.setText("failed to load pick: origin=" + _originId +
+                ", phase=" + streamConfig.templateConfig.phase);
+    throw builder::NoPick{logging::to_string(msg)};
   }
 
-  SCDETECT_LOG_DEBUG(
-      "%susing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
-      logPrefix.c_str(), _originId.c_str(), pick->time().value().iso().c_str(),
-      streamConfig.templateConfig.phase.c_str(),
-      utils::to_string(utils::WaveformStreamID{pickWaveformId}).c_str());
+  msg.setText("using arrival pick: origin=" + _originId +
+              ", time=" + pick->time().value().iso() +
+              ", phase=" + streamConfig.templateConfig.phase + ", stream=" +
+              utils::to_string(utils::WaveformStreamID{pickWaveformId}));
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
   auto wfStart{pick->time().value() +
                Core::TimeSpan{streamConfig.templateConfig.wfStart}};
@@ -166,21 +156,18 @@ DetectorBuilder &DetectorBuilder::setStream(
       wfStreamId.chaCode(), wfStart)};
 
   if (!stream) {
-    auto msg{logPrefix +
-             std::string{"stream not found in inventory for epoch: start="} +
-             wfStart.iso() + std::string{", end="} + wfEnd.iso()};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::NoStream{msg};
+    msg.setText("failed to load stream from inventory: start=" + wfStart.iso() +
+                ", end=" + wfEnd.iso());
+    throw builder::NoStream{logging::to_string(msg)};
   }
 
-  SCDETECT_LOG_DEBUG(
-      "%sloaded stream from inventory for epoch: start=%s, "
-      "end=%s",
-      logPrefix.c_str(), wfStart.iso().c_str(), wfEnd.iso().c_str());
+  msg.setText("loaded stream from inventory for epoch: start=" + wfStart.iso() +
+              ", end=" + wfEnd.iso());
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
-  SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
-                     streamConfig.templateId.c_str());
+  msg.setText("creating template waveform processor with id: " +
+              streamConfig.templateId);
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
   _product->_streamStates[streamId] = DetectorWaveformProcessor::StreamState{};
 
@@ -201,11 +188,8 @@ DetectorBuilder &DetectorBuilder::setStream(
     rtTemplateFilter.reset(WaveformProcessor::Filter::Create(rtFilterId, &err));
 
     if (!rtTemplateFilter) {
-      auto msg{logPrefix + "compiling filter (" + rtFilterId +
-               ") failed: " + err};
-
-      SCDETECT_LOG_WARNING("%s", msg.c_str());
-      throw builder::BaseException{msg};
+      msg.setText("compiling filter (" + rtFilterId + ") failed: " + err);
+      throw builder::BaseException{logging::to_string(msg)};
     }
   }
 
@@ -229,11 +213,11 @@ DetectorBuilder &DetectorBuilder::setStream(
         templateWfStreamId.locCode(), templateWfStreamId.chaCode(),
         templateWfChunkStartTime, templateWfChunkEndTime, templateWfConfig);
   } catch (WaveformHandler::NoData &e) {
-    throw builder::NoWaveformData{
-        std::string{"Failed to load template waveform: "} + e.what()};
+    msg.setText("failed to load template waveform: " + std::string{e.what()});
+    throw builder::NoWaveformData{logging::to_string(msg)};
   } catch (std::exception &e) {
-    throw builder::BaseException{
-        std::string{"Failed to load template waveform: "} + e.what()};
+    msg.setText("failed to load template waveform: " + std::string{e.what()});
+    throw builder::BaseException{logging::to_string(msg)};
   }
 
   // template processor
@@ -247,12 +231,13 @@ DetectorBuilder &DetectorBuilder::setStream(
         *streamConfig.targetSamplingFrequency);
   }
 
-  auto filterMsg{logPrefix + "filters configured: filter=\"" + rtFilterId +
-                 "\""};
+  std::string text{"filters configured: filter=\"" + rtFilterId + "\""};
   if (rtFilterId != templateWfFilterId) {
-    filterMsg += " (template_filter=\"" + templateWfFilterId + "\")";
+    text += " (template_filter=\"" + templateWfFilterId + "\")";
   }
-  SCDETECT_LOG_DEBUG_PROCESSOR(templateProc, "%s", filterMsg.c_str());
+  msg.setText(text);
+  SCDETECT_LOG_DEBUG_PROCESSOR(templateProc, "%s",
+                               logging::to_string(msg).c_str());
 
   TemplateProcessorConfig c{std::move(templateProc),
                             streamConfig.mergingThreshold,

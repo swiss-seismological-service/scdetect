@@ -968,30 +968,32 @@ bool Application::initDetectors(std::ifstream &ifs,
           } catch (builder::NoSensorLocation &e) {
             if (_config.skipTemplateIfNoSensorLocationData) {
               SCDETECT_LOG_WARNING(
-                  "%s (%s): No sensor location data for template processor "
-                  "available. Skipping.",
-                  streamConfigPair.first.c_str(),
-                  streamConfigPair.second.templateConfig.wfStreamId.c_str());
+                  "%s. Skipping template waveform processor initialization.",
+                  e.what());
               continue;
             }
             throw;
           } catch (builder::NoStream &e) {
             if (_config.skipTemplateIfNoStreamData) {
               SCDETECT_LOG_WARNING(
-                  "%s (%s): No stream data for template processor "
-                  "available. Skipping.",
-                  streamConfigPair.first.c_str(),
-                  streamConfigPair.second.templateConfig.wfStreamId.c_str());
+                  "%s. Skipping template waveform processor initialization.",
+                  e.what());
+              continue;
+            }
+            throw;
+          } catch (builder::NoPick &e) {
+            if (_config.skipTemplateIfNoPick) {
+              SCDETECT_LOG_WARNING(
+                  "%s. Skipping template waveform processor initialization.",
+                  e.what());
               continue;
             }
             throw;
           } catch (builder::NoWaveformData &e) {
             if (_config.skipTemplateIfNoWaveformData) {
               SCDETECT_LOG_WARNING(
-                  "%s (%s): No waveform data for template processor "
-                  "available. Skipping.",
-                  streamConfigPair.first.c_str(),
-                  streamConfigPair.second.templateConfig.wfStreamId.c_str());
+                  "%s. Skipping template waveform processor initialization.",
+                  e.what());
               continue;
             }
             throw;
