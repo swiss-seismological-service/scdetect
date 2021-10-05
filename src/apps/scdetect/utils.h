@@ -185,6 +185,8 @@ class WaveformStreamID {
 
 /* ------------------------------------------------------------------------- */
 // Wraps `DataModel::ThreeComponents`
+//
+// - TODO(damb): implement an iterator in order to iterate over the components
 class ThreeComponents {
  public:
   // Load components identified by `netCode`, `staCode`, `locCode`, `chaCode`
