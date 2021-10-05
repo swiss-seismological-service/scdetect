@@ -191,6 +191,12 @@ using TemplateConfigs = std::map<std::string, TemplateConfig>;
 /* ------------------------------------------------------------------------- */
 class TemplateFamilyConfig {
  public:
+  struct ReferenceConfig;
+
+ private:
+  using ReferencesConfigs = std::set<ReferenceConfig>;
+
+ public:
   // Configuration referencing a template family member
   struct ReferenceConfig {
     struct StreamConfig {
@@ -226,8 +232,6 @@ class TemplateFamilyConfig {
   TemplateFamilyConfig(const boost::property_tree::ptree &pt,
                        const TemplateConfigs &templateConfigs,
                        const ReferenceConfig::StreamConfig &streamDefaults);
-
-  using ReferencesConfigs = std::set<ReferenceConfig>;
 
   using size_type = ReferencesConfigs::size_type;
   using value_type = ReferencesConfigs::value_type;
