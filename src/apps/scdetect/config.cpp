@@ -2,6 +2,7 @@
 
 #include <boost/property_tree/exceptions.hpp>
 #include <stdexcept>
+#include <vector>
 
 #include "exception.h"
 #include "log.h"
@@ -234,7 +235,7 @@ TemplateConfig::const_reference TemplateConfig::at(
 /* ------------------------------------------------------------------------- */
 TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     const boost::property_tree::ptree &pt,
-    const TemplateConfigs &templateConfigs,
+    const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::StreamConfig &streamDefaults) {
   // detector identifier
   const auto dId{pt.get_optional<std::string>("detectorId")};
@@ -275,9 +276,13 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
     originId = *oId;
   } else if (dId && !dId.value().empty()) {
+    if (_templateConfigsIdx.empty()) {
+      createIndex(templateConfigs);
+    }
+
     // indirect configuration referencing a detector config
-    const auto it{templateConfigs.find(*dId)};
-    if (it == std::end(templateConfigs)) {
+    const auto it{_templateConfigsIdx.find(*dId)};
+    if (it == std::end(_templateConfigsIdx)) {
       throw config::ParserException{
           "invalid configuration: invalid \"detectorId\": " + *detectorId};
     }
@@ -291,7 +296,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
         const auto waveformId{
             utils::WaveformStreamID{pt.get_value<std::string>()}};
 
-        detectorStreamConfig = it->second.at(utils::to_string(waveformId));
+        detectorStreamConfig = it->second->at(utils::to_string(waveformId));
 
         streamConfig.waveformId = waveformId.sensorLocationStreamId();
 
@@ -315,7 +320,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
           "invalid configuration: no stream configuration found"};
     }
 
-    originId = it->second.originId();
+    originId = it->second->originId();
     detectorId = *dId;
   } else {
     throw config::ParserException{
@@ -324,9 +329,18 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
   }
 }
 
+void TemplateFamilyConfig::ReferenceConfig::createIndex(
+    const TemplateFamilyConfig::ReferenceConfig::TemplateConfigs
+        &templateConfigs) {
+  for (auto it{std::begin(templateConfigs)}; it != std::end(templateConfigs);
+       ++it) {
+    _templateConfigsIdx.emplace(it->detectorId(), it);
+  }
+}
+
 TemplateFamilyConfig::TemplateFamilyConfig(
     const boost::property_tree::ptree &pt,
-    const TemplateConfigs &templateConfigs,
+    const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::StreamConfig &streamDefaults)
     : _id{pt.get<std::string>("id", utils::createUUID())} {
   loadReferenceConfigs(pt.get_child("references"), templateConfigs,
@@ -337,7 +351,7 @@ const std::string &TemplateFamilyConfig::id() const { return _id; }
 
 void TemplateFamilyConfig::loadReferenceConfigs(
     const boost::property_tree::ptree &pt,
-    const TemplateConfigs &templateConfigs,
+    const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::StreamConfig &streamDefaults) {
   for (const auto &referenceConfigPt : pt) {
     const auto &pt{referenceConfigPt.second};

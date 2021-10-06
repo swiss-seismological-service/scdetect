@@ -186,8 +186,6 @@ class TemplateConfig {
   StreamConfigs _streamConfigs;
 };
 
-using TemplateConfigs = std::map<std::string, TemplateConfig>;
-
 /* ------------------------------------------------------------------------- */
 class TemplateFamilyConfig {
  public:
@@ -222,17 +220,25 @@ class TemplateFamilyConfig {
     StreamConfigs streamConfigs;
 
     ReferenceConfig(const boost::property_tree::ptree &pt,
-                    const TemplateConfigs &templateConfigs,
+                    const std::vector<TemplateConfig> &templateConfigs,
                     const ReferenceConfig::StreamConfig &streamDefaults);
 
     // Compare for order
     bool operator<(const ReferenceConfig &c) const {
       return originId < c.originId;
     }
+
+   private:
+    using TemplateConfigs = std::vector<TemplateConfig>;
+    using TemplateConfigsIdx =
+        std::unordered_map<std::string, TemplateConfigs::const_iterator>;
+    static void createIndex(const TemplateConfigs &templateConfigs);
+
+    static TemplateConfigsIdx _templateConfigsIdx;
   };
 
   TemplateFamilyConfig(const boost::property_tree::ptree &pt,
-                       const TemplateConfigs &templateConfigs,
+                       const std::vector<TemplateConfig> &templateConfigs,
                        const ReferenceConfig::StreamConfig &streamDefaults);
 
   using size_type = ReferencesConfigs::size_type;
@@ -257,7 +263,7 @@ class TemplateFamilyConfig {
   // `templateConfigs`
   void loadReferenceConfigs(
       const boost::property_tree::ptree &pt,
-      const TemplateConfigs &templateConfigs,
+      const std::vector<TemplateConfig> &templateConfigs,
       const ReferenceConfig::StreamConfig &streamDefaults);
 
  private:
@@ -266,8 +272,6 @@ class TemplateFamilyConfig {
 
   ReferencesConfigs _referenceConfigs;
 };
-
-using TemplateFamilyConfigs = std::map<std::string, TemplateFamilyConfig>;
 
 }  // namespace detect
 }  // namespace Seiscomp
