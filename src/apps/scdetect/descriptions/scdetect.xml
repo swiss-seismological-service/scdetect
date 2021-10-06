@@ -308,7 +308,7 @@
       </group>
 
       <group name="Input">
-        <option flag="" long-flag="template-json">
+        <option flag="" long-flag="templates-json">
           <description>
             Path to a template configuration file (JSON formatted).
           </description>
