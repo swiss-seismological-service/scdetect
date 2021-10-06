@@ -215,6 +215,8 @@ class TemplateFamilyConfig {
 
     // The reference configuration's origin identifier
     std::string originId;
+    // The optional reference configuration's detector identifier
+    boost::optional<std::string> detectorId;
 
     using StreamConfigs = std::set<StreamConfig>;
     StreamConfigs streamConfigs;

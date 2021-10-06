@@ -236,15 +236,17 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     const boost::property_tree::ptree &pt,
     const TemplateConfigs &templateConfigs,
     const ReferenceConfig::StreamConfig &streamDefaults) {
-  const auto detectorId{pt.get_optional<std::string>("detectorId")};
-  const auto origId{pt.get_optional<std::string>("originId")};
-  if (detectorId && origId) {
+  // detector identifier
+  const auto dId{pt.get_optional<std::string>("detectorId")};
+  // origin identifier
+  const auto oId{pt.get_optional<std::string>("originId")};
+  if (dId && oId) {
     throw config::ParserException{
         "invalid configuration: both \"detectorId\" and \"originId\" "
         "specified"};
   }
 
-  if (origId && !origId.value().empty()) {
+  if (oId && !oId.value().empty()) {
     // explicit configuration
     for (const auto &streamConfigPt : pt.get_child("streams")) {
       const auto &pt{streamConfigPt.second};
@@ -271,10 +273,10 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       streamConfigs.emplace(streamConfig);
     }
 
-    originId = *origId;
-  } else if (detectorId && !detectorId.value().empty()) {
+    originId = *oId;
+  } else if (dId && !dId.value().empty()) {
     // indirect configuration referencing a detector config
-    const auto it{templateConfigs.find(*detectorId)};
+    const auto it{templateConfigs.find(*dId)};
     if (it == std::end(templateConfigs)) {
       throw config::ParserException{
           "invalid configuration: invalid \"detectorId\": " + *detectorId};
@@ -314,6 +316,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     }
 
     originId = it->second.originId();
+    detectorId = *dId;
   } else {
     throw config::ParserException{
         "invalid configuration: neither \"detectorId\" nor \"originId\" "
