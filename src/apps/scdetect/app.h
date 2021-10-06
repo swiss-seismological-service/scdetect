@@ -93,7 +93,7 @@ class Application : public Client::StreamApplication {
     bool skipTemplateIfNoPick{true};
 
     // Input
-    std::string pathTemplateJson{};
+    std::string pathTemplateJson;
 
     // Reprocessing / playback
     struct {
