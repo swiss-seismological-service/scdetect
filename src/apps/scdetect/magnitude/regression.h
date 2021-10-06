@@ -34,13 +34,13 @@ class RegressionMagnitude : public Seiscomp::detect::MagnitudeProcessor {
   //
   // - neither amplitudes nor magnitudes are validated to be consistent i.e. it
   // is up to the client to add consistent amplitudes and magnitudes)
-  void add(const std::vector<AmplitudeMagnitude>& amplitudeMagnitudes);
+  virtual void add(const std::vector<AmplitudeMagnitude>& amplitudeMagnitudes);
   // Adds a single amplitude magnitude pair which is going to be used for the
   // *amplitude-magnitude regression*
   //
   // - neither amplitudes nor magnitudes are validated to be consistent i.e. it
   // is up to the client to add consistent amplitudes and magnitudes)
-  void add(const AmplitudeMagnitude& amplitudeMagnitude);
+  virtual void add(const AmplitudeMagnitude& amplitudeMagnitude);
 
   virtual void reset();
 
@@ -56,6 +56,18 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
  public:
   FixedSlopeRegressionMagnitude(const std::string& id)
       : RegressionMagnitude{id} {}
+
+  void add(
+      const std::vector<AmplitudeMagnitude>& amplitudeMagnitudes) override {
+    RegressionMagnitude::add(amplitudeMagnitudes);
+    if (!amplitudeMagnitudes.empty()) {
+      _bMean = boost::none;
+    }
+  }
+  void add(const AmplitudeMagnitude& amplitudeMagnitude) override {
+    RegressionMagnitude::add(amplitudeMagnitude);
+    _bMean = boost::none;
+  }
 
  protected:
   double computeMagnitude(DataModel::Amplitude* amplitude) override {
