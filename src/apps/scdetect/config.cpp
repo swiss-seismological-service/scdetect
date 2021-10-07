@@ -19,6 +19,8 @@ BaseException::BaseException() : Exception("base config exception") {}
 ParserException::ParserException()
     : BaseException{"error while parsing configuration"} {}
 
+ValidationError::ValidationError() : BaseException{"validation error"} {}
+
 }  // namespace config
 
 StreamConfig::StreamConfig() {}
@@ -236,6 +238,9 @@ TemplateConfig::const_reference TemplateConfig::at(
 TemplateFamilyConfig::ReferenceConfig::TemplateConfigsIdx
     TemplateFamilyConfig::ReferenceConfig::_templateConfigsIdx;
 
+const TemplateFamilyConfig::AllowedMagnitudeTypes
+    TemplateFamilyConfig::_allowedMagnitudeTypes{"Mw", "ML"};
+
 TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
@@ -349,12 +354,25 @@ TemplateFamilyConfig::TemplateFamilyConfig(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::StreamConfig &streamDefaults)
-    : _id{pt.get<std::string>("id", utils::createUUID())} {
+    : _id{pt.get<std::string>("id", utils::createUUID())},
+      _magnitudeType{pt.get<std::string>("magnitudeType", "Mw")} {
+  try {
+    validateMagnitudeType(_magnitudeType);
+  } catch (config::ValidationError &) {
+    _id = "";
+    _magnitudeType = "";
+    throw;
+  }
+
   loadReferenceConfigs(pt.get_child("references"), templateConfigs,
                        streamDefaults);
 }
 
 const std::string &TemplateFamilyConfig::id() const { return _id; }
+
+const std::string &TemplateFamilyConfig::magnitudeType() const {
+  return _magnitudeType;
+}
 
 void TemplateFamilyConfig::loadReferenceConfigs(
     const boost::property_tree::ptree &pt,
@@ -365,6 +383,15 @@ void TemplateFamilyConfig::loadReferenceConfigs(
 
     _referenceConfigs.emplace(
         ReferenceConfig{pt, templateConfigs, streamDefaults});
+  }
+}
+
+void TemplateFamilyConfig::validateMagnitudeType(
+    const std::string &magnitudeType) {
+  if (_allowedMagnitudeTypes.find(magnitudeType) ==
+      std::end(_allowedMagnitudeTypes)) {
+    throw config::ValidationError{
+        "invalid configuration: invalid magnitude type: " + magnitudeType};
   }
 }
 

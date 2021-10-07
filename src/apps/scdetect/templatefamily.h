@@ -6,6 +6,7 @@
 #include <seiscomp/datamodel/stationmagnitude.h>
 
 #include <map>
+#include <unordered_map>
 #include <utility>
 
 #include "amplitudeprocessor.h"
@@ -25,6 +26,8 @@ class TemplateFamily {
   };
 
  public:
+  // Defines available magnitude types
+  enum class MagnitudeType { kMw, kML };
   // Builds a template family
   //
   // - allows only a single phase to be associated per origin sensor location
@@ -37,9 +40,8 @@ class TemplateFamily {
     // - if no `id` is passed the identifier from the template family
     // configuration is used, instead
     Builder& setId(const boost::optional<std::string>& id = boost::none);
-    // Sets the template family members' magnitudes based on the
-    // amplitude/magnitude type `magnitudeType`
-    Builder& setStationMagnitudes(const std::string& magnitudeType);
+    // Sets the template family members' magnitudes
+    Builder& setStationMagnitudes();
     // Sets the template family members' amplitudes
     Builder& setAmplitudes(WaveformHandlerIface* waveformHandler,
                            const binding::Bindings& binding);
@@ -59,12 +61,18 @@ class TemplateFamily {
     using MapKey = std::pair<OriginId, SensorLocationId>;
     using Members = std::map<MapKey, TemplateFamily::Member>;
     Members _members;
+
+    using MagnitudeTypeMap =
+        std::unordered_map<std::string, TemplateFamily::MagnitudeType>;
+    static const MagnitudeTypeMap _magnitudeTypeMap;
   };
 
   friend Builder;
   static Builder Create(const TemplateFamilyConfig& templateFamilyConfig);
 
   const std::string& id() const;
+
+  const MagnitudeType& magnitudeType() const;
 
  protected:
   TemplateFamily();
@@ -75,6 +83,8 @@ class TemplateFamily {
   Members _members;
   // The template family identifier
   std::string _id;
+  // The template family's magnitude type
+  MagnitudeType _magnitudeType{MagnitudeType::kMw};
 };
 
 }  // namespace detect

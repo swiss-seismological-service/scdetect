@@ -33,6 +33,12 @@ class ParserException : public BaseException {
   ParserException();
 };
 
+class ValidationError : public BaseException {
+ public:
+  using BaseException::BaseException;
+  ValidationError();
+};
+
 }  // namespace config
 
 struct StreamConfig {
@@ -259,6 +265,8 @@ class TemplateFamilyConfig {
 
   // Returns the template family's identifier
   const std::string &id() const;
+  // Returns the magnitude type the template family is configured with
+  const std::string &magnitudeType() const;
 
  protected:
   // Loads the template family's reference configurations from `pt` and
@@ -269,10 +277,15 @@ class TemplateFamilyConfig {
       const ReferenceConfig::StreamConfig &streamDefaults);
 
  private:
+  void validateMagnitudeType(const std::string &magnitudeType);
   // The template family identifier
   std::string _id{utils::createUUID()};
 
   ReferenceConfigs _referenceConfigs;
+
+  std::string _magnitudeType;
+  using AllowedMagnitudeTypes = std::set<std::string>;
+  static const AllowedMagnitudeTypes _allowedMagnitudeTypes;
 };
 
 }  // namespace detect

@@ -23,6 +23,11 @@
 namespace Seiscomp {
 namespace detect {
 
+const TemplateFamily::Builder::MagnitudeTypeMap
+    TemplateFamily::Builder::_magnitudeTypeMap{
+        {"Mw", TemplateFamily::MagnitudeType::kMw},
+        {"ML", TemplateFamily::MagnitudeType::kML}};
+
 TemplateFamily::Builder::Builder(
     const TemplateFamilyConfig& templateFamilyConfig)
     : _templateFamilyConfig{templateFamilyConfig} {}
@@ -33,8 +38,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setId(
   return *this;
 }
 
-TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
-    const std::string& magnitudeType) {
+TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
   for (const auto& referenceConfig : _templateFamilyConfig) {
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
         referenceConfig.originId)};
@@ -65,7 +69,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
         }
       }
 
-      if (stationMagnitude->type() != magnitudeType) {
+      if (stationMagnitude->type() != _templateFamilyConfig.magnitudeType()) {
         continue;
       }
       auto sensorLocationId{utils::WaveformStreamID{
@@ -76,6 +80,10 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
       member.magnitude = stationMagnitude;
     }
   }
+
+  _product->_magnitudeType =
+      _magnitudeTypeMap.at(_templateFamilyConfig.magnitudeType());
+
   return *this;
 }
 
@@ -352,6 +360,10 @@ TemplateFamily::Builder TemplateFamily::Create(
 }
 
 const std::string& TemplateFamily::id() const { return _id; }
+
+const TemplateFamily::MagnitudeType& TemplateFamily::magnitudeType() const {
+  return _magnitudeType;
+}
 
 }  // namespace detect
 }  // namespace Seiscomp
