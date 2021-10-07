@@ -192,7 +192,7 @@ class TemplateFamilyConfig {
   struct ReferenceConfig;
 
  private:
-  using ReferencesConfigs = std::set<ReferenceConfig>;
+  using ReferenceConfigs = std::set<ReferenceConfig>;
 
  public:
   // Configuration referencing a template family member
@@ -243,10 +243,10 @@ class TemplateFamilyConfig {
                        const std::vector<TemplateConfig> &templateConfigs,
                        const ReferenceConfig::StreamConfig &streamDefaults);
 
-  using size_type = ReferencesConfigs::size_type;
-  using value_type = ReferencesConfigs::value_type;
-  using iterator = ReferencesConfigs::iterator;
-  using const_iterator = ReferencesConfigs::const_iterator;
+  using size_type = ReferenceConfigs::size_type;
+  using value_type = ReferenceConfigs::value_type;
+  using iterator = ReferenceConfigs::iterator;
+  using const_iterator = ReferenceConfigs::const_iterator;
 
   size_type size() const noexcept { return _referenceConfigs.size(); }
 
@@ -272,7 +272,7 @@ class TemplateFamilyConfig {
   // The template family identifier
   std::string _id{utils::createUUID()};
 
-  ReferencesConfigs _referenceConfigs;
+  ReferenceConfigs _referenceConfigs;
 };
 
 }  // namespace detect
