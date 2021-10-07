@@ -233,6 +233,9 @@ TemplateConfig::const_reference TemplateConfig::at(
 }
 
 /* ------------------------------------------------------------------------- */
+TemplateFamilyConfig::ReferenceConfig::TemplateConfigsIdx
+    TemplateFamilyConfig::ReferenceConfig::_templateConfigsIdx;
+
 TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
@@ -276,7 +279,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
     originId = *oId;
   } else if (dId && !dId.value().empty()) {
-    if (_templateConfigsIdx.empty()) {
+    if (!indexed()) {
       createIndex(templateConfigs);
     }
 
@@ -336,6 +339,10 @@ void TemplateFamilyConfig::ReferenceConfig::createIndex(
        ++it) {
     _templateConfigsIdx.emplace(it->detectorId(), it);
   }
+}
+
+bool TemplateFamilyConfig::ReferenceConfig::indexed() const {
+  return !_templateConfigsIdx.empty();
 }
 
 TemplateFamilyConfig::TemplateFamilyConfig(
