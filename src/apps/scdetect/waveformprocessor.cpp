@@ -3,7 +3,6 @@
 #include <exception>
 
 #include "log.h"
-#include "utils.h"
 #include "waveformoperator.h"
 
 namespace Seiscomp {

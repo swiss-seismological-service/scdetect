@@ -14,7 +14,7 @@
 
 #include "detector/arrival.h"
 #include "exception.h"
-#include "utils.h"
+#include "util/util.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -65,7 +65,7 @@ struct StreamConfig {
   bool isValid() const;
 
   // Template processor identifier
-  std::string templateId{utils::createUUID()};
+  std::string templateId{util::createUUID()};
 
   std::string wfStreamId;
 
@@ -181,7 +181,7 @@ class TemplateConfig {
   const_iterator cend() const { return _streamConfigs.cend(); }
 
  private:
-  std::string _detectorId{utils::createUUID()};
+  std::string _detectorId{util::createUUID()};
 
   std::string _originId;
 
@@ -279,7 +279,7 @@ class TemplateFamilyConfig {
  private:
   void validateMagnitudeType(const std::string &magnitudeType);
   // The template family identifier
-  std::string _id{utils::createUUID()};
+  std::string _id{util::createUUID()};
 
   ReferenceConfigs _referenceConfigs;
 

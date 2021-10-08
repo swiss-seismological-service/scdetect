@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "../log.h"
-#include "../utils.h"
 
 namespace Seiscomp {
 namespace detect {

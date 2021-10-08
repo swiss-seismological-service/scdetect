@@ -1,6 +1,7 @@
 #include "detectorwaveformprocessor.h"
 
 #include "../log.h"
+#include "../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -38,7 +39,7 @@ void DetectorWaveformProcessor::terminate() {
 
   _detector.terminate();
   if (_detection) {
-    auto detection{utils::make_smart<Detection>()};
+    auto detection{util::make_smart<Detection>()};
     prepareDetection(detection, *_detection);
     emitResult(nullptr, detection);
 
@@ -79,7 +80,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
 
   if (!finished()) {
     if (_detection) {
-      auto detection{utils::make_smart<Detection>()};
+      auto detection{util::make_smart<Detection>()};
       prepareDetection(detection, *_detection);
       emitResult(record, detection);
 

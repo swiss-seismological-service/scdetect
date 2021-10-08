@@ -12,7 +12,9 @@
 #include <vector>
 
 #include "../log.h"
-#include "../utils.h"
+#include "../util/floating_point_comparison.h"
+#include "../util/math.h"
+#include "../util/util.h"
 #include "../validators.h"
 
 namespace Seiscomp {
@@ -156,7 +158,7 @@ void Detector::remove(const std::string &waveformStreamId) {
 void Detector::process(const Record *record) {
   if (status() == Status::kTerminated) {
     throw BaseException{"error while processing: status=" +
-                        std::to_string(utils::asInteger(Status::kTerminated))};
+                        std::to_string(util::asInteger(Status::kTerminated))};
   }
 
   if (!_processors.empty()) {
@@ -253,7 +255,7 @@ void Detector::process(const Record *record) {
         // disable trigger if required
         if (endtime > *_triggerEnd ||
             result.fit < _thresTriggerOff.value_or(1) ||
-            (utils::almostEqual(_currentResult.value().fit, 1.0, 0.000001) &&
+            (util::almostEqual(_currentResult.value().fit, 1.0, 0.000001) &&
              _currentResult.value().getArrivalCount() == getProcessorCount())) {
           resetTrigger();
         }
@@ -365,7 +367,7 @@ bool Detector::feed(const Record *record) {
                                 record->streamID().c_str(),
                                 record->startTime().iso().c_str(),
                                 record->endTime().iso().c_str(),
-                                utils::asInteger(status), statusValue);
+                                util::asInteger(status), statusValue);
 
       return false;
     }
@@ -452,7 +454,7 @@ void Detector::prepareResult(const linker::Association &linkerResult,
 
   // compute origin time
   const auto &pickOffsetCorrection{
-      utils::cma(pickOffsets.data(), pickOffsets.size())};
+      util::cma(pickOffsets.data(), pickOffsets.size())};
   const auto &refOriginPickOffset{refResult.arrival.pick.offset};
   result.originTime = refStartTime + Core::TimeSpan{refPickOffset} -
                       refOriginPickOffset +
@@ -516,7 +518,7 @@ void Detector::storeTemplateResult(
     auto msg{Core::stringify(
         "Failed to match template (proc_id=%s). Reason: "
         "status=%d, statusValue=%f",
-        p.processor->id().c_str(), utils::asInteger(status), statusValue)};
+        p.processor->id().c_str(), util::asInteger(status), statusValue)};
 
     throw TemplateMatchingError{msg};
   }

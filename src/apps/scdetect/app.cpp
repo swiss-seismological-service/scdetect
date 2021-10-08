@@ -45,7 +45,10 @@
 #include "log.h"
 #include "resamplerstore.h"
 #include "settings.h"
-#include "utils.h"
+#include "util/memory.h"
+#include "util/three_components.h"
+#include "util/util.h"
+#include "util/waveform_stream_id.h"
 #include "validators.h"
 #include "version.h"
 #include "waveformprocessor.h"
@@ -188,7 +191,7 @@ bool Application::validateParameters() {
     return false;
   }
 
-  if (!utils::isGeZero(_config.streamConfig.initTime)) {
+  if (!util::isGeZero(_config.streamConfig.initTime)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'initTime': %f. Must be "
         "greater equal 0.",
@@ -290,7 +293,7 @@ bool Application::init() {
 
   // TODO(damb): Check if std::unique_ptr wouldn't be sufficient, here.
   WaveformHandlerIfacePtr waveformHandler{
-      utils::make_smart<WaveformHandler>(recordStreamURL())};
+      util::make_smart<WaveformHandler>(recordStreamURL())};
   if (!_config.templatesNoCache) {
     // cache template waveforms on filesystem
     _config.pathFilesystemCache =
@@ -302,14 +305,14 @@ bool Application::init() {
       return false;
     }
 
-    waveformHandler = utils::make_smart<FileSystemCache>(
+    waveformHandler = util::make_smart<FileSystemCache>(
         waveformHandler, _config.pathFilesystemCache,
         settings::kCacheRawWaveforms);
   }
   // cache demeaned template waveform snippets in order to speed up the
   // initialization procedure
   waveformHandler =
-      utils::make_smart<InMemoryCache>(waveformHandler, /*raw=*/false);
+      util::make_smart<InMemoryCache>(waveformHandler, /*raw=*/false);
 
   // load template related data
   // TODO(damb):
@@ -356,18 +359,18 @@ bool Application::run() {
 
   if (!_detectors.empty()) {
     if (commandline().hasOption("ep")) {
-      _ep = utils::make_smart<DataModel::EventParameters>();
+      _ep = util::make_smart<DataModel::EventParameters>();
     }
 
     SCDETECT_LOG_DEBUG(
         "Subscribing to streams required for detection processing");
-    std::vector<utils::ThreeComponents> uniqueThreeComponents;
+    std::vector<util::ThreeComponents> uniqueThreeComponents;
     Core::Time amplitudeStreamsSubscriptionTime{
         _config.playbackConfig.startTimeStr.empty()
             ? Core::Time::GMT()
             : _config.playbackConfig.startTime};
     for (const auto &detectorPair : _detectors) {
-      utils::WaveformStreamID waveformStreamId{detectorPair.first};
+      util::WaveformStreamID waveformStreamId{detectorPair.first};
 
       recordStream()->addStream(
           waveformStreamId.netCode(), waveformStreamId.staCode(),
@@ -375,7 +378,7 @@ bool Application::run() {
 
       if (detectorPair.second->publishConfig().createAmplitudes) {
         try {
-          utils::ThreeComponents lhs{
+          util::ThreeComponents lhs{
               Client::Inventory::Instance(), waveformStreamId.netCode(),
               waveformStreamId.staCode(),    waveformStreamId.locCode(),
               waveformStreamId.chaCode(),    amplitudeStreamsSubscriptionTime};
@@ -479,7 +482,7 @@ void Application::handleRecord(Record *rec) {
             "%s: Detector (id=%s) finished (status=%d, "
             "statusValue=%f). Resetting.",
             it->first.c_str(), detector->id().c_str(),
-            utils::asInteger(detector->status()), detector->statusValue());
+            util::asInteger(detector->status()), detector->statusValue());
         detector->reset();
         continue;
       }
@@ -563,13 +566,13 @@ void Application::emitDetection(
   }
 
   {
-    auto comment{utils::make_smart<DataModel::Comment>()};
+    auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId("scdetectDetectorId");
     comment->setText(processor->id());
     origin->add(comment.get());
   }
   {
-    auto comment{utils::make_smart<DataModel::Comment>()};
+    auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId("scdetectResultCCC");
     comment->setText(std::to_string(detection->fit));
     origin->add(comment.get());
@@ -634,7 +637,7 @@ void Application::emitDetection(
     ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
                                          arrival.pick.lowerUncertainty,
                                          arrival.pick.upperUncertainty});
-    utils::WaveformStreamID wfStreamId{arrival.pick.waveformStreamId};
+    util::WaveformStreamID wfStreamId{arrival.pick.waveformStreamId};
     ret->setWaveformID(DataModel::WaveformStreamID{
         wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
         wfStreamId.chaCode(), ""});
@@ -648,7 +651,7 @@ void Application::emitDetection(
 
   const auto createArrival = [&ci](const detector::Arrival &arrival,
                                    const DataModel::PickCPtr &pick) {
-    auto ret{utils::make_smart<DataModel::Arrival>()};
+    auto ret{util::make_smart<DataModel::Arrival>()};
     if (!ret) {
       throw DuplicatePublicObjectId{"duplicate arrival identifier"};
     }
@@ -673,7 +676,7 @@ void Application::emitDetection(
       try {
         const auto pick{createPick(res.arrival)};
         {
-          auto comment{utils::make_smart<DataModel::Comment>()};
+          auto comment{util::make_smart<DataModel::Comment>()};
           comment->setId(settings::kTemplateWaveformDurationPickCommentId);
           comment->setText(
               Core::stringify("%lu.%lu", res.templateWaveformDuration.seconds(),
@@ -717,24 +720,24 @@ void Application::emitDetection(
     SCDETECT_LOG_DEBUG_PROCESSOR(processor,
                                  "Sending event parameters (detection) ...");
 
-    auto notifierMsg{utils::make_smart<DataModel::NotifierMessage>()};
+    auto notifierMsg{util::make_smart<DataModel::NotifierMessage>()};
 
     // origin
-    auto notifier{utils::make_smart<DataModel::Notifier>(
+    auto notifier{util::make_smart<DataModel::Notifier>(
         "EventParameters", DataModel::OP_ADD, origin.get())};
     notifierMsg->attach(notifier.get());
 
     for (auto &arrivalPick : arrivalPicks) {
       // pick
       {
-        auto notifier{utils::make_smart<DataModel::Notifier>(
+        auto notifier{util::make_smart<DataModel::Notifier>(
             "EventParameters", DataModel::OP_ADD, arrivalPick.pick.get())};
 
         notifierMsg->attach(notifier.get());
       }
       // arrival
       {
-        auto notifier{utils::make_smart<DataModel::Notifier>(
+        auto notifier{util::make_smart<DataModel::Notifier>(
             origin->publicID(), DataModel::OP_ADD, arrivalPick.arrival.get())};
 
         notifierMsg->attach(notifier.get());
@@ -799,7 +802,7 @@ void Application::emitAmplitude(
   amp->setUnit(processor->unit());
   if (amplitude->waveformStreamIds) {
     if (amplitude->waveformStreamIds.value().size() == 1) {
-      const utils::WaveformStreamID waveformStreamId{
+      const util::WaveformStreamID waveformStreamId{
           amplitude->waveformStreamIds.value()[0]};
       amp->setWaveformID(DataModel::WaveformStreamID{
           waveformStreamId.netCode(), waveformStreamId.staCode(),
@@ -825,8 +828,8 @@ void Application::emitAmplitude(
     SCDETECT_LOG_DEBUG_PROCESSOR(processor,
                                  "Sending event parameters (amplitude) ...");
 
-    auto notifierMsg{utils::make_smart<DataModel::NotifierMessage>()};
-    auto notifier{utils::make_smart<DataModel::Notifier>(
+    auto notifierMsg{util::make_smart<DataModel::NotifierMessage>()};
+    auto notifier{util::make_smart<DataModel::Notifier>(
         "EventParameters", DataModel::OP_ADD, amp.get())};
     notifierMsg->attach(notifier.get());
 
@@ -871,7 +874,7 @@ bool Application::loadEvents(const std::string &eventDb,
       IO::DatabaseInterfacePtr db{IO::DatabaseInterface::Open(eventDb.c_str())};
       if (db) {
         SCDETECT_LOG_INFO("Connected successfully");
-        auto query{utils::make_smart<DataModel::DatabaseQuery>(db.get())};
+        auto query{util::make_smart<DataModel::DatabaseQuery>(db.get())};
         EventStore::Instance().load(query.get());
         loaded = true;
       } else {
@@ -1052,7 +1055,7 @@ bool Application::initAmplitudeProcessors(
     const detector::DetectorWaveformProcessor::DetectionCPtr &detection,
     const DataModel::OriginCPtr &origin, const Picks &picks) {
   struct ThreeComponentItem {
-    utils::ThreeComponents threeComponents;
+    util::ThreeComponents threeComponents;
     // Picks which are going to be associated with the `AmplitudeProcessor`;
     // note that the pick order is not relevant.
     Picks picks;
@@ -1060,9 +1063,9 @@ bool Application::initAmplitudeProcessors(
 
   std::vector<ThreeComponentItem> uniqueThreeComponentsItems;
   for (const auto &pick : picks) {
-    const utils::WaveformStreamID waveformStreamId{pick->waveformID()};
+    const util::WaveformStreamID waveformStreamId{pick->waveformID()};
     try {
-      const utils::ThreeComponents threeComponents{
+      const util::ThreeComponents threeComponents{
           Client::Inventory::Instance(), waveformStreamId.netCode(),
           waveformStreamId.staCode(),    waveformStreamId.locCode(),
           waveformStreamId.chaCode(),    pick->time().value()};
@@ -1115,8 +1118,8 @@ bool Application::initAmplitudeProcessors(
       continue;
     }
 
-    auto rmsAmplitudeProcessor{utils::make_unique<amplitude::RMSAmplitude>(
-        waveformStreamId + settings::kProcessorIdSep + utils::createUUID())};
+    auto rmsAmplitudeProcessor{util::make_unique<amplitude::RMSAmplitude>(
+        waveformStreamId + settings::kProcessorIdSep + util::createUUID())};
     // XXX(damb): do not provide a sensor location (currently not required)
     rmsAmplitudeProcessor->setEnvironment(origin, nullptr,
                                           threeComponentsItem.picks);
@@ -1138,7 +1141,7 @@ bool Application::initAmplitudeProcessors(
 
     // configure amplitude processing filter
     if (!amplitudeProcessingConfig.filter.empty()) {
-      utils::replaceEscapedXMLFilterIdChars(amplitudeProcessingConfig.filter);
+      util::replaceEscapedXMLFilterIdChars(amplitudeProcessingConfig.filter);
       std::unique_ptr<WaveformProcessor::Filter> amplitudeProcessingFilter{
           nullptr};
 
@@ -1214,7 +1217,7 @@ void Application::registerAmplitudeProcessor(
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     if (!processor->finished()) {
-      utils::WaveformStreamID converted{waveformStreamId};
+      util::WaveformStreamID converted{waveformStreamId};
       auto sequence{
           _waveformBuffer.sequence(Processing::StreamBuffer::WaveformID{
               converted.netCode(), converted.staCode(), converted.locCode(),

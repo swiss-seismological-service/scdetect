@@ -11,7 +11,8 @@
 
 #include "../filter.h"
 #include "../log.h"
-#include "../utils.h"
+#include "../util/math.h"
+#include "../util/memory.h"
 #include "../waveform.h"
 
 namespace Seiscomp {
@@ -60,7 +61,7 @@ void CrossCorrelation<TData>::reset() {
   _sumSquaredTemplateWaveform = 0;
   for (int i = 0; i < n; ++i) {
     _sumTemplateWaveform += samples_template_wf[i];
-    _sumSquaredTemplateWaveform += utils::square(samples_template_wf[i]);
+    _sumSquaredTemplateWaveform += util::square(samples_template_wf[i]);
   }
 
   _denominatorTemplateWaveform =
@@ -175,7 +176,7 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
     const TData newSample{data[i]};
     const TData lastSample{_buffer.front()};
     _sumData += newSample - lastSample;
-    _sumSquaredData += utils::square(newSample) - utils::square(lastSample);
+    _sumSquaredData += util::square(newSample) - util::square(lastSample);
     const double denominatorData{
         std::sqrt(n * _sumSquaredData - _sumData * _sumData)};
 
@@ -259,7 +260,7 @@ template <typename TData>
 void AdaptiveCrossCorrelation<TData>::createTemplateWaveform(
     double targetFrequency) {
   // XXX(damb): Assume, the data is demeaned, already.
-  auto wf{utils::make_smart<GenericRecord>(*_wf)};
+  auto wf{util::make_smart<GenericRecord>(*_wf)};
 
   // resample
   if (wf->samplingFrequency() != targetFrequency) {

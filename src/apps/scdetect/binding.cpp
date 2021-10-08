@@ -15,7 +15,8 @@
 #include "exception.h"
 #include "log.h"
 #include "settings.h"
-#include "utils.h"
+#include "util/memory.h"
+#include "util/util.h"
 #include "validators.h"
 
 namespace Seiscomp {
@@ -125,7 +126,7 @@ StreamConfig::DeconvolutionConfig::operator AmplitudeProcessor::
 }
 
 void StreamConfig::DeconvolutionConfig::setResponseTaperLength(double length) {
-  if (!utils::isGeZero(length)) {
+  if (!util::isGeZero(length)) {
     throw ValueException{"invalid response taper length: " +
                          std::to_string(length) + " (Must be >= 0.)"};
   }
@@ -200,7 +201,7 @@ void SensorLocationConfig::AmplitudeProcessingConfig::setFilter(
 }
 
 void SensorLocationConfig::AmplitudeProcessingConfig::setInitTime(double t) {
-  if (!utils::isGeZero(t)) {
+  if (!util::isGeZero(t)) {
     throw ValueException{"invalid init time: " + std::to_string(t) +
                          " (Must be >= 0.)"};
   }
@@ -310,7 +311,7 @@ const StationConfig &Bindings::load(
 
   Util::KeyValuesPtr keys;
   if (parameterSet) {
-    keys = utils::make_smart<Util::KeyValues>();
+    keys = util::make_smart<Util::KeyValues>();
     keys->init(parameterSet);
   }
 

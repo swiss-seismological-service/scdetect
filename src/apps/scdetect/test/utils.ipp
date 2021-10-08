@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../utils.h"
+#include "../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -16,7 +16,7 @@ GenericRecordPtr makeRecord(size_t count,
                             double samplingFrequency, std::string chaCode,
                             std::string locCode, std::string staCode,
                             std::string netCode) {
-  auto record{utils::make_smart<GenericRecord>(
+  auto record{util::make_smart<GenericRecord>(
       netCode, staCode, locCode, chaCode, startTime, samplingFrequency, -1,
       TdataType)};
 
@@ -30,7 +30,7 @@ GenericRecordPtr makeRecord(
     std::initializer_list<ArrayDataTypeTrait_t<TdataType>> init,
     const Core::Time startTime, double samplingFrequency, std::string chaCode,
     std::string locCode, std::string staCode, std::string netCode) {
-  auto record{utils::make_smart<GenericRecord>(
+  auto record{util::make_smart<GenericRecord>(
       netCode, staCode, locCode, chaCode, startTime, samplingFrequency, -1,
       TdataType)};
 

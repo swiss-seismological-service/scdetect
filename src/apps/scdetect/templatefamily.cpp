@@ -18,6 +18,9 @@
 #include "seiscomp/datamodel/eventparameters.h"
 #include "seiscomp/datamodel/sensorlocation.h"
 #include "settings.h"
+#include "util/three_components.h"
+#include "util/util.h"
+#include "util/waveform_stream_id.h"
 #include "waveformprocessor.h"
 
 namespace Seiscomp {
@@ -72,7 +75,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
       if (stationMagnitude->type() != _templateFamilyConfig.magnitudeType()) {
         continue;
       }
-      auto sensorLocationId{utils::WaveformStreamID{
+      auto sensorLocationId{util::WaveformStreamID{
           waveformStreamId.networkCode(), waveformStreamId.stationCode(),
           waveformStreamId.locationCode(), waveformStreamId.channelCode()}
                                 .sensorLocationStreamId()};
@@ -125,7 +128,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           continue;
         }
 
-        utils::WaveformStreamID waveformId{streamConfig.waveformId};
+        util::WaveformStreamID waveformId{streamConfig.waveformId};
         // validate the pick's sensor location
         auto templateWaveformSensorLocation{
             Client::Inventory::Instance()->getSensorLocation(
@@ -158,7 +161,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       const auto arrivalTime{pick->time().value()};
 
-      utils::WaveformStreamID waveformId{streamConfig.waveformId};
+      util::WaveformStreamID waveformId{streamConfig.waveformId};
       amplitude::RMSAmplitude rmsAmplitudeProcessor(
           _templateFamilyConfig.id() + settings::kProcessorIdSep +
           referenceConfig.originId + settings::kProcessorIdSep +
@@ -179,9 +182,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
                                const AmplitudeProcessor::Amplitude>(res));
           });
 
-      std::vector<utils::WaveformStreamID> waveformIds;
+      std::vector<util::WaveformStreamID> waveformIds;
       try {
-        utils::ThreeComponents threeComponents{
+        util::ThreeComponents threeComponents{
             Client::Inventory::Instance(), waveformId.netCode(),
             waveformId.staCode(),          waveformId.locCode(),
             waveformId.chaCode(),          arrivalTime};
@@ -282,7 +285,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           WaveformProcessor::Status::kFinished) {
         msg.setText(
             "failed compute rms amplitude: status=" +
-            std::to_string(utils::asInteger(rmsAmplitudeProcessor.status())));
+            std::to_string(util::asInteger(rmsAmplitudeProcessor.status())));
         throw builder::BaseException{logging::to_string(msg)};
       }
     }
@@ -322,7 +325,7 @@ void TemplateFamily::Builder::storeAmplitude(
   amp->setUnit(processor->unit());
   if (amplitude->waveformStreamIds) {
     if (amplitude->waveformStreamIds.value().size() == 1) {
-      const utils::WaveformStreamID waveformStreamId{
+      const util::WaveformStreamID waveformStreamId{
           amplitude->waveformStreamIds.value()[0]};
       amp->setWaveformID(DataModel::WaveformStreamID{
           waveformStreamId.netCode(), waveformStreamId.staCode(),
@@ -343,8 +346,8 @@ void TemplateFamily::Builder::storeAmplitude(
   processor->finalize(amp.get());
 
   auto sensorLocationId{
-      utils::WaveformStreamID{record->networkCode(), record->stationCode(),
-                              record->locationCode(), record->channelCode()}
+      util::WaveformStreamID{record->networkCode(), record->stationCode(),
+                             record->locationCode(), record->channelCode()}
           .sensorLocationStreamId()};
   auto& member{_members[MapKey{processor->environment().hypocenter->publicID(),
                                sensorLocationId}]};

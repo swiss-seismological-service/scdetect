@@ -13,7 +13,7 @@
 
 #include "../log.h"
 #include "../magnitudeprocessor.h"
-#include "../utils.h"
+#include "../util/math.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -128,7 +128,7 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
       throw MagnitudeProcessor::BaseException{"missing data"};
     }
 
-    _bMean = utils::cma(b.data(), b.size());
+    _bMean = util::cma(b.data(), b.size());
   }
 
   boost::optional<double> _bMean;

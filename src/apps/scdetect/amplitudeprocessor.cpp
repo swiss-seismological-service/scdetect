@@ -13,7 +13,9 @@
 #include <stdexcept>
 
 #include "settings.h"
-#include "utils.h"
+#include "util/memory.h"
+#include "util/util.h"
+#include "util/waveform_stream_id.h"
 #include "waveform.h"
 #include "waveformoperator.h"
 
@@ -206,15 +208,15 @@ void ReducingAmplitudeProcessor::add(
     stream.streamConfig = streamConfig;
     stream.deconvolutionConfig = deconvolutionConfig;
 
-    const utils::WaveformStreamID waveformStreamId{netCode, staCode, locCode,
-                                                   streamConfig.code()};
+    const util::WaveformStreamID waveformStreamId{netCode, staCode, locCode,
+                                                  streamConfig.code()};
 
-    _streams.emplace(utils::to_string(waveformStreamId), stream);
+    _streams.emplace(util::to_string(waveformStreamId), stream);
   }
 }
 
 std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
-  return utils::map_keys(_streams);
+  return util::map_keys(_streams);
 }
 
 void ReducingAmplitudeProcessor::dumpBufferedData(std::ostream &out) {
@@ -224,7 +226,7 @@ void ReducingAmplitudeProcessor::dumpBufferedData(std::ostream &out) {
       continue;
     }
 
-    const utils::WaveformStreamID waveformStreamId{streamPair.first};
+    const util::WaveformStreamID waveformStreamId{streamPair.first};
     GenericRecord trace{waveformStreamId.netCode(), waveformStreamId.staCode(),
                         waveformStreamId.locCode(), waveformStreamId.chaCode(),
                         /*stime=*/safetyTimeWindow().startTime() + _initTime,
@@ -263,7 +265,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   boost::filesystem::path scInstallDir{env->installDir()};
   boost::filesystem::path pathTemp{scInstallDir / settings::kPathTemp / id()};
 
-  if (utils::createDirectory(pathTemp)) {
+  if (util::createDirectory(pathTemp)) {
     // dump buffered filtered (raw) data
     const auto p{pathTemp / "filtered.mseed"};
     std::ofstream ofs{p.string()};
@@ -285,7 +287,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   }
 
 #ifdef SCDETECT_DEBUG
-  if (utils::createDirectory(pathTemp)) {
+  if (util::createDirectory(pathTemp)) {
     // dump buffered preprocessed data
     const auto p{pathTemp / "preprocessed.mseed"};
     std::ofstream ofs{p.string()};
@@ -360,7 +362,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
 #ifdef SCDETECT_DEBUG
   if (_commonSamplingFrequency) {
-    if (utils::createDirectory(pathTemp)) {
+    if (util::createDirectory(pathTemp)) {
       GenericRecord trace{
           "N", "S", "L", "C", signalStartTime, *_commonSamplingFrequency};
       trace.setData(dynamic_cast<DoubleArray *>(reduced->copy(Array::DOUBLE)));
@@ -373,7 +375,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   }
 #endif
 
-  auto amplitude{utils::make_smart<Amplitude>()};
+  auto amplitude{util::make_smart<Amplitude>()};
   computeAmplitude(*reduced,
                    IndexRange{0, static_cast<size_t>(reduced->size()) - 1},
                    *amplitude);
@@ -410,7 +412,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   // start time
   if (isFirstStreamRecord &&
       record->timeWindow().startTime() < safetyTimeWindow().startTime()) {
-    auto firstRecord{utils::make_smart<GenericRecord>(*record)};
+    auto firstRecord{util::make_smart<GenericRecord>(*record)};
     // the caller is required to copy the data
     // https://github.com/SeisComP/common/issues/38
     firstRecord->setData(

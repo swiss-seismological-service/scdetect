@@ -16,7 +16,9 @@
 
 #include "log.h"
 #include "resamplerstore.h"
-#include "utils.h"
+#include "util/math.h"
+#include "util/memory.h"
+#include "util/waveform_stream_id.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -131,7 +133,7 @@ void demean(GenericRecord &trace) {
 }
 
 void demean(DoubleArray &data) {
-  const auto mean{utils::cma(data.typedData(), data.size())};
+  const auto mean{util::cma(data.typedData(), data.size())};
   data -= mean;
 }
 
@@ -243,7 +245,7 @@ GenericRecordCPtr WaveformHandler::get(const std::string &netCode,
                                        const std::string &chaCode,
                                        const Core::TimeWindow &tw,
                                        const ProcessingConfig &config) {
-  utils::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
+  util::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
   if (!wfStreamId.isValid()) {
     throw BaseException{"Invalid waveform stream identifier."};
   }
@@ -268,7 +270,7 @@ GenericRecordCPtr WaveformHandler::get(const std::string &netCode,
 
   IO::RecordInput inp{rs.get(), Array::DOUBLE, Record::DATA_ONLY};
   std::unique_ptr<RecordSequence> seq{
-      utils::make_unique<TimeWindowBuffer>(twWithMargin)};
+      util::make_unique<TimeWindowBuffer>(twWithMargin)};
   RecordPtr rec;
   while ((rec = inp.next())) {
     seq->feed(rec.get());
@@ -339,7 +341,7 @@ GenericRecordCPtr Cached::get(
     return true;
   };
 
-  utils::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
+  util::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
   if (!wfStreamId.isValid()) {
     throw BaseException{"Invalid waveform stream identifier."};
   }
@@ -375,7 +377,7 @@ GenericRecordCPtr Cached::get(
     // `GenericRecordPtr` i.e. a non-const pointer.
 
     // make sure we do not modified the data cached i.e. create a copy
-    trace = utils::make_smart<const GenericRecord>(*trace);
+    trace = util::make_smart<const GenericRecord>(*trace);
   }
 
   process(const_cast<GenericRecord *>(trace.get()), config, tw);
@@ -433,7 +435,7 @@ GenericRecordCPtr FileSystemCache::get(const std::string &key) {
   if (!Util::fileExists(fpath)) return nullptr;
 
   std::ifstream ifs{fpath};
-  auto trace{utils::make_smart<GenericRecord>()};
+  auto trace{util::make_smart<GenericRecord>()};
   if (!waveform::read(*trace, ifs)) return nullptr;
 
   return trace;

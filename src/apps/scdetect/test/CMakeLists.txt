@@ -2,7 +2,7 @@ set(TESTS
   filter_crosscorrelation.cpp
   integration.cpp
   reducingamplitudeprocessor.cpp
-  utils_cma.cpp
+  util_math_cma.cpp
 )
 
 SET(SOURCES_filter_crosscorrelation
@@ -10,13 +10,13 @@ SET(SOURCES_filter_crosscorrelation
   ../filter.cpp
   ../filter/crosscorrelation.h
   ../resamplerstore.cpp
-  ../utils.cpp
+  ../util/util.cpp
+  ../util/waveform_stream_id.cpp
   ../waveform.cpp
 )
 
-set(SOURCES_utils_cma
+set(SOURCES_util_math_cma
   ../exception.cpp
-  ../utils.cpp
 )
 
 set(SOURCES_integration
@@ -50,7 +50,9 @@ set(SOURCES_integration
   ../stream.cpp
   ../templatefamily.cpp
   ../timewindowprocessor.cpp
-  ../utils.cpp
+  ../util/three_components.cpp
+  ../util/util.cpp
+  ../util/waveform_stream_id.cpp
   ../validators.cpp
   ../waveform.cpp
   ../waveformoperator.cpp
@@ -66,7 +68,8 @@ set(SOURCES_reducingamplitudeprocessor
   ../stream.cpp
   ../timewindowprocessor.cpp
   ../resamplerstore.cpp
-  ../utils.cpp
+  ../util/util.cpp
+  ../util/waveform_stream_id.cpp
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp

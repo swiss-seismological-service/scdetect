@@ -25,7 +25,9 @@
 #include <vector>
 
 #include "../amplitudeprocessor.h"
-#include "../utils.h"
+#include "../util/memory.h"
+#include "../util/util.h"
+#include "../util/waveform_stream_id.h"
 #include "../waveformprocessor.h"
 #include "fixture.h"
 #include "utils.h"
@@ -120,15 +122,15 @@ struct Sample {
 
   // Returns a reference to the buffer
   const detail::Buffer &at(
-      const utils::WaveformStreamID &waveformStreamId) const {
-    return _waveformBuffers.at(utils::to_string(waveformStreamId));
+      const util::WaveformStreamID &waveformStreamId) const {
+    return _waveformBuffers.at(util::to_string(waveformStreamId));
   }
 
   // Returns the waveform stream identifiers regarding the waveform data
-  std::vector<utils::WaveformStreamID> waveformStreamIds() const {
-    std::vector<utils::WaveformStreamID> retval;
+  std::vector<util::WaveformStreamID> waveformStreamIds() const {
+    std::vector<util::WaveformStreamID> retval;
     for (const auto &_waveformBuffersPair : _waveformBuffers) {
-      retval.push_back(utils::WaveformStreamID{_waveformBuffersPair.first});
+      retval.push_back(util::WaveformStreamID{_waveformBuffersPair.first});
     }
     return retval;
   }
@@ -278,8 +280,8 @@ class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
       samples.push_back(sum);
     }
 
-    return utils::make_smart<DoubleArray>(static_cast<int>(samples.size()),
-                                          samples.data());
+    return util::make_smart<DoubleArray>(static_cast<int>(samples.size()),
+                                         samples.data());
   }
 };
 
@@ -643,7 +645,7 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
     BOOST_FAIL("Missing signal time window.");
   }
 
-  TestReducingAmplitudeProcessor proc{utils::createUUID(),
+  TestReducingAmplitudeProcessor proc{util::createUUID(),
                                       *sample.signalTimeWindow()};
   const auto &waveformStreamIds{sample.waveformStreamIds()};
   // initialize the processor

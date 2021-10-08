@@ -6,7 +6,8 @@
 
 #include "exception.h"
 #include "log.h"
-#include "utils.h"
+#include "util/util.h"
+#include "util/waveform_stream_id.h"
 #include "validators.h"
 
 namespace Seiscomp {
@@ -36,7 +37,7 @@ StreamConfig::StreamConfig(const std::string &wfStreamId,
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
                            const StreamConfig &defaults)
-    : templateId{pt.get<std::string>("templateId", utils::createUUID())
+    : templateId{pt.get<std::string>("templateId", util::createUUID())
 
       },
       wfStreamId{pt.get<std::string>("waveformId")},
@@ -75,12 +76,12 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
 bool StreamConfig::isValid() const {
   bool retval{true};
   try {
-    retval = utils::WaveformStreamID{wfStreamId}.isValid();
+    retval = util::WaveformStreamID{wfStreamId}.isValid();
   } catch (ValueException &e) {
     return false;
   }
   try {
-    retval = utils::WaveformStreamID{templateConfig.wfStreamId}.isValid();
+    retval = util::WaveformStreamID{templateConfig.wfStreamId}.isValid();
   } catch (ValueException &e) {
     return false;
   }
@@ -106,15 +107,15 @@ bool StreamConfig::isValid() const {
   }
 
   return (retval && templateConfig.wfStart < templateConfig.wfEnd &&
-          !templateConfig.phase.empty() && utils::isGeZero(initTime));
+          !templateConfig.phase.empty() && util::isGeZero(initTime));
 }
 
 bool DetectorConfig::isValid(size_t numStreamConfigs) const {
   return (config::validateXCorrThreshold(triggerOn) &&
           config::validateXCorrThreshold(triggerOff) &&
           (!gapInterpolation ||
-           (gapInterpolation && utils::isGeZero(gapThreshold) &&
-            utils::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
+           (gapInterpolation && util::isGeZero(gapThreshold) &&
+            util::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
           config::validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
           config::validateMinArrivals(minArrivals,
                                       static_cast<int>(numStreamConfigs)) &&
@@ -125,7 +126,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
                                const DetectorConfig &detectorDefaults,
                                const StreamConfig &streamDefaults,
                                const PublishConfig &publishDefaults)
-    : _detectorId{pt.get<std::string>("detectorId", utils::createUUID())},
+    : _detectorId{pt.get<std::string>("detectorId", util::createUUID())},
       _originId(pt.get<std::string>("originId")) {
   _publishConfig.createArrivals =
       pt.get<bool>("createArrivals", publishDefaults.createArrivals);
@@ -262,7 +263,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       StreamConfig streamConfig;
       try {
         const auto waveformId{
-            utils::WaveformStreamID{pt.get<std::string>("templateWaveformId")}};
+            util::WaveformStreamID{pt.get<std::string>("templateWaveformId")}};
         streamConfig.waveformId = waveformId.sensorLocationStreamId();
       } catch (ValueException &e) {
         throw config::ParserException{"invalid configuration: " +
@@ -302,9 +303,9 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       detect::StreamConfig detectorStreamConfig;
       try {
         const auto waveformId{
-            utils::WaveformStreamID{pt.get_value<std::string>()}};
+            util::WaveformStreamID{pt.get_value<std::string>()}};
 
-        detectorStreamConfig = it->second->at(utils::to_string(waveformId));
+        detectorStreamConfig = it->second->at(util::to_string(waveformId));
 
         streamConfig.waveformId = waveformId.sensorLocationStreamId();
 
@@ -354,7 +355,7 @@ TemplateFamilyConfig::TemplateFamilyConfig(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::StreamConfig &streamDefaults)
-    : _id{pt.get<std::string>("id", utils::createUUID())},
+    : _id{pt.get<std::string>("id", util::createUUID())},
       _magnitudeType{pt.get<std::string>("magnitudeType", "Mw")} {
   try {
     validateMagnitudeType(_magnitudeType);

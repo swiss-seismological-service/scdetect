@@ -4,7 +4,7 @@
 #include <iterator>
 #include <unordered_set>
 
-#include "../utils.h"
+#include "../util/math.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -278,7 +278,7 @@ void Linker::Event::feed(const std::string &procId,
                  });
 
   // compute the overall event's score
-  association.fit = utils::cma(fits.data(), fits.size());
+  association.fit = util::cma(fits.data(), fits.size());
   association.pot = pot;
   if (!refPickTime || res.arrival.pick.time < refPickTime) {
     refPickTime = res.arrival.pick.time;

@@ -15,7 +15,9 @@
 #include "../eventstore.h"
 #include "../log.h"
 #include "../settings.h"
-#include "../utils.h"
+#include "../util/memory.h"
+#include "../util/util.h"
+#include "../util/waveform_stream_id.h"
 #include "detectorwaveformprocessor.h"
 
 namespace Seiscomp {
@@ -85,7 +87,7 @@ DetectorBuilder &DetectorBuilder::setStream(
     const std::string &streamId, const StreamConfig &streamConfig,
     WaveformHandlerIface *waveformHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
-  utils::WaveformStreamID templateWfStreamId{templateStreamId};
+  util::WaveformStreamID templateWfStreamId{templateStreamId};
 
   logging::TaggedMessage msg{streamId + " (" + templateStreamId + ")"};
   // configure pick from arrival
@@ -141,7 +143,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   msg.setText("using arrival pick: origin=" + _originId +
               ", time=" + pick->time().value().iso() +
               ", phase=" + streamConfig.templateConfig.phase + ", stream=" +
-              utils::to_string(utils::WaveformStreamID{pickWaveformId}));
+              util::to_string(util::WaveformStreamID{pickWaveformId}));
   SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
   auto wfStart{pick->time().value() +
@@ -150,7 +152,7 @@ DetectorBuilder &DetectorBuilder::setStream(
              Core::TimeSpan{streamConfig.templateConfig.wfEnd}};
 
   // load stream metadata from inventory
-  utils::WaveformStreamID wfStreamId{streamId};
+  util::WaveformStreamID wfStreamId{streamId};
   auto stream{Client::Inventory::Instance()->getStream(
       wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
       wfStreamId.chaCode(), wfStart)};
@@ -176,11 +178,11 @@ DetectorBuilder &DetectorBuilder::setStream(
   auto pickFilterId{pick->filterID()};
   auto templateWfFilterId{
       streamConfig.templateConfig.filter.value_or(pickFilterId)};
-  utils::replaceEscapedXMLFilterIdChars(templateWfFilterId);
+  util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
 
   std::unique_ptr<WaveformProcessor::Filter> rtTemplateFilter{nullptr};
   std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
-  utils::replaceEscapedXMLFilterIdChars(rtFilterId);
+  util::replaceEscapedXMLFilterIdChars(rtFilterId);
   // create template related filter (used during real-time stream
   // processing)
   if (!rtFilterId.empty()) {
@@ -221,7 +223,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   }
 
   // template processor
-  auto templateProc{utils::make_unique<detector::TemplateWaveformProcessor>(
+  auto templateProc{util::make_unique<detector::TemplateWaveformProcessor>(
       templateWfChunk, templateWfFilterId, wfStart, wfEnd,
       streamConfig.templateId, _product.get())};
 
@@ -342,7 +344,7 @@ void DetectorBuilder::finalize() {
 
       _product->_publishConfig.theoreticalTemplateArrivals.push_back(
           {{pick->time().value(),
-            utils::to_string(utils::WaveformStreamID{pick->waveformID()}),
+            util::to_string(util::WaveformStreamID{pick->waveformID()}),
             phaseHint, pick->time().value() - _product->_origin->time().value(),
             lowerUncertainty, upperUncertainty},
            arrival->phase(),

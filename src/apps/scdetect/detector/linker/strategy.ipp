@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "../../utils.h"
+#include "../../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -16,7 +16,7 @@ template <typename T, typename... Args>
 typename std::enable_if<std::is_constructible<T, Args...>::value,
                         std::unique_ptr<T> >::type
 create(Args &&...args) {
-  return utils::make_unique<T>(std::forward<Args>(args)...);
+  return util::make_unique<T>(std::forward<Args>(args)...);
 }
 
 // impossible to construct

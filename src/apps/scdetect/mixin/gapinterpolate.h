@@ -6,7 +6,6 @@
 #include <seiscomp/core/typedarray.h>
 
 #include "../stream.h"
-#include "../utils.h"
 
 namespace Seiscomp {
 namespace detect {

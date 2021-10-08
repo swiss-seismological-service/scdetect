@@ -12,7 +12,7 @@
 
 #include "datamodel/ddl.h"
 #include "log.h"
-#include "utils.h"
+#include "util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -96,7 +96,7 @@ void EventStore::load(const boost::filesystem::path &path) {
 
 void EventStore::load(DataModel::EventParameters *ep) {
   auto db_query{
-      utils::make_smart<DataModel::DatabaseQuery>(createInMemoryDb(ep).get())};
+      util::make_smart<DataModel::DatabaseQuery>(createInMemoryDb(ep).get())};
   load(db_query.get());
 }
 

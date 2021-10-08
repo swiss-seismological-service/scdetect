@@ -14,7 +14,9 @@
 #include <vector>
 
 #include "../settings.h"
-#include "../utils.h"
+#include "../util/math.h"
+#include "../util/memory.h"
+#include "../util/util.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -87,7 +89,7 @@ void RMSAmplitude::preprocessData(
     return;
   }
 
-  const auto numberOfIntegrations{utils::asInteger(signalUnit)};
+  const auto numberOfIntegrations{util::asInteger(signalUnit)};
   if (deconvolutionConfig.enabled) {
     if (!deconvolveData(streamState, sensor->response(), deconvolutionConfig,
                         numberOfIntegrations, data)) {
@@ -121,13 +123,13 @@ DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
   for (size_t i = idxRange.begin; i <= idxRange.end; ++i) {
     double rms{0};
     for (size_t j = 0; j < numberOfStreams; ++j) {
-      rms += utils::square(data[j]->get(i) - noiseInfos[j].offset);
+      rms += util::square(data[j]->get(i) - noiseInfos[j].offset);
     }
     samples.push_back(sqrt(rms));
   }
 
-  return utils::make_smart<DoubleArray>(static_cast<int>(samples.size()),
-                                        samples.data());
+  return util::make_smart<DoubleArray>(static_cast<int>(samples.size()),
+                                       samples.data());
 }
 
 boost::optional<double> RMSAmplitude::reduceNoiseData(
@@ -164,7 +166,7 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
 
   // pick public identifiers
   {
-    auto comment{utils::make_smart<DataModel::Comment>()};
+    auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId("scdetectRMSAmplitudePicks");
     comment->setText(boost::algorithm::join(publicIds, settings::kPublicIdSep));
     amplitude->add(comment.get());
@@ -172,9 +174,9 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
 
   // waveform stream identifiers
   {
-    auto comment{utils::make_smart<DataModel::Comment>()};
+    auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId("scdetectRMSAmplitudeStreams");
-    comment->setText(boost::algorithm::join(utils::map_keys(_streams),
+    comment->setText(boost::algorithm::join(util::map_keys(_streams),
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());
   }
