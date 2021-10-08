@@ -8,7 +8,6 @@ set(TESTS
 SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
   ../filter.cpp
-  ../filter/crosscorrelation.h
   ../resamplerstore.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
