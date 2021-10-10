@@ -408,11 +408,10 @@ bool Application::run() {
       SCDETECT_LOG_DEBUG(
           "Subscribing to streams required for amplitude calculation");
       for (const auto &threeComponents : uniqueThreeComponents) {
-        for (const auto &waveformStreamId :
-             threeComponents.waveformStreamIds()) {
-          recordStream()->addStream(
-              waveformStreamId.netCode(), waveformStreamId.staCode(),
-              waveformStreamId.locCode(), waveformStreamId.chaCode());
+        for (auto c : threeComponents) {
+          recordStream()->addStream(threeComponents.netCode(),
+                                    threeComponents.staCode(),
+                                    threeComponents.locCode(), c->code());
         }
       }
     }

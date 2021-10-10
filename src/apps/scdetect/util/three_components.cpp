@@ -54,15 +54,6 @@ std::string ThreeComponents::sensorLocationStreamId() const {
          _locationCode;
 }
 
-std::vector<util::WaveformStreamID> ThreeComponents::waveformStreamIds() const {
-  std::vector<util::WaveformStreamID> retval;
-  for (auto s : *this) {
-    retval.push_back(util::WaveformStreamID{_networkCode, _stationCode,
-                                            _locationCode, s->code()});
-  }
-  return retval;
-}
-
 std::string ThreeComponents::waveformStreamId() const {
   return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
          _locationCode + settings::kSNCLSep + _channelCode;

@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include "waveform_stream_id.h"
-
 namespace Seiscomp {
 namespace detect {
 namespace util {
@@ -69,8 +67,6 @@ class ThreeComponents {
   //
   // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
   std::string sensorLocationStreamId() const;
-  // Returns the waveform stream identifiers for all components
-  std::vector<util::WaveformStreamID> waveformStreamIds() const;
   // Returns a waveform stream identifier omitting the subsource code part.
   // I.e. the returned string is of the form `NET.STA.LOC.XY` where `X` refers
   // to the *band code* and `Y` refers to the *source code* identifiers.

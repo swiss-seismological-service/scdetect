@@ -223,9 +223,12 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           rmsAmplitudeProcessor.add(waveformId.netCode(), waveformId.staCode(),
                                     waveformId.locCode(), stream,
                                     deconvolutionConfig);
+
+          waveformIds.push_back(util::WaveformStreamID{
+              threeComponents.netCode(), threeComponents.staCode(),
+              threeComponents.locCode(), s->code()});
         }
 
-        waveformIds = threeComponents.waveformStreamIds();
       } catch (std::out_of_range&) {
         msg.setText("failed to load bindings configuration");
         throw builder::NoBindings{logging::to_string(msg)};
