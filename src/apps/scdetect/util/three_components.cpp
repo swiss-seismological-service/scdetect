@@ -78,33 +78,17 @@ bool operator==(const ThreeComponents &lhs, const ThreeComponents &rhs) {
   if (lhs._locationCode != rhs._locationCode) {
     return false;
   }
-  if ((lhs._threeComponents.vertical() && !rhs._threeComponents.vertical()) ||
-      (!lhs._threeComponents.vertical() && rhs._threeComponents.vertical()) ||
-      (lhs._threeComponents.vertical() && rhs._threeComponents.vertical() &&
-       lhs._threeComponents.vertical() != rhs._threeComponents.vertical())) {
-    return false;
-  }
-  if ((lhs._threeComponents.firstHorizontal() &&
-       !rhs._threeComponents.firstHorizontal()) ||
-      (!lhs._threeComponents.firstHorizontal() &&
-       rhs._threeComponents.firstHorizontal()) ||
-      (lhs._threeComponents.firstHorizontal() &&
-       rhs._threeComponents.firstHorizontal() &&
-       lhs._threeComponents.firstHorizontal() !=
-           rhs._threeComponents.firstHorizontal())) {
-    return false;
-  }
-  if ((lhs._threeComponents.secondHorizontal() &&
-       !rhs._threeComponents.secondHorizontal()) ||
-      (!lhs._threeComponents.secondHorizontal() &&
-       rhs._threeComponents.secondHorizontal()) ||
-      (lhs._threeComponents.secondHorizontal() &&
-       rhs._threeComponents.secondHorizontal() &&
-       lhs._threeComponents.secondHorizontal() !=
-           rhs._threeComponents.secondHorizontal())) {
-    return false;
-  }
 
+  auto lhsIt{lhs.begin()};
+  auto rhsIt{rhs.begin()};
+  while (lhsIt != lhs.end() || rhsIt != rhs.end()) {
+    if ((*lhsIt && !*rhsIt) || (!*lhsIt && *rhsIt) ||
+        (*lhsIt && *rhsIt && *lhsIt != *rhsIt)) {
+      return false;
+    }
+    ++lhsIt;
+    ++rhsIt;
+  }
   return true;
 }
 
