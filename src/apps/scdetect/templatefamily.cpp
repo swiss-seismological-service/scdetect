@@ -5,7 +5,6 @@
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <string>
-#include <vector>
 
 #include "amplitude/rms.h"
 #include "builder.h"
@@ -182,7 +181,6 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
                                const AmplitudeProcessor::Amplitude>(res));
           });
 
-      std::vector<util::WaveformStreamID> waveformIds;
       try {
         util::ThreeComponents threeComponents{
             Client::Inventory::Instance(), waveformId.netCode(),
@@ -223,37 +221,30 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           rmsAmplitudeProcessor.add(waveformId.netCode(), waveformId.staCode(),
                                     waveformId.locCode(), stream,
                                     deconvolutionConfig);
-
-          waveformIds.push_back(util::WaveformStreamID{
-              threeComponents.netCode(), threeComponents.staCode(),
-              threeComponents.locCode(), s->code()});
         }
 
+        WaveformHandlerIface::ProcessingConfig processingConfig;
+        // let the amplitude processor decide how to process the waveform
+        processingConfig.demean = false;
+        // load waveforms for all components and feed the data to the processor
+        for (auto c : threeComponents) {
+          GenericRecordCPtr record;
+          record = waveformHandler->get(
+              threeComponents.netCode(), threeComponents.staCode(),
+              threeComponents.locCode(), c->code(),
+              rmsAmplitudeProcessor.safetyTimeWindow(), processingConfig);
+          rmsAmplitudeProcessor.feed(record.get());
+        }
       } catch (std::out_of_range&) {
         msg.setText("failed to load bindings configuration");
         throw builder::NoBindings{logging::to_string(msg)};
+      } catch (WaveformProcessor::BaseException& e) {
+        msg.setText("failed to load data");
+        throw builder::BaseException{logging::to_string(msg)};
       } catch (Exception& e) {
         msg.setText("failed to load streams from inventory for time: " +
                     arrivalTime.iso());
         throw builder::NoStream{logging::to_string(msg)};
-      }
-
-      WaveformHandlerIface::ProcessingConfig processingConfig;
-      // let the amplitude processor decide how to process the waveform
-      processingConfig.demean = false;
-      // load waveforms for all components and feed the data to the processor
-      for (const auto& waveformId : waveformIds) {
-        GenericRecordCPtr record;
-        try {
-          record = waveformHandler->get(
-              waveformId.netCode(), waveformId.staCode(), waveformId.locCode(),
-              waveformId.chaCode(), rmsAmplitudeProcessor.safetyTimeWindow(),
-              processingConfig);
-        } catch (WaveformProcessor::BaseException& e) {
-          msg.setText("failed to load data");
-          throw builder::BaseException{logging::to_string(msg)};
-        }
-        rmsAmplitudeProcessor.feed(record.get());
       }
 
       if (rmsAmplitudeProcessor.status() !=
