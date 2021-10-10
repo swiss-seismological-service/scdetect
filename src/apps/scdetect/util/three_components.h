@@ -69,8 +69,6 @@ class ThreeComponents {
   //
   // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
   std::string sensorLocationStreamId() const;
-  // Returns the stream code identifiers for all components
-  std::vector<std::string> streamCodes() const;
   // Returns the waveform stream identifiers for all components
   std::vector<util::WaveformStreamID> waveformStreamIds() const;
   // Returns a waveform stream identifier omitting the subsource code part.
