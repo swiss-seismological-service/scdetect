@@ -4,6 +4,7 @@
 #include <seiscomp/client/inventory.h>
 #include <seiscomp/datamodel/utils.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -13,8 +14,6 @@ namespace Seiscomp {
 namespace detect {
 namespace util {
 // Wraps `DataModel::ThreeComponents`
-//
-// - TODO(damb): implement an iterator in order to iterate over the components
 class ThreeComponents {
  public:
   // Load components identified by `netCode`, `staCode`, `locCode`, `chaCode`
@@ -25,6 +24,35 @@ class ThreeComponents {
   ThreeComponents(Client::Inventory *inventory, const std::string &netCode,
                   const std::string &staCode, const std::string &locCode,
                   const std::string &chaCode, const Core::Time &time);
+
+  // Allows iteration over individual streams
+  class ZNEStreamIterator {
+   public:
+    ZNEStreamIterator(const ThreeComponents *threeComponents)
+        : _threeComponents{threeComponents} {}
+
+    bool operator!=(const ZNEStreamIterator &other) const {
+      return _pos != other._pos;
+    }
+
+    const DataModel::Stream *operator*() const {
+      return _threeComponents->_threeComponents.comps[_pos];
+    }
+
+    const ZNEStreamIterator &operator++() {
+      ++_pos;
+      return *this;
+    }
+
+   private:
+    friend ThreeComponents;
+
+    std::size_t _pos{0};
+    const ThreeComponents *_threeComponents;
+  };
+
+  ZNEStreamIterator begin() const;
+  ZNEStreamIterator end() const;
 
   // Returns the network code
   const std::string &netCode() const;
@@ -51,9 +79,6 @@ class ThreeComponents {
   //
   // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
   std::string waveformStreamId() const;
-
-  // Returns a reference to the underlying `DataModel::ThreeComponents` object
-  const DataModel::ThreeComponents &threeComponents() const;
 
   friend bool operator==(const ThreeComponents &lhs,
                          const ThreeComponents &rhs);

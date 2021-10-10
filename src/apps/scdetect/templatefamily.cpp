@@ -213,41 +213,13 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         rmsAmplitudeProcessor.setSaturationThreshold(
             amplitudeProcessingConfig.saturationThreshold);
 
-        // register vertical component
-        {
+        // register components
+        for (auto s : threeComponents) {
           Processing::Stream stream;
-          stream.init(threeComponents.threeComponents().vertical());
+          stream.init(s);
 
-          const auto chaCode{
-              threeComponents.threeComponents().vertical()->code()};
           const AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig{
-              sensorLocationBindings.at(chaCode).deconvolutionConfig};
-          rmsAmplitudeProcessor.add(waveformId.netCode(), waveformId.staCode(),
-                                    waveformId.locCode(), stream,
-                                    deconvolutionConfig);
-        }
-        // register first horizontal component
-        {
-          Processing::Stream stream;
-          stream.init(threeComponents.threeComponents().firstHorizontal());
-
-          const auto chaCode{
-              threeComponents.threeComponents().firstHorizontal()->code()};
-          const AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig{
-              sensorLocationBindings.at(chaCode).deconvolutionConfig};
-          rmsAmplitudeProcessor.add(waveformId.netCode(), waveformId.staCode(),
-                                    waveformId.locCode(), stream,
-                                    deconvolutionConfig);
-        }
-        // register second horizontal component
-        {
-          Processing::Stream stream;
-          stream.init(threeComponents.threeComponents().secondHorizontal());
-
-          const auto chaCode{
-              threeComponents.threeComponents().secondHorizontal()->code()};
-          const AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig{
-              sensorLocationBindings.at(chaCode).deconvolutionConfig};
+              sensorLocationBindings.at(s->code()).deconvolutionConfig};
           rmsAmplitudeProcessor.add(waveformId.netCode(), waveformId.staCode(),
                                     waveformId.locCode(), stream,
                                     deconvolutionConfig);

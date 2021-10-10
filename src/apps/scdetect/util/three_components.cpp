@@ -31,6 +31,16 @@ ThreeComponents::ThreeComponents(Client::Inventory *inventory,
   _channelCode = streamCode.substr(0, 2);
 }
 
+ThreeComponents::ZNEStreamIterator ThreeComponents::begin() const {
+  return ZNEStreamIterator{this};
+}
+
+ThreeComponents::ZNEStreamIterator ThreeComponents::end() const {
+  ZNEStreamIterator ret{this};
+  ret._pos = 3;
+  return ret;
+}
+
 const std::string &ThreeComponents::netCode() const { return _networkCode; }
 
 const std::string &ThreeComponents::staCode() const { return _stationCode; }
@@ -50,10 +60,6 @@ std::vector<std::string> ThreeComponents::streamCodes() const {
     retval.push_back(_threeComponents.comps[i]->code());
   }
   return retval;
-}
-
-const DataModel::ThreeComponents &ThreeComponents::threeComponents() const {
-  return _threeComponents;
 }
 
 std::vector<util::WaveformStreamID> ThreeComponents::waveformStreamIds() const {

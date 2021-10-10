@@ -1158,24 +1158,22 @@ bool Application::initAmplitudeProcessors(
                                        amplitudeProcessingConfig.initTime);
     }
 
-    for (size_t i = 0; i < 3; ++i) {
-      const auto component{
-          threeComponentsItem.threeComponents.threeComponents().comps[i]};
+    for (auto s : threeComponentsItem.threeComponents) {
       Processing::Stream stream;
-      stream.init(component);
+      stream.init(s);
 
       AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
       try {
         deconvolutionConfig =
             static_cast<AmplitudeProcessor::DeconvolutionConfig>(
-                sensorLocationConfig.at(component->code()).deconvolutionConfig);
+                sensorLocationConfig.at(s->code()).deconvolutionConfig);
       } catch (std::out_of_range &e) {
         binding::StreamConfig::DeconvolutionConfig fallback;
         SCDETECT_LOG_WARNING(
             "%s: failed to look up deconvolution configuration related "
             "bindings (channel code: \"%s\") required for amplitude processor "
             "configuration (%s); use fallback configuration, instead: \"%s\"",
-            waveformStreamId.c_str(), component->code().c_str(), e.what(),
+            waveformStreamId.c_str(), s->code().c_str(), e.what(),
             fallback.debugString().c_str());
         deconvolutionConfig =
             static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
