@@ -8,6 +8,7 @@
 #include <map>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "amplitudeprocessor.h"
 #include "binding.h"
