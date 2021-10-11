@@ -5,6 +5,7 @@
 #include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/stationmagnitude.h>
 
+#include <boost/optional/optional.hpp>
 #include <map>
 #include <unordered_map>
 #include <utility>
@@ -22,8 +23,13 @@ namespace detect {
 // Implements a template family
 class TemplateFamily {
   struct Member {
+    std::string sensorLocationId;
+
     DataModel::AmplitudeCPtr amplitude;
     DataModel::StationMagnitudeCPtr magnitude;
+
+    boost::optional<double> lowerLimit;
+    boost::optional<double> upperLimit;
   };
 
  public:
@@ -41,6 +47,8 @@ class TemplateFamily {
     // - if no `id` is passed the identifier from the template family
     // configuration is used, instead
     Builder& setId(const boost::optional<std::string>& id = boost::none);
+    // Sets the template family members' limits
+    Builder& setLimits();
     // Sets the template family members' magnitudes
     Builder& setStationMagnitudes();
     // Sets the template family members' amplitudes

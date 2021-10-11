@@ -40,6 +40,26 @@ TemplateFamily::Builder& TemplateFamily::Builder::setId(
   return *this;
 }
 
+TemplateFamily::Builder& TemplateFamily::Builder::setLimits() {
+  for (const auto& referenceConfig : _templateFamilyConfig) {
+    const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
+        referenceConfig.originId)};
+    if (!origin) {
+      throw builder::BaseException{"failed to find origin with id: " +
+                                   referenceConfig.originId};
+    }
+
+    for (const auto& streamConfig : referenceConfig.streamConfigs) {
+      const auto& sensorLocationId{streamConfig.waveformId};
+      auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
+      member.lowerLimit = streamConfig.lowerLimit;
+      member.upperLimit = streamConfig.upperLimit;
+    }
+  }
+
+  return *this;
+}
+
 TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
   for (const auto& referenceConfig : _templateFamilyConfig) {
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
@@ -269,8 +289,10 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
 void TemplateFamily::Builder::finalize() {
   for (auto& memberPair : _members) {
+    const auto& sensorLocationId{memberPair.first.second};
     auto& member{memberPair.second};
     if (member.amplitude && member.magnitude) {
+      member.sensorLocationId = sensorLocationId;
       _product->_members.push_back(member);
     }
   }

@@ -3,7 +3,7 @@
 
 #include <seiscomp/core/datetime.h>
 
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
@@ -210,6 +210,11 @@ class TemplateFamilyConfig {
       std::string waveformId;
       double waveformStart{-2};
       double waveformEnd{2};
+
+      // Defines the lower limit for magnitude calculation
+      boost::optional<double> lowerLimit;
+      // Defines the opper limit for magnitude calculation
+      boost::optional<double> upperLimit;
 
       // Compare for order
       bool operator<(const StreamConfig &c) const {

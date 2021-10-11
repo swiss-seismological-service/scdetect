@@ -280,6 +280,9 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       streamConfig.waveformEnd =
           pt.get<double>("templateWaveformEnd", streamDefaults.waveformEnd);
 
+      // XXX(damb): explicit references (i.e. those not referencing a detector
+      // configuration) do not take limits into account.
+
       streamConfigs.emplace(streamConfig);
     }
 
@@ -302,12 +305,22 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       StreamConfig streamConfig;
       detect::StreamConfig detectorStreamConfig;
       try {
-        const auto waveformId{
-            util::WaveformStreamID{pt.get_value<std::string>()}};
+        const auto waveformId{util::WaveformStreamID{
+            pt.get_value<std::string>("templateWaveformId")}};
 
         detectorStreamConfig = it->second->at(util::to_string(waveformId));
 
         streamConfig.waveformId = waveformId.sensorLocationStreamId();
+        streamConfig.lowerLimit =
+            pt.get_optional<double>("lowerLimit", streamDefaults.lowerLimit);
+        streamConfig.upperLimit =
+            pt.get_optional<double>("upperLimit", streamDefaults.upperLimit);
+        if (streamConfig.lowerLimit && streamConfig.upperLimit &&
+            (*streamConfig.upperLimit <= *streamConfig.lowerLimit)) {
+          throw config::ValidationError{
+              "invalid configuration: \"upperLimit\" must be greater than "
+              "\"lowerLimit\""};
+        }
 
       } catch (std::out_of_range &e) {
         throw config::ParserException{
@@ -365,8 +378,23 @@ TemplateFamilyConfig::TemplateFamilyConfig(
     throw;
   }
 
+  // parse template family configuration defaults
+  const auto lowerLimitDefault{pt.get_optional<double>("lowerLimit")};
+  const auto upperLimitDefault{pt.get_optional<double>("upperLimit")};
+  if (lowerLimitDefault && upperLimitDefault &&
+      *upperLimitDefault <= *lowerLimitDefault) {
+    _id = "";
+    _magnitudeType = "";
+    throw config::ValidationError{
+        "invalid configuration: `\"lowerLimit\" must be greater than "
+        "\"upperLimit\""};
+  }
+  ReferenceConfig::StreamConfig streamDefaultsWithGlobals{streamDefaults};
+  streamDefaultsWithGlobals.lowerLimit = lowerLimitDefault;
+  streamDefaultsWithGlobals.upperLimit = upperLimitDefault;
+
   loadReferenceConfigs(pt.get_child("references"), templateConfigs,
-                       streamDefaults);
+                       streamDefaultsWithGlobals);
 }
 
 const std::string &TemplateFamilyConfig::id() const { return _id; }
