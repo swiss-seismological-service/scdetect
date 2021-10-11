@@ -266,7 +266,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
             util::WaveformStreamID{pt.get<std::string>("templateWaveformId")}};
         streamConfig.waveformId = waveformId.sensorLocationStreamId();
       } catch (ValueException &e) {
-        throw config::ParserException{"invalid configuration: " +
+        throw config::ValidationError{"invalid configuration: " +
                                       std::string{e.what()}};
       }
 
@@ -315,7 +315,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
             "stream: " +
             pt.get_value<std::string>()};
       } catch (ValueException &e) {
-        throw config::ParserException{"invalid configuration: " +
+        throw config::ValidationError{"invalid configuration: " +
                                       std::string{e.what()}};
       }
 
