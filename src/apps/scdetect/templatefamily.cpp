@@ -49,37 +49,45 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
                                    referenceConfig.originId};
     }
 
-    for (size_t i = 0; i < origin->stationMagnitudeCount(); ++i) {
-      const auto stationMagnitude{origin->stationMagnitude(i)};
-      const auto amplitudeId{stationMagnitude->amplitudeID()};
+    for (const auto& streamConfig : referenceConfig.streamConfigs) {
+      const auto& sensorLocationId{streamConfig.waveformId};
+      for (size_t i = 0; i < origin->stationMagnitudeCount(); ++i) {
+        const auto stationMagnitude{origin->stationMagnitude(i)};
+        const auto amplitudeId{stationMagnitude->amplitudeID()};
 
-      const auto amplitude{
-          EventStore::Instance().get<DataModel::Amplitude>(amplitudeId)};
-      if (!amplitude) {
-        continue;
-      }
-
-      DataModel::WaveformStreamID waveformStreamId;
-      try {
-        waveformStreamId = amplitude->waveformID();
-      } catch (Core::ValueException&) {
-        try {
-          waveformStreamId = stationMagnitude->waveformID();
-        } catch (Core::ValueException&) {
-          // missing waveform stream identifier
+        const auto amplitude{
+            EventStore::Instance().get<DataModel::Amplitude>(amplitudeId)};
+        if (!amplitude) {
           continue;
         }
-      }
 
-      if (stationMagnitude->type() != _templateFamilyConfig.magnitudeType()) {
-        continue;
+        if (stationMagnitude->type() != _templateFamilyConfig.magnitudeType()) {
+          continue;
+        }
+
+        DataModel::WaveformStreamID waveformStreamId;
+        try {
+          waveformStreamId = amplitude->waveformID();
+        } catch (Core::ValueException&) {
+          try {
+            waveformStreamId = stationMagnitude->waveformID();
+          } catch (Core::ValueException&) {
+            // missing waveform stream identifier
+            continue;
+          }
+        }
+
+        auto magnitudeSensorLocationId{util::WaveformStreamID{
+            waveformStreamId.networkCode(), waveformStreamId.stationCode(),
+            waveformStreamId.locationCode(), waveformStreamId.channelCode()}
+                                           .sensorLocationStreamId()};
+        if (magnitudeSensorLocationId != sensorLocationId) {
+          continue;
+        }
+
+        auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
+        member.magnitude = stationMagnitude;
       }
-      auto sensorLocationId{util::WaveformStreamID{
-          waveformStreamId.networkCode(), waveformStreamId.stationCode(),
-          waveformStreamId.locationCode(), waveformStreamId.channelCode()}
-                                .sensorLocationStreamId()};
-      auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
-      member.magnitude = stationMagnitude;
     }
   }
 
