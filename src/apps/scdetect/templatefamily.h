@@ -54,7 +54,11 @@ class TemplateFamily {
     Builder& setLimits(const boost::optional<double>& lower = boost::none,
                        const boost::optional<double>& upper = boost::none);
     // Sets the template family members' magnitudes
-    Builder& setStationMagnitudes();
+    //
+    // - allows to explicitly override the `magnitudeType` (by default the
+    // magnitude type from the template family configuration is used, instead)
+    Builder& setStationMagnitudes(
+        const boost::optional<std::string>& magnitudeType = boost::none);
     // Sets the template family members' amplitudes
     Builder& setAmplitudes(WaveformHandlerIface* waveformHandler,
                            const binding::Bindings& binding);

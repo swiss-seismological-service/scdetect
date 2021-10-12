@@ -69,7 +69,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setLimits(
   return *this;
 }
 
-TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
+TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
+    const boost::optional<std::string>& magnitudeType) {
   for (const auto& referenceConfig : _templateFamilyConfig) {
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
         referenceConfig.originId)};
@@ -91,7 +92,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
           continue;
         }
 
-        if (stationMagnitude->type() != _templateFamilyConfig.magnitudeType()) {
+        if (stationMagnitude->type() !=
+            magnitudeType.value_or(_templateFamilyConfig.magnitudeType())) {
           continue;
         }
 
