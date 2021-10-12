@@ -180,6 +180,20 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());
   }
+
+  // forward reference of the detector which declared the origin
+  {
+    const auto &origin{_environment.hypocenter};
+    for (std::size_t i = 0; i < origin->commentCount(); ++i) {
+      if (origin->comment(i)->id() == "scdetectDetectorId") {
+        auto comment{util::make_smart<DataModel::Comment>()};
+        comment->setId("scdetectDetectorId");
+        comment->setText(origin->comment(i)->text());
+        amplitude->add(comment.get());
+        break;
+      }
+    }
+  }
 }
 
 /* ------------------------------------------------------------------------- */
