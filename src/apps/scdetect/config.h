@@ -275,9 +275,6 @@ class TemplateFamilyConfig {
 
   // Returns the template family's identifier
   const std::string &id() const;
-  // Returns the sensor location identifiers for associated detectors
-  std::vector<std::string> sensorLocationIds(
-      const std::string &detectorId) const;
   // Returns the magnitude type the template family is configured with
   const std::string &magnitudeType() const;
 
