@@ -245,7 +245,7 @@ const TemplateFamilyConfig::AllowedMagnitudeTypes
 TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
-    const ReferenceConfig::StreamConfig &streamDefaults) {
+    const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults) {
   // detector identifier
   const auto dId{pt.get_optional<std::string>("detectorId")};
   // origin identifier
@@ -260,30 +260,30 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     // explicit configuration
     for (const auto &streamConfigPt : pt.get_child("streams")) {
       const auto &pt{streamConfigPt.second};
-      StreamConfig streamConfig;
+      SensorLocationConfig sensorLocationConfig;
       try {
         const auto waveformId{
             util::WaveformStreamID{pt.get<std::string>("templateWaveformId")}};
-        streamConfig.waveformId = waveformId.sensorLocationStreamId();
+        sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
       } catch (ValueException &e) {
         throw config::ValidationError{"invalid configuration: " +
                                       std::string{e.what()}};
       }
 
-      streamConfig.phase =
-          pt.get<std::string>("templatePhase", streamDefaults.phase);
-      if (streamConfig.phase.empty()) {
-        streamConfig.phase = streamDefaults.phase;
+      sensorLocationConfig.phase =
+          pt.get<std::string>("templatePhase", sensorLocationDefaults.phase);
+      if (sensorLocationConfig.phase.empty()) {
+        sensorLocationConfig.phase = sensorLocationDefaults.phase;
       }
-      streamConfig.waveformStart =
-          pt.get<double>("templateWaveformStart", streamDefaults.waveformStart);
-      streamConfig.waveformEnd =
-          pt.get<double>("templateWaveformEnd", streamDefaults.waveformEnd);
+      sensorLocationConfig.waveformStart =
+          pt.get<double>("templateWaveformStart", sensorLocationDefaults.waveformStart);
+      sensorLocationConfig.waveformEnd =
+          pt.get<double>("templateWaveformEnd", sensorLocationDefaults.waveformEnd);
 
       // XXX(damb): explicit references (i.e. those not referencing a detector
       // configuration) do not take limits into account.
 
-      streamConfigs.emplace(streamConfig);
+      sensorLocationConfigs.emplace(sensorLocationConfig);
     }
 
     originId = *oId;
@@ -302,7 +302,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     for (const auto &streamConfigPt : pt.get_child("streams")) {
       const auto &pt{streamConfigPt.second};
 
-      StreamConfig streamConfig;
+      SensorLocationConfig sensorLocationConfig;
       detect::StreamConfig detectorStreamConfig;
       try {
         const auto waveformId{util::WaveformStreamID{
@@ -310,13 +310,14 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
         detectorStreamConfig = it->second->at(util::to_string(waveformId));
 
-        streamConfig.waveformId = waveformId.sensorLocationStreamId();
-        streamConfig.lowerLimit =
-            pt.get_optional<double>("lowerLimit", streamDefaults.lowerLimit);
-        streamConfig.upperLimit =
-            pt.get_optional<double>("upperLimit", streamDefaults.upperLimit);
-        if (streamConfig.lowerLimit && streamConfig.upperLimit &&
-            (*streamConfig.upperLimit <= *streamConfig.lowerLimit)) {
+        sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
+        sensorLocationConfig.lowerLimit =
+            pt.get_optional<double>("lowerLimit", sensorLocationDefaults.lowerLimit);
+        sensorLocationConfig.upperLimit =
+            pt.get_optional<double>("upperLimit", sensorLocationDefaults.upperLimit);
+        if (sensorLocationConfig.lowerLimit &&
+            sensorLocationConfig.upperLimit &&
+            (*sensorLocationConfig.upperLimit <= *sensorLocationConfig.lowerLimit)) {
           throw config::ValidationError{
               "invalid configuration: \"upperLimit\" must be greater than "
               "\"lowerLimit\""};
@@ -332,12 +333,12 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
                                       std::string{e.what()}};
       }
 
-      streamConfig.phase = detectorStreamConfig.templateConfig.phase;
-      streamConfig.waveformStart = detectorStreamConfig.templateConfig.wfStart;
-      streamConfig.waveformEnd = detectorStreamConfig.templateConfig.wfEnd;
+      sensorLocationConfig.phase = detectorStreamConfig.templateConfig.phase;
+      sensorLocationConfig.waveformStart = detectorStreamConfig.templateConfig.wfStart;
+      sensorLocationConfig.waveformEnd = detectorStreamConfig.templateConfig.wfEnd;
     }
 
-    if (streamConfigs.empty()) {
+    if (sensorLocationConfigs.empty()) {
       throw config::ParserException{
           "invalid configuration: no stream configuration found"};
     }
@@ -367,7 +368,7 @@ bool TemplateFamilyConfig::ReferenceConfig::indexed() const {
 TemplateFamilyConfig::TemplateFamilyConfig(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
-    const ReferenceConfig::StreamConfig &streamDefaults)
+    const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults)
     : _id{pt.get<std::string>("id", util::createUUID())},
       _magnitudeType{pt.get<std::string>("magnitudeType", "Mw")} {
   try {
@@ -389,12 +390,13 @@ TemplateFamilyConfig::TemplateFamilyConfig(
         "invalid configuration: `\"lowerLimit\" must be greater than "
         "\"upperLimit\""};
   }
-  ReferenceConfig::StreamConfig streamDefaultsWithGlobals{streamDefaults};
-  streamDefaultsWithGlobals.lowerLimit = lowerLimitDefault;
-  streamDefaultsWithGlobals.upperLimit = upperLimitDefault;
+  ReferenceConfig::SensorLocationConfig sensorLocationDefaultsWithGlobals{
+      sensorLocationDefaults};
+  sensorLocationDefaultsWithGlobals.lowerLimit = lowerLimitDefault;
+  sensorLocationDefaultsWithGlobals.upperLimit = upperLimitDefault;
 
   loadReferenceConfigs(pt.get_child("references"), templateConfigs,
-                       streamDefaultsWithGlobals);
+                       sensorLocationDefaultsWithGlobals);
 }
 
 const std::string &TemplateFamilyConfig::id() const { return _id; }
@@ -406,12 +408,12 @@ const std::string &TemplateFamilyConfig::magnitudeType() const {
 void TemplateFamilyConfig::loadReferenceConfigs(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
-    const ReferenceConfig::StreamConfig &streamDefaults) {
+    const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults) {
   for (const auto &referenceConfigPt : pt) {
     const auto &pt{referenceConfigPt.second};
 
     _referenceConfigs.emplace(
-        ReferenceConfig{pt, templateConfigs, streamDefaults});
+        ReferenceConfig{pt, templateConfigs, sensorLocationDefaults});
   }
 }
 

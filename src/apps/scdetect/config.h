@@ -203,7 +203,7 @@ class TemplateFamilyConfig {
  public:
   // Configuration referencing a template family member
   struct ReferenceConfig {
-    struct StreamConfig {
+    struct SensorLocationConfig {
       // The phase code
       std::string phase{"Pg"};
 
@@ -217,7 +217,7 @@ class TemplateFamilyConfig {
       boost::optional<double> upperLimit;
 
       // Compare for order
-      bool operator<(const StreamConfig &c) const {
+      bool operator<(const SensorLocationConfig &c) const {
         return waveformId < c.waveformId;
       }
     };
@@ -227,12 +227,13 @@ class TemplateFamilyConfig {
     // The optional reference configuration's detector identifier
     boost::optional<std::string> detectorId;
 
-    using StreamConfigs = std::set<StreamConfig>;
-    StreamConfigs streamConfigs;
+    using SensorLocationConfigs = std::set<SensorLocationConfig>;
+    SensorLocationConfigs sensorLocationConfigs;
 
-    ReferenceConfig(const boost::property_tree::ptree &pt,
-                    const std::vector<TemplateConfig> &templateConfigs,
-                    const ReferenceConfig::StreamConfig &streamDefaults);
+    ReferenceConfig(
+        const boost::property_tree::ptree &pt,
+        const std::vector<TemplateConfig> &templateConfigs,
+        const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults);
 
     // Compare for order
     bool operator<(const ReferenceConfig &c) const {
@@ -250,9 +251,10 @@ class TemplateFamilyConfig {
     static TemplateConfigsIdx _templateConfigsIdx;
   };
 
-  TemplateFamilyConfig(const boost::property_tree::ptree &pt,
-                       const std::vector<TemplateConfig> &templateConfigs,
-                       const ReferenceConfig::StreamConfig &streamDefaults);
+  TemplateFamilyConfig(
+      const boost::property_tree::ptree &pt,
+      const std::vector<TemplateConfig> &templateConfigs,
+      const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults);
 
   using size_type = ReferenceConfigs::size_type;
   using value_type = ReferenceConfigs::value_type;
@@ -270,6 +272,9 @@ class TemplateFamilyConfig {
 
   // Returns the template family's identifier
   const std::string &id() const;
+  // Returns the sensor location identifiers for associated detectors
+  std::vector<std::string> sensorLocationIds(
+      const std::string &detectorId) const;
   // Returns the magnitude type the template family is configured with
   const std::string &magnitudeType() const;
 
@@ -279,7 +284,7 @@ class TemplateFamilyConfig {
   void loadReferenceConfigs(
       const boost::property_tree::ptree &pt,
       const std::vector<TemplateConfig> &templateConfigs,
-      const ReferenceConfig::StreamConfig &streamDefaults);
+      const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults);
 
  private:
   void validateMagnitudeType(const std::string &magnitudeType);

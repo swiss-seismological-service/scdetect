@@ -49,11 +49,12 @@ TemplateFamily::Builder& TemplateFamily::Builder::setLimits() {
                                    referenceConfig.originId};
     }
 
-    for (const auto& streamConfig : referenceConfig.streamConfigs) {
-      const auto& sensorLocationId{streamConfig.waveformId};
+    for (const auto& sensorLocationConfig :
+         referenceConfig.sensorLocationConfigs) {
+      const auto& sensorLocationId{sensorLocationConfig.waveformId};
       auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
-      member.lowerLimit = streamConfig.lowerLimit;
-      member.upperLimit = streamConfig.upperLimit;
+      member.lowerLimit = sensorLocationConfig.lowerLimit;
+      member.upperLimit = sensorLocationConfig.upperLimit;
     }
   }
 
@@ -69,8 +70,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes() {
                                    referenceConfig.originId};
     }
 
-    for (const auto& streamConfig : referenceConfig.streamConfigs) {
-      const auto& sensorLocationId{streamConfig.waveformId};
+    for (const auto& sensorLocationConfig :
+         referenceConfig.sensorLocationConfigs) {
+      const auto& sensorLocationId{sensorLocationConfig.waveformId};
       for (size_t i = 0; i < origin->stationMagnitudeCount(); ++i) {
         const auto stationMagnitude{origin->stationMagnitude(i)};
         const auto amplitudeId{stationMagnitude->amplitudeID()};
@@ -126,12 +128,13 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       throw builder::BaseException{"failed to find origin with id: " +
                                    referenceConfig.originId};
     }
-    for (const auto& streamConfig : referenceConfig.streamConfigs) {
+    for (const auto& sensorLocationConfig :
+         referenceConfig.sensorLocationConfigs) {
       // use phase code to determine arrival time (i.e. actually the
       // corresponding pick time is used)
-      const auto& arrivalPhase{streamConfig.phase};
+      const auto& arrivalPhase{sensorLocationConfig.phase};
 
-      logging::TaggedMessage msg{streamConfig.waveformId};
+      logging::TaggedMessage msg{sensorLocationConfig.waveformId};
 
       DataModel::PickCPtr pick;
       DataModel::SensorLocationCPtr sensorLocation;
@@ -155,7 +158,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           continue;
         }
 
-        util::WaveformStreamID waveformId{streamConfig.waveformId};
+        util::WaveformStreamID waveformId{sensorLocationConfig.waveformId};
         // validate the pick's sensor location
         auto templateWaveformSensorLocation{
             Client::Inventory::Instance()->getSensorLocation(
@@ -188,15 +191,15 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       const auto arrivalTime{pick->time().value()};
 
-      util::WaveformStreamID waveformId{streamConfig.waveformId};
+      util::WaveformStreamID waveformId{sensorLocationConfig.waveformId};
       amplitude::RMSAmplitude rmsAmplitudeProcessor(
           _templateFamilyConfig.id() + settings::kProcessorIdSep +
           referenceConfig.originId + settings::kProcessorIdSep +
-          streamConfig.waveformId);
+          sensorLocationConfig.waveformId);
 
       Core::TimeWindow tw{
-          arrivalTime + Core::TimeSpan{streamConfig.waveformStart},
-          arrivalTime + Core::TimeSpan{streamConfig.waveformEnd}};
+          arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformStart},
+          arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformEnd}};
       rmsAmplitudeProcessor.setTimeWindow(tw);
 
       rmsAmplitudeProcessor.setEnvironment(origin, sensorLocation, {pick});
