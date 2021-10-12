@@ -40,7 +40,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setId(
   return *this;
 }
 
-TemplateFamily::Builder& TemplateFamily::Builder::setLimits() {
+TemplateFamily::Builder& TemplateFamily::Builder::setLimits(
+    const boost::optional<double>& lower,
+    const boost::optional<double>& upper) {
   for (const auto& referenceConfig : _templateFamilyConfig) {
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
         referenceConfig.originId)};
@@ -53,8 +55,14 @@ TemplateFamily::Builder& TemplateFamily::Builder::setLimits() {
          referenceConfig.sensorLocationConfigs) {
       const auto& sensorLocationId{sensorLocationConfig.waveformId};
       auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
-      member.lowerLimit = sensorLocationConfig.lowerLimit;
-      member.upperLimit = sensorLocationConfig.upperLimit;
+      member.lowerLimit = lower;
+      if (!member.lowerLimit) {
+        member.lowerLimit = sensorLocationConfig.lowerLimit;
+      }
+      member.upperLimit = upper;
+      if (!member.upperLimit) {
+        member.upperLimit = sensorLocationConfig.upperLimit;
+      }
     }
   }
 

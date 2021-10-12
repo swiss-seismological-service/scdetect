@@ -275,10 +275,10 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       if (sensorLocationConfig.phase.empty()) {
         sensorLocationConfig.phase = sensorLocationDefaults.phase;
       }
-      sensorLocationConfig.waveformStart =
-          pt.get<double>("templateWaveformStart", sensorLocationDefaults.waveformStart);
-      sensorLocationConfig.waveformEnd =
-          pt.get<double>("templateWaveformEnd", sensorLocationDefaults.waveformEnd);
+      sensorLocationConfig.waveformStart = pt.get<double>(
+          "templateWaveformStart", sensorLocationDefaults.waveformStart);
+      sensorLocationConfig.waveformEnd = pt.get<double>(
+          "templateWaveformEnd", sensorLocationDefaults.waveformEnd);
 
       // XXX(damb): explicit references (i.e. those not referencing a detector
       // configuration) do not take limits into account.
@@ -311,13 +311,18 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
         detectorStreamConfig = it->second->at(util::to_string(waveformId));
 
         sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
-        sensorLocationConfig.lowerLimit =
-            pt.get_optional<double>("lowerLimit", sensorLocationDefaults.lowerLimit);
-        sensorLocationConfig.upperLimit =
-            pt.get_optional<double>("upperLimit", sensorLocationDefaults.upperLimit);
+        sensorLocationConfig.lowerLimit = pt.get_optional<double>("lowerLimit");
+        if (!sensorLocationConfig.lowerLimit) {
+          sensorLocationConfig.lowerLimit = sensorLocationDefaults.lowerLimit;
+        }
+        sensorLocationConfig.upperLimit = pt.get_optional<double>("upperLimit");
+        if (!sensorLocationConfig.upperLimit) {
+          sensorLocationConfig.upperLimit = sensorLocationDefaults.upperLimit;
+        }
         if (sensorLocationConfig.lowerLimit &&
             sensorLocationConfig.upperLimit &&
-            (*sensorLocationConfig.upperLimit <= *sensorLocationConfig.lowerLimit)) {
+            (*sensorLocationConfig.upperLimit <=
+             *sensorLocationConfig.lowerLimit)) {
           throw config::ValidationError{
               "invalid configuration: \"upperLimit\" must be greater than "
               "\"lowerLimit\""};
@@ -334,8 +339,10 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       }
 
       sensorLocationConfig.phase = detectorStreamConfig.templateConfig.phase;
-      sensorLocationConfig.waveformStart = detectorStreamConfig.templateConfig.wfStart;
-      sensorLocationConfig.waveformEnd = detectorStreamConfig.templateConfig.wfEnd;
+      sensorLocationConfig.waveformStart =
+          detectorStreamConfig.templateConfig.wfStart;
+      sensorLocationConfig.waveformEnd =
+          detectorStreamConfig.templateConfig.wfEnd;
     }
 
     if (sensorLocationConfigs.empty()) {

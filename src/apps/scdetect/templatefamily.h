@@ -48,7 +48,11 @@ class TemplateFamily {
     // configuration is used, instead
     Builder& setId(const boost::optional<std::string>& id = boost::none);
     // Sets the template family members' limits
-    Builder& setLimits();
+    //
+    // - allows parameters to be explicitly overriden from the template family
+    // configuration (by means of passing `lower` and `upper`)
+    Builder& setLimits(const boost::optional<double>& lower = boost::none,
+                       const boost::optional<double>& upper = boost::none);
     // Sets the template family members' magnitudes
     Builder& setStationMagnitudes();
     // Sets the template family members' amplitudes
