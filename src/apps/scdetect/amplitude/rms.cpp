@@ -185,9 +185,9 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
   {
     const auto &origin{_environment.hypocenter};
     for (std::size_t i = 0; i < origin->commentCount(); ++i) {
-      if (origin->comment(i)->id() == "scdetectDetectorId") {
+      if (origin->comment(i)->id() == settings::kDetectorIdCommentId) {
         auto comment{util::make_smart<DataModel::Comment>()};
-        comment->setId("scdetectDetectorId");
+        comment->setId(settings::kDetectorIdCommentId);
         comment->setText(origin->comment(i)->text());
         amplitude->add(comment.get());
         break;

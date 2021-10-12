@@ -566,7 +566,7 @@ void Application::emitDetection(
 
   {
     auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId("scdetectDetectorId");
+    comment->setId(settings::kDetectorIdCommentId);
     comment->setText(processor->id());
     origin->add(comment.get());
   }

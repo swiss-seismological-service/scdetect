@@ -29,6 +29,7 @@ const std::string kConfigListSep{","};
 
 const std::string kTemplateWaveformDurationPickCommentId{
     "scdetectTemplateWaveformDuration"};
+const std::string kDetectorIdCommentId{"scdetectDetectorId"};
 
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kTemplateWaveformResampleMargin{2};
