@@ -235,6 +235,9 @@ class TemplateFamilyConfig {
         const std::vector<TemplateConfig> &templateConfigs,
         const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults);
 
+    // Returns whether the configuration actually references a detector
+    bool referencesDetector() const;
+
     // Compare for order
     bool operator<(const ReferenceConfig &c) const {
       return originId < c.originId;

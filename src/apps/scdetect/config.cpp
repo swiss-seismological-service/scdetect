@@ -359,6 +359,10 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
   }
 }
 
+bool TemplateFamilyConfig::ReferenceConfig::referencesDetector() const {
+  return static_cast<bool>(detectorId);
+}
+
 void TemplateFamilyConfig::ReferenceConfig::createIndex(
     const TemplateFamilyConfig::ReferenceConfig::TemplateConfigs
         &templateConfigs) {
@@ -416,11 +420,22 @@ void TemplateFamilyConfig::loadReferenceConfigs(
     const boost::property_tree::ptree &pt,
     const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults) {
+  bool hasDetectorReference{false};
   for (const auto &referenceConfigPt : pt) {
     const auto &pt{referenceConfigPt.second};
 
-    _referenceConfigs.emplace(
-        ReferenceConfig{pt, templateConfigs, sensorLocationDefaults});
+    ReferenceConfig referenceConfig{pt, templateConfigs,
+                                    sensorLocationDefaults};
+    if (referenceConfig.referencesDetector()) {
+      hasDetectorReference = true;
+    }
+    _referenceConfigs.emplace(referenceConfig);
+  }
+
+  if (!hasDetectorReference) {
+    throw config::ValidationError{
+        "missing detector reference: template families must at least define a "
+        "single reference to a detector"};
   }
 }
 
