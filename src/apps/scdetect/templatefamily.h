@@ -44,8 +44,8 @@ class TemplateFamily {
     Builder(const TemplateFamilyConfig& templateFamilyConfig);
     // Sets the template family's identifier
     //
-    // - if no `id` is passed the identifier from the template family
-    // configuration is used, instead
+    // - allows to explicitly ovveride the `id` (by default the identifier from
+    // the template configuration is used, instead)
     Builder& setId(const boost::optional<std::string>& id = boost::none);
     // Sets the template family members' limits
     //
