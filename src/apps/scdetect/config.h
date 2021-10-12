@@ -148,7 +148,7 @@ struct PublishConfig {
 };
 
 class TemplateConfig {
-  // Container for StreamConfig
+  // Container for stream configurations
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
 
  public:
