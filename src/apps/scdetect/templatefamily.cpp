@@ -54,14 +54,15 @@ TemplateFamily::Builder& TemplateFamily::Builder::setLimits(
     for (const auto& sensorLocationConfig :
          referenceConfig.sensorLocationConfigs) {
       const auto& sensorLocationId{sensorLocationConfig.waveformId};
-      auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
-      member.lowerLimit = lower;
-      if (!member.lowerLimit) {
-        member.lowerLimit = sensorLocationConfig.lowerLimit;
+      auto& originConfig{_members[origin->publicID()]};
+      auto& member{originConfig[sensorLocationId]};
+      member.config.lowerLimit = lower;
+      if (!member.config.lowerLimit) {
+        member.config.lowerLimit = sensorLocationConfig.lowerLimit;
       }
-      member.upperLimit = upper;
-      if (!member.upperLimit) {
-        member.upperLimit = sensorLocationConfig.upperLimit;
+      member.config.upperLimit = upper;
+      if (!member.config.upperLimit) {
+        member.config.upperLimit = sensorLocationConfig.upperLimit;
       }
     }
   }
@@ -117,7 +118,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
           continue;
         }
 
-        auto& member{_members[MapKey{origin->publicID(), sensorLocationId}]};
+        auto& originConfig{_members[origin->publicID()]};
+        auto& member{originConfig[sensorLocationId]};
         member.magnitude = stationMagnitude;
       }
     }
@@ -301,12 +303,29 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 }
 
 void TemplateFamily::Builder::finalize() {
-  for (auto& memberPair : _members) {
-    const auto& sensorLocationId{memberPair.first.second};
-    auto& member{memberPair.second};
-    if (member.amplitude && member.magnitude) {
-      member.sensorLocationId = sensorLocationId;
-      _product->_members.push_back(member);
+  // establish reference to detector
+  for (const auto& referenceConfig : _templateFamilyConfig) {
+    if (referenceConfig.detectorId) {
+      auto it{_members.find(referenceConfig.originId)};
+      if (it == _members.end()) {
+        continue;
+      }
+
+      for (auto& sensorLocationConfigPair : it->second) {
+        sensorLocationConfigPair.second.config.detectorId =
+            referenceConfig.detectorId;
+      }
+    }
+  }
+
+  for (auto& configPair : _members) {
+    for (auto& sensorLocationConfigPair : configPair.second) {
+      const auto& sensorLocationId{sensorLocationConfigPair.first};
+      auto& member{sensorLocationConfigPair.second};
+      if (member.amplitude && member.magnitude) {
+        member.config.sensorLocationId = sensorLocationId;
+        _product->_members.push_back(member);
+      }
     }
   }
 }
@@ -354,12 +373,12 @@ void TemplateFamily::Builder::storeAmplitude(
   }
   processor->finalize(amp.get());
 
+  auto& originConfig{_members[processor->environment().hypocenter->publicID()]};
   auto sensorLocationId{
       util::WaveformStreamID{record->networkCode(), record->stationCode(),
                              record->locationCode(), record->channelCode()}
           .sensorLocationStreamId()};
-  auto& member{_members[MapKey{processor->environment().hypocenter->publicID(),
-                               sensorLocationId}]};
+  auto& member{originConfig[sensorLocationId]};
   member.amplitude = amp;
 }
 

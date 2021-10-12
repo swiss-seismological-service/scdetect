@@ -23,13 +23,15 @@ namespace detect {
 // Implements a template family
 class TemplateFamily {
   struct Member {
-    std::string sensorLocationId;
-
     DataModel::AmplitudeCPtr amplitude;
     DataModel::StationMagnitudeCPtr magnitude;
 
-    boost::optional<double> lowerLimit;
-    boost::optional<double> upperLimit;
+    struct Config {
+      std::string sensorLocationId;
+      boost::optional<std::string> detectorId;
+      boost::optional<double> lowerLimit;
+      boost::optional<double> upperLimit;
+    } config;
   };
 
  public:
@@ -75,8 +77,8 @@ class TemplateFamily {
 
     using SensorLocationId = std::string;
     using OriginId = std::string;
-    using MapKey = std::pair<OriginId, SensorLocationId>;
-    using Members = std::map<MapKey, TemplateFamily::Member>;
+    using Members =
+        std::map<OriginId, std::map<SensorLocationId, TemplateFamily::Member>>;
     Members _members;
 
     using MagnitudeTypeMap =
