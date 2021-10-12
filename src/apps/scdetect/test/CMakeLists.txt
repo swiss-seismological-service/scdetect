@@ -41,6 +41,7 @@ set(SOURCES_integration
   ../filter.cpp
   ../log.cpp
   ../magnitudeprocessor.cpp
+  ../magnitude/decorator.cpp
   ../magnitude/regression.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp

@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_REGRESSION_H_
 #define SCDETECT_APPS_SCDETECT_MAGNITUDE_REGRESSION_H_
 
+#include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/stationmagnitude.h>
 
 #include <boost/algorithm/string/join.hpp>
@@ -9,16 +10,23 @@
 #include <cmath>
 #include <cstdint>
 #include <ratio>
+#include <unordered_map>
 #include <vector>
 
 #include "../log.h"
 #include "../magnitudeprocessor.h"
 #include "../util/math.h"
+#include "decorator.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace magnitude {
 
+// Convert waveform stream identifiers from an amplitude
+boost::optional<std::string> getSensorLocationStreamIdFromAmplitude(
+    DataModel::Amplitude* amplitude);
+
+/* ------------------------------------------------------------------------- */
 // Interface for regression magnitudes
 class RegressionMagnitude : public Seiscomp::detect::MagnitudeProcessor {
  public:
@@ -147,6 +155,47 @@ class MLFixedSlopeRegressionMagnitude
     : public FixedSlopeRegressionMagnitude<1> {
  public:
   MLFixedSlopeRegressionMagnitude(const std::string& id);
+};
+
+/* ------------------------------------------------------------------------- */
+class MagnitudeRange : public Decorator {
+ public:
+  MagnitudeRange(MagnitudeProcessor* processor, const std::string& id = "");
+
+  class MagnitudeOutOfRange : public MagnitudeProcessor::BaseException {
+   public:
+    using BaseException::BaseException;
+    MagnitudeOutOfRange();
+  };
+
+  // Configure a magnitude validity range with regard to magnitudes associated
+  // with `detectorId`
+  void add(const std::string& detectorId, const std::string& sensorLocationId,
+           const boost::optional<double>& lower,
+           const boost::optional<double> upper);
+
+  // Computes the magnitude while checking for configured limits
+  double compute(DataModel::Amplitude* amplitude) override;
+
+ protected:
+  // Called in case the magnitude is out of range
+  //
+  // - the default implementation throws a `MagnitudeOutOfRange` exception
+  virtual double handleMagnitudeOutOfRange(DataModel::Amplitude* amplitude,
+                                           double magnitude);
+
+ private:
+  struct Range {
+    boost::optional<double> begin;
+    boost::optional<double> end;
+  };
+
+  using DetectorId = std::string;
+  using SensorLocationId = std::string;
+  using Ranges =
+      std::unordered_map<DetectorId,
+                         std::unordered_map<SensorLocationId, Range>>;
+  Ranges _ranges;
 };
 
 }  // namespace magnitude
