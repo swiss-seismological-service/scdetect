@@ -22,6 +22,11 @@ namespace detect {
 
 // Implements a template family
 class TemplateFamily {
+ public:
+  // Defines available magnitude types
+  enum class MagnitudeType { kMw, kML };
+
+  // Defines a template family member
   struct Member {
     DataModel::AmplitudeCPtr amplitude;
     DataModel::StationMagnitudeCPtr magnitude;
@@ -34,9 +39,7 @@ class TemplateFamily {
     } config;
   };
 
- public:
-  // Defines available magnitude types
-  enum class MagnitudeType { kMw, kML };
+  using Members = std::vector<Member>;
   // Builds a template family
   //
   // - allows only a single phase to be associated per origin sensor location
@@ -93,12 +96,13 @@ class TemplateFamily {
 
   const MagnitudeType& magnitudeType() const;
 
+  Members::const_iterator begin() const noexcept { return _members.cbegin(); }
+  Members::const_iterator end() const noexcept { return _members.cend(); }
+
  protected:
   TemplateFamily();
 
  private:
-  using Members = std::vector<Member>;
-
   Members _members;
   // The template family identifier
   std::string _id;
