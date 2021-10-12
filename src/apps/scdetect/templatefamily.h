@@ -37,6 +37,9 @@ class TemplateFamily {
       boost::optional<double> lowerLimit;
       boost::optional<double> upperLimit;
     } config;
+
+    // Returns whether the member references a detector
+    bool referencesDetector() const;
   };
 
   using Members = std::vector<Member>;

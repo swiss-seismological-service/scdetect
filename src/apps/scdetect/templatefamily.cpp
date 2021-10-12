@@ -383,6 +383,10 @@ void TemplateFamily::Builder::storeAmplitude(
 }
 
 /* ------------------------------------------------------------------------- */
+bool TemplateFamily::Member::referencesDetector() const {
+  return static_cast<bool>(config.detectorId);
+}
+
 TemplateFamily::TemplateFamily() {}
 
 TemplateFamily::Builder TemplateFamily::Create(
