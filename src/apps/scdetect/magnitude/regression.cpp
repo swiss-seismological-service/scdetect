@@ -16,7 +16,7 @@ namespace detect {
 namespace magnitude {
 
 boost::optional<std::string> getSensorLocationStreamIdFromAmplitude(
-    DataModel::Amplitude* amplitude) {
+    const DataModel::Amplitude* amplitude) {
   std::string waveformStreamIds;
   for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
     auto comment{amplitude->comment(i)};
@@ -97,7 +97,7 @@ void MagnitudeRange::add(const std::string& detectorId,
   _ranges[detectorId][sensorLocationId] = Range{lower, upper};
 }
 
-double MagnitudeRange::compute(DataModel::Amplitude* amplitude) {
+double MagnitudeRange::compute(const DataModel::Amplitude* amplitude) {
   auto magnitude{Decorator::compute(amplitude)};
 
   // extract the amplitude's associated detector
@@ -146,7 +146,7 @@ double MagnitudeRange::compute(DataModel::Amplitude* amplitude) {
 }
 
 double MagnitudeRange::handleMagnitudeOutOfRange(
-    DataModel::Amplitude* amplitude, double magnitude) {
+    const DataModel::Amplitude* amplitude, double magnitude) {
   throw MagnitudeOutOfRange{};
 }
 

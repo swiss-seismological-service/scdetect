@@ -7,7 +7,7 @@ namespace magnitude {
 Decorator::Decorator(MagnitudeProcessor* processor, const std::string& id)
     : MagnitudeProcessor{id}, _processor{processor} {}
 
-double Decorator::compute(DataModel::Amplitude* amplitude) {
+double Decorator::compute(const DataModel::Amplitude* amplitude) {
   return _processor->compute(amplitude);
 }
 

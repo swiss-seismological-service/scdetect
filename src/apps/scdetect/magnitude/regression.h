@@ -24,7 +24,7 @@ namespace magnitude {
 
 // Convert waveform stream identifiers from an amplitude
 boost::optional<std::string> getSensorLocationStreamIdFromAmplitude(
-    DataModel::Amplitude* amplitude);
+    const DataModel::Amplitude* amplitude);
 
 /* ------------------------------------------------------------------------- */
 // Interface for regression magnitudes
@@ -78,7 +78,7 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
   }
 
  protected:
-  double computeMagnitude(DataModel::Amplitude* amplitude) override {
+  double computeMagnitude(const DataModel::Amplitude* amplitude) override {
     if (!_bMean) {
       recomputeBMean();
     }
@@ -175,14 +175,14 @@ class MagnitudeRange : public Decorator {
            const boost::optional<double> upper);
 
   // Computes the magnitude while checking for configured limits
-  double compute(DataModel::Amplitude* amplitude) override;
+  double compute(const DataModel::Amplitude* amplitude) override;
 
  protected:
   // Called in case the magnitude is out of range
   //
   // - the default implementation throws a `MagnitudeOutOfRange` exception
-  virtual double handleMagnitudeOutOfRange(DataModel::Amplitude* amplitude,
-                                           double magnitude);
+  virtual double handleMagnitudeOutOfRange(
+      const DataModel::Amplitude* amplitude, double magnitude);
 
  private:
   struct Range {

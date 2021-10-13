@@ -75,16 +75,16 @@ class MagnitudeProcessor : public Processor {
   // Computes the magnitude from `amplitude`
   //
   // - may throw an instance of `BaseException`
-  virtual double compute(DataModel::Amplitude* amplitude);
+  virtual double compute(const DataModel::Amplitude* amplitude);
 
   // Finalizes the `magnitude` created by client code
   virtual void finalizeMagnitude(DataModel::StationMagnitude* magnitude) const;
 
  protected:
-  virtual double computeMagnitude(DataModel::Amplitude* amplitude) = 0;
+  virtual double computeMagnitude(const DataModel::Amplitude* amplitude) = 0;
 
   // Converts the amplitude unit of `amplitude` into `targetAmplitudeUnit`
-  double convertAmplitude(DataModel::Amplitude* amplitude,
+  double convertAmplitude(const DataModel::Amplitude* amplitude,
                           const std::string& targetAmplitudeUnit) const;
 
   // The type of the magnitude

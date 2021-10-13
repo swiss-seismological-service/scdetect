@@ -11,7 +11,7 @@ class Decorator : public MagnitudeProcessor {
  public:
   Decorator(MagnitudeProcessor* processor, const std::string& id = "");
 
-  double compute(DataModel::Amplitude* amplitude) override;
+  double compute(const DataModel::Amplitude* amplitude) override;
 
  protected:
   MagnitudeProcessor* _processor;

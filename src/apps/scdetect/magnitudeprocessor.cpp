@@ -29,7 +29,7 @@ const std::string& MagnitudeProcessor::type() const { return _type; }
 
 std::string MagnitudeProcessor::amplitudeType() const { return type(); }
 
-double MagnitudeProcessor::compute(DataModel::Amplitude* amplitude) {
+double MagnitudeProcessor::compute(const DataModel::Amplitude* amplitude) {
   return computeMagnitude(amplitude);
 }
 
@@ -37,7 +37,7 @@ void MagnitudeProcessor::finalizeMagnitude(
     DataModel::StationMagnitude* magnitude) const {}
 
 double MagnitudeProcessor::convertAmplitude(
-    DataModel::Amplitude* amplitude,
+    const DataModel::Amplitude* amplitude,
     const std::string& targetAmplitudeUnit) const {
   const auto& amplitudeUnit{amplitude->unit()};
   if (amplitudeUnit.empty()) {
