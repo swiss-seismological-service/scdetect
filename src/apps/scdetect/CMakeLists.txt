@@ -23,6 +23,8 @@ set(
     filter.cpp
     log.cpp
     magnitudeprocessor.cpp
+    magnitude/decorator/range.cpp
+    magnitude/decorator/util.cpp
     magnitude/decorator.cpp
     magnitude/regression.cpp
     main.cpp

@@ -41,6 +41,8 @@ set(SOURCES_integration
   ../filter.cpp
   ../log.cpp
   ../magnitudeprocessor.cpp
+  ../magnitude/decorator/range.cpp
+  ../magnitude/decorator/util.cpp
   ../magnitude/decorator.cpp
   ../magnitude/regression.cpp
   ../operator/resample.cpp
@@ -78,8 +80,8 @@ set(SOURCES_reducingamplitudeprocessor
 
 
 add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
-# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-# add_link_options(-fsanitize=address)
+add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+add_link_options(-fsanitize=address)
 
 foreach(TEST_SRC ${TESTS})
 	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
