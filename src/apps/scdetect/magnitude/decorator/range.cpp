@@ -24,8 +24,7 @@ void MagnitudeRange::add(const std::string& detectorId,
 double MagnitudeRange::compute(const DataModel::Amplitude* amplitude) {
   auto magnitude{Decorator::compute(amplitude)};
 
-  auto detectorId{extractDetectorId(amplitude)};
-
+  const auto detectorId{extractDetectorId(amplitude)};
   // no detector associated
   if (!detectorId) {
     return magnitude;
@@ -37,8 +36,7 @@ double MagnitudeRange::compute(const DataModel::Amplitude* amplitude) {
     return magnitude;
   }
 
-  auto sensorLocationStreamId{
-      getSensorLocationStreamIdFromAmplitude(amplitude)};
+  auto sensorLocationStreamId{extractSensorLocationId(amplitude)};
   // no sensor location associated
   if (!sensorLocationStreamId) {
     return magnitude;

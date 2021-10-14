@@ -15,8 +15,8 @@ namespace decorator {
 boost::optional<std::string> extractDetectorId(
     const DataModel::Amplitude* amplitude);
 
-// Convert waveform stream identifiers from an amplitude
-boost::optional<std::string> getSensorLocationStreamIdFromAmplitude(
+// Extract the sensor location identifier from `amplitude`
+boost::optional<std::string> extractSensorLocationId(
     const DataModel::Amplitude* amplitude);
 
 }  // namespace decorator

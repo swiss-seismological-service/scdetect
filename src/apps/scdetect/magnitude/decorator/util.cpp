@@ -23,7 +23,7 @@ boost::optional<std::string> extractDetectorId(
   return boost::none;
 }
 
-boost::optional<std::string> getSensorLocationStreamIdFromAmplitude(
+boost::optional<std::string> extractSensorLocationId(
     const DataModel::Amplitude* amplitude) {
   std::string waveformStreamIds;
   for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
