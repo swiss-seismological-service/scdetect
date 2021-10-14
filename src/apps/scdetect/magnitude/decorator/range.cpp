@@ -1,6 +1,5 @@
 #include "range.h"
 
-#include "../../settings.h"
 #include "util.h"
 
 namespace Seiscomp {
@@ -25,23 +24,15 @@ void MagnitudeRange::add(const std::string& detectorId,
 double MagnitudeRange::compute(const DataModel::Amplitude* amplitude) {
   auto magnitude{Decorator::compute(amplitude)};
 
-  // extract the amplitude's associated detector
-  std::string detectorId;
-  for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
-    auto comment{amplitude->comment(i)};
-    if (comment->id() == settings::kDetectorIdCommentId &&
-        !comment->text().empty()) {
-      detectorId = comment->text();
-    }
-  }
+  auto detectorId{extractDetectorId(amplitude)};
 
   // no detector associated
-  if (detectorId.empty()) {
+  if (!detectorId) {
     return magnitude;
   }
 
   // no range associated
-  auto dit{_ranges.find(detectorId)};
+  auto dit{_ranges.find(*detectorId)};
   if (dit == _ranges.end()) {
     return magnitude;
   }

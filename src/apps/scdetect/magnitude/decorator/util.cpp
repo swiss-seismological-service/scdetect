@@ -10,6 +10,19 @@ namespace detect {
 namespace magnitude {
 namespace decorator {
 
+boost::optional<std::string> extractDetectorId(
+    const DataModel::Amplitude* amplitude) {
+  for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
+    auto comment{amplitude->comment(i)};
+    if (comment->id() == settings::kDetectorIdCommentId &&
+        !comment->text().empty()) {
+      return comment->text();
+    }
+  }
+
+  return boost::none;
+}
+
 boost::optional<std::string> getSensorLocationStreamIdFromAmplitude(
     const DataModel::Amplitude* amplitude) {
   std::string waveformStreamIds;
