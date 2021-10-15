@@ -1,6 +1,8 @@
 #ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_H_
 #define SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_H_
 
+#include <memory>
+
 #include "../magnitudeprocessor.h"
 
 namespace Seiscomp {
@@ -9,12 +11,13 @@ namespace magnitude {
 
 class Decorator : public MagnitudeProcessor {
  public:
-  Decorator(MagnitudeProcessor* processor, const std::string& id = "");
+  Decorator(std::unique_ptr<MagnitudeProcessor>&& decorated,
+            const std::string& id = "");
 
   double compute(const DataModel::Amplitude* amplitude) override;
 
  protected:
-  MagnitudeProcessor* _processor;
+  std::unique_ptr<MagnitudeProcessor> _decorated;
 };
 
 }  // namespace magnitude

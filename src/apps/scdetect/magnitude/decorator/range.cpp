@@ -10,9 +10,9 @@ namespace decorator {
 MagnitudeRange::MagnitudeOutOfRange::MagnitudeOutOfRange()
     : MagnitudeProcessor::BaseException{"magnitude out of range"} {}
 
-MagnitudeRange::MagnitudeRange(MagnitudeProcessor* processor,
+MagnitudeRange::MagnitudeRange(std::unique_ptr<MagnitudeProcessor>&& decorated,
                                const std::string& id)
-    : Decorator{processor, id} {}
+    : Decorator{std::move(decorated), id} {}
 
 void MagnitudeRange::add(const std::string& detectorId,
                          const std::string& sensorLocationId,

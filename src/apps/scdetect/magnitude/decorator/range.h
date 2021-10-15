@@ -4,6 +4,7 @@
 #include <seiscomp/datamodel/amplitude.h>
 
 #include <boost/optional/optional.hpp>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -17,7 +18,8 @@ namespace decorator {
 
 class MagnitudeRange : public Decorator {
  public:
-  MagnitudeRange(MagnitudeProcessor* processor, const std::string& id = "");
+  MagnitudeRange(std::unique_ptr<MagnitudeProcessor>&& decorated,
+                 const std::string& id = "");
 
   class MagnitudeOutOfRange : public MagnitudeProcessor::BaseException {
    public:
