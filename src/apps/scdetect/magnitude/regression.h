@@ -138,16 +138,16 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
   static const std::ratio<Num, Denom> _slope;
 };
 
-class MwFixedSlopeRegressionMagnitude
+class MwxFixedSlopeRegressionMagnitude
     : public FixedSlopeRegressionMagnitude<2, 3> {
  public:
-  MwFixedSlopeRegressionMagnitude(const std::string& id);
+  MwxFixedSlopeRegressionMagnitude(const std::string& id);
 };
 
-class MLFixedSlopeRegressionMagnitude
+class MLxFixedSlopeRegressionMagnitude
     : public FixedSlopeRegressionMagnitude<1> {
  public:
-  MLFixedSlopeRegressionMagnitude(const std::string& id);
+  MLxFixedSlopeRegressionMagnitude(const std::string& id);
 };
 
 }  // namespace magnitude
