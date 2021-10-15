@@ -770,7 +770,7 @@ void Application::emitDetection(
   }
 }
 
-void Application::emitAmplitude(
+DataModel::AmplitudeCPtr Application::emitAmplitude(
     const AmplitudeProcessor *processor, const Record *record,
     const AmplitudeProcessor::AmplitudeCPtr &amplitude) {
   Core::TimeWindow tw{
@@ -788,7 +788,7 @@ void Application::emitAmplitude(
   if (!amp) {
     SCDETECT_LOG_WARNING_PROCESSOR(
         processor, "Internal error: duplicate amplitude identifier");
-    return;
+    return nullptr;
   }
 
   DataModel::CreationInfo ci;
@@ -842,6 +842,8 @@ void Application::emitAmplitude(
   if (_ep) {
     _ep->add(amp.get());
   }
+
+  return amp;
 }
 
 bool Application::loadEvents(const std::string &eventDb,

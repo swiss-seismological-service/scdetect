@@ -5,6 +5,7 @@
 #include <seiscomp/client/streamapplication.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
+#include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/datamodel/pick.h>
@@ -146,8 +147,12 @@ class Application : public Client::StreamApplication {
       const Record *record,
       const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
 
-  void emitAmplitude(const AmplitudeProcessor *processor, const Record *record,
-                     const AmplitudeProcessor::AmplitudeCPtr &amplitude);
+  // Emits an amplitude
+  //
+  // - returns the emitted amplitude
+  DataModel::AmplitudeCPtr emitAmplitude(
+      const AmplitudeProcessor *processor, const Record *record,
+      const AmplitudeProcessor::AmplitudeCPtr &amplitude);
 
  protected:
   // Load events either from `eventDb` or `db`
