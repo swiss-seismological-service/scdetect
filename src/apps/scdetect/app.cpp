@@ -323,6 +323,8 @@ bool Application::init() {
     return false;
   }
 
+  SCDETECT_LOG_INFO("Loading template configuration from %s",
+                    _config.pathTemplateJson.c_str());
   try {
     std::ifstream ifs{_config.pathTemplateJson};
     if (!initDetectors(ifs, waveformHandler.get())) {
@@ -941,9 +943,6 @@ bool Application::initDetectors(std::ifstream &ifs,
   };
 
   try {
-    SCDETECT_LOG_INFO("Loading template configuration from %s",
-                      _config.pathTemplateJson.c_str());
-
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
 
