@@ -1,6 +1,6 @@
 #include "range.h"
 
-#include "util.h"
+#include "../util.h"
 
 namespace Seiscomp {
 namespace detect {

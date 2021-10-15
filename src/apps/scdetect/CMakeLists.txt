@@ -24,9 +24,9 @@ set(
     log.cpp
     magnitudeprocessor.cpp
     magnitude/decorator/range.cpp
-    magnitude/decorator/util.cpp
     magnitude/decorator.cpp
     magnitude/regression.cpp
+    magnitude/util.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp

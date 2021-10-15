@@ -2,13 +2,12 @@
 
 #include <seiscomp/core/strings.h>
 
-#include "../../settings.h"
-#include "../../util/waveform_stream_id.h"
+#include "../settings.h"
+#include "../util/waveform_stream_id.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace magnitude {
-namespace decorator {
 
 boost::optional<std::string> extractDetectorId(
     const DataModel::Amplitude* amplitude) {
@@ -58,7 +57,6 @@ boost::optional<std::string> extractSensorLocationId(
   return sensorLocationId;
 }
 
-}  // namespace decorator
 }  // namespace magnitude
 }  // namespace detect
 }  // namespace Seiscomp
