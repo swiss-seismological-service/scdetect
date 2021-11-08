@@ -8,8 +8,6 @@
 namespace Seiscomp {
 namespace detect {
 
-WaveformProcessor::WaveformProcessor(const std::string &id) : Processor{id} {}
-
 WaveformProcessor::Result::~Result() {}
 
 void WaveformProcessor::enable() {

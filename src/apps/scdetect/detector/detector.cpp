@@ -25,7 +25,8 @@ const Core::TimeSpan Detector::_linkerSafetyMargin{1.0};
 
 Detector::Detector(const detect::Processor *detector,
                    const DataModel::OriginCPtr &origin)
-    : Processor{detector->id()}, _origin{origin} {
+    : Processor{}, _origin{origin} {
+  setId(detector->id());
   _linker.setResultCallback([this](const linker::Association &res) {
     return storeLinkerResult(res);
   });

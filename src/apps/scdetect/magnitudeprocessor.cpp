@@ -7,8 +7,6 @@
 namespace Seiscomp {
 namespace detect {
 
-MagnitudeProcessor::MagnitudeProcessor(const std::string& id) : Processor{id} {}
-
 MagnitudeProcessor::BaseException::BaseException(const std::string& msg,
                                                  Status status)
     : Processor::BaseException{msg}, _status{status} {}

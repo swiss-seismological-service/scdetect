@@ -39,11 +39,8 @@ void LocalMaxima::feed(double coefficient, std::size_t lagIdx) {
 TemplateWaveformProcessor::TemplateWaveformProcessor(
     const GenericRecordCPtr &waveform, const std::string filterId,
     const Core::Time &templateStartTime, const Core::Time &templateEndTime,
-    const std::string &processorId, const Processor *p)
-    : WaveformProcessor{p ? std::string{p->id() + settings::kProcessorIdSep +
-                                        processorId}
-                          : processorId},
-      _crossCorrelation{waveform, filterId, templateStartTime,
+    const Processor *p)
+    : _crossCorrelation{waveform, filterId, templateStartTime,
                         templateEndTime} {}
 
 void TemplateWaveformProcessor::setFilter(Filter *filter,

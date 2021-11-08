@@ -8,12 +8,11 @@ namespace detect {
 namespace detector {
 
 DetectorWaveformProcessor::DetectorWaveformProcessor(
-    const std::string &id, const DataModel::OriginCPtr &origin)
-    : WaveformProcessor{id}, _detector{this, origin}, _origin{origin} {}
+    const DataModel::OriginCPtr &origin)
+    : _detector{this, origin}, _origin{origin} {}
 
-DetectorBuilder DetectorWaveformProcessor::Create(const std::string &detectorId,
-                                                  const std::string &originId) {
-  return DetectorBuilder(detectorId, originId);
+DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
+  return DetectorBuilder(originId);
 }
 
 void DetectorWaveformProcessor::setFilter(Filter *filter,

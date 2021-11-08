@@ -18,8 +18,7 @@ namespace decorator {
 
 class MagnitudeRange : public Decorator {
  public:
-  MagnitudeRange(std::unique_ptr<MagnitudeProcessor>&& decorated,
-                 const std::string& id = "");
+  using Decorator::Decorator;
 
   class MagnitudeOutOfRange : public MagnitudeProcessor::BaseException {
    public:

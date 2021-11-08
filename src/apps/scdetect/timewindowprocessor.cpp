@@ -3,9 +3,6 @@
 namespace Seiscomp {
 namespace detect {
 
-TimeWindowProcessor::TimeWindowProcessor(const std::string &id)
-    : WaveformProcessor{id} {}
-
 void TimeWindowProcessor::setTimeWindow(const Core::TimeWindow &tw) {
   if (!tw) {
     _timeWindow = Core::TimeWindow{};

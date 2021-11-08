@@ -204,7 +204,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       const auto arrivalTime{pick->time().value()};
 
       util::WaveformStreamID waveformId{sensorLocationConfig.waveformId};
-      amplitude::RMSAmplitude rmsAmplitudeProcessor(
+      amplitude::RMSAmplitude rmsAmplitudeProcessor;
+      rmsAmplitudeProcessor.setId(
           _templateFamilyConfig.id() + settings::kProcessorIdSep +
           referenceConfig.originId + settings::kProcessorIdSep +
           sensorLocationConfig.waveformId);

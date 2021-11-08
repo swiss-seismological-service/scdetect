@@ -23,8 +23,7 @@ namespace detector {
 
 // Detector waveform processor implementation
 class DetectorWaveformProcessor : public WaveformProcessor {
-  DetectorWaveformProcessor(const std::string &id,
-                            const DataModel::OriginCPtr &origin);
+  DetectorWaveformProcessor(const DataModel::OriginCPtr &origin);
 
  public:
   DEFINE_SMARTPOINTER(Detection);
@@ -52,8 +51,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   };
 
   friend class DetectorBuilder;
-  static DetectorBuilder Create(const std::string &detectorId,
-                                const std::string &originId);
+  static DetectorBuilder Create(const std::string &originId);
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 

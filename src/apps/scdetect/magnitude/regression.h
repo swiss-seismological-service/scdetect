@@ -55,9 +55,6 @@ class RegressionMagnitude : public Seiscomp::detect::MagnitudeProcessor {
 template <std::intmax_t Num, std::intmax_t Denom = 1>
 class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
  public:
-  FixedSlopeRegressionMagnitude(const std::string& id)
-      : RegressionMagnitude{id} {}
-
   void add(
       const std::vector<AmplitudeMagnitude>& amplitudeMagnitudes) override {
     RegressionMagnitude::add(amplitudeMagnitudes);
@@ -141,13 +138,13 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
 class MwxFixedSlopeRegressionMagnitude
     : public FixedSlopeRegressionMagnitude<2, 3> {
  public:
-  MwxFixedSlopeRegressionMagnitude(const std::string& id);
+  MwxFixedSlopeRegressionMagnitude();
 };
 
 class MLxFixedSlopeRegressionMagnitude
     : public FixedSlopeRegressionMagnitude<1> {
  public:
-  MLxFixedSlopeRegressionMagnitude(const std::string& id);
+  MLxFixedSlopeRegressionMagnitude();
 };
 
 }  // namespace magnitude

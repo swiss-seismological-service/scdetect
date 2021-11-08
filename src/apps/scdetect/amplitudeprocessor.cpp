@@ -22,9 +22,6 @@
 namespace Seiscomp {
 namespace detect {
 
-AmplitudeProcessor::AmplitudeProcessor(const std::string &id)
-    : TimeWindowProcessor{id} {}
-
 void AmplitudeProcessor::setSignalBegin(
     const boost::optional<Core::TimeSpan> &signalBegin) {
   if (!signalBegin) {
@@ -162,9 +159,6 @@ bool AmplitudeProcessor::deriveData(StreamState &streamState,
 }
 
 /* ------------------------------------------------------------------------- */
-ReducingAmplitudeProcessor::ReducingAmplitudeProcessor(const std::string &id)
-    : AmplitudeProcessor{id} {}
-
 void ReducingAmplitudeProcessor::setFilter(Filter *filter,
                                            const Core::TimeSpan &initTime) {
   if (!locked()) {

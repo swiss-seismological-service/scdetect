@@ -12,7 +12,7 @@ namespace amplitude {
 // - the amplitude is computed on velocity seismograms
 class RMSAmplitude : public ReducingAmplitudeProcessor {
  public:
-  RMSAmplitude(const std::string &id);
+  RMSAmplitude();
 
   enum class SignalUnit {
     // displacement

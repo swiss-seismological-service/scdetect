@@ -11,8 +11,7 @@ namespace magnitude {
 
 class Decorator : public MagnitudeProcessor {
  public:
-  Decorator(std::unique_ptr<MagnitudeProcessor>&& decorated,
-            const std::string& id = "");
+  Decorator(std::unique_ptr<MagnitudeProcessor>&& decorated);
 
   double compute(const DataModel::Amplitude* amplitude) override;
 

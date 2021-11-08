@@ -35,8 +35,6 @@ class WaveformOperator;
 class WaveformProcessor : public Processor,
                           public InterpolateGaps<WaveformProcessor> {
  public:
-  WaveformProcessor(const std::string &id);
-
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
   DEFINE_SMARTPOINTER(Result);

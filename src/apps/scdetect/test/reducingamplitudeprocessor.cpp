@@ -232,9 +232,7 @@ struct Sample {
 // - does not implement any preprocessing
 class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
  public:
-  TestReducingAmplitudeProcessor(const std::string &id,
-                                 const Core::TimeWindow &tw)
-      : ReducingAmplitudeProcessor{id} {
+  TestReducingAmplitudeProcessor(const Core::TimeWindow &tw) {
     setTimeWindow(tw);
     _type = "Mtest";
     _unit = "M/S";
@@ -645,8 +643,7 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
     BOOST_FAIL("Missing signal time window.");
   }
 
-  TestReducingAmplitudeProcessor proc{util::createUUID(),
-                                      *sample.signalTimeWindow()};
+  TestReducingAmplitudeProcessor proc{*sample.signalTimeWindow()};
   const auto &waveformStreamIds{sample.waveformStreamIds()};
   // initialize the processor
   for (const auto &waveformStreamId : waveformStreamIds) {

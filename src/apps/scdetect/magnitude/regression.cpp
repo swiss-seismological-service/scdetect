@@ -30,15 +30,11 @@ void RegressionMagnitude::add(
 void RegressionMagnitude::reset() { _amplitudeMagnitudes.clear(); }
 
 /* ------------------------------------------------------------------------- */
-MwxFixedSlopeRegressionMagnitude::MwxFixedSlopeRegressionMagnitude(
-    const std::string& id)
-    : FixedSlopeRegressionMagnitude{id} {
+MwxFixedSlopeRegressionMagnitude::MwxFixedSlopeRegressionMagnitude() {
   _type = "Mwx";
 }
 
-MLxFixedSlopeRegressionMagnitude::MLxFixedSlopeRegressionMagnitude(
-    const std::string& id)
-    : FixedSlopeRegressionMagnitude{id} {
+MLxFixedSlopeRegressionMagnitude::MLxFixedSlopeRegressionMagnitude() {
   _type = "MLx";
 }
 

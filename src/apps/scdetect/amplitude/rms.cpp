@@ -22,8 +22,7 @@ namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
-RMSAmplitude::RMSAmplitude(const std::string &id)
-    : ReducingAmplitudeProcessor{id} {
+RMSAmplitude::RMSAmplitude() {
   _type = "Mrms";
   _unit = "M/S";
 }

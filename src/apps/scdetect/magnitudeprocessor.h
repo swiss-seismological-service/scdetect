@@ -14,8 +14,6 @@ namespace detect {
 // `Seiscomp::Processing::MagnitudeProcessor`
 class MagnitudeProcessor : public Processor {
  public:
-  MagnitudeProcessor(const std::string& id);
-
   // XXX(damb): From libs/seiscomp/processing/magnitudeprocessor.h
   enum class Status {
     //! Given amplitude is out of range

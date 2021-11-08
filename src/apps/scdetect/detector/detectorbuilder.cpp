@@ -24,8 +24,7 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-DetectorBuilder::DetectorBuilder(const std::string &id,
-                                 const std::string &originId)
+DetectorBuilder::DetectorBuilder(const std::string &originId)
     : _originId{originId} {
   DataModel::OriginCPtr origin{
       EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
@@ -38,7 +37,12 @@ DetectorBuilder::DetectorBuilder(const std::string &id,
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
   _product = std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{id, origin});
+      new DetectorWaveformProcessor{origin});
+}
+
+DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
+  _product->setId(id);
+  return *this;
 }
 
 DetectorBuilder &DetectorBuilder::setConfig(
@@ -224,8 +228,12 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   // template processor
   auto templateProc{util::make_unique<detector::TemplateWaveformProcessor>(
-      templateWfChunk, templateWfFilterId, wfStart, wfEnd,
-      streamConfig.templateId, _product.get())};
+      templateWfChunk, templateWfFilterId, wfStart, wfEnd, _product.get())};
+
+  templateProc->setId(_product->id().empty()
+                          ? streamConfig.templateId
+                          : _product->id() + settings::kProcessorIdSep +
+                                streamConfig.templateId);
 
   templateProc->setFilter(rtTemplateFilter.release(), streamConfig.initTime);
   if (streamConfig.targetSamplingFrequency) {

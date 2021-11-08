@@ -955,8 +955,8 @@ bool Application::initDetectors(std::ifstream &ifs,
                            tc.detectorId().c_str());
 
         auto detectorBuilder{
-            std::move(detector::DetectorWaveformProcessor::Create(
-                          tc.detectorId(), tc.originId())
+            std::move(detector::DetectorWaveformProcessor::Create(tc.originId())
+                          .setId(tc.detectorId())
                           .setConfig(tc.publishConfig(), tc.detectorConfig(),
                                      _config.playbackConfig.enabled)
                           .setEventParameters())};
@@ -1118,8 +1118,9 @@ bool Application::initAmplitudeProcessors(
       continue;
     }
 
-    auto rmsAmplitudeProcessor{util::make_unique<amplitude::RMSAmplitude>(
-        waveformStreamId + settings::kProcessorIdSep + util::createUUID())};
+    auto rmsAmplitudeProcessor{util::make_unique<amplitude::RMSAmplitude>()};
+    rmsAmplitudeProcessor->setId(processor->id() + settings::kProcessorIdSep +
+                                 util::createUUID());
     // XXX(damb): do not provide a sensor location (currently not required)
     rmsAmplitudeProcessor->setEnvironment(origin, nullptr,
                                           threeComponentsItem.picks);
