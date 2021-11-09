@@ -27,6 +27,7 @@ set(
     magnitude/decorator.cpp
     magnitude/regression.cpp
     magnitude/util.cpp
+    magnitude/templatefamily.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp

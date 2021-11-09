@@ -15,55 +15,27 @@
 #include "../log.h"
 #include "../magnitudeprocessor.h"
 #include "../util/math.h"
+#include "templatefamily.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace magnitude {
 
-// Interface for regression magnitudes
-class RegressionMagnitude : public Seiscomp::detect::MagnitudeProcessor {
- public:
-  RegressionMagnitude(const std::string& id);
-
-  // Maps an amplitude with a magnitude
-  struct AmplitudeMagnitude {
-    DataModel::AmplitudeCPtr amplitude;
-    DataModel::StationMagnitudeCPtr magnitude;
-  };
-  // Adds multiple amplitude magnitude pairs which are going to be used for the
-  // *amplitude-magnitude regression*
-  //
-  // - neither amplitudes nor magnitudes are validated to be consistent i.e. it
-  // is up to the client to add consistent amplitudes and magnitudes)
-  virtual void add(const std::vector<AmplitudeMagnitude>& amplitudeMagnitudes);
-  // Adds a single amplitude magnitude pair which is going to be used for the
-  // *amplitude-magnitude regression*
-  //
-  // - neither amplitudes nor magnitudes are validated to be consistent i.e. it
-  // is up to the client to add consistent amplitudes and magnitudes)
-  virtual void add(const AmplitudeMagnitude& amplitudeMagnitude);
-
-  virtual void reset();
-
- protected:
-  using AmplitudeMagnitudes = std::vector<AmplitudeMagnitude>;
-  AmplitudeMagnitudes _amplitudeMagnitudes;
-};
-
 // Computes a magnitude by means of an *amplitude-magnitude regression* based
 // on a fixed slope
 template <std::intmax_t Num, std::intmax_t Denom = 1>
-class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
+class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
+                                      public TemplateFamilyBased {
  public:
-  void add(
-      const std::vector<AmplitudeMagnitude>& amplitudeMagnitudes) override {
-    RegressionMagnitude::add(amplitudeMagnitudes);
-    if (!amplitudeMagnitudes.empty()) {
-      _bMean = boost::none;
-    }
+  void addAmplitudeMagnitude(
+      DataModel::AmplitudeCPtr amplitude,
+      DataModel::StationMagnitudeCPtr magnitude) override {
+    TemplateFamilyBased::addAmplitudeMagnitude(amplitude, magnitude);
+    _bMean = boost::none;
   }
-  void add(const AmplitudeMagnitude& amplitudeMagnitude) override {
-    RegressionMagnitude::add(amplitudeMagnitude);
+
+  void resetAmplitudeMagnitudes() override {
+    TemplateFamilyBased::resetAmplitudeMagnitudes();
     _bMean = boost::none;
   }
 
@@ -80,11 +52,6 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
     return static_cast<double>(_slope.num) / static_cast<double>(_slope.den);
   }
 
-  void reset() override {
-    RegressionMagnitude::reset();
-    _bMean = boost::none;
-  }
-
   void recomputeBMean() {
     // Given the line formula y = m*x + b and a fixed m for a set of lines (i.e.
     // both x and y are vectors), the estimate for the interseption b is
@@ -96,7 +63,7 @@ class FixedSlopeRegressionMagnitude : public RegressionMagnitude {
     std::feclearexcept(FE_ALL_EXCEPT);
 
     std::vector<double> b;
-    for (const auto& ampMag : _amplitudeMagnitudes) {
+    for (const auto& ampMag : *this) {
       const auto& amp{ampMag.amplitude};
       const auto& mag{ampMag.magnitude};
 
