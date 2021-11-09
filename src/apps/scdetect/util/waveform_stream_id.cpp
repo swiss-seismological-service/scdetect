@@ -22,7 +22,7 @@ WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {
   Core::split(tokens, netStaLocCha, _delimiter.c_str(), false);
 
   if (4 != tokens.size()) {
-    throw ValueException{std::string{"Invalid number of tokens: "} +
+    throw ValueException{std::string{"invalid number of tokens: "} +
                          std::to_string(tokens.size())};
   }
   _netCode = tokens[0];
@@ -39,7 +39,7 @@ WaveformStreamID::WaveformStreamID(const DataModel::WaveformStreamID &id)
   if (!isValid()) {
     std::ostringstream oss;
     oss << *this;
-    throw ValueException{std::string{"Invalid DataModel::WaveformStreamID: "} +
+    throw ValueException{std::string{"invalid DataModel::WaveformStreamID: "} +
                          oss.str()};
   }
 }
