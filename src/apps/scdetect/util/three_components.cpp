@@ -19,12 +19,14 @@ ThreeComponents::ThreeComponents(Client::Inventory *inventory,
         inventory->getThreeComponents(netCode, staCode, locCode, chaCode, time);
   } catch (Core::ValueException &e) {
     reset();
-    throw Exception{"failed to load components: " + std::string{e.what()}};
+    throw Exception{"failed to load components from inventory: " +
+                    std::string{e.what()}};
   }
 
   if (realSize() != 3) {
     reset();
-    throw Exception{"failed to load components: missing components"};
+    throw Exception{
+        "failed to load components from inventory: missing components"};
   }
 
   const auto &streamCode{_threeComponents.comps[0]->code()};
