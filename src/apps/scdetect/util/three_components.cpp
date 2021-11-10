@@ -108,7 +108,7 @@ void ThreeComponents::reset() {
   for (size_t i = 0; i < 3; ++i) {
     _threeComponents.comps[i] = nullptr;
   }
-};
+}
 
 }  // namespace util
 }  // namespace detect
