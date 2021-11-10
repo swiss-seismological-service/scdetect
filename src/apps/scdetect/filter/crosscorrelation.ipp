@@ -204,7 +204,7 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
           "Floating point exception during cross-correlation (sample_idx=" +
           std::to_string(i) + ", sample=" + std::to_string(newSample) + "): "};
       msg += boost::algorithm::join(exceptions, ", ");
-      SCDETECT_LOG_WARNING(msg.c_str());
+      SCDETECT_LOG_WARNING("%s", msg.c_str());
 
       std::feclearexcept(FE_ALL_EXCEPT);
     }

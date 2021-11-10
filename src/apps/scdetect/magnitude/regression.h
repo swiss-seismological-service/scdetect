@@ -86,7 +86,7 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
       std::string msg{
           "Floating point exception during amplitude-magnitude regression: "};
       msg += boost::algorithm::join(exceptions, ", ");
-      SCDETECT_LOG_WARNING(msg.c_str());
+      SCDETECT_LOG_WARNING("%s", msg.c_str());
     }
 
     if (b.empty()) {
