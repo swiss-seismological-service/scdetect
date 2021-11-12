@@ -61,6 +61,10 @@
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
+      </comment>
     </origin>
     <origin publicID="Origin/20210119164429.607131.5961">
       <time>
@@ -105,6 +109,10 @@
       <comment>
         <text>detector-02</text>
         <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
       </comment>
     </origin>
   </EventParameters>
