@@ -70,6 +70,10 @@
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
+      </comment>
     </origin>
   </EventParameters>
 </seiscomp>
