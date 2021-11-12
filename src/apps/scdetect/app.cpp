@@ -28,6 +28,7 @@
 #include <ios>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -566,6 +567,13 @@ void Application::emitDetection(
     comment->setText(processor->id());
     origin->add(comment.get());
   }
+  {
+    auto comment{utils::make_smart<DataModel::Comment>()};
+    comment->setId("scdetectResultCCC");
+    comment->setText(std::to_string(detection->fit));
+    origin->add(comment.get());
+  }
+
   origin->setCreationInfo(ci);
   origin->setLatitude(DataModel::RealQuantity(detection->latitude));
   origin->setLongitude(DataModel::RealQuantity(detection->longitude));
