@@ -3,7 +3,13 @@
 
 #include <seiscomp/datamodel/amplitude.h>
 
+#include <memory>
+#include <unordered_map>
+
+#include "factory.h"
+#include "magnitude/templatefamily.h"
 #include "processor.h"
+#include "templatefamily.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -60,6 +66,48 @@ class MagnitudeProcessor : public Processor {
 
    private:
     Status _status{Status::kError};
+  };
+
+  class Factory {
+    using AdaptedFactory = detect::Factory<MagnitudeProcessor, std::string>;
+
+   public:
+    using CallbackType = AdaptedFactory::CallbackType;
+
+    static bool registerFactory(const std::string& id, CallbackType callback);
+
+    static bool unregisterFactory(const std::string& id);
+
+    // Emerges the magnitude processor based on `amplitude` or (as a fallback)
+    // from `id`
+    static std::unique_ptr<MagnitudeProcessor> create(
+        const DataModel::Amplitude* amplitude, const std::string& id = "");
+
+    // Register a template family
+    static void registerTemplateFamily(
+        std::unique_ptr<TemplateFamily>&& templateFamily);
+    // Unregister a template family
+    static void unregisterTemplateFamily(const std::string& detectorId,
+                                         const std::string& sensorLocationId);
+
+   private:
+    using DetectorId = std::string;
+    using SensorLocationId = std::string;
+    static bool configureTemplateFamily(
+        magnitude::TemplateFamilyBased* processor,
+        const DataModel::Amplitude* amplitude, const DetectorId& detectorId,
+        const SensorLocationId& sensorLocationId,
+        const std::string& magnitudeType,
+        std::shared_ptr<TemplateFamily>& templateFamily);
+    static bool configureLimits(
+        std::unique_ptr<MagnitudeProcessor>& ret, const DetectorId& detectorId,
+        const SensorLocationId& sensorLocationId,
+        const std::shared_ptr<TemplateFamily>& templateFamily);
+
+    using TemplateFamilies = std::unordered_map<
+        DetectorId,
+        std::unordered_map<SensorLocationId, std::shared_ptr<TemplateFamily>>>;
+    static TemplateFamilies& templateFamilies();
   };
 
   // Returns the type of the magnitude

@@ -36,8 +36,6 @@ class TemplateFamilyBased {
 
   virtual void resetAmplitudeMagnitudes();
 
-  virtual TemplateFamily::MagnitudeType templateFamilyMagnitudeType() = 0;
-
   using const_iterator = AmplitudeMagnitudes::const_iterator;
   const_iterator begin() const { return _amplitudeMagnitudes.begin(); }
   const_iterator end() const { return _amplitudeMagnitudes.end(); }
