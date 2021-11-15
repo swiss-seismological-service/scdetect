@@ -8,15 +8,15 @@
 #include <string>
 #include <unordered_map>
 
-#include "../../magnitudeprocessor.h"
 #include "../decorator.h"
 
 namespace Seiscomp {
 namespace detect {
+
 namespace magnitude {
 namespace decorator {
 
-class MagnitudeRange : public Decorator {
+class MagnitudeRange : public magnitude::Decorator {
  public:
   using Decorator::Decorator;
 
@@ -28,14 +28,13 @@ class MagnitudeRange : public Decorator {
 
   // Configure a magnitude validity range with regard to magnitudes associated
   // with `detectorId` and `sensorLocationId`
-  void add(const std::string& detectorId, const std::string& sensorLocationId,
-           const boost::optional<double>& lower,
-           const boost::optional<double> upper);
-
-  // Computes the magnitude while checking for configured limits
-  double compute(const DataModel::Amplitude* amplitude) override;
+  void addLimits(const std::string& detectorId,
+                 const std::string& sensorLocationId,
+                 const boost::optional<double>& lower,
+                 const boost::optional<double> upper);
 
  protected:
+  double computeMagnitude(const DataModel::Amplitude* amplitude) override;
   // Called in case the magnitude is out of range
   //
   // - the default implementation throws a `MagnitudeOutOfRange` exception

@@ -1,5 +1,6 @@
 #include "range.h"
 
+#include "../../magnitudeprocessor.h"
 #include "../util.h"
 
 namespace Seiscomp {
@@ -10,14 +11,14 @@ namespace decorator {
 MagnitudeRange::MagnitudeOutOfRange::MagnitudeOutOfRange()
     : MagnitudeProcessor::BaseException{"magnitude out of range"} {}
 
-void MagnitudeRange::add(const std::string& detectorId,
-                         const std::string& sensorLocationId,
-                         const boost::optional<double>& lower,
-                         const boost::optional<double> upper) {
+void MagnitudeRange::addLimits(const std::string& detectorId,
+                               const std::string& sensorLocationId,
+                               const boost::optional<double>& lower,
+                               const boost::optional<double> upper) {
   _ranges[detectorId][sensorLocationId] = Range{lower, upper};
 }
 
-double MagnitudeRange::compute(const DataModel::Amplitude* amplitude) {
+double MagnitudeRange::computeMagnitude(const DataModel::Amplitude* amplitude) {
   auto magnitude{Decorator::compute(amplitude)};
 
   const auto detectorId{extractDetectorId(amplitude)};
