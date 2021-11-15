@@ -30,7 +30,7 @@ class WaveformStreamID {
   const std::string &chaCode() const;
 
   // Returns the sensor location stream identifier i.e. in the form
-  // `NET.STA.LOC.`.
+  // `NET.STA.LOC`.
   std::string sensorLocationStreamId() const;
 
   // Returns `true` if the waveform stream identifier is valid, `false`
