@@ -85,6 +85,9 @@ class MagnitudeProcessor : public Processor {
   double convertAmplitude(const DataModel::Amplitude* amplitude,
                           const std::string& targetAmplitudeUnit) const;
 
+  void setType(std::string type);
+
+ private:
   // The type of the magnitude
   std::string _type;
 };

@@ -5,11 +5,11 @@ namespace detect {
 namespace magnitude {
 
 MwxFixedSlopeRegressionMagnitude::MwxFixedSlopeRegressionMagnitude() {
-  _type = "Mwx";
+  setType("Mwx");
 }
 
 MLxFixedSlopeRegressionMagnitude::MLxFixedSlopeRegressionMagnitude() {
-  _type = "MLx";
+  setType("MLx");
 }
 
 }  // namespace magnitude

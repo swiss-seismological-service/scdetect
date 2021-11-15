@@ -70,5 +70,7 @@ double MagnitudeProcessor::convertAmplitude(
   return targetAmplitude;
 }
 
+void MagnitudeProcessor::setType(std::string type) { _type = type; }
+
 }  // namespace detect
 }  // namespace Seiscomp
