@@ -39,7 +39,7 @@ boost::optional<std::string> extractSensorLocationId(
 
   std::vector<std::string> tokens;
   Core::split(tokens, waveformStreamIds, settings::kWaveformStreamIdSep.c_str(),
-              false);
+              true);
   if (tokens.empty()) {
     return boost::none;
   }
