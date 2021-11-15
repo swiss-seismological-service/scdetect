@@ -21,8 +21,10 @@ namespace Seiscomp {
 namespace detect {
 namespace magnitude {
 
-// Computes a magnitude by means of an *amplitude-magnitude regression* based
-// on a fixed slope
+// Computes a magnitude by means of a template family based
+// *amplitude-magnitude regression*
+//
+// - the regression uses a fixed slope
 template <std::intmax_t Num, std::intmax_t Denom = 1>
 class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
                                       public TemplateFamilyBased {
