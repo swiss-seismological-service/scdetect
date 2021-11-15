@@ -212,6 +212,9 @@ class Bindings {
   ConfigMap _stationConfigs;
 };
 
+// Returns the band and source code identifier from `chaCode`
+std::string getBandAndSourceCode(const std::string &chaCode);
+
 }  // namespace binding
 }  // namespace detect
 }  // namespace Seiscomp

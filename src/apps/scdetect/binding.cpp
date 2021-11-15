@@ -247,7 +247,7 @@ StationConfig::const_iterator StationConfig::end() const {
 
 const SensorLocationConfig &StationConfig::at(
     const std::string &locCode, const std::string &chaCode) const {
-  return _sensorLocationConfigs.at({locCode, chaCode});
+  return _sensorLocationConfigs.at({locCode, getBandAndSourceCode(chaCode)});
 }
 
 Bindings::const_iterator Bindings::begin() const {
@@ -265,7 +265,8 @@ const SensorLocationConfig &Bindings::at(const std::string &netCode,
                                          const std::string &staCode,
                                          const std::string &locCode,
                                          const std::string &chaCode) const {
-  return _stationConfigs.at({netCode, staCode}).at(locCode, chaCode);
+  return _stationConfigs.at({netCode, staCode})
+      .at(locCode, getBandAndSourceCode(chaCode));
 }
 
 void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
@@ -344,9 +345,8 @@ const StationConfig &Bindings::load(
       }
 
       // only take the band and source code identifiers into account
-      chaCode = chaCode.substr(0, 2);
-      auto &sensorLocationConfig{
-          stationConfig._sensorLocationConfigs[{locCode, chaCode}]};
+      auto &sensorLocationConfig{stationConfig._sensorLocationConfigs[{
+          locCode, getBandAndSourceCode(chaCode)}]};
       auto &amplitudeProcessingConfig{
           sensorLocationConfig.amplitudeProcessingConfig};
       if (!settings.getValue(amplitudeProcessingConfig.enabled,
@@ -392,7 +392,8 @@ const StationConfig &Bindings::load(
           }
 
           auto &streamConfig{
-              sensorLocationConfig.streamConfigs[chaCode + subSourceCode]};
+              sensorLocationConfig.streamConfigs[getBandAndSourceCode(chaCode) +
+                                                 subSourceCode]};
           auto &deconvolutionConfig{streamConfig.deconvolutionConfig};
           try {
             deconvolutionConfig.setResponseTaperLength(
@@ -417,6 +418,10 @@ const StationConfig &Bindings::load(
   }
   stationConfig._parameters = keys;
   return stationConfig;
+}
+
+std::string getBandAndSourceCode(const std::string &chaCode) {
+  return chaCode.size() <= 2 ? chaCode : chaCode.substr(0, 2);
 }
 
 }  // namespace binding
