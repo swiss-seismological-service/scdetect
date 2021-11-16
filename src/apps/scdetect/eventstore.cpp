@@ -83,8 +83,13 @@ EventStore &EventStore::Instance() {
 }
 
 void EventStore::load(const std::string &path) {
-  load(loadXMLArchive(path).get());
+  auto ep{loadXMLArchive(path)};
+  if (!ep) {
+    throw SCMLException{"failed to load events from file: " + path};
+  }
+  load(ep.get());
 }
+
 void EventStore::load(const boost::filesystem::path &path) {
   load(path.string());
 }

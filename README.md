@@ -81,8 +81,8 @@ The subsequent sections are intended to provide an introduction on how to use
 and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
-2. How to enable [amplitude calculation](#amplitude-calculation) (required for
-   a magnitude estimation based on amplitude-magnitude regression)
+2. How to enable [amplitude calculation](#amplitude-calculation) (required for a
+   magnitude estimation based on amplitude-magnitude regression)
 3. How to access
    [metadata and configuration](#inventory-events-and-configuration) from the
    database or from plain files
@@ -107,45 +107,48 @@ objects (each detector refers to a template origin identified by its
 streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
 
 ```json
-{
-  "detectorId": "detector-01",
-  "createArrivals": true,
-  "createTemplateArrivals": true,
-  "gapInterpolation": true,
-  "gapThreshold": 0.1,
-  "gapTolerance": 1.5,
-  "triggerDuration": -1,
-  "triggerOnThreshold": 0.98,
-  "triggerOffThreshold": 0,
-  "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
-  "filter": "",
-  "templateFilter": "",
-  "streams": [
-    {
-      "templateId": "template-01",
-      "initTime": 10,
-      "templateWaveformStart": -2,
-      "templateWaveformEnd": 2,
-      "waveformId": "CH.GRIMS..HHZ",
-      "templateWaveformId": "CH.GRIMS..HHZ",
-      "templatePhase": "Pg"
-    },
-    {
-      "templateId": "template-02",
-      "initTime": 10,
-      "templateWaveformStart": -3,
-      "templateWaveformEnd": 1,
-      "waveformId": "CH.HASLI..HHZ",
-      "templateWaveformId": "CH.HASLI..HHZ",
-      "templatePhase": "Pg"
-    }
-  ]
-}
+[
+  {
+    "detectorId": "detector-01",
+    "createArrivals": true,
+    "createTemplateArrivals": true,
+    "gapInterpolation": true,
+    "gapThreshold": 0.1,
+    "gapTolerance": 1.5,
+    "triggerDuration": -1,
+    "triggerOnThreshold": 0.98,
+    "triggerOffThreshold": 0,
+    "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+    "filter": "",
+    "templateFilter": "",
+    "streams": [
+      {
+        "templateId": "template-01",
+        "initTime": 10,
+        "templateWaveformStart": -2,
+        "templateWaveformEnd": 2,
+        "waveformId": "CH.GRIMS..HHZ",
+        "templateWaveformId": "CH.GRIMS..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-02",
+        "initTime": 10,
+        "templateWaveformStart": -3,
+        "templateWaveformEnd": 1,
+        "waveformId": "CH.HASLI..HHZ",
+        "templateWaveformId": "CH.HASLI..HHZ",
+        "templatePhase": "Pg"
+      }
+    ]
+  }
+]
 ```
 
 That is, a detector configuration defines besides the detector specific
 configuration parameters a list of stream configurations and optionally some
-[stream configuration defaults](#stream-configuration-defaults).
+[stream configuration defaults](#stream-configuration-defaults). Again, the list
+of detector configurations is wrapped into a JSON array.
 
 Note that if a configuration parameter is not explicitly defined a module
 specific global default is used instead. Global defaults may be configured
@@ -359,6 +362,7 @@ configuration parameters:
   frequency. Both the template waveform and the stream to be processed may be
   required to be resampled to the sampling frequency specified. Note that data
   is resampled **before** being filtered.
+
 #### Stream configuration defaults
 
 The following stream configuration default parameters may be defined within the
@@ -379,39 +383,41 @@ fallback values will be used.
 **Example**:
 
 ```json
-{
-  "detectorId": "detector-01",
-  "createArrivals": true,
-  "createTemplateArrivals": true,
-  "gapInterpolation": true,
-  "gapThreshold": 0.1,
-  "gapTolerance": 1.5,
-  "triggerDuration": -1,
-  "triggerOnThreshold": 0.98,
-  "triggerOffThreshold": 0,
-  "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
-  "templatePhase": "Pg",
-  "filter": "",
-  "templateFilter": "",
-  "initTime": 0,
-  "streams": [
-    {
-      "templateId": "template-01",
-      "templateWaveformStart": -2,
-      "templateWaveformEnd": 2,
-      "waveformId": "CH.GRIMS..HHZ",
-      "templateWaveformId": "CH.GRIMS..HHZ"
-    },
-    {
-      "templateId": "template-02",
-      "templateWaveformStart": -3,
-      "templateWaveformEnd": 1,
-      "waveformId": "CH.HASLI..HHZ",
-      "templateWaveformId": "CH.HASLI..HHZ",
-      "templatePhase": "Sg"
-    }
-  ]
-}
+[
+  {
+    "detectorId": "detector-01",
+    "createArrivals": true,
+    "createTemplateArrivals": true,
+    "gapInterpolation": true,
+    "gapThreshold": 0.1,
+    "gapTolerance": 1.5,
+    "triggerDuration": -1,
+    "triggerOnThreshold": 0.98,
+    "triggerOffThreshold": 0,
+    "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+    "templatePhase": "Pg",
+    "filter": "",
+    "templateFilter": "",
+    "initTime": 0,
+    "streams": [
+      {
+        "templateId": "template-01",
+        "templateWaveformStart": -2,
+        "templateWaveformEnd": 2,
+        "waveformId": "CH.GRIMS..HHZ",
+        "templateWaveformId": "CH.GRIMS..HHZ"
+      },
+      {
+        "templateId": "template-02",
+        "templateWaveformStart": -3,
+        "templateWaveformEnd": 1,
+        "waveformId": "CH.HASLI..HHZ",
+        "templateWaveformId": "CH.HASLI..HHZ",
+        "templatePhase": "Sg"
+      }
+    ]
+  }
+]
 ```
 
 In the example above, the stream configuration default `"templatePhase"` is used
@@ -440,8 +446,8 @@ streams for a certain sensor location w.r.t. velocity seismograms). In order to
 provide dedicated configuration for different sensor locations `scdetect` makes
 use of
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
-concept. Amplitudes are calculated only for those sensor locations with
-bindings configuration available.
+concept. Amplitudes are calculated only for those sensor locations with bindings
+configuration available.
 
 For those users already familiar with
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
@@ -459,6 +465,7 @@ frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html
 . Alternatively, *key files* may be created manually.
 
 **Creating key files** (`scconfig`):
+
 1. Create an *amplitude profile* for a sensor location. As a bare minimum
    specify at least the `locationCode` and `channelCode` attributes.
 
