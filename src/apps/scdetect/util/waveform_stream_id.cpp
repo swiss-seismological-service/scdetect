@@ -15,11 +15,16 @@ std::string to_string(const WaveformStreamID &waveformStreamId) {
   return oss.str();
 }
 
-const std::string WaveformStreamID::_delimiter{settings::kSNCLSep};
+void tokenizeWaveformStreamId(const std::string &str,
+                              std::vector<std::string> &tokens) {
+  Core::split(tokens, str, WaveformStreamID::delimiter.c_str(), false);
+}
+
+const std::string WaveformStreamID::delimiter{settings::kSNCLSep};
 
 WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {
   std::vector<std::string> tokens;
-  Core::split(tokens, netStaLocCha, _delimiter.c_str(), false);
+  tokenizeWaveformStreamId(netStaLocCha, tokens);
 
   if (4 != tokens.size()) {
     throw ValueException{std::string{"invalid number of tokens: "} +
@@ -59,7 +64,7 @@ const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
 std::string WaveformStreamID::sensorLocationStreamId() const {
-  return _netCode + _delimiter + _staCode + _delimiter + _locCode;
+  return _netCode + delimiter + _staCode + delimiter + _locCode;
 }
 
 bool WaveformStreamID::isValid() const {
@@ -67,8 +72,8 @@ bool WaveformStreamID::isValid() const {
 }
 
 std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
-  os << id._netCode << id._delimiter << id._staCode << id._delimiter
-     << id._locCode << id._delimiter << id._chaCode;
+  os << id._netCode << id.delimiter << id._staCode << id.delimiter
+     << id._locCode << id.delimiter << id._chaCode;
   return os;
 }
 

@@ -5,6 +5,7 @@
 
 #include <ostream>
 #include <string>
+#include <vector>
 
 namespace Seiscomp {
 namespace detect {
@@ -13,12 +14,17 @@ namespace util {
 class WaveformStreamID;
 std::string to_string(const WaveformStreamID &waveformStreamId);
 
+void tokenizeWaveformStreamId(const std::string &str,
+                              std::vector<std::string> &tokens);
+
 class WaveformStreamID {
  public:
   explicit WaveformStreamID(const std::string &netStaLocCha);
   explicit WaveformStreamID(const DataModel::WaveformStreamID &id);
   WaveformStreamID(const std::string &netCode, const std::string &staCode,
                    const std::string &locCode, const std::string &chaCode);
+
+  static const std::string delimiter;
 
   // Returns the network code
   const std::string &netCode() const;
@@ -38,9 +44,6 @@ class WaveformStreamID {
   bool isValid() const;
 
   friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
-
- protected:
-  static const std::string _delimiter;
 
  private:
   std::string _netCode;
