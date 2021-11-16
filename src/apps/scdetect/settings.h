@@ -22,8 +22,6 @@ const std::string kFnameDebugInfo{"debug_info.json"};
 const std::string kWaveformStreamIdSep{"||"};
 // Separator for public identifiers (i.e. publicIDs)
 const std::string kPublicIdSep{"||"};
-// Separator for so called SNCLs
-const std::string kSNCLSep{"."};
 // Separator for configuration lists
 const std::string kConfigListSep{","};
 

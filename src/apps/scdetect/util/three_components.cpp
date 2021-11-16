@@ -1,7 +1,7 @@
 #include "three_components.h"
 
 #include "../exception.h"
-#include "../settings.h"
+#include "waveform_stream_id.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -52,13 +52,14 @@ const std::string &ThreeComponents::locCode() const { return _locationCode; }
 const std::string &ThreeComponents::chaCode() const { return _channelCode; }
 
 std::string ThreeComponents::sensorLocationStreamId() const {
-  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
-         _locationCode;
+  return _networkCode + WaveformStreamID::delimiter + _stationCode +
+         WaveformStreamID::delimiter + _locationCode;
 }
 
 std::string ThreeComponents::waveformStreamId() const {
-  return _networkCode + settings::kSNCLSep + _stationCode + settings::kSNCLSep +
-         _locationCode + settings::kSNCLSep + _channelCode;
+  return _networkCode + WaveformStreamID::delimiter + _stationCode +
+         WaveformStreamID::delimiter + _locationCode +
+         WaveformStreamID::delimiter + _channelCode;
 }
 
 bool operator==(const ThreeComponents &lhs, const ThreeComponents &rhs) {

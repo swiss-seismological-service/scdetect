@@ -3,7 +3,6 @@
 #include <seiscomp/core/strings.h>
 
 #include "../exception.h"
-#include "../settings.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -20,7 +19,7 @@ void tokenizeWaveformStreamId(const std::string &str,
   Core::split(tokens, str, WaveformStreamID::delimiter.c_str(), false);
 }
 
-const std::string WaveformStreamID::delimiter{settings::kSNCLSep};
+const std::string WaveformStreamID::delimiter{"."};
 
 WaveformStreamID::WaveformStreamID(const std::string &netStaLocCha) {
   std::vector<std::string> tokens;
