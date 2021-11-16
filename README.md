@@ -81,8 +81,8 @@ The subsequent sections are intended to provide an introduction on how to use
 and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
-2. How to enable [amplitude calculation](#amplitude-calculation) (required for
-   a magnitude estimation based on amplitude-magnitude regression)
+2. How to enable [amplitude calculation](#amplitude-calculation) (required for a
+   magnitude estimation based on amplitude-magnitude regression)
 3. How to access
    [metadata and configuration](#inventory-events-and-configuration) from the
    database or from plain files
@@ -362,6 +362,7 @@ configuration parameters:
   frequency. Both the template waveform and the stream to be processed may be
   required to be resampled to the sampling frequency specified. Note that data
   is resampled **before** being filtered.
+
 #### Stream configuration defaults
 
 The following stream configuration default parameters may be defined within the
@@ -445,8 +446,8 @@ streams for a certain sensor location w.r.t. velocity seismograms). In order to
 provide dedicated configuration for different sensor locations `scdetect` makes
 use of
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
-concept. Amplitudes are calculated only for those sensor locations with
-bindings configuration available.
+concept. Amplitudes are calculated only for those sensor locations with bindings
+configuration available.
 
 For those users already familiar with
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
@@ -464,6 +465,7 @@ frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html
 . Alternatively, *key files* may be created manually.
 
 **Creating key files** (`scconfig`):
+
 1. Create an *amplitude profile* for a sensor location. As a bare minimum
    specify at least the `locationCode` and `channelCode` attributes.
 
