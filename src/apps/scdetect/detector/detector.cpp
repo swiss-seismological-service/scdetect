@@ -596,14 +596,6 @@ void Detector::storeTemplateResult(
     throw TemplateMatchingError{msg};
   }
 
-#ifdef SCDETECT_DEBUG
-  const auto &tw{result->timeWindow};
-  SCDETECT_LOG_DEBUG_PROCESSOR(
-      processor, "[%s] (%-27s - %-27s): fit=%9f, lag=%10f",
-      record->streamID().c_str(), tw.startTime().iso().c_str(),
-      tw.endTime().iso().c_str(), result->coefficient, result->lag);
-#endif
-
   _linker.feed(processor, result);
 }
 

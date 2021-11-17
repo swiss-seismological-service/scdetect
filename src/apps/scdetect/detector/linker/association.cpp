@@ -37,7 +37,7 @@ operator()(const Seiscomp::detect::detector::linker::Association::TemplateResult
       ret, std::hash<Seiscomp::detect::detector::Arrival>{}(tr.arrival));
 
   if (tr.matchResult) {
-    boost::hash_combine(ret, std::hash<double>{}(tr.matchResult->coefficient));
+    boost::hash_combine(ret, std::hash<double>{}(tr.resultIt->coefficient));
   }
 
   return ret;

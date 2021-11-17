@@ -113,32 +113,49 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
     auto &linkerProc{it->second};
     // create a new arrival from a *template arrival*
     auto newArrival{linkerProc.arrival};
+
     const auto templateStartTime{linkerProc.proc->templateStartTime()};
     if (templateStartTime) {
       // XXX(damb): recompute the pickOffset; the template proc might have
       // changed the underlying template waveform (due to resampling)
       const auto pickOffset{linkerProc.arrival.pick.time - *templateStartTime};
-      const auto time{res->timeWindow.startTime() + Core::TimeSpan{res->lag} +
-                      pickOffset};
-      newArrival.pick.time = time;
+      for (auto valueIt{res->localMaxima.begin()};
+           valueIt != res->localMaxima.end(); ++valueIt) {
+        const auto time{res->timeWindow.startTime() +
+                        Core::TimeSpan{valueIt->lag} + pickOffset};
+        newArrival.pick.time = time;
 
-      linker::Association::TemplateResult templateResult{newArrival, res};
-      // filter/drop based on merging strategy
-      if (_mergingStrategy && _thresAssociation &&
-          !_mergingStrategy->operator()(
-              templateResult, *_thresAssociation,
-              linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
+        linker::Association::TemplateResult templateResult{newArrival, valueIt,
+                                                           res};
+        // filter/drop based on merging strategy
+        if (_mergingStrategy && _thresAssociation &&
+            !_mergingStrategy->operator()(
+                templateResult, *_thresAssociation,
+                linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
 #ifdef SCDETECT_DEBUG
-        SCDETECT_LOG_DEBUG_PROCESSOR(proc,
-                                     "Dropping result due to merging strategy "
-                                     "applied: fit=%9f, lag=%10f",
-                                     templateResult.matchResult->coefficient,
-                                     templateResult.matchResult->lag);
+          SCDETECT_LOG_DEBUG_PROCESSOR(
+              proc,
+              "[%s] [%s - %s] Dropping result due to merging "
+              "strategy applied: time%s, fit=%9f, lag=%10f",
+              newArrival.pick.waveformStreamId.c_str(),
+              res->timeWindow.startTime().iso().c_str(),
+              res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+              valueIt->coefficient, valueIt->lag);
 #endif
-        return;
-      }
+          continue;
+        }
 
-      process(proc, templateResult);
+#ifdef SCDETECT_DEBUG
+        SCDETECT_LOG_DEBUG_PROCESSOR(
+            proc,
+            "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
+            newArrival.pick.waveformStreamId.c_str(),
+            res->timeWindow.startTime().iso().c_str(),
+            res->timeWindow.endTime().iso().c_str(), valueIt->coefficient,
+            valueIt->lag, time.iso().c_str());
+#endif
+        process(proc, templateResult);
+      }
     }
   }
 }
@@ -157,7 +174,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     _pot.enable();
 
     const auto &procId{proc->id()};
-    const auto &matchResult{res.matchResult};
+    auto resultIt{res.resultIt};
     // merge result into existing events
     for (auto eventIt = std::begin(_queue); eventIt != std::end(_queue);
          ++eventIt) {
@@ -165,7 +182,8 @@ void Linker::process(const TemplateWaveformProcessor *proc,
         auto &templResults{eventIt->association.results};
         auto it{templResults.find(procId)};
         if (it == templResults.end() ||
-            matchResult->coefficient > it->second.matchResult->coefficient) {
+            resultIt->coefficient > it->second.resultIt->coefficient) {
+          // create POT
           std::vector<Arrival> arrivals{res.arrival};
           std::unordered_set<std::string> wfIds;
           for (const auto &templResultPair : templResults) {
@@ -256,7 +274,7 @@ void Linker::Event::feed(const std::string &procId,
   std::transform(std::begin(templateResults), std::end(templateResults),
                  std::back_inserter(fits),
                  [](const linker::Association::TemplateResults::value_type &p) {
-                   return p.second.matchResult->coefficient;
+                   return p.second.resultIt->coefficient;
                  });
 
   // compute the overall event's score

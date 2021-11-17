@@ -16,13 +16,13 @@ inline bool LinkAllResults::operator()(
 bool LinkIfGreaterEqualAssociationThres::operator()(
     const Association::TemplateResult &result, double associationThres,
     double mergingThres) {
-  return result.matchResult->coefficient >= associationThres;
+  return result.resultIt->coefficient >= associationThres;
 }
 
 bool LinkIfGreaterEqualMergingThres::operator()(
     const Association::TemplateResult &result, double associationThres,
     double mergingThres) {
-  return result.matchResult->coefficient >= mergingThres;
+  return result.resultIt->coefficient >= mergingThres;
 }
 
 }  // namespace linker

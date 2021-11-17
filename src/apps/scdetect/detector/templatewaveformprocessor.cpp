@@ -1,6 +1,8 @@
 #include "templatewaveformprocessor.h"
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -16,6 +18,23 @@
 namespace Seiscomp {
 namespace detect {
 namespace detector {
+
+namespace detail {
+
+void LocalMaxima::feed(double coefficient, std::size_t lagIdx) {
+  if (!std::isfinite(coefficient)) {
+    return;
+  }
+
+  if (coefficient < prevCoefficient && notDecreasing) {
+    values.push_back({prevCoefficient, --lagIdx});
+  }
+
+  notDecreasing = coefficient >= prevCoefficient;
+  prevCoefficient = coefficient;
+}
+
+}  // namespace detail
 
 TemplateWaveformProcessor::TemplateWaveformProcessor(
     const GenericRecordCPtr &waveform, const std::string filterId,
@@ -102,28 +121,29 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
         record->startTime() + Core::TimeSpan{record->timeWindow().length() * t};
   }
 
-  double coefficient{std::nan("")};
-  size_t lagIdx{0};
-  // determine the first maximum correlation coefficient
+  detail::LocalMaxima maxima;
   for (size_t i{static_cast<size_t>(startIdx)}; i < n; ++i) {
-    const double v{filteredData[i]};
-    if (!isfinite(coefficient) || coefficient < v) {
-      coefficient = v;
-      lagIdx = i;
-    }
+    maxima.feed(filteredData[i], i);
   }
 
-  // take cross-correlation filter delay into account i.e. the template
-  // processor's result is referring to a time window shifted to the past
-  const auto matchIdx{
-      static_cast<int>(lagIdx - _crossCorrelation.templateSize() + 1)};
-  const auto t{static_cast<double>(matchIdx) / n};
-  const Core::TimeSpan template_length{_crossCorrelation.templateLength()};
-  const Core::TimeWindow tw{start, record->endTime()};
+  if (maxima.values.empty()) {
+    return;
+  }
 
+  const Core::TimeSpan templateLength{_crossCorrelation.templateLength()};
+  const Core::TimeWindow tw{start, record->endTime()};
   auto result{utils::make_smart<MatchResult>()};
-  result->coefficient = coefficient;
-  result->lag = tw.length() * t;
+  for (const auto &m : maxima.values) {
+    // take cross-correlation filter delay into account i.e. the template
+    // processor's result is referring to a time window shifted to the past
+    const auto matchIdx{
+        static_cast<int>(m.lagIdx - _crossCorrelation.templateSize() + 1)};
+    const auto t{static_cast<double>(matchIdx) / n};
+
+    result->localMaxima.push_back(
+        MatchResult::Value{m.coefficient, tw.length() * t});
+  }
+
   result->timeWindow = tw;
 
   emitResult(record, result.get());
