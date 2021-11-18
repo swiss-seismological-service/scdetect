@@ -168,6 +168,9 @@ class Detector : public detect::Processor {
   void storeLinkerResult(const linker::Association &linkerResult);
 
  private:
+  // Safety margin for linker on hold duration
+  static const Core::TimeSpan _linkerSafetyMargin;
+
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
@@ -209,8 +212,6 @@ class Detector : public detect::Processor {
   Linker _linker;
   using ResultQueue = std::deque<linker::Association>;
   ResultQueue _resultQueue;
-  // Safety margin for linker on hold duration
-  Core::TimeSpan _linkerSafetyMargin{1.0};
 
   // Maximum data latency
   boost::optional<Core::TimeSpan> _maxLatency;

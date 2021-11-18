@@ -19,6 +19,8 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
+const Core::TimeSpan Detector::_linkerSafetyMargin{1.0};
+
 Detector::Detector(const detect::Processor *detector,
                    const DataModel::OriginCPtr &origin)
     : Processor{detector->id()}, _origin{origin} {
