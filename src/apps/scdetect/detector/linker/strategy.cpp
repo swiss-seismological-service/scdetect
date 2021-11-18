@@ -1,7 +1,5 @@
 #include "strategy.h"
 
-#include "../../utils.h"
-
 namespace Seiscomp {
 namespace detect {
 namespace detector {
