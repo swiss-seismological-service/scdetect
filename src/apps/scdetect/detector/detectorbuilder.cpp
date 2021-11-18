@@ -269,29 +269,12 @@ DetectorBuilder &DetectorBuilder::setStream(
 
 void DetectorBuilder::finalize() {
   // use a POT to determine the max relative pick offset
-  detector::PickOffsetTable pot{_arrivalPicks};
-
-  // detector initialization time
-  Core::TimeSpan po{pot.pickOffset().value_or(0)};
-  if (po) {
-    using pair_type = TemplateProcessorConfigs::value_type;
-    const auto max{std::max_element(
-        std::begin(_processorConfigs), std::end(_processorConfigs),
-        [](const pair_type &lhs, const pair_type &rhs) {
-          return lhs.second.processor->initTime() <
-                 rhs.second.processor->initTime();
-        })};
-
-    _product->_initTime = (max->second.processor->initTime() > po
-                               ? max->second.processor->initTime()
-                               : po);
-
-  } else if (pot.size()) {
-    _product->_initTime =
-        _processorConfigs.cbegin()->second.processor->initTime();
-  } else {
+  auto hasNoChildren{_processorConfigs.empty()};
+  if (hasNoChildren) {
     _product->disable();
   }
+
+  _product->_initTime = Core::TimeSpan{0.0};
 
   const auto &cfg{_product->_config};
   _product->_detector.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
