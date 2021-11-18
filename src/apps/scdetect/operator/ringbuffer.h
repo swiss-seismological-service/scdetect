@@ -11,7 +11,6 @@
 #include <unordered_map>
 
 #include "../mixin/gapinterpolate.h"
-#include "../settings.h"
 #include "../stream.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
@@ -75,7 +74,7 @@ class RingBufferOperator : public WaveformOperator,
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
   StreamConfigs _streamConfigs;
 
-  Core::TimeSpan _bufferSize{30.0 * settings::kBufferMultiplicator};
+  Core::TimeSpan _bufferSize{60};
 
   // Reference to the processor using the operator
   WaveformProcessor *_processor;

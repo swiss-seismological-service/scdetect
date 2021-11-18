@@ -15,7 +15,6 @@
 
 #include "../eventstore.h"
 #include "../log.h"
-#include "../operator/ringbuffer.h"
 #include "../settings.h"
 #include "../utils.h"
 #include "detectorwaveformprocessor.h"
@@ -49,6 +48,10 @@ DetectorBuilder &DetectorBuilder::setConfig(
   _product->_config = detectorConfig;
 
   _product->_enabled = detectorConfig.enabled;
+
+  _product->setGapThreshold(Core::TimeSpan{detectorConfig.gapThreshold});
+  _product->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
+  _product->setGapInterpolation(detectorConfig.gapInterpolation);
 
   _product->_detector.setMergingStrategy(
       _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
@@ -313,27 +316,10 @@ void DetectorBuilder::finalize() {
     _product->_detector.setMinArrivals(cfg.minArrivals);
   }
 
-  if (cfg.chunkSize < 0) {
-    _product->_detector.setChunkSize(boost::none);
-  } else {
-    _product->_detector.setChunkSize(Core::TimeSpan{cfg.chunkSize});
-  }
-
-  auto bufferingOperator{
-      utils::make_unique<waveform_operator::RingBufferOperator>(
-          _product.get())};
-  bufferingOperator->setGapThreshold(Core::TimeSpan{cfg.gapThreshold});
-  bufferingOperator->setGapTolerance(Core::TimeSpan{cfg.gapTolerance});
-  bufferingOperator->setGapInterpolation(cfg.gapInterpolation);
-
   std::unordered_set<std::string> usedPicks;
   for (auto &procConfigPair : _processorConfigs) {
     const auto &streamId{procConfigPair.first};
     auto &procConfig{procConfigPair.second};
-
-    bufferingOperator->add(streamId,
-                           Core::TimeSpan{std::max(30.0, cfg.chunkSize) *
-                                          settings::kBufferMultiplicator});
 
     const auto &meta{procConfig.metadata};
     boost::optional<std::string> phase_hint;
@@ -343,8 +329,7 @@ void DetectorBuilder::finalize() {
     }
     // initialize detection processing
     _product->_detector.add(
-        std::move(procConfig.processor), bufferingOperator->get(streamId),
-        streamId,
+        std::move(procConfig.processor), streamId,
         detector::Arrival{
             {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
              meta.pick->time().value() - _product->_origin->time().value()},
@@ -358,7 +343,6 @@ void DetectorBuilder::finalize() {
 
     usedPicks.emplace(meta.pick->publicID());
   }
-  _product->setOperator(bufferingOperator.release());
 
   // attach reference theoretical template arrivals to the product
   if (_product->_publishConfig.createTemplateArrivals) {

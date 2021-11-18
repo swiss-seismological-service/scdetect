@@ -156,8 +156,6 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<int>("minimumArrivals", detectorDefaults.minArrivals);
   _detectorConfig.mergingStrategy =
       pt.get<std::string>("mergingStrategy", detectorDefaults.mergingStrategy);
-  _detectorConfig.chunkSize =
-      pt.get<double>("chunkSize", detectorDefaults.chunkSize);
 
   // patch stream defaults with detector config globals
   auto patchedStreamDefaults{streamDefaults};

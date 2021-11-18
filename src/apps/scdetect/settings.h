@@ -31,7 +31,6 @@ const std::string kTemplateWaveformDurationPickCommentId{
     "scdetectTemplateWaveformDuration"};
 
 constexpr bool kCacheRawWaveforms{true};
-constexpr double kBufferMultiplicator{2};
 constexpr double kTemplateWaveformResampleMargin{2};
 
 }  // namespace settings

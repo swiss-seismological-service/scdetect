@@ -120,11 +120,6 @@ struct DetectorConfig {
   // criteria
   std::string mergingStrategy{"greaterEqualTriggerOnThreshold"};
 
-  // Defines the chunk size in seconds which is used to feed data to template
-  // waveform processors
-  // - setting a negative value forces a default chunk size of 10s
-  double chunkSize{10};
-
   bool isValid(size_t numStreamConfigs) const;
 };
 
