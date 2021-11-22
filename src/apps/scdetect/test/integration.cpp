@@ -159,6 +159,17 @@ Samples dataset{
      /*pathSample=*/"integration/detector/single-detector-multi-stream-0004",
      /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
 
+    // detector: single detector - single stream
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2019-11-05T04:30:00", "expected.scml",
+     /*pathSample=*/"integration/detector/single-detector-single-stream-0000",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*starttime=*/"2019-11-05T04:45:00", "expected.scml",
+     /*pathSample=*/
+     "integration/detector/single-detector-single-stream-0001",
+     /*customFlags=*/{std::make_shared<cli::FlagAmplitudesForce>(false)}},
+
     // processing: resample
     {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
      /*starttime=*/"2020-10-25T19:30:00", "expected.scml",
