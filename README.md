@@ -397,6 +397,7 @@ fallback values will be used.
     "triggerOffThreshold": 0,
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
     "templatePhase": "Pg",
+    "arrivalOffsetThreshold":"",  
     "filter": "",
     "templateFilter": "",
     "initTime": 0,
