@@ -586,7 +586,9 @@ including exemplary RecordStream configurations can be found
 
 Alternatively, the RecordStream can be defined making use of `scdetect`'s `-I [
 --record-url ] URI` CLI flag (Note that this is the standard CLI flag used for
-all SeisComP modules implementing SeisComP's `StreamApplication` interface.).
+all SeisComP modules implementing SeisComP's `StreamApplication` interface.) combined with a local archive.
+
+In that case the miniSEED data records in the local archive must be **sorted by end time**, especially in the case of multistream detection. This could be easily done using [scmssort](https://www.seiscomp.de/doc/apps/scmssort.html). 
 
 In general, with regard to waveform data `scdetect` implements the following
 approach:
