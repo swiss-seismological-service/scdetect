@@ -119,6 +119,7 @@ streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
     "triggerOnThreshold": 0.98,
     "triggerOffThreshold": 0,
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+    "arrivalOffsetThreshold":"",  
     "filter": "",
     "templateFilter": "",
     "streams": [
