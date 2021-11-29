@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "../filter/crosscorrelation.h"
 #include "../waveformprocessor.h"
@@ -15,6 +16,25 @@
 namespace Seiscomp {
 namespace detect {
 namespace detector {
+
+namespace detail {
+
+struct LocalMaxima {
+  struct Value {
+    double coefficient;
+    size_t lagIdx;
+  };
+
+  using Values = std::vector<Value>;
+  Values values;
+
+  double prevCoefficient{-1};
+  bool notDecreasing{false};
+
+  void feed(double coefficient, std::size_t lagIdx);
+};
+
+}  // namespace detail
 
 // Template waveform processor implementation
 // - implements resampling and filtering
@@ -32,10 +52,15 @@ class TemplateWaveformProcessor : public WaveformProcessor {
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
-    double coefficient{std::nan("")};
-    double lag{};  // seconds
+    struct Value {
+      double coefficient;
+      double lag;  // seconds
+    };
 
-    // Time window for w.r.t. the match result
+    using LocalMaxima = std::vector<Value>;
+    LocalMaxima localMaxima;
+
+    // Time window for w.r.t. the match results
     Core::TimeWindow timeWindow;
   };
 

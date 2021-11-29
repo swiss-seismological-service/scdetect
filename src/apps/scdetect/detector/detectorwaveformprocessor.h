@@ -73,7 +73,6 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   bool fill(detect::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
-  bool enoughDataReceived(const StreamState &streamState) const override;
   // Callback function storing `res`
   void storeDetection(const Detector::Result &res);
   // Prepares the detection from `res`

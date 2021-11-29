@@ -60,7 +60,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
                                         const Record *record,
                                         const DoubleArray &filteredData) {
   try {
-    _detector.process(record->streamID());
+    _detector.process(record);
   } catch (detector::Detector::ProcessingError &e) {
     SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
                                    record->streamID().c_str(), e.what());
@@ -103,17 +103,6 @@ bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
   s.receivedSamples += data->size();
 
-  return true;
-}
-
-bool DetectorWaveformProcessor::enoughDataReceived(
-    const StreamState &streamState) const {
-  for (const auto &streamStatePair : _streamStates) {
-    const auto &state{streamStatePair.second};
-    if (state.receivedSamples <= state.neededSamples) {
-      return false;
-    }
-  }
   return true;
 }
 

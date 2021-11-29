@@ -3,7 +3,6 @@
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
-#include <seiscomp/core/recordsequence.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/origin.h>
 
@@ -116,27 +115,21 @@ class Detector : public detect::Processor {
   void setMaxLatency(const boost::optional<Core::TimeSpan> &latency);
   // Returns the maximum allowed data latency configured
   boost::optional<Core::TimeSpan> maxLatency() const;
-  // Sets the processing chunk size. If configured with `boost::none` as much
-  // data is processed as possible as a single chunk.
-  void setChunkSize(const boost::optional<Core::TimeSpan> &chunkSize);
-  // Returns the processing chunk size
-  boost::optional<Core::TimeSpan> chunkSize() const;
   // Returns the number of registered template processors
   size_t getProcessorCount() const;
 
-  // Register the template waveform processor `proc` for processing buffered
-  // data from `buf` where records are identified by the waveform stream
-  // identifier `waveformStreamId`. `proc` is registered together with the
-  // template arrival `arrival` and the sensor location `loc`.
+  // Register the template waveform processor `proc`. Records are identified by
+  // the waveform stream identifier `waveformStreamId`. `proc` is registered
+  // together with the template arrival `arrival` and the sensor location
+  // `loc`.
   void add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
-           const std::shared_ptr<const RecordSequence> &buf,
            const std::string &waveformStreamId, const Arrival &arrival,
            const Detector::SensorLocation &loc,
            const boost::optional<double> &mergingThreshold);
   // Removes the processors processing streams identified by `waveformStreamId`
   void remove(const std::string &waveformStreamId);
 
-  void process(const std::string &waveformStreamIdHint);
+  void process(const Record *record);
   // Reset the detector
   void reset();
   // Terminates the detector
@@ -148,11 +141,12 @@ class Detector : public detect::Processor {
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
+  // Returns `true` if `record` has an acceptable latency, else `false`
+  bool hasAcceptableLatency(const Record *record);
+
   using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
-  bool prepareProcessing(TimeWindows &tws,
-                         const std::string &waveformStreamIdHint);
   // Feed data to template processors
-  bool feed(const TimeWindows &tws);
+  bool feed(const Record *record);
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;
@@ -174,25 +168,22 @@ class Detector : public detect::Processor {
   void storeLinkerResult(const linker::Association &linkerResult);
 
  private:
+  // Safety margin for linker on hold duration
+  static const Core::TimeSpan _linkerSafetyMargin;
+
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
 
-    std::unique_ptr<TemplateWaveformProcessor> processor;
-    // Reference to the record buffer
-    std::shared_ptr<const RecordSequence> buffer;
-
+    // The sensor location w.r.t. the template `processor`
+    SensorLocation sensorLocation;
     // The time window fed
     // XXX(damb): The data time window fed might be different from the data
     // time window processed (e.g. due to the usage of certain waveform
     // operators). Therefore, keep track of the time window fed, too.
     Core::TimeWindow dataTimeWindowFed;
-    // The processor dependent chunk size used to feed data to
-    // `TemplateWaveformProcessor` waveform processors
-    boost::optional<Core::TimeSpan> chunkSize;
 
-    // The sensor location w.r.t. the template `processor`
-    SensorLocation sensorLocation;
+    std::unique_ptr<TemplateWaveformProcessor> processor;
   };
 
   using ProcessorStates = std::unordered_map<std::string, ProcessorState>;
@@ -221,8 +212,6 @@ class Detector : public detect::Processor {
   Linker _linker;
   using ResultQueue = std::deque<linker::Association>;
   ResultQueue _resultQueue;
-  // Safety margin for linker on hold duration
-  Core::TimeSpan _linkerSafetyMargin{1.0};
 
   // Maximum data latency
   boost::optional<Core::TimeSpan> _maxLatency;

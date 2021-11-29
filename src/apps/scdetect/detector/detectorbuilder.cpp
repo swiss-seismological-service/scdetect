@@ -15,7 +15,6 @@
 
 #include "../eventstore.h"
 #include "../log.h"
-#include "../operator/ringbuffer.h"
 #include "../settings.h"
 #include "../utils.h"
 #include "detectorwaveformprocessor.h"
@@ -49,6 +48,10 @@ DetectorBuilder &DetectorBuilder::setConfig(
   _product->_config = detectorConfig;
 
   _product->_enabled = detectorConfig.enabled;
+
+  _product->setGapThreshold(Core::TimeSpan{detectorConfig.gapThreshold});
+  _product->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
+  _product->setGapInterpolation(detectorConfig.gapInterpolation);
 
   _product->_detector.setMergingStrategy(
       _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
@@ -266,29 +269,12 @@ DetectorBuilder &DetectorBuilder::setStream(
 
 void DetectorBuilder::finalize() {
   // use a POT to determine the max relative pick offset
-  detector::PickOffsetTable pot{_arrivalPicks};
-
-  // detector initialization time
-  Core::TimeSpan po{pot.pickOffset().value_or(0)};
-  if (po) {
-    using pair_type = TemplateProcessorConfigs::value_type;
-    const auto max{std::max_element(
-        std::begin(_processorConfigs), std::end(_processorConfigs),
-        [](const pair_type &lhs, const pair_type &rhs) {
-          return lhs.second.processor->initTime() <
-                 rhs.second.processor->initTime();
-        })};
-
-    _product->_initTime = (max->second.processor->initTime() > po
-                               ? max->second.processor->initTime()
-                               : po);
-
-  } else if (pot.size()) {
-    _product->_initTime =
-        _processorConfigs.cbegin()->second.processor->initTime();
-  } else {
+  auto hasNoChildren{_processorConfigs.empty()};
+  if (hasNoChildren) {
     _product->disable();
   }
+
+  _product->_initTime = Core::TimeSpan{0.0};
 
   const auto &cfg{_product->_config};
   _product->_detector.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
@@ -313,27 +299,10 @@ void DetectorBuilder::finalize() {
     _product->_detector.setMinArrivals(cfg.minArrivals);
   }
 
-  if (cfg.chunkSize < 0) {
-    _product->_detector.setChunkSize(boost::none);
-  } else {
-    _product->_detector.setChunkSize(Core::TimeSpan{cfg.chunkSize});
-  }
-
-  auto bufferingOperator{
-      utils::make_unique<waveform_operator::RingBufferOperator>(
-          _product.get())};
-  bufferingOperator->setGapThreshold(Core::TimeSpan{cfg.gapThreshold});
-  bufferingOperator->setGapTolerance(Core::TimeSpan{cfg.gapTolerance});
-  bufferingOperator->setGapInterpolation(cfg.gapInterpolation);
-
   std::unordered_set<std::string> usedPicks;
   for (auto &procConfigPair : _processorConfigs) {
     const auto &streamId{procConfigPair.first};
     auto &procConfig{procConfigPair.second};
-
-    bufferingOperator->add(streamId,
-                           Core::TimeSpan{std::max(30.0, cfg.chunkSize) *
-                                          settings::kBufferMultiplicator});
 
     const auto &meta{procConfig.metadata};
     boost::optional<std::string> phase_hint;
@@ -343,8 +312,7 @@ void DetectorBuilder::finalize() {
     }
     // initialize detection processing
     _product->_detector.add(
-        std::move(procConfig.processor), bufferingOperator->get(streamId),
-        streamId,
+        std::move(procConfig.processor), streamId,
         detector::Arrival{
             {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
              meta.pick->time().value() - _product->_origin->time().value()},
@@ -358,7 +326,6 @@ void DetectorBuilder::finalize() {
 
     usedPicks.emplace(meta.pick->publicID());
   }
-  _product->setOperator(bufferingOperator.release());
 
   // attach reference theoretical template arrivals to the product
   if (_product->_publishConfig.createTemplateArrivals) {
