@@ -24,6 +24,9 @@
 `scdetect` is a [SeisComP](https://github.com/SeisComP) extension module that
 implements both real-time and classical offline earthquake detection based on
 waveform cross-correlation, also called matched filtering or template matching.
+Again, the underlying cross-correlation algorithm is based on computing
+the [Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient)
+.
 
 The module allows both single-stream and multi-stream earthquake detection.
 
