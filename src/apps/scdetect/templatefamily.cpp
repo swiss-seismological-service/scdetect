@@ -17,7 +17,7 @@
 #include "seiscomp/datamodel/eventparameters.h"
 #include "seiscomp/datamodel/sensorlocation.h"
 #include "settings.h"
-#include "util/three_components.h"
+#include "util/horizontal_components.h"
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
 #include "waveformprocessor.h"
@@ -226,14 +226,13 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           });
 
       try {
-        util::ThreeComponents threeComponents{
-            Client::Inventory::Instance(), waveformId.netCode(),
-            waveformId.staCode(),          waveformId.locCode(),
-            waveformId.chaCode(),          arrivalTime};
+        util::HorizontalComponents horizontalComponents{
+            Client::Inventory::Instance(),  tokens[0],  tokens[1], tokens[2],
+            sensorLocationConfig.channelId, arrivalTime};
 
-        auto& sensorLocationBindings{
-            bindings.at(waveformId.netCode(), waveformId.staCode(),
-                        waveformId.locCode(), waveformId.chaCode())};
+        auto& sensorLocationBindings{bindings.at(
+            horizontalComponents.netCode(), horizontalComponents.staCode(),
+            horizontalComponents.locCode(), sensorLocationConfig.channelId)};
         auto& amplitudeProcessingConfig{
             sensorLocationBindings.amplitudeProcessingConfig};
 
@@ -256,26 +255,36 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
             amplitudeProcessingConfig.saturationThreshold);
 
         // register components
-        for (auto s : threeComponents) {
+        for (auto s : horizontalComponents) {
           Processing::Stream stream;
           stream.init(s);
 
-          const AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig{
-              sensorLocationBindings.at(s->code()).deconvolutionConfig};
-          rmsAmplitudeProcessor.add(waveformId.netCode(), waveformId.staCode(),
-                                    waveformId.locCode(), stream,
-                                    deconvolutionConfig);
+          try {
+            rmsAmplitudeProcessor.add(
+                horizontalComponents.netCode(), horizontalComponents.staCode(),
+                horizontalComponents.locCode(), stream,
+                AmplitudeProcessor::DeconvolutionConfig{
+                    sensorLocationBindings.at(s->code()).deconvolutionConfig});
+          } catch (std::out_of_range&) {
+            // binding lookup failed
+            rmsAmplitudeProcessor.add(
+                horizontalComponents.netCode(), horizontalComponents.staCode(),
+                horizontalComponents.locCode(), stream,
+                AmplitudeProcessor::DeconvolutionConfig{
+                    binding::StreamConfig::DeconvolutionConfig{}});
+          }
         }
 
         WaveformHandlerIface::ProcessingConfig processingConfig;
         // let the amplitude processor decide how to process the waveform
         processingConfig.demean = false;
-        // load waveforms for all components and feed the data to the processor
-        for (auto c : threeComponents) {
+        // load waveforms for the horizontal components and feed the data to
+        // the processor
+        for (auto s : horizontalComponents) {
           GenericRecordCPtr record;
           record = waveformHandler->get(
-              threeComponents.netCode(), threeComponents.staCode(),
-              threeComponents.locCode(), c->code(),
+              horizontalComponents.netCode(), horizontalComponents.staCode(),
+              horizontalComponents.locCode(), s->code(),
               rmsAmplitudeProcessor.safetyTimeWindow(), processingConfig);
           rmsAmplitudeProcessor.feed(record.get());
         }

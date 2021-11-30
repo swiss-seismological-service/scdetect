@@ -45,8 +45,8 @@
 #include "log.h"
 #include "resamplerstore.h"
 #include "settings.h"
+#include "util/horizontal_components.h"
 #include "util/memory.h"
-#include "util/three_components.h"
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
 #include "validators.h"
@@ -366,7 +366,12 @@ bool Application::run() {
 
     SCDETECT_LOG_DEBUG(
         "Subscribing to streams required for detection processing");
-    std::vector<util::ThreeComponents> uniqueThreeComponents;
+    auto cmp = [](const util::HorizontalComponents &lhs,
+                  const util::HorizontalComponents &rhs) {
+      return util::getWaveformStreamId(lhs) < util::getWaveformStreamId(rhs);
+    };
+    std::set<util::HorizontalComponents, decltype(cmp)>
+        uniqueHorizontalComponents{cmp};
     Core::Time amplitudeStreamsSubscriptionTime{
         _config.playbackConfig.startTimeStr.empty()
             ? Core::Time::GMT()
@@ -380,20 +385,10 @@ bool Application::run() {
 
       if (detectorPair.second->publishConfig().createAmplitudes) {
         try {
-          util::ThreeComponents lhs{
+          uniqueHorizontalComponents.emplace(util::HorizontalComponents{
               Client::Inventory::Instance(), waveformStreamId.netCode(),
-              waveformStreamId.staCode(),    waveformStreamId.locCode(),
-              waveformStreamId.chaCode(),    amplitudeStreamsSubscriptionTime};
-
-          if (std::find_if(
-                  std::begin(uniqueThreeComponents),
-                  std::end(uniqueThreeComponents),
-                  [&lhs](
-                      const decltype(uniqueThreeComponents)::value_type &rhs) {
-                    return lhs == rhs;
-                  }) == uniqueThreeComponents.end()) {
-            uniqueThreeComponents.push_back(lhs);
-          }
+              waveformStreamId.staCode(), waveformStreamId.locCode(),
+              waveformStreamId.chaCode(), amplitudeStreamsSubscriptionTime});
         } catch (Exception &e) {
           SCDETECT_LOG_WARNING(
               "%s.%s.%s.%s: %s. Skipping amplitude calculation.",
@@ -406,14 +401,14 @@ bool Application::run() {
       }
     }
 
-    if (!uniqueThreeComponents.empty()) {
+    if (!uniqueHorizontalComponents.empty()) {
       SCDETECT_LOG_DEBUG(
           "Subscribing to streams required for amplitude calculation");
-      for (const auto &threeComponents : uniqueThreeComponents) {
-        for (auto c : threeComponents) {
-          recordStream()->addStream(threeComponents.netCode(),
-                                    threeComponents.staCode(),
-                                    threeComponents.locCode(), c->code());
+      for (const auto &horizontalComponents : uniqueHorizontalComponents) {
+        for (auto c : horizontalComponents) {
+          recordStream()->addStream(horizontalComponents.netCode(),
+                                    horizontalComponents.staCode(),
+                                    horizontalComponents.locCode(), c->code());
         }
       }
     }
@@ -1054,34 +1049,34 @@ bool Application::initAmplitudeProcessors(
     const detector::DetectorWaveformProcessor *processor,
     const detector::DetectorWaveformProcessor::DetectionCPtr &detection,
     const DataModel::OriginCPtr &origin, const Picks &picks) {
-  struct ThreeComponentItem {
-    util::ThreeComponents threeComponents;
+  struct ComponentItem {
+    util::HorizontalComponents horizontalComponents;
     // Picks which are going to be associated with the `AmplitudeProcessor`;
     // note that the pick order is not relevant.
     Picks picks;
   };
 
-  std::vector<ThreeComponentItem> uniqueThreeComponentsItems;
+  std::vector<ComponentItem> uniqueComponentItems;
   for (const auto &pick : picks) {
     const util::WaveformStreamID waveformStreamId{pick->waveformID()};
     try {
-      const util::ThreeComponents threeComponents{
+      const util::HorizontalComponents horizontalComponents{
           Client::Inventory::Instance(), waveformStreamId.netCode(),
           waveformStreamId.staCode(),    waveformStreamId.locCode(),
           waveformStreamId.chaCode(),    pick->time().value()};
 
-      auto it{std::find_if(std::begin(uniqueThreeComponentsItems),
-                           std::end(uniqueThreeComponentsItems),
-                           [&threeComponents](const ThreeComponentItem &item) {
-                             return item.threeComponents == threeComponents;
-                           })};
+      auto it{std::find_if(
+          std::begin(uniqueComponentItems), std::end(uniqueComponentItems),
+          [&horizontalComponents](const ComponentItem &item) {
+            return item.horizontalComponents == horizontalComponents;
+          })};
 
-      if (it != uniqueThreeComponentsItems.end()) {
+      if (it != uniqueComponentItems.end()) {
         it->picks.push_back(pick);
         continue;
       }
 
-      uniqueThreeComponentsItems.push_back({threeComponents, {pick}});
+      uniqueComponentItems.push_back({horizontalComponents, {pick}});
     } catch (Exception &e) {
       SCDETECT_LOG_WARNING("%s.%s.%s.%s: %s (pick_time=%s)",
                            waveformStreamId.netCode().c_str(),
@@ -1093,15 +1088,16 @@ bool Application::initAmplitudeProcessors(
     }
   }
 
-  for (const auto &threeComponentsItem : uniqueThreeComponentsItems) {
-    const auto &threeComponents{threeComponentsItem.threeComponents};
-    const auto waveformStreamId{threeComponents.waveformStreamId()};
+  for (const auto &componentsItem : uniqueComponentItems) {
+    const auto &horizontalComponents{componentsItem.horizontalComponents};
+    const auto waveformStreamId{
+        util::getWaveformStreamId(horizontalComponents)};
 
     binding::SensorLocationConfig sensorLocationConfig;
     try {
-      sensorLocationConfig =
-          _bindings.at(threeComponents.netCode(), threeComponents.staCode(),
-                       threeComponents.locCode(), threeComponents.chaCode());
+      sensorLocationConfig = _bindings.at(
+          horizontalComponents.netCode(), horizontalComponents.staCode(),
+          horizontalComponents.locCode(), horizontalComponents.chaCode());
     } catch (std::out_of_range &e) {
       SCDETECT_LOG_DEBUG(
           "%s: failed to look up bindings required for amplitude processor "

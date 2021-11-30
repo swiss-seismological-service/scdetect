@@ -53,7 +53,7 @@ set(SOURCES_integration
   ../stream.cpp
   ../templatefamily.cpp
   ../timewindowprocessor.cpp
-  ../util/three_components.cpp
+  ../util/horizontal_components.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../validators.cpp

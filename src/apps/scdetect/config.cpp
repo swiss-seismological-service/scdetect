@@ -240,7 +240,7 @@ TemplateFamilyConfig::ReferenceConfig::TemplateConfigsIdx
     TemplateFamilyConfig::ReferenceConfig::_templateConfigsIdx;
 
 const TemplateFamilyConfig::AllowedMagnitudeTypes
-    TemplateFamilyConfig::_allowedMagnitudeTypes{"Mw", "ML"};
+    TemplateFamilyConfig::_allowedMagnitudeTypes{"MLx"};
 
 TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
     const boost::property_tree::ptree &pt,
@@ -381,7 +381,6 @@ TemplateFamilyConfig::TemplateFamilyConfig(
     const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults)
     : _id{pt.get<std::string>("id", util::createUUID())},
-      _magnitudeType{pt.get<std::string>("magnitudeType", "Mw")} {
   try {
     validateMagnitudeType(_magnitudeType);
   } catch (config::ValidationError &) {
@@ -389,6 +388,7 @@ TemplateFamilyConfig::TemplateFamilyConfig(
     _magnitudeType = "";
     throw;
   }
+      _magnitudeType{pt.get<std::string>("magnitudeType", "MLx")} {
 
   // parse template family configuration defaults
   const auto lowerLimitDefault{pt.get_optional<double>("lowerLimit")};
