@@ -20,7 +20,7 @@
 namespace Seiscomp {
 namespace detect {
 
-// Implements a template family
+// Implements a RMS amplitude based template family
 class TemplateFamily {
  public:
   // Defines available magnitude types
