@@ -387,22 +387,14 @@ TemplateFamilyConfig::TemplateFamilyConfig(
     const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults)
     : _id{pt.get<std::string>("id", util::createUUID())},
-  try {
-    validateMagnitudeType(_magnitudeType);
-  } catch (config::ValidationError &) {
-    _id = "";
-    _magnitudeType = "";
-    throw;
-  }
       _magnitudeType{pt.get<std::string>("magnitudeType", "MLx")} {
+  validateMagnitudeType(_magnitudeType);
 
   // parse template family configuration defaults
   const auto lowerLimitDefault{pt.get_optional<double>("lowerLimit")};
   const auto upperLimitDefault{pt.get_optional<double>("upperLimit")};
   if (lowerLimitDefault && upperLimitDefault &&
       *upperLimitDefault <= *lowerLimitDefault) {
-    _id = "";
-    _magnitudeType = "";
     throw config::ValidationError{
         "invalid configuration: `\"lowerLimit\" must be greater than "
         "\"upperLimit\""};
