@@ -179,7 +179,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get_optional<std::string>("templateFilter");
 
   // initialize stream configs
-  for (const auto &streamConfigPair : pt.find("streams")->second) {
+  for (const auto &streamConfigPair : pt.get_child("streams")) {
     const auto &sc{streamConfigPair.second};
 
     std::string wfStreamId;
@@ -258,26 +258,27 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
   if (oId && !oId.value().empty()) {
     // explicit configuration
-    for (const auto &streamConfigPt : pt.get_child("streams")) {
-      const auto &pt{streamConfigPt.second};
+    for (const auto &streamConfigPair : pt.get_child("streams")) {
+      const auto &streamConfigPt{streamConfigPair.second};
       SensorLocationConfig sensorLocationConfig;
       try {
-        const auto waveformId{
-            util::WaveformStreamID{pt.get<std::string>("templateWaveformId")}};
+        const auto waveformId{util::WaveformStreamID{
+            streamConfigPt.get<std::string>("templateWaveformId")}};
         sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
+        sensorLocationConfig.channelId = waveformId.chaCode();
       } catch (ValueException &e) {
         throw config::ValidationError{"invalid configuration: " +
                                       std::string{e.what()}};
       }
 
-      sensorLocationConfig.phase =
-          pt.get<std::string>("templatePhase", sensorLocationDefaults.phase);
+      sensorLocationConfig.phase = streamConfigPt.get<std::string>(
+          "templatePhase", sensorLocationDefaults.phase);
       if (sensorLocationConfig.phase.empty()) {
         sensorLocationConfig.phase = sensorLocationDefaults.phase;
       }
-      sensorLocationConfig.waveformStart = pt.get<double>(
+      sensorLocationConfig.waveformStart = streamConfigPt.get<double>(
           "templateWaveformStart", sensorLocationDefaults.waveformStart);
-      sensorLocationConfig.waveformEnd = pt.get<double>(
+      sensorLocationConfig.waveformEnd = streamConfigPt.get<double>(
           "templateWaveformEnd", sensorLocationDefaults.waveformEnd);
 
       // XXX(damb): explicit references (i.e. those not referencing a detector
@@ -299,23 +300,26 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
           "invalid configuration: invalid \"detectorId\": " + *detectorId};
     }
 
-    for (const auto &streamConfigPt : pt.get_child("streams")) {
-      const auto &pt{streamConfigPt.second};
+    for (const auto &streamConfigPair : pt.get_child("streams")) {
+      const auto &streamConfigPt{streamConfigPair.second};
 
       SensorLocationConfig sensorLocationConfig;
       detect::StreamConfig detectorStreamConfig;
       try {
         const auto waveformId{util::WaveformStreamID{
-            pt.get_value<std::string>("templateWaveformId")}};
+            streamConfigPt.get<std::string>("templateWaveformId")}};
 
         detectorStreamConfig = it->second->at(util::to_string(waveformId));
 
         sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
-        sensorLocationConfig.lowerLimit = pt.get_optional<double>("lowerLimit");
+        sensorLocationConfig.channelId = waveformId.chaCode();
+        sensorLocationConfig.lowerLimit =
+            streamConfigPt.get_optional<double>("lowerLimit");
         if (!sensorLocationConfig.lowerLimit) {
           sensorLocationConfig.lowerLimit = sensorLocationDefaults.lowerLimit;
         }
-        sensorLocationConfig.upperLimit = pt.get_optional<double>("upperLimit");
+        sensorLocationConfig.upperLimit =
+            streamConfigPt.get_optional<double>("upperLimit");
         if (!sensorLocationConfig.upperLimit) {
           sensorLocationConfig.upperLimit = sensorLocationDefaults.upperLimit;
         }
@@ -332,7 +336,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
         throw config::ParserException{
             "invalid configuration: failed to look up stream configuration for "
             "stream: " +
-            pt.get_value<std::string>()};
+            streamConfigPt.get<std::string>("templateWaveformId")};
       } catch (ValueException &e) {
         throw config::ValidationError{"invalid configuration: " +
                                       std::string{e.what()}};
@@ -343,6 +347,8 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
           detectorStreamConfig.templateConfig.wfStart;
       sensorLocationConfig.waveformEnd =
           detectorStreamConfig.templateConfig.wfEnd;
+
+      sensorLocationConfigs.emplace(sensorLocationConfig);
     }
 
     if (sensorLocationConfigs.empty()) {
@@ -421,10 +427,10 @@ void TemplateFamilyConfig::loadReferenceConfigs(
     const std::vector<TemplateConfig> &templateConfigs,
     const ReferenceConfig::SensorLocationConfig &sensorLocationDefaults) {
   bool hasDetectorReference{false};
-  for (const auto &referenceConfigPt : pt) {
-    const auto &pt{referenceConfigPt.second};
+  for (const auto &referenceConfigPair : pt) {
+    const auto &referenceConfigPt{referenceConfigPair.second};
 
-    ReferenceConfig referenceConfig{pt, templateConfigs,
+    ReferenceConfig referenceConfig{referenceConfigPt, templateConfigs,
                                     sensorLocationDefaults};
     if (referenceConfig.referencesDetector()) {
       hasDetectorReference = true;
