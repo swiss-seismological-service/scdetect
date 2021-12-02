@@ -1078,12 +1078,10 @@ bool Application::initAmplitudeProcessors(
 
       uniqueComponentItems.push_back({horizontalComponents, {pick}});
     } catch (Exception &e) {
-      SCDETECT_LOG_WARNING("%s.%s.%s.%s: %s (pick_time=%s)",
-                           waveformStreamId.netCode().c_str(),
-                           waveformStreamId.staCode().c_str(),
-                           waveformStreamId.locCode().c_str(),
-                           waveformStreamId.chaCode().c_str(), e.what(),
-                           pick->time().value().iso().c_str());
+      logging::TaggedMessage msg{util::to_string(waveformStreamId),
+                                 std::string{e.what()} + "(pick_time=" +
+                                     pick->time().value().iso() + ")"};
+      SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
       continue;
     }
   }
