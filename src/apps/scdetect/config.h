@@ -208,13 +208,15 @@ class TemplateFamilyConfig {
       std::string phase{"Pg"};
 
       std::string waveformId;
-      double waveformStart{-2};
-      double waveformEnd{2};
+      std::string channelId;
 
       // Defines the lower limit for magnitude calculation
       boost::optional<double> lowerLimit;
       // Defines the opper limit for magnitude calculation
       boost::optional<double> upperLimit;
+
+      double waveformStart{-2};
+      double waveformEnd{2};
 
       // Compare for order
       bool operator<(const SensorLocationConfig &c) const {
