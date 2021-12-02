@@ -308,7 +308,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       if (rmsAmplitudeProcessor.status() !=
           WaveformProcessor::Status::kFinished) {
         msg.setText(
-            "failed compute rms amplitude: status=" +
+            "failed to compute rms amplitude: status=" +
             std::to_string(util::asInteger(rmsAmplitudeProcessor.status())));
         throw builder::BaseException{logging::to_string(msg)};
       }
