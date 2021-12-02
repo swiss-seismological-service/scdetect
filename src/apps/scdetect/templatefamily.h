@@ -36,7 +36,8 @@ class TemplateFamily {
       boost::optional<std::string> detectorId;
       boost::optional<double> lowerLimit;
       boost::optional<double> upperLimit;
-    } config;
+    };
+    Config config;
 
     // Returns whether the member references a detector
     bool referencesDetector() const;
