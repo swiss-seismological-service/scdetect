@@ -11,6 +11,10 @@ namespace decorator {
 MagnitudeRange::MagnitudeOutOfRange::MagnitudeOutOfRange()
     : MagnitudeProcessor::BaseException{"magnitude out of range"} {}
 
+double MagnitudeRange::compute(const DataModel::Amplitude* amplitude) {
+  return computeMagnitude(amplitude);
+}
+
 void MagnitudeRange::addLimits(const std::string& detectorId,
                                const std::string& sensorLocationId,
                                const boost::optional<double>& lower,

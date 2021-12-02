@@ -15,7 +15,12 @@ class Decorator : public MagnitudeProcessor {
 
   double compute(const DataModel::Amplitude* amplitude) override;
 
+  void finalizeMagnitude(DataModel::StationMagnitude* magnitude) const override;
+
  protected:
+  MagnitudeProcessor* decorated();
+
+ private:
   std::unique_ptr<MagnitudeProcessor> _decorated;
 };
 

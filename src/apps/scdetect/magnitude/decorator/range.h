@@ -26,6 +26,8 @@ class MagnitudeRange : public magnitude::Decorator {
     MagnitudeOutOfRange();
   };
 
+  double compute(const DataModel::Amplitude* amplitude) override;
+
   // Configure a magnitude validity range with regard to magnitudes associated
   // with `detectorId` and `sensorLocationId`
   void addLimits(const std::string& detectorId,
