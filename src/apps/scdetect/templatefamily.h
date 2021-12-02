@@ -43,8 +43,11 @@ class TemplateFamily {
     bool referencesDetector() const;
   };
 
+ private:
   using Members = std::vector<Member>;
-  // Builds a template family
+
+ public:
+  // Builds a RMS amplitude based template family
   //
   // - allows only a single phase to be associated per origin sensor location
   // combination
@@ -100,8 +103,13 @@ class TemplateFamily {
 
   const MagnitudeType& magnitudeType() const;
 
-  Members::const_iterator begin() const noexcept { return _members.cbegin(); }
-  Members::const_iterator end() const noexcept { return _members.cend(); }
+  using const_iterator = Members::const_iterator;
+  using size_type = Members::size_type;
+  const_iterator begin() const noexcept { return _members.begin(); }
+  const_iterator end() const noexcept { return _members.end(); }
+
+  size_type size() const noexcept { return _members.size(); }
+  bool empty() const noexcept { return _members.empty(); }
 
  protected:
   TemplateFamily();
