@@ -81,7 +81,8 @@ class MagnitudeProcessor : public Processor {
     // Emerges the magnitude processor based on `amplitude` or (as a fallback)
     // from `id`
     static std::unique_ptr<MagnitudeProcessor> create(
-        const DataModel::Amplitude* amplitude, const std::string& id = "");
+        const DataModel::Amplitude* amplitude, const std::string& id = "",
+        const std::string& processorId = "");
 
     // Register a template family
     static void registerTemplateFamily(

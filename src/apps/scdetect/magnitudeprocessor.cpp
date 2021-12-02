@@ -88,7 +88,8 @@ bool MagnitudeProcessor::Factory::unregisterFactory(const std::string& id) {
 }
 
 std::unique_ptr<MagnitudeProcessor> MagnitudeProcessor::Factory::create(
-    const DataModel::Amplitude* amplitude, const std::string& id) {
+    const DataModel::Amplitude* amplitude, const std::string& id,
+    const std::string& processorId) {
   auto ret{AdaptedFactory::create(amplitude->type())};
   if (!ret) {
     ret = AdaptedFactory::create(id);
@@ -111,13 +112,17 @@ std::unique_ptr<MagnitudeProcessor> MagnitudeProcessor::Factory::create(
       return nullptr;
     }
 
-    SCDETECT_LOG_DEBUG_PROCESSOR(
-        ret.get(), "Configured processor with template family: id=%s",
+    SCDETECT_LOG_DEBUG_TAGGED(
+        processorId, "Configured processor with template family: id=%s",
         templateFamily->id().c_str());
 
     if (!configureLimits(ret, *detectorId, *sensorLocationId, templateFamily)) {
       return nullptr;
     }
+  }
+
+  if (ret) {
+    ret->setId(processorId);
   }
 
   return ret;
