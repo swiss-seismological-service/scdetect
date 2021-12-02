@@ -143,6 +143,7 @@ struct PublishConfig {
 
   // The origin method identifier
   std::string originMethodId{"DETECT"};
+  std::string amplitudeMethodId{"DETECT"};
 
   std::vector<detector::Arrival> theoreticalTemplateArrivals;
 };
