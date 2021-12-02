@@ -37,7 +37,7 @@
 #include "amplitude/rms.h"
 #include "amplitudeprocessor.h"
 #include "builder.h"
-#include "config.h"
+#include "config/exception.h"
 #include "detector/arrival.h"
 #include "detector/detectorbuilder.h"
 #include "detector/detectorwaveformprocessor.h"
@@ -943,8 +943,9 @@ bool Application::initDetectors(std::ifstream &ifs,
 
     for (const auto &templateSettingPt : pt) {
       try {
-        TemplateConfig tc{templateSettingPt.second, _config.detectorConfig,
-                          _config.streamConfig, _config.publishConfig};
+        config::TemplateConfig tc{templateSettingPt.second,
+                                  _config.detectorConfig, _config.streamConfig,
+                                  _config.publishConfig};
 
         SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
                            tc.detectorId().c_str());

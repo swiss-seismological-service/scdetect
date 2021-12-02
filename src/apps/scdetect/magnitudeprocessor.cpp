@@ -4,7 +4,6 @@
 
 #include <memory>
 
-#include "config.h"
 #include "log.h"
 #include "magnitude/decorator/range.h"
 #include "magnitude/util.h"

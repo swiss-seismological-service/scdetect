@@ -47,7 +47,7 @@ void DetectorWaveformProcessor::terminate() {
   WaveformProcessor::terminate();
 }
 
-const PublishConfig &DetectorWaveformProcessor::publishConfig() const {
+const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
   return _publishConfig;
 }
 

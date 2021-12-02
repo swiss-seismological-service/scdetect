@@ -23,7 +23,8 @@
 
 #include "amplitudeprocessor.h"
 #include "binding.h"
-#include "config.h"
+#include "config/detector.h"
+#include "config/template_family.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
 #include "waveform.h"
@@ -116,11 +117,12 @@ class Application : public Client::StreamApplication {
     std::string amplitudeMessagingGroup{"AMPLITUDE"};
 
     // default configurations
-    PublishConfig publishConfig;
+    config::PublishConfig publishConfig;
 
-    DetectorConfig detectorConfig;
+    config::DetectorConfig detectorConfig;
 
-    StreamConfig streamConfig;
+    config::StreamConfig streamConfig;
+
 
     // binding default configurations
     binding::SensorLocationConfig sensorLocationBindings;

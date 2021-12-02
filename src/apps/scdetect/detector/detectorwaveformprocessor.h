@@ -11,7 +11,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "../config.h"
+#include "../config/detector.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
 #include "detector.h"
@@ -40,7 +40,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     size_t numChannelsAssociated{};
     size_t numChannelsUsed{};
 
-    PublishConfig publishConfig;
+    config::PublishConfig publishConfig;
 
     using TemplateResult = Detector::Result::TemplateResult;
     // Maps the waveform stream identifier with the template result
@@ -58,7 +58,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   void reset() override;
   void terminate() override;
 
-  const PublishConfig &publishConfig() const;
+  const config::PublishConfig &publishConfig() const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
@@ -82,7 +82,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
       std::unordered_map<WaveformStreamID, WaveformProcessor::StreamState>;
   StreamStates _streamStates;
 
-  DetectorConfig _config;
+  config::DetectorConfig _config;
 
   Detector _detector;
   boost::optional<Detector::Result> _detection;
@@ -92,7 +92,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   // Reference to the *template* event
   DataModel::EventPtr _event;
 
-  PublishConfig _publishConfig;
+  config::PublishConfig _publishConfig;
 };
 
 }  // namespace detector

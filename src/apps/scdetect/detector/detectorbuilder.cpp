@@ -47,8 +47,8 @@ DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
 }
 
 DetectorBuilder &DetectorBuilder::setConfig(
-    const PublishConfig &publishConfig, const DetectorConfig &detectorConfig,
-    bool playback) {
+    const config::PublishConfig &publishConfig,
+    const config::DetectorConfig &detectorConfig, bool playback) {
   _product->_publishConfig = publishConfig;
 
   _product->_config = detectorConfig;
@@ -89,7 +89,7 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
 }
 
 DetectorBuilder &DetectorBuilder::setStream(
-    const std::string &streamId, const StreamConfig &streamConfig,
+    const std::string &streamId, const config::StreamConfig &streamConfig,
     WaveformHandlerIface *waveformHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
   util::WaveformStreamID templateWfStreamId{templateStreamId};

@@ -24,7 +24,9 @@ set(SOURCES_integration
   ../app.cpp
   ../binding.cpp
   ../builder.cpp
-  ../config.cpp
+  ../config/detector.cpp
+  ../config/exception.cpp
+  ../config/template_family.cpp
   ../datamodel/ddl.cpp
   ../detail/sqlite.cpp
   ../detector/arrival.cpp

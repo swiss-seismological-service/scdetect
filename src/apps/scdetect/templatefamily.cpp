@@ -34,7 +34,7 @@ const TemplateFamily::Builder::MagnitudeTypeMap
     TemplateFamily::Builder::_magnitudeTypeMap{{"MLx", {"MLhc", "MLh"}}};
 
 TemplateFamily::Builder::Builder(
-    const TemplateFamilyConfig& templateFamilyConfig)
+    const config::TemplateFamilyConfig& templateFamilyConfig)
     : _templateFamilyConfig{templateFamilyConfig} {
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
@@ -440,7 +440,7 @@ bool TemplateFamily::Member::referencesDetector() const {
 TemplateFamily::TemplateFamily() {}
 
 TemplateFamily::Builder TemplateFamily::Create(
-    const TemplateFamilyConfig& templateFamilyConfig) {
+    const config::TemplateFamilyConfig& templateFamilyConfig) {
   return Builder(templateFamilyConfig);
 }
 

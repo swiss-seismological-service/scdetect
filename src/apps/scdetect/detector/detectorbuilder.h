@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "../builder.h"
-#include "../config.h"
+#include "../config/detector.h"
 #include "../waveform.h"
 #include "linker/strategy.h"
 #include "pot.h"
@@ -30,15 +30,15 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
 
   DetectorBuilder &setId(const std::string &id);
 
-  DetectorBuilder &setConfig(const PublishConfig &publishConfig,
-                             const DetectorConfig &detectorConfig,
+  DetectorBuilder &setConfig(const config::PublishConfig &publishConfig,
+                             const config::DetectorConfig &detectorConfig,
                              bool playback);
 
   DetectorBuilder &setEventParameters();
   // Set stream related template configuration where `streamId` refers to the
   // waveform stream identifier of the stream to be processed.
   DetectorBuilder &setStream(const std::string &streamId,
-                             const StreamConfig &streamConfig,
+                             const config::StreamConfig &streamConfig,
                              WaveformHandlerIface *waveformHandler);
 
  protected:

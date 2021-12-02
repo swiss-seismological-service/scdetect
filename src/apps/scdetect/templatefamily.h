@@ -14,7 +14,7 @@
 #include "amplitudeprocessor.h"
 #include "binding.h"
 #include "builder.h"
-#include "config.h"
+#include "config/template_family.h"
 #include "waveform.h"
 
 namespace Seiscomp {
@@ -50,7 +50,7 @@ class TemplateFamily {
   // combination
   class Builder : public detect::Builder<TemplateFamily> {
    public:
-    Builder(const TemplateFamilyConfig& templateFamilyConfig);
+    Builder(const config::TemplateFamilyConfig& templateFamilyConfig);
     // Sets the template family's identifier
     //
     // - allows to explicitly ovveride the `id` (by default the identifier from
@@ -85,7 +85,7 @@ class TemplateFamily {
                         const Record* record,
                         const AmplitudeProcessor::AmplitudeCPtr& amplitude);
 
-    TemplateFamilyConfig _templateFamilyConfig;
+    config::TemplateFamilyConfig _templateFamilyConfig;
 
     using SensorLocationMap =
         std::map<SensorLocationId, TemplateFamily::Member>;
@@ -100,7 +100,8 @@ class TemplateFamily {
   };
 
   friend Builder;
-  static Builder Create(const TemplateFamilyConfig& templateFamilyConfig);
+  static Builder Create(
+      const config::TemplateFamilyConfig& templateFamilyConfig);
 
   const std::string& id() const;
 
