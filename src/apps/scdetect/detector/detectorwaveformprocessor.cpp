@@ -9,7 +9,7 @@ namespace detector {
 
 DetectorWaveformProcessor::DetectorWaveformProcessor(
     const DataModel::OriginCPtr &origin)
-    : _detector{this, origin}, _origin{origin} {}
+    : _detector{origin}, _origin{origin} {}
 
 DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
   return DetectorBuilder(originId);

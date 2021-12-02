@@ -42,6 +42,7 @@ DetectorBuilder::DetectorBuilder(const std::string &originId)
 
 DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
   _product->setId(id);
+  _product->_detector.setId(id);
   return *this;
 }
 
