@@ -140,10 +140,16 @@ struct PublishConfig {
   // Indicates whether to both compute and create amplitudes for a declared
   // origin
   bool createAmplitudes{false};
+  // Indicates whether to both compute and create magnitudes for a declared
+  // origin
+  bool createMagnitudes{false};
+  // A list of magnitudes to be computed
+  std::vector<std::string> magnitudeTypes{"MLx"};
 
   // The origin method identifier
   std::string originMethodId{"DETECT"};
   std::string amplitudeMethodId{"DETECT"};
+  std::string magnitudeMethodId{"DETECT"};
 
   std::vector<detector::Arrival> theoreticalTemplateArrivals;
 };
