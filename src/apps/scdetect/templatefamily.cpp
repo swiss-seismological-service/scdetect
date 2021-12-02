@@ -170,12 +170,16 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           continue;
         }
 
-        util::WaveformStreamID waveformId{sensorLocationConfig.waveformId};
+        std::vector<std::string> tokens;
+        util::tokenizeWaveformStreamId(sensorLocationConfig.waveformId, tokens);
+        if (tokens.size() != 3) {
+          continue;
+        }
+
         // validate the pick's sensor location
         auto templateWaveformSensorLocation{
             Client::Inventory::Instance()->getSensorLocation(
-                waveformId.netCode(), waveformId.staCode(),
-                waveformId.locCode(), p->time().value())};
+                tokens[0], tokens[1], tokens[2], p->time().value())};
         if (!templateWaveformSensorLocation) {
           msg.setText("failed to find sensor location in inventory for time: " +
                       p->time().value().iso());
@@ -203,7 +207,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       const auto arrivalTime{pick->time().value()};
 
-      util::WaveformStreamID waveformId{sensorLocationConfig.waveformId};
+      std::vector<std::string> tokens;
+      util::tokenizeWaveformStreamId(sensorLocationConfig.waveformId, tokens);
+
       amplitude::RMSAmplitude rmsAmplitudeProcessor;
       rmsAmplitudeProcessor.setId(
           _templateFamilyConfig.id() + settings::kProcessorIdSep +
