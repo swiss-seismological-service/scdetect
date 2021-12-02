@@ -23,9 +23,6 @@ namespace detect {
 // Implements a RMS amplitude based template family
 class TemplateFamily {
  public:
-  // Defines available magnitude types
-  enum class MagnitudeType { kMw, kML };
-
   // Defines a template family member
   struct Member {
     DataModel::AmplitudeCPtr amplitude;
@@ -81,20 +78,24 @@ class TemplateFamily {
     void finalize() override;
 
    private:
+    using SensorLocationId = std::string;
+    using OriginId = std::string;
+
     void storeAmplitude(const AmplitudeProcessor* processor,
                         const Record* record,
                         const AmplitudeProcessor::AmplitudeCPtr& amplitude);
 
     TemplateFamilyConfig _templateFamilyConfig;
 
-    using SensorLocationId = std::string;
-    using OriginId = std::string;
-    using Members =
-        std::map<OriginId, std::map<SensorLocationId, TemplateFamily::Member>>;
+    using SensorLocationMap =
+        std::map<SensorLocationId, TemplateFamily::Member>;
+    using Members = std::map<OriginId, SensorLocationMap>;
     Members _members;
 
     using MagnitudeTypeMap =
-        std::unordered_map<std::string, TemplateFamily::MagnitudeType>;
+        std::unordered_map<std::string, std::vector<std::string>>;
+    // Maps the configured template family magnitude type to *real* station
+    // magnitude types
     static const MagnitudeTypeMap _magnitudeTypeMap;
   };
 
@@ -103,7 +104,7 @@ class TemplateFamily {
 
   const std::string& id() const;
 
-  const MagnitudeType& magnitudeType() const;
+  const std::string& magnitudeType() const;
 
   using const_iterator = Members::const_iterator;
   using size_type = Members::size_type;
@@ -121,7 +122,7 @@ class TemplateFamily {
   // The template family identifier
   std::string _id;
   // The template family's magnitude type
-  MagnitudeType _magnitudeType{MagnitudeType::kMw};
+  std::string _magnitudeType{"MLx"};
 };
 
 }  // namespace detect

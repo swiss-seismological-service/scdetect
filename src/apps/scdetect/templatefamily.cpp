@@ -1,21 +1,26 @@
 #include "templatefamily.h"
 
+#include <seiscomp/client/inventory.h>
 #include <seiscomp/core/exceptions.h>
+#include <seiscomp/core/genericrecord.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
+#include <memory>
+#include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "amplitude/rms.h"
+#include "amplitudeprocessor.h"
+#include "binding.h"
 #include "builder.h"
 #include "eventstore.h"
 #include "log.h"
-#include "seiscomp/client/inventory.h"
-#include "seiscomp/core/datetime.h"
-#include "seiscomp/core/genericrecord.h"
-#include "seiscomp/core/timewindow.h"
-#include "seiscomp/datamodel/eventparameters.h"
-#include "seiscomp/datamodel/sensorlocation.h"
 #include "settings.h"
 #include "util/horizontal_components.h"
 #include "util/util.h"
@@ -26,13 +31,15 @@ namespace Seiscomp {
 namespace detect {
 
 const TemplateFamily::Builder::MagnitudeTypeMap
-    TemplateFamily::Builder::_magnitudeTypeMap{
-        {"Mw", TemplateFamily::MagnitudeType::kMw},
-        {"ML", TemplateFamily::MagnitudeType::kML}};
+    TemplateFamily::Builder::_magnitudeTypeMap{{"MLx", {"MLhc", "MLh"}}};
 
 TemplateFamily::Builder::Builder(
     const TemplateFamilyConfig& templateFamilyConfig)
-    : _templateFamilyConfig{templateFamilyConfig} {}
+    : _templateFamilyConfig{templateFamilyConfig} {
+  // XXX(damb): Using `new` to access a non-public ctor; see also
+  // https://abseil.io/tips/134
+  _product = std::unique_ptr<TemplateFamily>{new TemplateFamily{}};
+}
 
 TemplateFamily::Builder& TemplateFamily::Builder::setId(
     const boost::optional<std::string>& id) {
@@ -54,6 +61,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setLimits(
     for (const auto& sensorLocationConfig :
          referenceConfig.sensorLocationConfigs) {
       const auto& sensorLocationId{sensorLocationConfig.waveformId};
+
       auto& originConfig{_members[origin->publicID()]};
       auto& member{originConfig[sensorLocationId]};
       member.config.lowerLimit = lower;
@@ -72,6 +80,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setLimits(
 
 TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
     const boost::optional<std::string>& magnitudeType) {
+  auto configuredMagnitudeType{
+      magnitudeType.value_or(_templateFamilyConfig.magnitudeType())};
+  auto matchingMagnitudeTypes{_magnitudeTypeMap.at(configuredMagnitudeType)};
   for (const auto& referenceConfig : _templateFamilyConfig) {
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
         referenceConfig.originId)};
@@ -80,6 +91,10 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
                                    referenceConfig.originId};
     }
 
+    using AvailableMatchingMagnitudes =
+        std::unordered_map<std::string, DataModel::StationMagnitudeCPtr>;
+    AvailableMatchingMagnitudes availableMatchingMagnitudes;
+    // collect available matching station magnitudes
     for (const auto& sensorLocationConfig :
          referenceConfig.sensorLocationConfigs) {
       const auto& sensorLocationId{sensorLocationConfig.waveformId};
@@ -93,40 +108,59 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
           continue;
         }
 
-        if (stationMagnitude->type() !=
-            magnitudeType.value_or(_templateFamilyConfig.magnitudeType())) {
+        if (std::find(std::begin(matchingMagnitudeTypes),
+                      std::end(matchingMagnitudeTypes),
+                      stationMagnitude->type()) ==
+            matchingMagnitudeTypes.end()) {
           continue;
         }
 
-        DataModel::WaveformStreamID waveformStreamId;
         try {
-          waveformStreamId = amplitude->waveformID();
-        } catch (Core::ValueException&) {
+          DataModel::WaveformStreamID waveformStreamId;
           try {
-            waveformStreamId = stationMagnitude->waveformID();
+            waveformStreamId = amplitude->waveformID();
           } catch (Core::ValueException&) {
-            // missing waveform stream identifier
+            try {
+              waveformStreamId = stationMagnitude->waveformID();
+            } catch (Core::ValueException&) {
+              // missing waveform stream identifier
+              continue;
+            }
+          }
+
+          auto magnitudeSensorLocationId{util::WaveformStreamID{
+              waveformStreamId.networkCode(), waveformStreamId.stationCode(),
+              waveformStreamId.locationCode(), waveformStreamId.channelCode()}
+                                             .sensorLocationStreamId()};
+          if (magnitudeSensorLocationId != sensorLocationId) {
             continue;
           }
-        }
 
-        auto magnitudeSensorLocationId{util::WaveformStreamID{
-            waveformStreamId.networkCode(), waveformStreamId.stationCode(),
-            waveformStreamId.locationCode(), waveformStreamId.channelCode()}
-                                           .sensorLocationStreamId()};
-        if (magnitudeSensorLocationId != sensorLocationId) {
+          availableMatchingMagnitudes.emplace(stationMagnitude->type(),
+                                              stationMagnitude);
+
+        } catch (std::out_of_range&) {
           continue;
         }
+      }
 
-        auto& originConfig{_members[origin->publicID()]};
-        auto& member{originConfig[sensorLocationId]};
-        member.magnitude = stationMagnitude;
+      // assign station magnitudes
+      for (const auto& mType : matchingMagnitudeTypes) {
+        try {
+          auto& magnitudeCandidate{availableMatchingMagnitudes.at(mType)};
+
+          auto& originConfig{_members[origin->publicID()]};
+          auto& member{originConfig[sensorLocationId]};
+          member.magnitude = magnitudeCandidate;
+          break;
+        } catch (std::out_of_range&) {
+          continue;
+        }
       }
     }
   }
 
-  _product->_magnitudeType =
-      _magnitudeTypeMap.at(_templateFamilyConfig.magnitudeType());
+  _product->_magnitudeType = configuredMagnitudeType;
 
   return *this;
 }
@@ -140,6 +174,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       throw builder::BaseException{"failed to find origin with id: " +
                                    referenceConfig.originId};
     }
+
     for (const auto& sensorLocationConfig :
          referenceConfig.sensorLocationConfigs) {
       // use phase code to determine arrival time (i.e. actually the
@@ -411,7 +446,7 @@ TemplateFamily::Builder TemplateFamily::Create(
 
 const std::string& TemplateFamily::id() const { return _id; }
 
-const TemplateFamily::MagnitudeType& TemplateFamily::magnitudeType() const {
+const std::string& TemplateFamily::magnitudeType() const {
   return _magnitudeType;
 }
 
