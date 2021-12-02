@@ -211,10 +211,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       util::tokenizeWaveformStreamId(sensorLocationConfig.waveformId, tokens);
 
       amplitude::RMSAmplitude rmsAmplitudeProcessor;
-      rmsAmplitudeProcessor.setId(
-          _templateFamilyConfig.id() + settings::kProcessorIdSep +
-          referenceConfig.originId + settings::kProcessorIdSep +
-          sensorLocationConfig.waveformId);
+      rmsAmplitudeProcessor.setId(_templateFamilyConfig.id() +
+                                  settings::kProcessorIdSep +
+                                  util::createUUID());
 
       Core::TimeWindow tw{
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformStart},
