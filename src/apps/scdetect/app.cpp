@@ -38,6 +38,7 @@
 #include "amplitudeprocessor.h"
 #include "builder.h"
 #include "config/exception.h"
+#include "config/validators.h"
 #include "detector/arrival.h"
 #include "detector/detectorbuilder.h"
 #include "detector/detectorwaveformprocessor.h"
@@ -49,7 +50,6 @@
 #include "util/memory.h"
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
-#include "validators.h"
 #include "version.h"
 #include "waveformprocessor.h"
 

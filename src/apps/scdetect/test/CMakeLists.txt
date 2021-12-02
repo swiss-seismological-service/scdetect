@@ -27,6 +27,7 @@ set(SOURCES_integration
   ../config/detector.cpp
   ../config/exception.cpp
   ../config/template_family.cpp
+  ../config/validators.cpp
   ../datamodel/ddl.cpp
   ../detail/sqlite.cpp
   ../detector/arrival.cpp
@@ -58,7 +59,6 @@ set(SOURCES_integration
   ../util/horizontal_components.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
-  ../validators.cpp
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp

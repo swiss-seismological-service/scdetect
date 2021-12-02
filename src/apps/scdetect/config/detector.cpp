@@ -3,8 +3,8 @@
 #include "../exception.h"
 #include "../log.h"
 #include "../util/waveform_stream_id.h"
-#include "../validators.h"
 #include "exception.h"
+#include "validators.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -73,7 +73,7 @@ bool StreamConfig::isValid() const {
   }
 
   if (mergingThreshold) {
-    retval = config::validateXCorrThreshold(*mergingThreshold);
+    retval = validateXCorrThreshold(*mergingThreshold);
   }
 
   const auto validateFilter = [](const std::string &filterId) {
@@ -97,15 +97,14 @@ bool StreamConfig::isValid() const {
 }
 
 bool DetectorConfig::isValid(size_t numStreamConfigs) const {
-  return (config::validateXCorrThreshold(triggerOn) &&
-          config::validateXCorrThreshold(triggerOff) &&
-          (!gapInterpolation ||
-           (gapInterpolation && util::isGeZero(gapThreshold) &&
-            util::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
-          config::validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
-          config::validateMinArrivals(minArrivals,
-                                      static_cast<int>(numStreamConfigs)) &&
-          config::validateLinkerMergingStrategy(mergingStrategy));
+  return (
+      validateXCorrThreshold(triggerOn) && validateXCorrThreshold(triggerOff) &&
+      (!gapInterpolation ||
+       (gapInterpolation && util::isGeZero(gapThreshold) &&
+        util::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
+      validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
+      validateMinArrivals(minArrivals, static_cast<int>(numStreamConfigs)) &&
+      validateLinkerMergingStrategy(mergingStrategy));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,

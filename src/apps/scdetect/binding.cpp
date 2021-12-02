@@ -12,12 +12,12 @@
 #include <string>
 #include <vector>
 
+#include "config/validators.h"
 #include "exception.h"
 #include "log.h"
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
-#include "validators.h"
 
 namespace Seiscomp {
 namespace detect {

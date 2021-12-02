@@ -11,11 +11,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include "../config/validators.h"
 #include "../log.h"
 #include "../util/floating_point_comparison.h"
 #include "../util/math.h"
 #include "../util/util.h"
-#include "../validators.h"
 
 namespace Seiscomp {
 namespace detect {
