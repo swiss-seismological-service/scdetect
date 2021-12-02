@@ -119,8 +119,6 @@ class MagnitudeProcessor : public Processor {
   std::string amplitudeType() const;
 
   // Computes the magnitude from `amplitude`
-  //
-  // - may throw an instance of `BaseException`
   virtual double compute(const DataModel::Amplitude* amplitude);
 
   // Finalizes the `magnitude` created by client code
