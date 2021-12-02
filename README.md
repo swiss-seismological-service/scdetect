@@ -162,7 +162,7 @@ files (`global.cfg`, `scdetect.cfg` located at corresponding configuration
 directory paths).
 
 In order to validate the template configuration, with
-[templates.schema.json](src/apps/scdetect/config/templates.schema.json) a
+[templates.schema.json](src/apps/scdetect/json-schema/templates.schema.json) a
 rudimentary [JSON schema](https://json-schema.org/) is provided.
 
 #### Detector configuration parameters
