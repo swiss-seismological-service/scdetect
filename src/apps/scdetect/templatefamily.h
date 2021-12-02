@@ -72,6 +72,8 @@ class TemplateFamily {
     Builder& setStationMagnitudes(
         const boost::optional<std::string>& magnitudeType = boost::none);
     // Sets the template family members' amplitudes
+    //
+    // TODO(damb): Allow to inject an amplitude processor (preconfigured)
     Builder& setAmplitudes(WaveformHandlerIface* waveformHandler,
                            const binding::Bindings& binding);
 
