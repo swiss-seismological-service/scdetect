@@ -190,6 +190,23 @@
           </description>
         </parameter>
       </group>
+      <group name="magnitudes">
+        <parameter name="magnitudes" type="string" default="MLx">
+          <description>
+            Defines the magnitudes to be computed (on detector configuration
+            level granularity).
+          </description>
+        </parameter>
+        <parameter name="calculateMagnitudes" type="boolean"
+                   default="false">
+          <description>
+            Defines the default value whether magnitude calculation
+            is enabled or disabled (on detector configuration level
+            granularity). Note that magnitude calculation implies computing
+            amplitudes.
+          </description>
+        </parameter>
+      </group>
     </configuration>
 
     <command-line>
@@ -311,6 +328,11 @@
         <option flag="" long-flag="templates-json">
           <description>
             Path to a template configuration file (JSON formatted).
+          </description>
+        </option>
+        <option flag="" long-flag="template-family-json">
+          <description>
+            Path to a template family configuration file (JSON formatted).
           </description>
         </option>
       </group>

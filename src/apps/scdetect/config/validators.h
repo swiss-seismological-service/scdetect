@@ -11,12 +11,15 @@ namespace config {
 static const std::vector<std::string> kValidLinkerMergingStrategies{
     "all", "greaterEqualTriggerOnThreshold", "greaterEqualMergingThreshold"};
 
+static const std::vector<std::string> kValidMagnitudeTypes{"MLx"};
+
 bool validateXCorrThreshold(const double &thres);
 bool validateArrivalOffsetThreshold(double thres);
 bool validateMinArrivals(int n, int numStreamConfigs = 0);
 bool validateSamplingFrequency(double samplingFrequency);
 bool validateFilter(const std::string &filterId, std::string &err);
 bool validateLinkerMergingStrategy(const std::string &mergingStrategy);
+bool validateMagnitudeType(const std::string &magnitudeType);
 
 }  // namespace config
 }  // namespace detect

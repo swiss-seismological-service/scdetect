@@ -44,7 +44,7 @@ class WaveformProcessor : public Processor,
   };
 
   using PublishResultCallback = std::function<void(
-      const WaveformProcessor *, const Record *, const ResultCPtr &)>;
+      const WaveformProcessor *, const Record *, const ResultCPtr)>;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
