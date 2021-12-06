@@ -178,24 +178,6 @@ class Application : public Client::StreamApplication {
 
   bool isEventDatabaseEnabled() const;
 
-  void processDetection(
-      const detector::DetectorWaveformProcessor *processor,
-      const Record *record,
-      const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
-
-  // Creates an amplitude
-  //
-  // - if `amplitudeType` is passed it overrides the default value
-  DataModel::AmplitudePtr createAmplitude(
-      const AmplitudeProcessor *processor, const Record *record,
-      const AmplitudeProcessor::AmplitudeCPtr &amplitude,
-      const boost::optional<std::string> &methodId,
-      const boost::optional<std::string> &amplitudeType = boost::none);
-
-  // Load events either from `eventDb` or `db`
-  virtual bool loadEvents(const std::string &eventDb,
-                          DataModel::DatabaseQueryPtr db);
-
  private:
   using Picks = std::vector<DataModel::PickCPtr>;
   using TemplateConfigs = std::vector<config::TemplateConfig>;
@@ -265,6 +247,9 @@ class Application : public Client::StreamApplication {
     }
   };
 
+  // Load events either from `eventDb` or `db`
+  bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
+
   // Initialize detectors
   //
   // - `ifs` references a template configuration input file stream
@@ -287,6 +272,15 @@ class Application : public Client::StreamApplication {
   // Initialize magnitude processor factory callbacks
   bool initMagnitudeProcessorFactories();
 
+  // Creates an amplitude
+  //
+  // - if `amplitudeType` is passed it overrides the default value
+  DataModel::AmplitudePtr createAmplitude(
+      const AmplitudeProcessor *processor, const Record *record,
+      const AmplitudeProcessor::AmplitudeCPtr &amplitude,
+      const boost::optional<std::string> &methodId,
+      const boost::optional<std::string> &amplitudeType = boost::none);
+
   // Computes a magnitude based on `amplitude`
   DataModel::StationMagnitudePtr createMagnitude(
       const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
@@ -303,6 +297,11 @@ class Application : public Client::StreamApplication {
   void registerDetection(const std::shared_ptr<DetectionItem> &detection);
   // Removes a detection
   void removeDetection(const std::shared_ptr<DetectionItem> &detection);
+
+  void processDetection(
+      const detector::DetectorWaveformProcessor *processor,
+      const Record *record,
+      const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
 
   void publishDetection(const DetectionItem &detectionItem);
 
