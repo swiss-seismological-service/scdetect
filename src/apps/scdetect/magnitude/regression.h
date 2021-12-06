@@ -61,8 +61,8 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
 
   void recomputeBMean() {
     // Given the line formula y = m*x + b and a fixed m for a set of lines (i.e.
-    // both x and y are vectors), the estimate for the interseption b is
-    // computed by:
+    // both x and y are vectors), the estimate for the intercept b is computed
+    // by:
     //
     //  b = mean(y-m*x)
     //
