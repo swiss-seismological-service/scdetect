@@ -136,7 +136,7 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
           SCDETECT_LOG_DEBUG_PROCESSOR(
               proc,
               "[%s] [%s - %s] Dropping result due to merging "
-              "strategy applied: time%s, fit=%9f, lag=%10f",
+              "strategy applied: time=%s, fit=%9f, lag=%10f",
               newArrival.pick.waveformStreamId.c_str(),
               res->timeWindow.startTime().iso().c_str(),
               res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),

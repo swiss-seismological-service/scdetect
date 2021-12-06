@@ -304,10 +304,9 @@ class Application : public Client::StreamApplication {
   // Removes a detection
   void removeDetection(const std::shared_ptr<DetectionItem> &detection);
 
-  void tryToPublishAndRemoveDetection(
-      std::shared_ptr<DetectionItem> &detection);
-
   void publishDetection(const DetectionItem &detectionItem);
+
+  void publishAndRemoveDetection(std::shared_ptr<DetectionItem> &detection);
 
   Config _config;
   binding::Bindings _bindings;

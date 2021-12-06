@@ -492,7 +492,7 @@ void Application::done() {
 
     // flush pending detections
     for (auto &detectionPair : _detections) {
-      tryToPublishAndRemoveDetection(detectionPair.second);
+      publishAndRemoveDetection(detectionPair.second);
     }
 
     if (_ep) {
@@ -605,7 +605,7 @@ void Application::handleRecord(Record *rec) {
 
     // schedule the detection for deletion when finished
     if (detection->ready()) {
-      tryToPublishAndRemoveDetection(detection);
+      publishAndRemoveDetection(detection);
     }
   }
 
@@ -615,7 +615,7 @@ void Application::handleRecord(Record *rec) {
   while (!_detectionRemovalQueue.empty()) {
     auto detection{_detectionRemovalQueue.front()};
     _detectionRemovalQueue.pop_front();
-    tryToPublishAndRemoveDetection(detection);
+    publishAndRemoveDetection(detection);
   }
 
   // register pending detections
@@ -1401,7 +1401,7 @@ bool Application::initAmplitudeProcessors(
   return true;
 }
 
-void Application::tryToPublishAndRemoveDetection(
+void Application::publishAndRemoveDetection(
     std::shared_ptr<DetectionItem> &detection) {
   if (!detection->published) {
     publishDetection(*detection);
