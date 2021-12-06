@@ -51,7 +51,7 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
     if (!_bMean) {
       recomputeBMean();
     }
-    return slope() * amplitude->amplitude().value() + *_bMean;
+    return slope() * std::log10(amplitude->amplitude().value()) + *_bMean;
   }
 
   // Returns the slope used for calculating the *regression*
