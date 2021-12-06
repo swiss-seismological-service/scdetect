@@ -321,11 +321,10 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         // load waveforms for the horizontal components and feed the data to
         // the processor
         for (auto s : horizontalComponents) {
-          GenericRecordCPtr record;
-          record = waveformHandler->get(
+          auto record{waveformHandler->get(
               horizontalComponents.netCode(), horizontalComponents.staCode(),
               horizontalComponents.locCode(), s->code(),
-              rmsAmplitudeProcessor.safetyTimeWindow(), processingConfig);
+              rmsAmplitudeProcessor.safetyTimeWindow(), processingConfig)};
           rmsAmplitudeProcessor.feed(record.get());
         }
       } catch (std::out_of_range&) {
