@@ -52,10 +52,10 @@ bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
 
   // one sample tolerance
   if (beginOffset == -1) {
-    beginOffset++;
+    ++beginOffset;
   }
   if (endOffset == trace.data()->size() + 1) {
-    endOffset--;
+    --endOffset;
   }
 
   // not enough data at start of time window
