@@ -107,7 +107,7 @@ template <typename TData>
 boost::optional<const Core::Time> CrossCorrelation<TData>::templateEndTime()
     const {
   if (_initialized) {
-    _templateWaveform->endTime();
+    return _templateWaveform->endTime();
   }
   return boost::none;
 }
