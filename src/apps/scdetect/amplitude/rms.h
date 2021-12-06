@@ -10,6 +10,8 @@ namespace amplitude {
 // Computes the RMS amplitude
 //
 // - the amplitude is computed on velocity seismograms
+// - required for *amplitude-magnitude regression* magnitudes (see
+// https://doi.org/10.1029/2019JB017468)
 class RMSAmplitude : public ReducingAmplitudeProcessor {
  public:
   RMSAmplitude();

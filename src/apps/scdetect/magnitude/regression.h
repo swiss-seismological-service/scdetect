@@ -25,6 +25,7 @@ namespace magnitude {
 // *amplitude-magnitude regression*
 //
 // - the regression uses a fixed slope
+// - for further details please refer to https://doi.org/10.1029/2019JB017468
 template <std::intmax_t Num, std::intmax_t Denom = 1>
 class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
                                       public TemplateFamilyBased {
