@@ -259,7 +259,7 @@ class Application : public Client::StreamApplication {
   // Initialize amplitude processors
   //
   // - XXX(damb): The current implementation supports RMS based amplitude
-  // processorss to be initialized, only
+  // processors to be initialized, only
   bool initAmplitudeProcessors(std::shared_ptr<DetectionItem> &detectionItem);
 
   // Initialize template families
