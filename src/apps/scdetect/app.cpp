@@ -768,13 +768,10 @@ void Application::processDetection(
 
       try {
         const auto pick{createPick(res.arrival)};
-        {
-          auto comment{util::make_smart<DataModel::Comment>()};
-          comment->setId(settings::kTemplateWaveformDurationPickCommentId);
-          comment->setText(
-              Core::stringify("%lu.%lu", res.templateWaveformDuration.seconds(),
-                              res.templateWaveformDuration.microseconds()));
-          pick->add(comment.get());
+        if (!pick->add(createTemplateWaveformTimeInfoComment(res).release())) {
+          SCDETECT_LOG_WARNING_PROCESSOR(processor,
+                                         "Internal error: failed to add "
+                                         "template waveform time info comment");
         }
 
         const auto arrival{createArrival(res.arrival, pick)};
@@ -1679,6 +1676,21 @@ void Application::removeDetection(
     }
     ++it;
   }
+}
+
+std::unique_ptr<DataModel::Comment>
+Application::createTemplateWaveformTimeInfoComment(
+    const detector::DetectorWaveformProcessor::Detection::TemplateResult
+        &templateResult) {
+  auto ret{util::make_unique<DataModel::Comment>()};
+  ret->setId(settings::kTemplateWaveformTimeInfoPickCommentId);
+  ret->setText(templateResult.templateWaveformStartTime.iso() +
+               settings::kTemplateWaveformTimeInfoPickCommentIdSep +
+               templateResult.templateWaveformEndTime.iso() +
+               settings::kTemplateWaveformTimeInfoPickCommentIdSep +
+               templateResult.templateWaveformReferenceTime.iso());
+
+  return ret;
 }
 
 Application::Config::Config() {

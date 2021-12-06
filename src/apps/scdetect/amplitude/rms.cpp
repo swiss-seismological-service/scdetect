@@ -1,6 +1,7 @@
 #include "rms.h"
 
 #include <seiscomp/core/datetime.h>
+#include <seiscomp/core/strings.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/comment.h>
 
@@ -8,6 +9,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/optional/optional.hpp>
 #include <cmath>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -22,6 +24,45 @@ namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
+namespace {
+struct TimeInfo {
+  Core::Time startTime;
+  Core::Time endTime;
+  Core::Time referenceTime;
+
+  friend std::istream &operator>>(std::istream &is, TimeInfo &timeInfo) {
+    std::string tmp;
+    is >> tmp;
+
+    std::vector<std::string> tokens;
+    Core::split(tokens, tmp,
+                settings::kTemplateWaveformTimeInfoPickCommentIdSep.c_str());
+    if (tokens.size() != 3) {
+      is.setstate(std::ios::failbit);
+      return is;
+    }
+
+    auto createTime = [](const std::string &str) {
+      auto ret{Core::Time::FromString(str.c_str(), "%FT%T.%fZ")};
+      if (!ret) {
+        throw ValueException{"invalid time string format: " + str};
+      }
+      return ret;
+    };
+
+    try {
+      timeInfo.startTime = createTime(tokens[0]);
+      timeInfo.endTime = createTime(tokens[1]);
+      timeInfo.referenceTime = createTime(tokens[2]);
+    } catch (ValueException &) {
+      is.setstate(std::ios::failbit);
+    }
+
+    return is;
+  }
+};
+}  // namespace
+
 RMSAmplitude::RMSAmplitude() {
   _type = "Mrms";
   _unit = "M/S";
@@ -34,36 +75,44 @@ void RMSAmplitude::computeTimeWindow() {
   }
 
   std::vector<Core::Time> pickTimes;
-  Core::TimeSpan maxTemplateWaveformDuration;
+  Core::TimeSpan maxTemplateWaveformStartTimeOffset;
+  Core::TimeSpan maxTemplateWaveformEndTimeOffset;
   for (const auto &pick : _environment.picks) {
     pickTimes.push_back(pick->time().value());
     for (size_t i = 0; i < pick->commentCount(); ++i) {
       const auto comment{pick->comment(i)};
       if (comment &&
-          comment->id() == settings::kTemplateWaveformDurationPickCommentId) {
-        try {
-          auto converted{std::stod(comment->text())};
-          if (converted > maxTemplateWaveformDuration) {
-            maxTemplateWaveformDuration = converted;
-          }
-        } catch (std::invalid_argument &) {
+          comment->id() == settings::kTemplateWaveformTimeInfoPickCommentId) {
+        TimeInfo timeInfo;
+        std::stringstream ss{comment->text()};
+        if (!(ss >> timeInfo)) {
           continue;
-        } catch (std::out_of_range &) {
-          continue;
+        }
+
+        if (!maxTemplateWaveformStartTimeOffset ||
+            timeInfo.referenceTime - timeInfo.startTime >
+                maxTemplateWaveformStartTimeOffset) {
+          maxTemplateWaveformStartTimeOffset =
+              timeInfo.referenceTime - timeInfo.startTime;
+        }
+        if (!maxTemplateWaveformEndTimeOffset ||
+            timeInfo.endTime - timeInfo.referenceTime >
+                maxTemplateWaveformEndTimeOffset) {
+          maxTemplateWaveformEndTimeOffset =
+              timeInfo.endTime - timeInfo.referenceTime;
         }
       }
     }
   }
 
-  if (!maxTemplateWaveformDuration) {
+  if (!maxTemplateWaveformEndTimeOffset || !maxTemplateWaveformEndTimeOffset) {
     throw Processor::BaseException{"failed to determine required time window"};
   }
 
   auto bounds{std::minmax_element(std::begin(pickTimes), std::end(pickTimes))};
-  // XXX(damb): Use twice the template waveform duration as time window for
-  // amplitude calculation plus the time span included by all available picks.
-  setTimeWindow(Core::TimeWindow{*bounds.first - maxTemplateWaveformDuration,
-                                 *bounds.second + maxTemplateWaveformDuration});
+  setTimeWindow(
+      Core::TimeWindow{*bounds.first - maxTemplateWaveformStartTimeOffset,
+                       *bounds.second + maxTemplateWaveformEndTimeOffset});
 }
 
 void RMSAmplitude::preprocessData(

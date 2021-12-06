@@ -120,7 +120,7 @@ void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
   }
 
   const auto procId{proc->id()};
-  ProcessorState p{loc, Core::TimeWindow{}, std::move(proc)};
+  ProcessorState p{loc, Core::TimeWindow{}, arrival.pick.time, std::move(proc)};
   _processors.emplace(procId, std::move(p));
 
   _processorIdx.emplace(waveformStreamId, procId);
@@ -445,7 +445,9 @@ void Detector::prepareResult(const linker::Association &linkerResult,
       templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
                               Detector::Result::TemplateResult{
                                   templateResult.arrival, proc.sensorLocation,
-                                  proc.processor->templateDuration()});
+                                  *proc.processor->templateStartTime(),
+                                  *proc.processor->templateEndTime(),
+                                  proc.templateWaveformReferenceTime});
       usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
       usedStas.emplace(proc.sensorLocation.stationId);
     }

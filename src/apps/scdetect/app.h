@@ -307,6 +307,10 @@ class Application : public Client::StreamApplication {
 
   void publishAndRemoveDetection(std::shared_ptr<DetectionItem> &detection);
 
+  std::unique_ptr<DataModel::Comment> createTemplateWaveformTimeInfoComment(
+      const detector::DetectorWaveformProcessor::Detection::TemplateResult
+          &templateResult);
+
   Config _config;
   binding::Bindings _bindings;
 

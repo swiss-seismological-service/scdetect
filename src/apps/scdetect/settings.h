@@ -25,8 +25,10 @@ const std::string kPublicIdSep{"||"};
 // Separator for configuration lists
 const std::string kConfigListSep{","};
 
-const std::string kTemplateWaveformDurationPickCommentId{
-    "scdetectTemplateWaveformDuration"};
+const std::string kTemplateWaveformTimeInfoPickCommentId{
+    "scdetectTemplateWaveformTimeInfo"};
+const std::string kTemplateWaveformTimeInfoPickCommentIdSep{"|"};
+
 const std::string kDetectorIdCommentId{"scdetectDetectorId"};
 const std::string kRMSAmplitudeStreamsCommentId{"scdetectRMSAmplitudeStreams"};
 
