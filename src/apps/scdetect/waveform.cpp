@@ -67,7 +67,11 @@ bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
     return false;
   }
 
-  trace.setData(trace.data()->slice(beginOffset, endOffset));
+  ArrayPtr sliced{trace.data()->slice(beginOffset, endOffset)};
+  if (!sliced) {
+    return false;
+  }
+  trace.setData(sliced.get());
   trace.setStartTime(trace.startTime() +
                      Core::TimeSpan{beginOffset / trace.samplingFrequency()});
   return true;
