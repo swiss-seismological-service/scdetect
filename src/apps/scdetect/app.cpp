@@ -1346,9 +1346,19 @@ bool Application::initAmplitudeProcessors(
           rmsAmplitudeProcessor->setFilter(
               createFilter(amplitudeProcessingConfig.filter).release(),
               amplitudeProcessingConfig.initTime);
+          SCDETECT_LOG_DEBUG_TAGGED(
+              rmsAmplitudeProcessor->id(),
+              "Configured amplitude processor filter: filter=\"%s\", "
+              "init_time=%f",
+              amplitudeProcessingConfig.filter.c_str(),
+              amplitudeProcessingConfig.initTime);
         } catch (WaveformProcessor::BaseException &e) {
           throw BaseException{waveformStreamId + ": " + e.what()};
         }
+      } else {
+        SCDETECT_LOG_DEBUG_TAGGED(
+            rmsAmplitudeProcessor->id(),
+            "Configured amplitude processor with no filter: filter=\"\"");
       }
 
       for (auto s : horizontalComponents) {

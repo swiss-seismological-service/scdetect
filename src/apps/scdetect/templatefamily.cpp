@@ -281,10 +281,20 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
             rmsAmplitudeProcessor.setFilter(
                 createFilter(amplitudeProcessingConfig.filter).release(),
                 amplitudeProcessingConfig.initTime);
+            SCDETECT_LOG_DEBUG_TAGGED(
+                rmsAmplitudeProcessor.id(),
+                "Configured amplitude processor filter: filter=\"%s\", "
+                "init_time=%f",
+                amplitudeProcessingConfig.filter.c_str(),
+                amplitudeProcessingConfig.initTime);
           } catch (WaveformProcessor::BaseException& e) {
             msg.setText(e.what());
             throw builder::BaseException{logging::to_string(msg)};
           }
+        } else {
+          SCDETECT_LOG_DEBUG_TAGGED(
+              rmsAmplitudeProcessor.id(),
+              "Configured amplitude processor with no filter: filter=\"\"");
         }
 
         rmsAmplitudeProcessor.setSaturationThreshold(
