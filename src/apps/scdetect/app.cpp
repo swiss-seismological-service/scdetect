@@ -1342,20 +1342,13 @@ bool Application::initAmplitudeProcessors(
       // configure amplitude processing filter
       if (!amplitudeProcessingConfig.filter.empty()) {
         util::replaceEscapedXMLFilterIdChars(amplitudeProcessingConfig.filter);
-        std::unique_ptr<WaveformProcessor::Filter> amplitudeProcessingFilter{
-            nullptr};
-
-        std::string err;
-        amplitudeProcessingFilter.reset(WaveformProcessor::Filter::Create(
-            amplitudeProcessingConfig.filter, &err));
-        if (!amplitudeProcessingFilter) {
-          auto msg{waveformStreamId + ": compiling filter (" +
-                   amplitudeProcessingConfig.filter + ") failed: " + err};
-          throw BaseException{msg};
+        try {
+          rmsAmplitudeProcessor->setFilter(
+              createFilter(amplitudeProcessingConfig.filter).release(),
+              amplitudeProcessingConfig.initTime);
+        } catch (WaveformProcessor::BaseException &e) {
+          throw BaseException{waveformStreamId + ": " + e.what()};
         }
-
-        rmsAmplitudeProcessor->setFilter(amplitudeProcessingFilter.release(),
-                                         amplitudeProcessingConfig.initTime);
       }
 
       for (auto s : horizontalComponents) {

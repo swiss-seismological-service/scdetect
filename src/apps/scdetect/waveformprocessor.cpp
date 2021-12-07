@@ -241,5 +241,17 @@ void WaveformProcessor::setStatus(Status status, double value) {
   _statusValue = value;
 }
 
+std::unique_ptr<WaveformProcessor::Filter> createFilter(
+    const std::string &filter) {
+  std::string err;
+  std::unique_ptr<WaveformProcessor::Filter> ret{
+      WaveformProcessor::Filter::Create(filter, &err)};
+  if (!ret) {
+    throw WaveformProcessor::BaseException{"failed to compile filter (" +
+                                           filter + "): " + err};
+  }
+  return ret;
+}
+
 }  // namespace detect
 }  // namespace Seiscomp

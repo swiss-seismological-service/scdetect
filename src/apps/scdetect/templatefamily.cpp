@@ -276,19 +276,15 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         auto& amplitudeProcessingConfig{
             sensorLocationBindings.amplitudeProcessingConfig};
 
-        // configure filter
-        {
-          std::string err;
-          auto filter{WaveformProcessor::Filter::Create(
-              amplitudeProcessingConfig.filter, &err)};
-
-          if (!filter) {
-            msg.setText("failed to initialize filter: " +
-                        amplitudeProcessingConfig.filter);
+        if (!amplitudeProcessingConfig.filter.empty()) {
+          try {
+            rmsAmplitudeProcessor.setFilter(
+                createFilter(amplitudeProcessingConfig.filter).release(),
+                amplitudeProcessingConfig.initTime);
+          } catch (WaveformProcessor::BaseException& e) {
+            msg.setText(e.what());
             throw builder::BaseException{logging::to_string(msg)};
           }
-          rmsAmplitudeProcessor.setFilter(filter,
-                                          amplitudeProcessingConfig.initTime);
         }
 
         rmsAmplitudeProcessor.setSaturationThreshold(

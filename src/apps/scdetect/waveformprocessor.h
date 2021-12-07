@@ -230,6 +230,9 @@ class WaveformProcessor : public Processor,
   double _statusValue{0};
 };
 
+std::unique_ptr<WaveformProcessor::Filter> createFilter(
+    const std::string &filter);
+
 }  // namespace detect
 }  // namespace Seiscomp
 
