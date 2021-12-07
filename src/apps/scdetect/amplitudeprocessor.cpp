@@ -12,6 +12,7 @@
 #include <ostream>
 #include <stdexcept>
 
+#include "seiscomp/core/datetime.h"
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
@@ -402,10 +403,15 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
     return false;
   }
 
+  auto differenceGreaterEqualSampleTolerance{
+      (Core::TimeSpan{record->timeWindow().startTime() -
+                      safetyTimeWindow().startTime()}
+           .abs() >= Core::TimeSpan{1.0 / record->samplingFrequency()})};
   // trim the first incoming stream records equally at the front to a common
   // start time
   if (isFirstStreamRecord &&
-      record->timeWindow().startTime() < safetyTimeWindow().startTime()) {
+      record->timeWindow().startTime() < safetyTimeWindow().startTime() &&
+      differenceGreaterEqualSampleTolerance) {
     auto firstRecord{util::make_smart<GenericRecord>(*record)};
     // the caller is required to copy the data
     // https://github.com/SeisComP/common/issues/38
