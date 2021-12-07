@@ -168,7 +168,7 @@ DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
   const auto numberOfStreams{data.size()};
 
   std::vector<double> samples;
-  for (size_t i = idxRange.begin; i <= idxRange.end; ++i) {
+  for (size_t i = idxRange.begin; i < idxRange.end; ++i) {
     double rms{0};
     for (size_t j = 0; j < numberOfStreams; ++j) {
       rms += util::square(data[j]->get(i) - noiseInfos[j].offset);

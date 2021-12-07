@@ -269,28 +269,6 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   }
 #endif
 
-  std::vector<DoubleArray const *> data;
-  for (auto &streamPair : _streams) {
-    auto &stream{streamPair.second};
-    preprocessData(stream.streamState, stream.streamConfig,
-                   stream.deconvolutionConfig, stream.buffer);
-    if (finished()) {
-      return;
-    }
-
-    data.push_back(&stream.buffer);
-  }
-
-#ifdef SCDETECT_DEBUG
-  if (util::createDirectory(pathTemp)) {
-    // dump buffered preprocessed data
-    const auto p{pathTemp / "preprocessed.mseed"};
-    std::ofstream ofs{p.string()};
-    dumpBufferedData(ofs);
-    ofs.close();
-  }
-#endif
-
   // buffers are already aligned regarding starttime
   const auto bufferBeginTime{
       _streams.cbegin()->second.streamState.dataTimeWindow.startTime() +
@@ -343,6 +321,33 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
     setStatus(Status::kError, 0);
     return;
   }
+
+  std::vector<DoubleArray const *> data;
+  for (auto &streamPair : _streams) {
+    auto &stream{streamPair.second};
+
+    // slice buffered data
+    stream.buffer.setData(signalEndIdx - signalBeginIdx,
+                          stream.buffer.typedData() + signalBeginIdx);
+
+    preprocessData(stream.streamState, stream.streamConfig,
+                   stream.deconvolutionConfig, stream.buffer);
+    if (finished()) {
+      return;
+    }
+
+    data.push_back(&stream.buffer);
+  }
+
+#ifdef SCDETECT_DEBUG
+  if (util::createDirectory(pathTemp)) {
+    // dump buffered preprocessed data
+    const auto p{pathTemp / "preprocessed.mseed"};
+    std::ofstream ofs{p.string()};
+    dumpBufferedData(ofs);
+    ofs.close();
+  }
+#endif
 
   // TODO(damb):
   //
