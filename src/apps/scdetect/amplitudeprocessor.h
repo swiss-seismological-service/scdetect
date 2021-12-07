@@ -101,7 +101,7 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   void setSignalBegin(const boost::optional<Core::TimeSpan> &signalBegin);
   // Returns the beginning of the time window used for amplitude calculation
   Core::Time signalBegin() const;
-  // Configures the beginning of the time window used for amplitude calculation
+  // Configures the end of the time window used for amplitude calculation
   // (with regard to the end of the overall time window)
   void setSignalEnd(const boost::optional<Core::TimeSpan> &signalEnd);
   // Returns the end of the time window used for amplitude calculation
