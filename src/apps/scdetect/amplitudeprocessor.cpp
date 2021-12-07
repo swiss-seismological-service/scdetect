@@ -320,7 +320,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   }
 
   if (signalEnd() < bufferBeginTime) {
-    setSignalEnd(bufferEndTime);
+    setSignalEnd(bufferBeginTime);
   }
   const auto computeSignalEndIdx = [&commonSamplingFrequency, &bufferBeginTime](
                                        const Core::Time &signalEnd) {
