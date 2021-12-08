@@ -93,6 +93,11 @@ const std::string FlagAmplitudesForce::flag() const {
   return "--amplitudes-force";
 }
 
+FlagMagnitudesForce::FlagMagnitudesForce(bool enabled) : BooleanFlag{enabled} {}
+const std::string FlagMagnitudesForce::flag() const {
+  return "--magnitudes-force";
+}
+
 const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
 const std::string FlagPlayback::flag() const {

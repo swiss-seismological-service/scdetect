@@ -78,6 +78,12 @@ class FlagAmplitudesForce : public BooleanFlag {
   const std::string flag() const override;
 };
 
+class FlagMagnitudesForce : public BooleanFlag {
+ public:
+  explicit FlagMagnitudesForce(bool enabled);
+  const std::string flag() const override;
+};
+
 class FlagPlayback : public Flag {
  public:
   const std::string flag() const override;
