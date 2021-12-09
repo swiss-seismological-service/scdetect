@@ -165,7 +165,7 @@
           </description>
         </parameter>
         <parameter name="calculateAmplitudes" type="boolean"
-                   default="false">
+                   default="true">
           <description>
             Defines the default value whether amplitude calculation
             is enabled or disabled (on detector configuration level
@@ -198,7 +198,7 @@
           </description>
         </parameter>
         <parameter name="calculateMagnitudes" type="boolean"
-                   default="false">
+                   default="true">
           <description>
             Defines the default value whether magnitude calculation
             is enabled or disabled (on detector configuration level
