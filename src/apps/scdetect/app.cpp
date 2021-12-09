@@ -1337,21 +1337,22 @@ bool Application::initAmplitudeProcessors(
           });
 
       rmsAmplitudeProcessor->setSaturationThreshold(
-          amplitudeProcessingConfig.saturationThreshold);
+          amplitudeProcessingConfig.mlx.saturationThreshold);
 
       // configure amplitude processing filter
-      if (!amplitudeProcessingConfig.filter.empty()) {
-        util::replaceEscapedXMLFilterIdChars(amplitudeProcessingConfig.filter);
+      if (!amplitudeProcessingConfig.mlx.filter.empty()) {
+        util::replaceEscapedXMLFilterIdChars(
+            amplitudeProcessingConfig.mlx.filter);
         try {
           rmsAmplitudeProcessor->setFilter(
-              createFilter(amplitudeProcessingConfig.filter).release(),
-              amplitudeProcessingConfig.initTime);
+              createFilter(amplitudeProcessingConfig.mlx.filter).release(),
+              amplitudeProcessingConfig.mlx.initTime);
           SCDETECT_LOG_DEBUG_TAGGED(
               rmsAmplitudeProcessor->id(),
               "Configured amplitude processor filter: filter=\"%s\", "
               "init_time=%f",
-              amplitudeProcessingConfig.filter.c_str(),
-              amplitudeProcessingConfig.initTime);
+              amplitudeProcessingConfig.mlx.filter.c_str(),
+              amplitudeProcessingConfig.mlx.initTime);
         } catch (WaveformProcessor::BaseException &e) {
           throw BaseException{waveformStreamId + ": " + e.what()};
         }
@@ -1821,15 +1822,15 @@ void Application::Config::init(const Client::Application *app) {
   }
 
   try {
-    sensorLocationBindings.amplitudeProcessingConfig.setFilter(
-        app->configGetString("amplitudes.filter"));
+    sensorLocationBindings.amplitudeProcessingConfig.mlx.filter =
+        app->configGetString("amplitudes.filter");
   } catch (ValueException &e) {
     throw;
   } catch (...) {
   }
   try {
-    sensorLocationBindings.amplitudeProcessingConfig.setInitTime(
-        app->configGetDouble("amplitudes.initTime"));
+    sensorLocationBindings.amplitudeProcessingConfig.mlx.initTime =
+        app->configGetDouble("amplitudes.initTime");
   } catch (ValueException &e) {
     throw;
   } catch (...) {

@@ -276,17 +276,17 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         auto& amplitudeProcessingConfig{
             sensorLocationBindings.amplitudeProcessingConfig};
 
-        if (!amplitudeProcessingConfig.filter.empty()) {
+        if (!amplitudeProcessingConfig.mlx.filter.empty()) {
           try {
             rmsAmplitudeProcessor.setFilter(
-                createFilter(amplitudeProcessingConfig.filter).release(),
-                amplitudeProcessingConfig.initTime);
+                createFilter(amplitudeProcessingConfig.mlx.filter).release(),
+                amplitudeProcessingConfig.mlx.initTime);
             SCDETECT_LOG_DEBUG_TAGGED(
                 rmsAmplitudeProcessor.id(),
                 "Configured amplitude processor filter: filter=\"%s\", "
                 "init_time=%f",
-                amplitudeProcessingConfig.filter.c_str(),
-                amplitudeProcessingConfig.initTime);
+                amplitudeProcessingConfig.mlx.filter.c_str(),
+                amplitudeProcessingConfig.mlx.initTime);
           } catch (WaveformProcessor::BaseException& e) {
             msg.setText(e.what());
             throw builder::BaseException{logging::to_string(msg)};
@@ -298,7 +298,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         }
 
         rmsAmplitudeProcessor.setSaturationThreshold(
-            amplitudeProcessingConfig.saturationThreshold);
+            amplitudeProcessingConfig.mlx.saturationThreshold);
 
         // register components
         for (auto s : horizontalComponents) {

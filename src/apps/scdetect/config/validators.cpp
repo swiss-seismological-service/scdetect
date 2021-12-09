@@ -49,6 +49,10 @@ bool validateMagnitudeType(const std::string &magnitudeType) {
                    magnitudeType) != kValidMagnitudeTypes.end();
 }
 
+bool validateAmplitudeType(const std::string &amplitudeType) {
+  return validateMagnitudeType(amplitudeType);
+}
+
 }  // namespace config
 }  // namespace detect
 }  // namespace Seiscomp

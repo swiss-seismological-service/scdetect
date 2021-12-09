@@ -20,6 +20,7 @@ bool validateSamplingFrequency(double samplingFrequency);
 bool validateFilter(const std::string &filterId, std::string &err);
 bool validateLinkerMergingStrategy(const std::string &mergingStrategy);
 bool validateMagnitudeType(const std::string &magnitudeType);
+bool validateAmplitudeType(const std::string &amplitudeType);
 
 }  // namespace config
 }  // namespace detect

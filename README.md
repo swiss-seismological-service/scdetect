@@ -480,14 +480,15 @@ frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html
 
 **Creating key files** (`scconfig`):
 
-1. Create an *amplitude profile* for a sensor location. As a bare minimum
-   specify at least the `locationCode` and `channelCode` attributes.
+1. Create an *sensor location profile* for a sensor location. As a bare minimum
+   specify at least the `locationCode` (which may be empty) and `channelCode`
+   attributes.
 
    **Tip**: Although not strictly required, it is recommended to use sensible
-   profile names. E.g. for an amplitude profile with `locationCode` `00`
+   profile names. E.g. for a sensor location profile with `locationCode` `00`
    and `channelCode` `HH` naming the profile with e.g. `00_HH` is recommended.
-2. Add the profile's name to the list of known `amplitudeProfiles`. Only those
-   profiles are taken into account with a corresponding list entry.
+2. Add the profile's name to the list of known `sensorLocationProfiles`. Only
+   those profiles are taken into account with a corresponding list entry.
 3. (Optional): in case of creating a *binding profile* assign the bindings
    configuration to the corresponding stations.
 4. Save the configuration. With that, the bindings configuration is written to
