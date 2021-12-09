@@ -536,7 +536,7 @@ family configuration must be provided by `scdetect`'
 s `--templates-family-json path/to/templates-family.json` CLI flag.
 
 Again, for the amplitude-magnitude regression itself, the following types of
-*template magnitudes* are taken into account:
+*template station magnitudes* are taken into account:
 
 - [`MLh`](https://www.seiscomp.de/doc/apps/global_mlh.html)
 
@@ -544,7 +544,12 @@ Again, for the amplitude-magnitude regression itself, the following types of
   corrected for near-field observations) and allows for station specific
   corrections.
 
-Note that magnitudes of type `MLhc` are preferred over magnitudes of type `MLh`.
+> **NOTE**: Magnitudes of type `MLhc` are preferred over magnitudes of type `MLh`.
+
+The template station magnitudes must be available through eventparameters (for
+further details, please refer to the
+related [section](#inventory-events-and-configuration) on providing these data
+products).
 
 Magnitudes computed based on the amplitude-magnitude regression approach are of
 type `MLx`. These magnitudes are going to be issued as SeisComP *Station
