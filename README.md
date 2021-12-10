@@ -224,10 +224,10 @@ estimation based on an amplitude-magnitude regression. Within a detector
 configuration the following amplitude related configuration parameters may be
 provided:
 
-- `"calculateAmplitudes"`: Boolean value which enables/disables
-  [amplitude calculation](#amplitude-calculation) for this detector
-  configuration. Note also that amplitudes are calculated only for those sensor
-  locations
+- `"createAmplitudes"`: Boolean value which
+  enables/disables [amplitude calculation](#amplitude-calculation) for this
+  detector configuration. Note also that amplitudes are calculated only for
+  those sensor locations
   where [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
   is supplied.
 

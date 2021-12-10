@@ -164,8 +164,7 @@
             Defines the messaging group amplitudes are sent to.
           </description>
         </parameter>
-        <parameter name="calculateAmplitudes" type="boolean"
-                   default="true">
+        <parameter name="createAmplitudes" type="boolean" default="true">
           <description>
             Defines the default value whether amplitude calculation
             is enabled or disabled (on detector configuration level
@@ -197,8 +196,7 @@
             level granularity).
           </description>
         </parameter>
-        <parameter name="calculateMagnitudes" type="boolean"
-                   default="true">
+        <parameter name="createMagnitudes" type="boolean" default="true">
           <description>
             Defines the default value whether magnitude calculation
             is enabled or disabled (on detector configuration level

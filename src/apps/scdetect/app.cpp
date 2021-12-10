@@ -1735,7 +1735,7 @@ void Application::Config::init(const Client::Application *app) {
   }
   try {
     publishConfig.createAmplitudes =
-        app->configGetBool("amplitudes.calculateAmplitudes");
+        app->configGetBool("amplitudes.createAmplitudes");
   } catch (...) {
   }
   try {
@@ -1747,7 +1747,7 @@ void Application::Config::init(const Client::Application *app) {
   }
   try {
     publishConfig.createMagnitudes =
-        app->configGetBool("magnitudes.calculateMagnitudes");
+        app->configGetBool("magnitudes.createMagnitudes");
   } catch (...) {
   }
 
