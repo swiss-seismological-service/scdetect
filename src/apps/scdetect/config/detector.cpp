@@ -62,12 +62,12 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
 bool StreamConfig::isValid() const {
   bool retval{true};
   try {
-    retval = util::WaveformStreamID{wfStreamId}.isValid();
+    util::WaveformStreamID{wfStreamId};
   } catch (detect::ValueException &e) {
     return false;
   }
   try {
-    retval = util::WaveformStreamID{templateConfig.wfStreamId}.isValid();
+    util::WaveformStreamID{templateConfig.wfStreamId};
   } catch (detect::ValueException &e) {
     return false;
   }

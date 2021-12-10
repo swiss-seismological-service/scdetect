@@ -45,13 +45,13 @@ class WaveformStreamID {
   // Returns the channel code
   const std::string &chaCode() const;
 
+  friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
+
+ private:
   // Returns `true` if the waveform stream identifier is valid, `false`
   // otherwise.
   bool isValid() const;
 
-  friend std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id);
-
- private:
   std::string _netCode;
   std::string _staCode;
   std::string _locCode;

@@ -72,14 +72,14 @@ const std::string &WaveformStreamID::staCode() const { return _staCode; }
 const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
-bool WaveformStreamID::isValid() const {
-  return !(_netCode.empty() || _staCode.empty() || _chaCode.empty());
-}
-
 std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
   os << id._netCode << id.delimiter << id._staCode << id.delimiter
      << id._locCode << id.delimiter << id._chaCode;
   return os;
+}
+
+bool WaveformStreamID::isValid() const {
+  return !(_netCode.empty() || _staCode.empty() || _chaCode.empty());
 }
 
 }  // namespace util

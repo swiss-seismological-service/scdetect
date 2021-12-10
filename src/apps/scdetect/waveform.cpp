@@ -249,9 +249,11 @@ GenericRecordCPtr WaveformHandler::get(const std::string &netCode,
                                        const std::string &chaCode,
                                        const Core::TimeWindow &tw,
                                        const ProcessingConfig &config) {
-  util::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
-  if (!wfStreamId.isValid()) {
-    throw BaseException{"Invalid waveform stream identifier."};
+  try {
+    util::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
+  } catch (ValueException &e) {
+    throw BaseException{std::string{"invalid waveform stream identifier: "} +
+                        e.what()};
   }
 
   IO::RecordStreamPtr rs = IO::RecordStream::Open(_recordStreamUrl.c_str());
@@ -345,9 +347,11 @@ GenericRecordCPtr Cached::get(
     return true;
   };
 
-  util::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
-  if (!wfStreamId.isValid()) {
-    throw BaseException{"Invalid waveform stream identifier."};
+  try {
+    util::WaveformStreamID wfStreamId{netCode, staCode, locCode, chaCode};
+  } catch (ValueException &e) {
+    throw BaseException{std::string{"invalid waveform stream identifier: "} +
+                        e.what()};
   }
 
   std::string cache_key;
