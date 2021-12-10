@@ -231,6 +231,21 @@ provided:
   where [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
   is supplied.
 
+> **NOTE**: Magnitudes are computed only for those detectors with amplitude calculation enabled.
+
+**Magnitude estimation**:
+
+Magnitude related configuration options which may be defined within a detector
+configuration include:
+
+- `"createMagnitudes"`: Boolean value which
+  enables/disables [magnitude estimation](#magnitude-estimation) for this
+  detector configuration. Magnitudes are only computed for those sensor
+  locations where
+  both [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+  is available and amplitude calculation is enabled (
+  i.e. `"createAmplitudes": true`).
+
 **Detections and arrivals**:
 
 - `"arrivalOffsetThreshold"`: Maximum arrival offset in seconds (i.e. with
