@@ -4,7 +4,10 @@
 #include <ostream>
 #include <string>
 
+#ifndef SEISCOMP_COMPONENT
 #define SEISCOMP_COMPONENT DETECT
+#endif
+
 #include <seiscomp/core/strings.h>
 #include <seiscomp/logging/log.h>
 
