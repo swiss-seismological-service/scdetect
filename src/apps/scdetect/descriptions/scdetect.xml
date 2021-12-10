@@ -313,6 +313,13 @@
             configuration provided on detector configuration level granularity.
           </description>
         </option>
+        <option flag="" long-flag="magnitudes-force">
+          <description>
+            Enables/disables the estimation of magnitudes regardless of the
+            configuration provided on detector configuration level granularity.
+            If enabled, amplitudes will be computed, too.
+          </description>
+        </option>
       </group>
 
       <group name="Input">
