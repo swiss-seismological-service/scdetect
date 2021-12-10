@@ -121,6 +121,9 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get<std::string>("methodId", publishDefaults.originMethodId);
   _publishConfig.createAmplitudes =
       pt.get<bool>("createAmplitudes", publishDefaults.createAmplitudes);
+  _publishConfig.createMagnitudes =
+      pt.get<bool>("createMagnitudes", publishDefaults.createMagnitudes &&
+                                           publishDefaults.createAmplitudes);
 
   _detectorConfig.triggerOn =
       pt.get<double>("triggerOnThreshold", detectorDefaults.triggerOn);

@@ -189,12 +189,6 @@
         </parameter>
       </group>
       <group name="magnitudes">
-        <parameter name="magnitudes" type="string" default="MLx">
-          <description>
-            Defines the magnitudes to be computed (on detector configuration
-            level granularity).
-          </description>
-        </parameter>
         <parameter name="createMagnitudes" type="boolean" default="true">
           <description>
             Defines the default value whether magnitude calculation

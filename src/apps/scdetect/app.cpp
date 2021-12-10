@@ -239,12 +239,6 @@ bool Application::validateParameters() {
     return false;
   }
 
-  for (const auto &magnitudeType : _config.publishConfig.magnitudeTypes) {
-    if (!config::validateMagnitudeType(magnitudeType)) {
-      return false;
-    }
-  }
-
   return true;
 }
 
@@ -1185,80 +1179,62 @@ bool Application::initDetectors(std::ifstream &ifs,
 
 bool Application::initAmplitudeProcessors(
     std::shared_ptr<DetectionItem> &detectionItem) {
-  struct ComponentItem {
-    util::HorizontalComponents horizontalComponents;
-    // Picks which are going to be associated with the `AmplitudeProcessor`;
-    // note that the pick order is not relevant.
-    Picks picks;
-  };
-
-  std::vector<ComponentItem> uniqueComponentItems;
+  using SensorLocationPickMap = std::unordered_map<std::string, Picks>;
+  SensorLocationPickMap sensorLocationPickMap;
+  // gather unique sensor locations which have amplitude calculation enabled
+  // (requires bindings to be configured)
   for (const auto &pick : detectionItem->amplitudePicks) {
     const util::WaveformStreamID waveformStreamId{pick->waveformID()};
     try {
-      const util::HorizontalComponents horizontalComponents{
-          Client::Inventory::Instance(), waveformStreamId.netCode(),
-          waveformStreamId.staCode(),    waveformStreamId.locCode(),
-          waveformStreamId.chaCode(),    pick->time().value()};
-
-      auto it{std::find_if(
-          std::begin(uniqueComponentItems), std::end(uniqueComponentItems),
-          [&horizontalComponents](const ComponentItem &item) {
-            return item.horizontalComponents == horizontalComponents;
-          })};
-
-      if (it != uniqueComponentItems.end()) {
-        it->picks.push_back(pick);
-        continue;
+      auto hasAmplitudeCalculationEnabled{
+          _bindings
+              .at(waveformStreamId.netCode(), waveformStreamId.staCode(),
+                  waveformStreamId.locCode(), waveformStreamId.chaCode())
+              .amplitudeProcessingConfig.enabled};
+      if (hasAmplitudeCalculationEnabled) {
+        auto &sensorLocationPicks{
+            sensorLocationPickMap[util::getSensorLocationStreamId(
+                waveformStreamId, true)]};
+        sensorLocationPicks.push_back(pick);
       }
-
-      uniqueComponentItems.push_back({horizontalComponents, {pick}});
-    } catch (Exception &e) {
-      logging::TaggedMessage msg{util::to_string(waveformStreamId),
-                                 std::string{e.what()} + "(pick_time=" +
-                                     pick->time().value().iso() + ")"};
-      SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
+    } catch (std::out_of_range &) {
       continue;
     }
   }
 
-  for (const auto &componentsItem : uniqueComponentItems) {
-    const auto &horizontalComponents{componentsItem.horizontalComponents};
-    const auto waveformStreamId{
-        util::getWaveformStreamId(horizontalComponents)};
+  for (const auto &sensorLocationPickMapPair : sensorLocationPickMap) {
+    auto picks{sensorLocationPickMapPair.second};
+    // choose arbitrarily the earliest pick w.r.t. a sensor location
+    std::sort(std::begin(picks), std::end(picks),
+              [](const Picks::value_type &lhs, const Picks::value_type &rhs) {
+                return lhs->time().value() < rhs->time().value();
+              });
+    auto &earliestPick{picks.front()};
 
-    binding::SensorLocationConfig sensorLocationConfig;
-    try {
-      sensorLocationConfig = _bindings.at(
-          horizontalComponents.netCode(), horizontalComponents.staCode(),
-          horizontalComponents.locCode(), horizontalComponents.chaCode());
-    } catch (std::out_of_range &e) {
-      SCDETECT_LOG_DEBUG(
-          "%s: failed to look up bindings required for amplitude processor "
-          "configuration (%s)",
-          waveformStreamId.c_str(), e.what());
-      continue;
-    }
+    const auto &sensorLocationStreamId{sensorLocationPickMapPair.first};
+    std::vector<std::string> sensorLocationStreamIdTokens;
+    util::tokenizeWaveformStreamId(sensorLocationStreamId,
+                                   sensorLocationStreamIdTokens);
 
-    auto &amplitudeProcessingConfig{
-        sensorLocationConfig.amplitudeProcessingConfig};
-    if (!amplitudeProcessingConfig.enabled) {
-      SCDETECT_LOG_DEBUG("%s: skipping amplitude calculation (disabled)",
-                         waveformStreamId.c_str());
-      continue;
-    }
+    auto &sensorLocationBindings{_bindings.at(
+        sensorLocationStreamIdTokens[0], sensorLocationStreamIdTokens[1],
+        sensorLocationStreamIdTokens[2], sensorLocationStreamIdTokens[3])};
+    auto &amplitudeTypes{
+        sensorLocationBindings.amplitudeProcessingConfig.amplitudeTypes};
+    // TODO(damb):
+    // - implement a factory for creating amplitude processors
+    for (const auto &amplitudeType : amplitudeTypes) {
+      if (amplitudeType != "MLx") {
+        continue;
+      }
 
-    for (auto &magnitudeType :
-         detectionItem->detection->publishConfig.magnitudeTypes) {
-      // TODO(damb):
-      // - use factory to create amplitude processor
       auto rmsAmplitudeProcessor{util::make_unique<amplitude::RMSAmplitude>()};
       rmsAmplitudeProcessor->setId(detectionItem->detectorId +
                                    settings::kProcessorIdSep +
                                    util::createUUID());
       // XXX(damb): do not provide a sensor location (currently not required)
       rmsAmplitudeProcessor->setEnvironment(detectionItem->origin, nullptr,
-                                            componentsItem.picks);
+                                            picks);
 
       rmsAmplitudeProcessor->computeTimeWindow();
       rmsAmplitudeProcessor->setGapInterpolation(
@@ -1272,10 +1248,20 @@ bool Application::initAmplitudeProcessors(
                                    *_config.magnitudesForceMode};
       bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
                                     !*_config.magnitudesForceMode};
+
+      const auto &magnitudeProcessingConfig{
+          sensorLocationBindings.magnitudeProcessingConfig};
+      const auto magnitudeType{amplitudeType};
+
       bool magnitudeCalculationEnabled{
           magnitudesForcedEnabled ||
           (!magnitudesForcedDisabled &&
-           detectionItem->detection->publishConfig.createMagnitudes)};
+           detectionItem->detection->publishConfig.createMagnitudes &&
+           magnitudeProcessingConfig.enabled &&
+           std::find(std::begin(magnitudeProcessingConfig.magnitudeTypes),
+                     std::end(magnitudeProcessingConfig.magnitudeTypes),
+                     magnitudeType) !=
+               std::end(magnitudeProcessingConfig.magnitudeTypes))};
       auto magnitudeProcessorId{detectionItem->detectorId +
                                 settings::kProcessorIdSep + util::createUUID()};
 
@@ -1336,25 +1322,26 @@ bool Application::initAmplitudeProcessors(
             }
           });
 
+      const auto &amplitudeProcessingConfig{
+          sensorLocationBindings.amplitudeProcessingConfig};
       rmsAmplitudeProcessor->setSaturationThreshold(
           amplitudeProcessingConfig.mlx.saturationThreshold);
 
       // configure amplitude processing filter
       if (!amplitudeProcessingConfig.mlx.filter.empty()) {
-        util::replaceEscapedXMLFilterIdChars(
-            amplitudeProcessingConfig.mlx.filter);
+        auto filter{amplitudeProcessingConfig.mlx.filter};
+        util::replaceEscapedXMLFilterIdChars(filter);
         try {
           rmsAmplitudeProcessor->setFilter(
-              createFilter(amplitudeProcessingConfig.mlx.filter).release(),
+              createFilter(filter).release(),
               amplitudeProcessingConfig.mlx.initTime);
           SCDETECT_LOG_DEBUG_TAGGED(
               rmsAmplitudeProcessor->id(),
               "Configured amplitude processor filter: filter=\"%s\", "
               "init_time=%f",
-              amplitudeProcessingConfig.mlx.filter.c_str(),
-              amplitudeProcessingConfig.mlx.initTime);
+              filter.c_str(), amplitudeProcessingConfig.mlx.initTime);
         } catch (WaveformProcessor::BaseException &e) {
-          throw BaseException{waveformStreamId + ": " + e.what()};
+          throw BaseException{sensorLocationStreamId + ": " + e.what()};
         }
       } else {
         SCDETECT_LOG_DEBUG_TAGGED(
@@ -1362,31 +1349,45 @@ bool Application::initAmplitudeProcessors(
             "Configured amplitude processor with no filter: filter=\"\"");
       }
 
-      for (auto s : horizontalComponents) {
-        Processing::Stream stream;
-        stream.init(s);
+      try {
+        const util::HorizontalComponents horizontalComponents{
+            Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
+            sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
+            sensorLocationStreamIdTokens[3], earliestPick->time().value()};
 
-        AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
-        try {
-          deconvolutionConfig =
-              static_cast<AmplitudeProcessor::DeconvolutionConfig>(
-                  sensorLocationConfig.at(s->code()).deconvolutionConfig);
-        } catch (std::out_of_range &e) {
-          binding::StreamConfig::DeconvolutionConfig fallback;
-          SCDETECT_LOG_WARNING(
-              "%s: failed to look up deconvolution configuration related "
-              "bindings (channel code: \"%s\") required for amplitude "
-              "processor configuration (%s); use fallback configuration, "
-              "instead: \"%s\"",
-              waveformStreamId.c_str(), s->code().c_str(), e.what(),
-              fallback.debugString().c_str());
-          deconvolutionConfig =
-              static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
+        for (auto s : horizontalComponents) {
+          Processing::Stream stream;
+          stream.init(s);
+
+          AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
+          try {
+            deconvolutionConfig =
+                static_cast<AmplitudeProcessor::DeconvolutionConfig>(
+                    sensorLocationBindings.at(s->code()).deconvolutionConfig);
+          } catch (std::out_of_range &e) {
+            binding::StreamConfig::DeconvolutionConfig fallback;
+            SCDETECT_LOG_WARNING(
+                "%s: failed to look up deconvolution configuration related "
+                "bindings (channel code: \"%s\") required for amplitude "
+                "processor configuration (%s); use fallback configuration, "
+                "instead: \"%s\"",
+                sensorLocationStreamId.c_str(), s->code().c_str(), e.what(),
+                fallback.debugString().c_str());
+            deconvolutionConfig =
+                static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
+          }
+
+          rmsAmplitudeProcessor->add(
+              horizontalComponents.netCode(), horizontalComponents.staCode(),
+              horizontalComponents.locCode(), stream, deconvolutionConfig);
         }
-
-        rmsAmplitudeProcessor->add(
-            horizontalComponents.netCode(), horizontalComponents.staCode(),
-            horizontalComponents.locCode(), stream, deconvolutionConfig);
+      } catch (Exception &e) {
+        logging::TaggedMessage msg{
+            sensorLocationStreamId,
+            std::string{e.what()} +
+                "(pick_time=" + earliestPick->time().value().iso() + ")"};
+        SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
+        continue;
       }
 
       try {
@@ -1736,13 +1737,6 @@ void Application::Config::init(const Client::Application *app) {
   try {
     publishConfig.createAmplitudes =
         app->configGetBool("amplitudes.createAmplitudes");
-  } catch (...) {
-  }
-  try {
-    // TODO TODO TODO
-    // - validate types
-    publishConfig.magnitudeTypes =
-        app->configGetStrings("magnitudes.magnitudes");
   } catch (...) {
   }
   try {
