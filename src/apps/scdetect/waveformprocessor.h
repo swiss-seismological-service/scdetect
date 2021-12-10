@@ -35,8 +35,6 @@ class WaveformOperator;
 class WaveformProcessor : public Processor,
                           public InterpolateGaps<WaveformProcessor> {
  public:
-  WaveformProcessor(const std::string &id);
-
   using Filter = Math::Filtering::InPlaceFilter<double>;
 
   DEFINE_SMARTPOINTER(Result);
@@ -46,7 +44,7 @@ class WaveformProcessor : public Processor,
   };
 
   using PublishResultCallback = std::function<void(
-      const WaveformProcessor *, const Record *, const ResultCPtr &)>;
+      const WaveformProcessor *, const Record *, const ResultCPtr)>;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
@@ -231,6 +229,9 @@ class WaveformProcessor : public Processor,
   Status _status{Status::kWaitingForData};
   double _statusValue{0};
 };
+
+std::unique_ptr<WaveformProcessor::Filter> createFilter(
+    const std::string &filter);
 
 }  // namespace detect
 }  // namespace Seiscomp

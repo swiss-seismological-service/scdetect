@@ -32,8 +32,7 @@ namespace detector {
 
 class Detector : public detect::Processor {
  public:
-  Detector(const detect::Processor *detector,
-           const DataModel::OriginCPtr &origin);
+  Detector(const DataModel::OriginCPtr &origin);
   virtual ~Detector();
 
   class BaseException : public Processor::BaseException {
@@ -72,8 +71,10 @@ class Detector : public detect::Processor {
       Arrival arrival;
       SensorLocation sensorLocation;
 
-      // The template waveform duration
-      Core::TimeSpan templateWaveformDuration;
+      Core::Time templateWaveformStartTime;
+      Core::Time templateWaveformEndTime;
+      // The template waveform reference time
+      Core::Time templateWaveformReferenceTime;
     };
 
     using TemplateResults =
@@ -175,13 +176,16 @@ class Detector : public detect::Processor {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
 
-    // The sensor location w.r.t. the template `processor`
+    // The sensor location w.r.t. the template waveform `processor`
     SensorLocation sensorLocation;
     // The time window fed
     // XXX(damb): The data time window fed might be different from the data
     // time window processed (e.g. due to the usage of certain waveform
     // operators). Therefore, keep track of the time window fed, too.
     Core::TimeWindow dataTimeWindowFed;
+    // The template waveform reference time w.r.t. the template waveform
+    // `processor`
+    Core::Time templateWaveformReferenceTime;
 
     std::unique_ptr<TemplateWaveformProcessor> processor;
   };

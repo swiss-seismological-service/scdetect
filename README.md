@@ -10,6 +10,7 @@
     + [General](#general)
     + [Template configuration](#template-configuration)
     + [Amplitude calculation](#amplitude-calculation)
+    + [Magnitude estimation](#magnitude-estimation)
     + [Inventory metadata, event metadata and configuration](#inventory-events-and-configuration)
     + [Waveform data and RecordStream configuration](#waveform-data-and-recordstream-configuration)
 - [Installation](#compiling-and-installation)
@@ -32,6 +33,10 @@ The module allows both single-stream and multi-stream earthquake detection.
 
 In case the detection parameters exceed the configured thresholds, `scdetect`
 declares a new origin.
+
+Besides, magnitudes may be estimated based on a template family
+*amplitude-magnitude regression*. The implementation follows the approach
+outlined in https://doi.org/10.1029/2019JB017468.
 
 ## Overview
 
@@ -86,10 +91,11 @@ and configure `scdetect`. This includes:
 1. How to [configure templates](#template-configuration)
 2. How to enable [amplitude calculation](#amplitude-calculation) (required for a
    magnitude estimation based on amplitude-magnitude regression)
-3. How to access
+3. How to enable [magnitude estimation](#magnitude-estimation)
+4. How to access
    [metadata and configuration](#inventory-events-and-configuration) from the
    database or from plain files
-4. How
+5. How
    [waveform data is accessed](#waveform-data-and-recordstream-configuration)
    including both [template waveform data caching](#caching-waveform-data)
    and [template waveform data preparation](#prepare-template-waveform-data)
@@ -162,7 +168,7 @@ files (`global.cfg`, `scdetect.cfg` located at corresponding configuration
 directory paths).
 
 In order to validate the template configuration, with
-[templates.schema.json](src/apps/scdetect/config/templates.schema.json) a
+[templates.schema.json](src/apps/scdetect/json-schema/templates.schema.json) a
 rudimentary [JSON schema](https://json-schema.org/) is provided.
 
 #### Detector configuration parameters
@@ -174,9 +180,12 @@ configuration parameters:
 
 - `"detectorId"`: A string defining the detector identifier. If not defined a
   random unique identifier will be generated, automatically. Declared origins
-  will contain a comment with a reference to the detector identifier. Note also
-  that since `scdetect` implements hierarchical logging explicitly defining the
-  detector identifier may be of particular use while debugging.
+  will contain a comment with a reference to the detector identifier. Besides,
+  the detector identifier is used in the context of the template family
+  amplitude-magnitude regression based magnitude estimation.
+
+  Note also that since `scdetect` implements hierarchical logging explicitly
+  defining the detector identifier may be of particular use while debugging.
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
   to `NOW`. If data arrive later than the value specified it is not used,
@@ -215,12 +224,27 @@ estimation based on an amplitude-magnitude regression. Within a detector
 configuration the following amplitude related configuration parameters may be
 provided:
 
-- `"calculateAmplitudes"`: Boolean value which enables/disables
-  [amplitude calculation](#amplitude-calculation) for this detector
-  configuration. Note also that amplitudes are calculated only for those sensor
-  locations
+- `"createAmplitudes"`: Boolean value which
+  enables/disables [amplitude calculation](#amplitude-calculation) for this
+  detector configuration. Note also that amplitudes are calculated only for
+  those sensor locations
   where [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
   is supplied.
+
+> **NOTE**: Magnitudes are computed only for those detectors with amplitude calculation enabled.
+
+**Magnitude estimation**:
+
+Magnitude related configuration options which may be defined within a detector
+configuration include:
+
+- `"createMagnitudes"`: Boolean value which
+  enables/disables [magnitude estimation](#magnitude-estimation) for this
+  detector configuration. Magnitudes are only computed for those sensor
+  locations where
+  both [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+  is available and amplitude calculation is enabled (
+  i.e. `"createAmplitudes": true`).
 
 **Detections and arrivals**:
 
@@ -330,19 +354,21 @@ configuration parameters:
   account.
 
 - `"templatePhase"`: Required. A string defining the template phase code used
-  for the template waveform creation. Note that for the template phase lookup,
-  only the sensor location related part is used of waveform stream identifier
-  configured.
+  for the template waveform creation. It is the phase code which defines the
+  *reference time* for the actual template waveform creation.
+
+  Note that for the template phase lookup, only the sensor location related part
+  is used of waveform stream identifier configured.
 
 - `"templateWaveformStart"`: The template waveform start in seconds with regard
-  to the template pick time. A negative value refers to a template waveform
-  start *before* the template pick time, while a positive value means
-  *after* the pick time.
+  to the template reference time. A negative value refers to a template waveform
+  start *before* the template reference time, while a positive value means
+  *after* the reference time.
 
 - `"templateWaveformEnd"`: The template waveform end in seconds with regard to
-  the template pick time. A negative value refers to a template waveform start
-  *before* the template pick time, while a positive value means *after* the pick
-  time.
+  the template reference time. A negative value refers to a template waveform
+  start *before* the template reference time, while a positive value means
+  *after* the reference time.
 
 **Filtering and resampling**:
 
@@ -435,19 +461,19 @@ the stream set.
 ### Amplitude calculation
 
 `scdetect` implements the calculation of amplitudes which are a prerequisite in
-order to perform a so called *amplitude-magnitude regression*. The
-implementation follows the approach outlined
-in https://doi.org/10.1029/2019JB017468 (section 3.3.3 Magnitude Estimation).
-Amplitudes are calculated once an origin has been declared.
+order to perform a so called amplitude-magnitude regression. The implementation
+follows the approach outlined in https://doi.org/10.1029/2019JB017468 (section
+3.3.3 *Magnitude Estimation*). Amplitudes are calculated once an origin has been
+declared.
 
-This section contains a detailed description how to setup the configuration
+This section contains a detailed description how to set up the configuration
 required for amplitude calculation.
 
 Amplitudes used for the amplitude-magnitude regression are so called *sensor
-location RMS (root-mean-square) amplitudes* (i.e. the maximum RMS regarding all
-streams for a certain sensor location w.r.t. velocity seismograms). In order to
-provide dedicated configuration for different sensor locations `scdetect` makes
-use of
+location RMS (root-mean-square) amplitudes* (i.e. the maximum sample-wise RMS
+regarding the horizontal components for a certain sensor location w.r.t.
+velocity seismograms). In order to provide dedicated configuration for different
+sensor locations `scdetect` makes use of
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 concept. Amplitudes are calculated only for those sensor locations with bindings
 configuration available.
@@ -460,7 +486,7 @@ an important note:
 > [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 > allows configuration to be provided for stations, only. In order to allow
 > users to supply configuration on sensor location granularity, `scdetect`
-> makes use of so called *amplitude profiles* and *response profiles*.
+> makes use of so called *sensor location profiles*.
 
 In general, bindings are configured the easiest with SeisComP's configuration
 and system management
@@ -469,14 +495,15 @@ frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html
 
 **Creating key files** (`scconfig`):
 
-1. Create an *amplitude profile* for a sensor location. As a bare minimum
-   specify at least the `locationCode` and `channelCode` attributes.
+1. Create an *sensor location profile* for a sensor location. As a bare minimum
+   specify at least the `locationCode` (which may be empty) and `channelCode`
+   attributes.
 
    **Tip**: Although not strictly required, it is recommended to use sensible
-   profile names. E.g. for an amplitude profile with `locationCode` `00`
+   profile names. E.g. for a sensor location profile with `locationCode` `00`
    and `channelCode` `HH` naming the profile with e.g. `00_HH` is recommended.
-2. Add the profile's name to the list of known `amplitudeProfiles`. Only those
-   profiles are taken into account with a corresponding list entry.
+2. Add the profile's name to the list of known `sensorLocationProfiles`. Only
+   those profiles are taken into account with a corresponding list entry.
 3. (Optional): in case of creating a *binding profile* assign the bindings
    configuration to the corresponding stations.
 4. Save the configuration. With that, the bindings configuration is written to
@@ -512,6 +539,196 @@ will dump the configuration to a database named `seiscomp`
 information, please refer to
 the [bindings2cfg](https://www.seiscomp.de/doc/apps/bindings2cfg.html)
 documentation.
+
+### Magnitude estimation
+
+For sensor locations amplitudes were computed `scdetect` is able to estimate
+magnitudes based on the *amplitude-magnitude regression* approach (for further
+details, please refer to https://doi.org/10.1029/2019JB017468, section 3.3.3 -
+*Magnitude Estimation*). The approach is based on so-called *template families*
+which in fact are groups of *related* templates. The corresponding template
+family configuration must be provided by `scdetect`'
+s `--templates-family-json path/to/templates-family.json` CLI flag.
+
+Again, for the amplitude-magnitude regression itself, the following types of
+*template station magnitudes* are taken into account:
+
+- [`MLh`](https://www.seiscomp.de/doc/apps/global_mlh.html)
+
+- `MLhc`: based on `MLh`, but uses a slightly adjusted relationship (i.e.
+  corrected for near-field observations) and allows for station specific
+  corrections.
+
+> **NOTE**: Magnitudes of type `MLhc` are preferred over magnitudes of type `MLh`.
+
+The template station magnitudes must be available through eventparameters (for
+further details, please refer to the
+related [section](#inventory-events-and-configuration) on providing these data
+products).
+
+Magnitudes computed based on the amplitude-magnitude regression approach are of
+type `MLx`. These magnitudes are going to be issued as SeisComP *Station
+Magnitudes* (see also
+the [scmag documentation](https://docs.gempa.de/seiscomp/current/apps/scmag.html))
+.
+
+#### Template family configuration
+
+The template family configuration defines a group of templates which are usually
+generated by a cluster analysis approach. The members of a template family
+define which *reference magnitudes* are part of a regression for a certain group
+of templates.
+
+The template family configuration must be provided as a JSON configuration file
+which includes a JSON array of *template family configuration objects*. An
+exemplary template family configuration file containing the definition for a
+single template family may look like:
+
+```json
+[
+  {
+    "id": "e7bc36fc-95e4-45de-a33d-6dcef43ca809",
+    "references": [
+      {
+        "detectorId": "detector-01",
+        "streams": [
+          {
+            "templateWaveformId": "NET.STA00.LOC.HHZ",
+            "upperLimit": 2
+          }
+        ]
+      },
+      {
+        "detectorId": "detector-02",
+        "lowerLimit": 0.5,
+        "upperLimit": 2.5,
+        "streams": [
+          {
+            "templateWaveformId": "NET.STA01.LOC.HHZ"
+          },
+          {
+            "templateWaveformId": "NET.STA02.LOC.BHE",
+            "upperLimit": 2.3
+          }
+        ]
+      },
+      {
+        "originId": "originPublicId",
+        "streams": [
+          {
+            "templatePhase": "Pg",
+            "templateWaveformId": "NET.STA01.LOC.HHZ",
+            "templateWaveformStart": -2,
+            "templateWaveformEnd": 2
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+A template family configuration object may have the following attributes:
+
+- `"id"`: The optional template family identifier. Currently, this identifier
+  has no special meaning except of the fact that it is used in log messages. If
+  no value is specified a unique identifier is created automatically.
+
+- `"references"`: Required. A JSON array of template family members
+  configuration objects. Members may reference detectors (defined by
+  the [template configuration](#template-configuration)) or third-party
+  origins (i.e. origins which are not used for detections but contribute to the
+  amplitude-magnitude regression).
+
+**Detector reference configuration**:
+
+The so-called *detector reference* members reference detector configurations
+from the [template configuration](#template-configuration). The reference is
+established by means of the `"detectorId"` attribute. Detector reference members
+imply that
+
+- reference magnitudes are added to the template family. That is, based both on
+  the origin identifier (`"originId"`) and the sensor locations (defined by
+  corresponding streams (`"streams"`)).
+
+- for the sensor locations referenced new magnitudes will be computed in case of
+  detections issued by the corresponding detector.
+
+Detector reference configuration objects allow the following attributes to be
+specified:
+
+- `"detectorId"`: Required. Detector identifier used for establishing a
+  reference to a detector configuration from
+  the [template configuration](#template-configuration).
+
+- `"streams"`: Required. A JSON array of so-called *sensor location
+  configuration objects*. Again, in the context of a detector reference, a
+  sensor location configuration object defines the attributes:
+
+    - `"templateWaveformId"`: Required. The template waveform identifier
+      regarding a detector configuration stream configuration. Required, in
+      order to fully establish the relation detector - (template) origin -
+      sensor location.
+
+      Usually, this refers to
+      a [FDSN Source Identifier](http://docs.fdsn.org/projects/source-identifiers/en/v1.0/)
+      . Note that the part relevant for specifying a sensor location is taken
+      into account, only.
+
+    - `"lowerLimit"`: The optional lower limit for magnitudes estimated.
+      Magnitudes smaller than the limit specified won't be issued.
+
+    - `"upperLimit"`: The optional upper limit for magnitudes estimated.
+      Magnitudes greater than the limit specified won't be issued.
+
+**Detector reference configuration defaults**
+
+The following sensor location configuration defaults may be defined within the
+scope of a detector reference configuration:
+
+- `"lowerLimit"`
+- `"upperLimit"`
+
+That is, if not explicitly overridden within sensor location configurations the
+corresponding fallback values will be used, instead.
+
+**Third-party reference configuration**:
+
+The so-called *third-party reference* members reference origins which are not
+used for detection, but they contribute to the amplitude-magnitude regression. A
+third-party reference configuration object allows the following attributes to be
+defined:
+
+- `"originId"`: Required. The origin identifier used to establish a reference to
+  an origin in the catalog. Usually, the origin identifier corresponds to a
+  *seismic metadata resource identifier* (`smi`).
+
+- `"streams"`: Required. A JSON array of sensor location configuration objects
+  (now, in the context of a third-party reference configuration). In the context
+  of a third-party reference configuration a sensor location configuration
+  allows the following attributes to be specified:
+
+    - `"templateWaveformId"`: Required. The template waveform identifier
+      regarding a (template) origin. Required, in order to fully establish the
+      relation origin - sensor location.
+
+      Usually, this refers to
+      a [FDSN Source Identifier](http://docs.fdsn.org/projects/source-identifiers/en/v1.0/)
+      . Note that the part relevant for specifying a sensor location taken is
+      into account, only.
+
+    - `"templatePhase"`: Required. A string defining the template phase code
+      used for amplitude calculation. It is the phase code which actually
+      defines the *reference time* used for waveform extraction.
+
+    - `"templateWaveformStart"`: The template waveform start in seconds with
+      regard to the reference time. A negative value refers to a waveform
+      start *before* the reference time, while a positive value means *after*
+      the reference time.
+
+    - `"templateWaveformEnd"`: The waveform end in seconds with regard to the
+      reference time. A negative value refers to a waveform start *before* the
+      reference time, while a positive value means *after* the reference time.
 
 ### Inventory, events and configuration
 

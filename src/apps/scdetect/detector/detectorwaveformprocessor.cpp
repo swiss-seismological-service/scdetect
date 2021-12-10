@@ -1,18 +1,18 @@
 #include "detectorwaveformprocessor.h"
 
 #include "../log.h"
+#include "../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 
 DetectorWaveformProcessor::DetectorWaveformProcessor(
-    const std::string &id, const DataModel::OriginCPtr &origin)
-    : WaveformProcessor{id}, _detector{this, origin}, _origin{origin} {}
+    const DataModel::OriginCPtr &origin)
+    : _detector{origin}, _origin{origin} {}
 
-DetectorBuilder DetectorWaveformProcessor::Create(const std::string &detectorId,
-                                                  const std::string &originId) {
-  return DetectorBuilder(detectorId, originId);
+DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
+  return DetectorBuilder(originId);
 }
 
 void DetectorWaveformProcessor::setFilter(Filter *filter,
@@ -38,7 +38,7 @@ void DetectorWaveformProcessor::terminate() {
 
   _detector.terminate();
   if (_detection) {
-    auto detection{utils::make_smart<Detection>()};
+    auto detection{util::make_smart<Detection>()};
     prepareDetection(detection, *_detection);
     emitResult(nullptr, detection);
 
@@ -47,7 +47,7 @@ void DetectorWaveformProcessor::terminate() {
   WaveformProcessor::terminate();
 }
 
-const PublishConfig &DetectorWaveformProcessor::publishConfig() const {
+const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
   return _publishConfig;
 }
 
@@ -79,7 +79,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
 
   if (!finished()) {
     if (_detection) {
-      auto detection{utils::make_smart<Detection>()};
+      auto detection{util::make_smart<Detection>()};
       prepareDetection(detection, *_detection);
       emitResult(record, detection);
 
@@ -131,6 +131,7 @@ void DetectorWaveformProcessor::prepareDetection(
       _publishConfig.createTemplateArrivals;
   d->publishConfig.originMethodId = _publishConfig.originMethodId;
   d->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
+  d->publishConfig.createMagnitudes = _publishConfig.createMagnitudes;
 
   if (_publishConfig.createTemplateArrivals) {
     for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {

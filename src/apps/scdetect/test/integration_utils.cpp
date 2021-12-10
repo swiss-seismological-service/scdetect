@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "../settings.h"
-#include "../utils.h"
+#include "../util/memory.h"
 
 namespace fs = boost::filesystem;
 namespace utf = boost::unit_test;
@@ -91,6 +91,11 @@ const std::string FlagConsole::flag() const { return "--console"; }
 FlagAmplitudesForce::FlagAmplitudesForce(bool enabled) : BooleanFlag{enabled} {}
 const std::string FlagAmplitudesForce::flag() const {
   return "--amplitudes-force";
+}
+
+FlagMagnitudesForce::FlagMagnitudesForce(bool enabled) : BooleanFlag{enabled} {}
+const std::string FlagMagnitudesForce::flag() const {
+  return "--magnitudes-force";
 }
 
 const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
@@ -313,9 +318,9 @@ void originCmp(const DataModel::OriginCPtr &lhs,
   BOOST_TEST_CHECK(lhs->earthModelID() == rhs->earthModelID());
 
   auto lhsOriginQuality{
-      utils::make_smart<DataModel::OriginQuality>(lhs->quality())};
+      util::make_smart<DataModel::OriginQuality>(lhs->quality())};
   auto rhsOriginQuality{
-      utils::make_smart<DataModel::OriginQuality>(rhs->quality())};
+      util::make_smart<DataModel::OriginQuality>(rhs->quality())};
   originQualityCmp(lhsOriginQuality, rhsOriginQuality);
 
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::OriginCPtr orig) {

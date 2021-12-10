@@ -47,7 +47,6 @@ class TemplateWaveformProcessor : public WaveformProcessor {
                             const std::string filterId,
                             const Core::Time &templateStartTime,
                             const Core::Time &templateEndTime,
-                            const std::string &processorId,
                             const Processor *p = nullptr);
 
   DEFINE_SMARTPOINTER(MatchResult);

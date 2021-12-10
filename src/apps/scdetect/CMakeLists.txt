@@ -6,7 +6,10 @@ set(
     amplitudeprocessor.cpp
     app.cpp
     binding.cpp
-    config.cpp
+    config/detector.cpp
+    config/exception.cpp
+    config/template_family.cpp
+    config/validators.cpp
     datamodel/ddl.cpp
     detail/sqlite.cpp
     detector/arrival.cpp
@@ -21,15 +24,24 @@ set(
     eventstore.cpp
     exception.cpp
     filter.cpp
+    log.cpp
+    magnitudeprocessor.cpp
+    magnitude/decorator/range.cpp
+    magnitude/decorator.cpp
+    magnitude/regression.cpp
+    magnitude/util.cpp
+    magnitude/templatefamily.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
     processor.cpp
     resamplerstore.cpp
     stream.cpp
+    templatefamily.cpp
     timewindowprocessor.cpp
-    utils.cpp
-    validators.cpp
+    util/horizontal_components.cpp
+    util/util.cpp
+    util/waveform_stream_id.cpp
     waveform.cpp
     waveformoperator.cpp
     waveformprocessor.cpp

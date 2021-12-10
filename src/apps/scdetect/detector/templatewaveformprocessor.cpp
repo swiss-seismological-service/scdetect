@@ -11,7 +11,7 @@
 #include "../operator/resample.h"
 #include "../resamplerstore.h"
 #include "../settings.h"
-#include "../utils.h"
+#include "../util/memory.h"
 #include "../waveform.h"
 #include "../waveformoperator.h"
 
@@ -39,11 +39,8 @@ void LocalMaxima::feed(double coefficient, std::size_t lagIdx) {
 TemplateWaveformProcessor::TemplateWaveformProcessor(
     const GenericRecordCPtr &waveform, const std::string filterId,
     const Core::Time &templateStartTime, const Core::Time &templateEndTime,
-    const std::string &processorId, const Processor *p)
-    : WaveformProcessor{p ? std::string{p->id() + settings::kProcessorIdSep +
-                                        processorId}
-                          : processorId},
-      _crossCorrelation{waveform, filterId, templateStartTime,
+    const Processor *p)
+    : _crossCorrelation{waveform, filterId, templateStartTime,
                         templateEndTime} {}
 
 void TemplateWaveformProcessor::setFilter(Filter *filter,
@@ -132,7 +129,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
 
   const Core::TimeSpan templateLength{_crossCorrelation.templateLength()};
   const Core::TimeWindow tw{start, record->endTime()};
-  auto result{utils::make_smart<MatchResult>()};
+  auto result{util::make_smart<MatchResult>()};
   for (const auto &m : maxima.values) {
     // take cross-correlation filter delay into account i.e. the template
     // processor's result is referring to a time window shifted to the past
@@ -171,7 +168,7 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
                                  "Reinitialize stream: samplingFrequency=%f",
                                  _targetSamplingFrequency);
     auto resamplingOperator{
-        utils::make_unique<waveform_operator::ResamplingOperator>(
+        util::make_unique<waveform_operator::ResamplingOperator>(
             RecordResamplerStore::Instance().get(record,
                                                  *_targetSamplingFrequency))};
     setOperator(resamplingOperator.release());

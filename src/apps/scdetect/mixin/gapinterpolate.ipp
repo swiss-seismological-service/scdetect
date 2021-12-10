@@ -4,7 +4,7 @@
 #include <seiscomp/core/genericrecord.h>
 
 #include "../log.h"
-#include "../utils.h"
+#include "../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -87,12 +87,12 @@ bool InterpolateGaps<TGapInterpolateable>::fillGap(
     const Core::TimeSpan &duration, double nextSample, size_t missingSamples) {
   if (duration <= _gapTolerance) {
     if (_gapInterpolation) {
-      auto filled{utils::make_unique<GenericRecord>(
+      auto filled{util::make_unique<GenericRecord>(
           record->networkCode(), record->stationCode(), record->locationCode(),
           record->channelCode(), streamState.lastRecord->endTime(),
           record->samplingFrequency())};
 
-      auto dataPtr{utils::make_smart<DoubleArray>(missingSamples)};
+      auto dataPtr{util::make_smart<DoubleArray>(missingSamples)};
       double delta{nextSample - streamState.lastSample};
       double step{1. / static_cast<double>(missingSamples + 1)};
       double di = step;

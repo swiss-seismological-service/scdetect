@@ -1,25 +1,14 @@
-#include "config.h"
+#include "detector.h"
 
-#include <boost/property_tree/exceptions.hpp>
-#include <utility>
-#include <vector>
-
+#include "../exception.h"
+#include "../log.h"
+#include "../util/waveform_stream_id.h"
 #include "exception.h"
-#include "log.h"
-#include "utils.h"
 #include "validators.h"
 
 namespace Seiscomp {
 namespace detect {
-
 namespace config {
-
-BaseException::BaseException() : Exception("base config exception") {}
-
-ParserException::ParserException()
-    : BaseException{"error while parsing configuration"} {}
-
-}  // namespace config
 
 StreamConfig::StreamConfig() {}
 
@@ -34,7 +23,7 @@ StreamConfig::StreamConfig(const std::string &wfStreamId,
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
                            const StreamConfig &defaults)
-    : templateId{pt.get<std::string>("templateId", utils::createUUID())
+    : templateId{pt.get<std::string>("templateId", util::createUUID())
 
       },
       wfStreamId{pt.get<std::string>("waveformId")},
@@ -73,18 +62,18 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
 bool StreamConfig::isValid() const {
   bool retval{true};
   try {
-    retval = utils::WaveformStreamID{wfStreamId}.isValid();
-  } catch (ValueException &e) {
+    util::WaveformStreamID{wfStreamId};
+  } catch (detect::ValueException &e) {
     return false;
   }
   try {
-    retval = utils::WaveformStreamID{templateConfig.wfStreamId}.isValid();
-  } catch (ValueException &e) {
+    util::WaveformStreamID{templateConfig.wfStreamId};
+  } catch (detect::ValueException &e) {
     return false;
   }
 
   if (mergingThreshold) {
-    retval = config::validateXCorrThreshold(*mergingThreshold);
+    retval = validateXCorrThreshold(*mergingThreshold);
   }
 
   const auto validateFilter = [](const std::string &filterId) {
@@ -104,26 +93,25 @@ bool StreamConfig::isValid() const {
   }
 
   return (retval && templateConfig.wfStart < templateConfig.wfEnd &&
-          !templateConfig.phase.empty() && utils::isGeZero(initTime));
+          !templateConfig.phase.empty() && util::isGeZero(initTime));
 }
 
 bool DetectorConfig::isValid(size_t numStreamConfigs) const {
-  return (config::validateXCorrThreshold(triggerOn) &&
-          config::validateXCorrThreshold(triggerOff) &&
-          (!gapInterpolation ||
-           (gapInterpolation && utils::isGeZero(gapThreshold) &&
-            utils::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
-          config::validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
-          config::validateMinArrivals(minArrivals,
-                                      static_cast<int>(numStreamConfigs)) &&
-          config::validateLinkerMergingStrategy(mergingStrategy));
+  return (
+      validateXCorrThreshold(triggerOn) && validateXCorrThreshold(triggerOff) &&
+      (!gapInterpolation ||
+       (gapInterpolation && util::isGeZero(gapThreshold) &&
+        util::isGeZero(gapTolerance) && gapThreshold < gapTolerance)) &&
+      validateArrivalOffsetThreshold(arrivalOffsetThreshold) &&
+      validateMinArrivals(minArrivals, static_cast<int>(numStreamConfigs)) &&
+      validateLinkerMergingStrategy(mergingStrategy));
 }
 
 TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
                                const DetectorConfig &detectorDefaults,
                                const StreamConfig &streamDefaults,
                                const PublishConfig &publishDefaults)
-    : _detectorId{pt.get<std::string>("detectorId", utils::createUUID())},
+    : _detectorId{pt.get<std::string>("detectorId", util::createUUID())},
       _originId(pt.get<std::string>("originId")) {
   _publishConfig.createArrivals =
       pt.get<bool>("createArrivals", publishDefaults.createArrivals);
@@ -132,7 +120,10 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   _publishConfig.originMethodId =
       pt.get<std::string>("methodId", publishDefaults.originMethodId);
   _publishConfig.createAmplitudes =
-      pt.get<bool>("calculateAmplitudes", publishDefaults.createAmplitudes);
+      pt.get<bool>("createAmplitudes", publishDefaults.createAmplitudes);
+  _publishConfig.createMagnitudes =
+      pt.get<bool>("createMagnitudes", publishDefaults.createMagnitudes &&
+                                           publishDefaults.createAmplitudes);
 
   _detectorConfig.triggerOn =
       pt.get<double>("triggerOnThreshold", detectorDefaults.triggerOn);
@@ -176,7 +167,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       pt.get_optional<std::string>("templateFilter");
 
   // initialize stream configs
-  for (const auto &streamConfigPair : pt.find("streams")->second) {
+  for (const auto &streamConfigPair : pt.get_child("streams")) {
     const auto &sc{streamConfigPair.second};
 
     std::string wfStreamId;
@@ -227,5 +218,11 @@ TemplateConfig::reference TemplateConfig::at(const std::string &stream_id) {
   return _streamConfigs.at(stream_id);
 }
 
+TemplateConfig::const_reference TemplateConfig::at(
+    const std::string &stream_id) const {
+  return _streamConfigs.at(stream_id);
+}
+
+}  // namespace config
 }  // namespace detect
 }  // namespace Seiscomp

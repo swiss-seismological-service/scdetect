@@ -4,7 +4,7 @@
 #include <iterator>
 #include <unordered_set>
 
-#include "../utils.h"
+#include "../util/math.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -136,7 +136,7 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
           SCDETECT_LOG_DEBUG_PROCESSOR(
               proc,
               "[%s] [%s - %s] Dropping result due to merging "
-              "strategy applied: time%s, fit=%9f, lag=%10f",
+              "strategy applied: time=%s, fit=%9f, lag=%10f",
               newArrival.pick.waveformStreamId.c_str(),
               res->timeWindow.startTime().iso().c_str(),
               res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
@@ -278,7 +278,7 @@ void Linker::Event::feed(const std::string &procId,
                  });
 
   // compute the overall event's score
-  association.fit = utils::cma(fits.data(), fits.size());
+  association.fit = util::cma(fits.data(), fits.size());
   association.pot = pot;
   if (!refPickTime || res.arrival.pick.time < refPickTime) {
     refPickTime = res.arrival.pick.time;

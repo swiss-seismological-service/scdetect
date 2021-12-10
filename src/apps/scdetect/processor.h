@@ -25,8 +25,7 @@ namespace detect {
 // Abstract interface for processor implementations
 class Processor {
  public:
-  Processor(const std::string &id);
-  virtual ~Processor();
+  virtual ~Processor() = default;
 
   // Base class for all processor related exceptions
   class BaseException : public Exception {
@@ -35,6 +34,8 @@ class Processor {
     BaseException();
   };
 
+  // Sets the processor's identifier
+  void setId(const std::string &id);
   // Returns the processor's identifier
   const std::string &id() const;
 

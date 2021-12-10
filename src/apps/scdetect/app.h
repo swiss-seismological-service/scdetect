@@ -5,13 +5,18 @@
 #include <seiscomp/client/streamapplication.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
+#include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/stationmagnitude.h>
 #include <seiscomp/processing/streambuffer.h>
 #include <seiscomp/system/commandline.h>
 
 #include <boost/optional/optional.hpp>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <list>
@@ -22,7 +27,8 @@
 
 #include "amplitudeprocessor.h"
 #include "binding.h"
-#include "config.h"
+#include "config/detector.h"
+#include "config/template_family.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
 #include "waveform.h"
@@ -68,6 +74,10 @@ class Application : public Client::StreamApplication {
     // calculating amplitudes (regardless of the configuration provided on
     // detector configuration level granularity).
     boost::optional<bool> amplitudesForceMode;
+    // Global flag indicating whether to enable `true` or disable `false`
+    // calculating magnitudes (regardless of the configuration provided on
+    // detector configuration level granularity.
+    boost::optional<bool> magnitudesForceMode;
 
     // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
@@ -86,9 +96,38 @@ class Application : public Client::StreamApplication {
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
     bool skipTemplateIfNoSensorLocationData{true};
+    // Defines if a detector should be initialized although template processors
+    // could not be initialized due to a missing pick in the event parameters.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipTemplateIfNoPick{true};
+    // Defines if a template family should be initialized despite reference
+    // configurations could not be initialized due to missing waveform data.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipReferenceConfigIfNoWaveformData{true};
+    // Defines if a template family should be initialized although reference
+    // configurations could not be initialized due to missing stream
+    // information in the inventory.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipReferenceConfigIfNoStreamData{true};
+    // Defines if a template family should be initialized although reference
+    // configurations could not be initialized due to missing sensor location
+    // information in the inventory.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipReferenceConfigIfNoSensorLocationData{true};
+    // Defines if a template family should be initialized although reference
+    // configurations could not be initialized due to a missing pick in the
+    // event parameters.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipReferenceConfigIfNoPick{true};
 
     // Input
-    std::string pathTemplateJson{};
+    std::string pathTemplateJson;
+    std::string pathTemplateFamilyJson;
 
     // Reprocessing / playback
     struct {
@@ -110,11 +149,14 @@ class Application : public Client::StreamApplication {
     std::string amplitudeMessagingGroup{"AMPLITUDE"};
 
     // default configurations
-    PublishConfig publishConfig;
+    config::PublishConfig publishConfig;
 
-    DetectorConfig detectorConfig;
+    config::DetectorConfig detectorConfig;
 
-    StreamConfig streamConfig;
+    config::StreamConfig streamConfig;
+
+    config::TemplateFamilyConfig::ReferenceConfig::SensorLocationConfig
+        templateFamilySensorLocationConfig;
 
     // binding default configurations
     binding::SensorLocationConfig sensorLocationBindings;
@@ -136,31 +178,113 @@ class Application : public Client::StreamApplication {
 
   bool isEventDatabaseEnabled() const;
 
-  void emitDetection(
-      const detector::DetectorWaveformProcessor *processor,
-      const Record *record,
-      const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
-
-  void emitAmplitude(const AmplitudeProcessor *processor, const Record *record,
-                     const AmplitudeProcessor::AmplitudeCPtr &amplitude);
-
- protected:
-  // Load events either from `eventDb` or `db`
-  virtual bool loadEvents(const std::string &eventDb,
-                          DataModel::DatabaseQueryPtr db);
-
  private:
   using Picks = std::vector<DataModel::PickCPtr>;
+  using TemplateConfigs = std::vector<config::TemplateConfig>;
+
+  struct DetectionItem {
+    explicit DetectionItem(const DataModel::OriginPtr &origin)
+        : origin{origin} {
+      assert(origin);
+    }
+
+    Core::Time expired{Core::Time::GMT() +
+                       Core::TimeSpan{10 * 60.0 /*seconds*/}};
+
+    struct ProcessorConfig {
+      bool gapInterpolation;
+      Core::TimeSpan gapThreshold;
+      Core::TimeSpan gapTolerance;
+    };
+
+    ProcessorConfig config;
+
+    using Amplitudes = std::vector<DataModel::AmplitudePtr>;
+    Amplitudes amplitudes;
+    using Magnitudes = std::vector<DataModel::StationMagnitudePtr>;
+    Magnitudes magnitudes;
+
+    struct ArrivalPick {
+      DataModel::ArrivalPtr arrival;
+      DataModel::PickPtr pick;
+    };
+    using ArrivalPicks = std::vector<ArrivalPick>;
+    // Picks and arrivals which are associated to the detection (i.e. both
+    // detected picks and *template picks*)
+    ArrivalPicks arrivalPicks;
+    using AmplitudePicks = std::vector<DataModel::PickCPtr>;
+    // Picks used for amplitude calculation
+    AmplitudePicks amplitudePicks;
+
+    DataModel::OriginPtr origin;
+
+    std::string detectorId;
+    detector::DetectorWaveformProcessor::DetectionCPtr detection;
+
+    std::size_t numberOfRequiredAmplitudes{};
+    std::size_t numberOfRequiredMagnitudes{};
+
+    bool published{false};
+
+    const std::string &id() const { return origin->publicID(); }
+
+    bool amplitudesReady() const {
+      return numberOfRequiredAmplitudes == amplitudes.size();
+    }
+    bool magnitudesReady() const {
+      return numberOfRequiredMagnitudes == magnitudes.size();
+    }
+    bool ready() const {
+      return (amplitudesReady() && magnitudesReady()) ||
+             (Core::Time::GMT() >= expired);
+    }
+
+    friend bool operator==(const DetectionItem &lhs, const DetectionItem &rhs) {
+      return lhs.id() == rhs.id();
+    }
+    friend bool operator!=(const DetectionItem &lhs, const DetectionItem &rhs) {
+      return !(lhs == rhs);
+    }
+  };
+
+  // Load events either from `eventDb` or `db`
+  bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
+
   // Initialize detectors
   //
   // - `ifs` references a template configuration input file stream
-  bool initDetectors(std::ifstream &ifs, WaveformHandlerIface *waveformHandler);
+  bool initDetectors(std::ifstream &ifs, WaveformHandlerIface *waveformHandler,
+                     TemplateConfigs &templateConfigs);
 
   // Initialize amplitude processors
-  bool initAmplitudeProcessors(
-      const detector::DetectorWaveformProcessor *processor,
-      const detector::DetectorWaveformProcessor::DetectionCPtr &detection,
-      const DataModel::OriginCPtr &origin, const Picks &picks);
+  //
+  // - XXX(damb): The current implementation supports RMS based amplitude
+  // processors to be initialized, only
+  bool initAmplitudeProcessors(std::shared_ptr<DetectionItem> &detectionItem);
+
+  // Initialize template families
+  //
+  // - `ifs` references a template family configuration input file stream
+  bool initTemplateFamilies(std::ifstream &ifs,
+                            WaveformHandlerIface *waveformHandler,
+                            const TemplateConfigs &templateConfigs);
+
+  // Initialize magnitude processor factory callbacks
+  bool initMagnitudeProcessorFactories();
+
+  // Creates an amplitude
+  //
+  // - if `amplitudeType` is passed it overrides the default value
+  DataModel::AmplitudePtr createAmplitude(
+      const AmplitudeProcessor *processor, const Record *record,
+      const AmplitudeProcessor::AmplitudeCPtr &amplitude,
+      const boost::optional<std::string> &methodId,
+      const boost::optional<std::string> &amplitudeType = boost::none);
+
+  // Computes a magnitude based on `amplitude`
+  DataModel::StationMagnitudePtr createMagnitude(
+      const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
+      const std::string &methodId = "", const std::string &processorId = "");
 
   // Registers an amplitude processor
   void registerAmplitudeProcessor(
@@ -168,6 +292,24 @@ class Application : public Client::StreamApplication {
   // Removes an amplitude processor
   void removeAmplitudeProcessor(
       const std::shared_ptr<ReducingAmplitudeProcessor> &processor);
+
+  // Registers a detection
+  void registerDetection(const std::shared_ptr<DetectionItem> &detection);
+  // Removes a detection
+  void removeDetection(const std::shared_ptr<DetectionItem> &detection);
+
+  void processDetection(
+      const detector::DetectorWaveformProcessor *processor,
+      const Record *record,
+      const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
+
+  void publishDetection(const DetectionItem &detectionItem);
+
+  void publishAndRemoveDetection(std::shared_ptr<DetectionItem> &detection);
+
+  std::unique_ptr<DataModel::Comment> createTemplateWaveformTimeInfoComment(
+      const detector::DetectorWaveformProcessor::Detection::TemplateResult
+          &templateResult);
 
   Config _config;
   binding::Bindings _bindings;
@@ -185,6 +327,18 @@ class Application : public Client::StreamApplication {
   // Ringbuffer
   Processing::StreamBuffer _waveformBuffer{30 * 60 /*seconds*/};
 
+  using Detections =
+      std::unordered_multimap<WaveformStreamId, std::shared_ptr<DetectionItem>>;
+  Detections _detections;
+
+  using DetectionQueue = std::list<std::shared_ptr<DetectionItem>>;
+  // The queue used for detection registration
+  DetectionQueue _detectionQueue;
+  // The queue used for detection removal
+  DetectionQueue _detectionRemovalQueue;
+
+  bool _detectionRegistrationBlocked{false};
+
   using AmplitudeProcessors =
       std::unordered_multimap<WaveformStreamId,
                               std::shared_ptr<ReducingAmplitudeProcessor>>;
@@ -198,7 +352,7 @@ class Application : public Client::StreamApplication {
   AmplitudeProcessorQueue _amplitudeProcessorQueue;
   // The queue used for amplitude processor removal
   AmplitudeProcessorQueue _amplitudeProcessorRemovalQueue;
-  bool _registrationBlocked{false};
+  bool _amplitudeProcessorRegistrationBlocked{false};
 };
 
 }  // namespace detect

@@ -32,8 +32,6 @@ namespace detect {
 // amplitudes are computed based on the `TimeWindowProcessor`'s time window.
 class AmplitudeProcessor : public TimeWindowProcessor {
  public:
-  AmplitudeProcessor(const std::string &id);
-
   struct Config {
     // Defines the beginning of the time window used for amplitude analysis
     // with regard to the beginning of the overall time window
@@ -103,7 +101,7 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   void setSignalBegin(const boost::optional<Core::TimeSpan> &signalBegin);
   // Returns the beginning of the time window used for amplitude calculation
   Core::Time signalBegin() const;
-  // Configures the beginning of the time window used for amplitude calculation
+  // Configures the end of the time window used for amplitude calculation
   // (with regard to the end of the overall time window)
   void setSignalEnd(const boost::optional<Core::TimeSpan> &signalEnd);
   // Returns the end of the time window used for amplitude calculation
@@ -195,8 +193,6 @@ class AmplitudeProcessor : public TimeWindowProcessor {
 // - TODO(damb): implement SNR facilities
 class ReducingAmplitudeProcessor : public AmplitudeProcessor {
  public:
-  ReducingAmplitudeProcessor(const std::string &id);
-
   // Sets the `filter` for all registered streams
   //
   // - configuring the `filter` can be done only before the first record was

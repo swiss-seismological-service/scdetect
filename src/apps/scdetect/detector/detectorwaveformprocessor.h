@@ -11,7 +11,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "../config.h"
+#include "../config/detector.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
 #include "detector.h"
@@ -23,8 +23,7 @@ namespace detector {
 
 // Detector waveform processor implementation
 class DetectorWaveformProcessor : public WaveformProcessor {
-  DetectorWaveformProcessor(const std::string &id,
-                            const DataModel::OriginCPtr &origin);
+  DetectorWaveformProcessor(const DataModel::OriginCPtr &origin);
 
  public:
   DEFINE_SMARTPOINTER(Detection);
@@ -41,26 +40,25 @@ class DetectorWaveformProcessor : public WaveformProcessor {
     size_t numChannelsAssociated{};
     size_t numChannelsUsed{};
 
-    PublishConfig publishConfig;
+    config::PublishConfig publishConfig;
 
     using TemplateResult = Detector::Result::TemplateResult;
-    // Maps the waveform stream identifier with the template result
+    using WaveformStreamId = std::string;
     using TemplateResults =
-        std::unordered_multimap<std::string, TemplateResult>;
+        std::unordered_multimap<WaveformStreamId, TemplateResult>;
     // Template specific results
     TemplateResults templateResults;
   };
 
   friend class DetectorBuilder;
-  static DetectorBuilder Create(const std::string &detectorId,
-                                const std::string &originId);
+  static DetectorBuilder Create(const std::string &originId);
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
 
   void reset() override;
   void terminate() override;
 
-  const PublishConfig &publishConfig() const;
+  const config::PublishConfig &publishConfig() const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
@@ -84,7 +82,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
       std::unordered_map<WaveformStreamID, WaveformProcessor::StreamState>;
   StreamStates _streamStates;
 
-  DetectorConfig _config;
+  config::DetectorConfig _config;
 
   Detector _detector;
   boost::optional<Detector::Result> _detection;
@@ -94,7 +92,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
   // Reference to the *template* event
   DataModel::EventPtr _event;
 
-  PublishConfig _publishConfig;
+  config::PublishConfig _publishConfig;
 };
 
 }  // namespace detector

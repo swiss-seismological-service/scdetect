@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
-#include "settings.h"
-#include "waveformprocessor.h"
+#include "../settings.h"
+#include "../waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -42,6 +42,15 @@ bool validateLinkerMergingStrategy(const std::string &mergingStrategy) {
   return std::find(kValidLinkerMergingStrategies.begin(),
                    kValidLinkerMergingStrategies.end(),
                    mergingStrategy) != kValidLinkerMergingStrategies.end();
+}
+
+bool validateMagnitudeType(const std::string &magnitudeType) {
+  return std::find(kValidMagnitudeTypes.begin(), kValidMagnitudeTypes.end(),
+                   magnitudeType) != kValidMagnitudeTypes.end();
+}
+
+bool validateAmplitudeType(const std::string &amplitudeType) {
+  return validateMagnitudeType(amplitudeType);
 }
 
 }  // namespace config

@@ -3,12 +3,10 @@
 namespace Seiscomp {
 namespace detect {
 
-Processor::Processor(const std::string &id) : _id{id} {}
-
-Processor::~Processor() {}
-
 Processor::BaseException::BaseException()
     : Exception{"base processor exception"} {}
+
+void Processor::setId(const std::string &id) { _id = id; }
 
 const std::string &Processor::id() const { return _id; }
 

@@ -1,37 +1,18 @@
-#ifndef SCDETECT_APPS_SCDETECT_CONFIG_H_
-#define SCDETECT_APPS_SCDETECT_CONFIG_H_
+#ifndef SCDETECT_APPS_SCDETECT_CONFIG_DETECTOR_H_
+#define SCDETECT_APPS_SCDETECT_CONFIG_DETECTOR_H_
 
-#include <seiscomp/core/datetime.h>
-
-#include <boost/optional.hpp>
-#include <boost/property_tree/json_parser.hpp>
+#include <boost/optional/optional.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "detector/arrival.h"
-#include "exception.h"
-#include "utils.h"
+#include "../detector/arrival.h"
+#include "../util/util.h"
 
 namespace Seiscomp {
 namespace detect {
-
 namespace config {
-
-class BaseException : public Exception {
- public:
-  using Exception::Exception;
-  BaseException();
-};
-
-class ParserException : public BaseException {
- public:
-  using BaseException::BaseException;
-  ParserException();
-};
-
-}  // namespace config
 
 struct StreamConfig {
   // Stream related template configuration
@@ -57,7 +38,7 @@ struct StreamConfig {
   bool isValid() const;
 
   // Template processor identifier
-  std::string templateId{utils::createUUID()};
+  std::string templateId{util::createUUID()};
 
   std::string wfStreamId;
 
@@ -132,21 +113,27 @@ struct PublishConfig {
   // Indicates whether to both compute and create amplitudes for a declared
   // origin
   bool createAmplitudes{false};
+  // Indicates whether to both compute and create magnitudes for a declared
+  // origin
+  bool createMagnitudes{false};
 
   // The origin method identifier
   std::string originMethodId{"DETECT"};
+  std::string amplitudeMethodId{"DETECT"};
+  std::string magnitudeMethodId{"DETECT"};
 
   std::vector<detector::Arrival> theoreticalTemplateArrivals;
 };
 
 class TemplateConfig {
-  // Container for StreamConfig
+  // Container for stream configurations
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
 
  public:
   using size_type = StreamConfigs::size_type;
   using value_type = StreamConfigs::value_type;
   using reference = StreamConfigs::mapped_type &;
+  using const_reference = const StreamConfigs::mapped_type &;
   using iterator = StreamConfigs::iterator;
   using const_iterator = StreamConfigs::const_iterator;
 
@@ -161,7 +148,8 @@ class TemplateConfig {
   PublishConfig publishConfig() const;
 
   size_type size() const noexcept { return _streamConfigs.size(); }
-  reference &at(const std::string &stream_id);
+  reference at(const std::string &stream_id);
+  const_reference at(const std::string &stream_id) const;
 
   iterator begin() { return _streamConfigs.begin(); }
   iterator end() { return _streamConfigs.end(); }
@@ -171,7 +159,7 @@ class TemplateConfig {
   const_iterator cend() const { return _streamConfigs.cend(); }
 
  private:
-  std::string _detectorId{utils::createUUID()};
+  std::string _detectorId{util::createUUID()};
 
   std::string _originId;
 
@@ -182,7 +170,8 @@ class TemplateConfig {
   StreamConfigs _streamConfigs;
 };
 
+}  // namespace config
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_CONFIG_H_
+#endif  // SCDETECT_APPS_SCDETECT_CONFIG_DETECTOR_H_

@@ -87,4 +87,4 @@ class SQLiteDatabase : public Seiscomp::IO::DatabaseInterface {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif
+#endif  // _SCDETECT_APPS_SCDETECT_DETAIL_SQLITE_H_

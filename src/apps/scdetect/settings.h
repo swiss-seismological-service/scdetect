@@ -22,13 +22,15 @@ const std::string kFnameDebugInfo{"debug_info.json"};
 const std::string kWaveformStreamIdSep{"||"};
 // Separator for public identifiers (i.e. publicIDs)
 const std::string kPublicIdSep{"||"};
-// Separator for so called SNCLs
-const std::string kSNCLSep{"."};
 // Separator for configuration lists
 const std::string kConfigListSep{","};
 
-const std::string kTemplateWaveformDurationPickCommentId{
-    "scdetectTemplateWaveformDuration"};
+const std::string kTemplateWaveformTimeInfoPickCommentId{
+    "scdetectTemplateWaveformTimeInfo"};
+const std::string kTemplateWaveformTimeInfoPickCommentIdSep{"|"};
+
+const std::string kDetectorIdCommentId{"scdetectDetectorId"};
+const std::string kRMSAmplitudeStreamsCommentId{"scdetectRMSAmplitudeStreams"};
 
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kTemplateWaveformResampleMargin{2};

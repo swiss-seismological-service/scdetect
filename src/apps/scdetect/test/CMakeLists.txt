@@ -2,21 +2,20 @@ set(TESTS
   filter_crosscorrelation.cpp
   integration.cpp
   reducingamplitudeprocessor.cpp
-  utils_cma.cpp
+  util_math_cma.cpp
 )
 
 SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
   ../filter.cpp
-  ../filter/crosscorrelation.h
   ../resamplerstore.cpp
-  ../utils.cpp
+  ../util/util.cpp
+  ../util/waveform_stream_id.cpp
   ../waveform.cpp
 )
 
-set(SOURCES_utils_cma
+set(SOURCES_util_math_cma
   ../exception.cpp
-  ../utils.cpp
 )
 
 set(SOURCES_integration
@@ -25,7 +24,10 @@ set(SOURCES_integration
   ../app.cpp
   ../binding.cpp
   ../builder.cpp
-  ../config.cpp
+  ../config/detector.cpp
+  ../config/exception.cpp
+  ../config/template_family.cpp
+  ../config/validators.cpp
   ../datamodel/ddl.cpp
   ../detail/sqlite.cpp
   ../detector/arrival.cpp
@@ -40,14 +42,23 @@ set(SOURCES_integration
   ../eventstore.cpp
   ../exception.cpp
   ../filter.cpp
+  ../log.cpp
+  ../magnitudeprocessor.cpp
+  ../magnitude/decorator/range.cpp
+  ../magnitude/decorator.cpp
+  ../magnitude/regression.cpp
+  ../magnitude/util.cpp
+  ../magnitude/templatefamily.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processor.cpp
   ../resamplerstore.cpp
   ../stream.cpp
+  ../templatefamily.cpp
   ../timewindowprocessor.cpp
-  ../utils.cpp
-  ../validators.cpp
+  ../util/horizontal_components.cpp
+  ../util/util.cpp
+  ../util/waveform_stream_id.cpp
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp
@@ -62,7 +73,8 @@ set(SOURCES_reducingamplitudeprocessor
   ../stream.cpp
   ../timewindowprocessor.cpp
   ../resamplerstore.cpp
-  ../utils.cpp
+  ../util/util.cpp
+  ../util/waveform_stream_id.cpp
   ../waveform.cpp
   ../waveformoperator.cpp
   ../waveformprocessor.cpp
@@ -71,8 +83,8 @@ set(SOURCES_reducingamplitudeprocessor
 
 
 add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
-# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-# add_link_options(-fsanitize=address)
+add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+add_link_options(-fsanitize=address)
 
 foreach(TEST_SRC ${TESTS})
 	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)

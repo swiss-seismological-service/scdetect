@@ -33,6 +33,18 @@ class NoSensorLocation : public BaseException {
   NoSensorLocation();
 };
 
+class NoBindings : public BaseException {
+ public:
+  using BaseException::BaseException;
+  NoBindings();
+};
+
+class NoPick : public BaseException {
+ public:
+  using BaseException::BaseException;
+  NoPick();
+};
+
 }  // namespace builder
 
 template <typename TProduct>

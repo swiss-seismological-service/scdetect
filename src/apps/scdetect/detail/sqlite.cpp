@@ -28,6 +28,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include "../log.h"
+
 namespace Seiscomp {
 namespace detect {
 namespace detail {
