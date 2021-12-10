@@ -84,8 +84,12 @@ class HorizontalComponents {
 // Returns the sensor location stream identifier i.e. in the form
 // `NET.STA.LOC`.
 //
+// - if `includeBandAndSourceCode` is `true` both the band and source code
+// identifiers are appended (e.g. `NET.STA.LOC.HH`)
+//
 // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
-std::string getSensorLocationStreamId(const HorizontalComponents &c);
+std::string getSensorLocationStreamId(const HorizontalComponents &c,
+                                      bool includeBandAndSourceCode = false);
 // Returns a waveform stream identifier omitting the subsource code part.
 // I.e. the returned string is of the form `NET.STA.LOC.XY` where `X` refers
 // to the *band code* and `Y` refers to the *source code* identifiers.

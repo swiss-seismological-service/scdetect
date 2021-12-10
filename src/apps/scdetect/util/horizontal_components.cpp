@@ -111,9 +111,12 @@ void HorizontalComponents::reset() {
   }
 }
 
-std::string getSensorLocationStreamId(const HorizontalComponents &c) {
+std::string getSensorLocationStreamId(const HorizontalComponents &c,
+                                      bool includeBandAndSourceCode) {
   return c.netCode() + WaveformStreamID::delimiter + c.staCode() +
-         WaveformStreamID::delimiter + c.locCode();
+         WaveformStreamID::delimiter + c.locCode() +
+         (includeBandAndSourceCode ? WaveformStreamID::delimiter + c.chaCode()
+                                   : "");
 }
 
 std::string getWaveformStreamId(const HorizontalComponents &c) {

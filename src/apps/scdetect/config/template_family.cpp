@@ -35,7 +35,8 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
       try {
         const auto waveformId{util::WaveformStreamID{
             streamConfigPt.get<std::string>("templateWaveformId")}};
-        sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
+        sensorLocationConfig.waveformId =
+            util::getSensorLocationStreamId(waveformId);
         sensorLocationConfig.channelId = waveformId.chaCode();
       } catch (ValueException &e) {
         throw config::ValidationError{"invalid configuration: " +
@@ -82,7 +83,8 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
         detectorStreamConfig = it->second->at(util::to_string(waveformId));
 
-        sensorLocationConfig.waveformId = waveformId.sensorLocationStreamId();
+        sensorLocationConfig.waveformId =
+            util::getSensorLocationStreamId(waveformId);
         sensorLocationConfig.channelId = waveformId.chaCode();
         sensorLocationConfig.lowerLimit =
             streamConfigPt.get_optional<double>("lowerLimit");

@@ -128,10 +128,11 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
             }
           }
 
-          auto magnitudeSensorLocationId{util::WaveformStreamID{
-              waveformStreamId.networkCode(), waveformStreamId.stationCode(),
-              waveformStreamId.locationCode(), waveformStreamId.channelCode()}
-                                             .sensorLocationStreamId()};
+          auto magnitudeSensorLocationId{util::getSensorLocationStreamId(
+              util::WaveformStreamID{waveformStreamId.networkCode(),
+                                     waveformStreamId.stationCode(),
+                                     waveformStreamId.locationCode(),
+                                     waveformStreamId.channelCode()})};
           if (magnitudeSensorLocationId != sensorLocationId) {
             continue;
           }
@@ -429,10 +430,9 @@ void TemplateFamily::Builder::storeAmplitude(
   processor->finalize(amp.get());
 
   auto& originConfig{_members[processor->environment().hypocenter->publicID()]};
-  auto sensorLocationId{
+  auto sensorLocationId{util::getSensorLocationStreamId(
       util::WaveformStreamID{record->networkCode(), record->stationCode(),
-                             record->locationCode(), record->channelCode()}
-          .sensorLocationStreamId()};
+                             record->locationCode(), record->channelCode()})};
   auto& member{originConfig[sensorLocationId]};
   member.amplitude = amp;
 }
