@@ -486,7 +486,7 @@ an important note:
 > [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 > allows configuration to be provided for stations, only. In order to allow
 > users to supply configuration on sensor location granularity, `scdetect`
-> makes use of so called *amplitude profiles* and *response profiles*.
+> makes use of so called *sensor location profiles*.
 
 In general, bindings are configured the easiest with SeisComP's configuration
 and system management
@@ -672,8 +672,8 @@ specified:
 
       Usually, this refers to
       a [FDSN Source Identifier](http://docs.fdsn.org/projects/source-identifiers/en/v1.0/)
-      . Note that the part relevant for specifying a sensor location taken into
-      account, only.
+      . Note that the part relevant for specifying a sensor location is taken
+      into account, only.
 
     - `"lowerLimit"`: The optional lower limit for magnitudes estimated.
       Magnitudes smaller than the limit specified won't be issued.
@@ -703,8 +703,8 @@ defined:
   an origin in the catalog. Usually, the origin identifier corresponds to a
   *seismic metadata resource identifier* (`smi`).
 
-- `"streams"`: Required. A JSON array of sensor location configuration objects (
-  now, in the context of a third-party reference configuration). In the context
+- `"streams"`: Required. A JSON array of sensor location configuration objects
+  (now, in the context of a third-party reference configuration). In the context
   of a third-party reference configuration a sensor location configuration
   allows the following attributes to be specified:
 
