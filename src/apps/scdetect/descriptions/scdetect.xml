@@ -172,8 +172,7 @@
             origin has been declared.
           </description>
         </parameter>
-        <parameter name="filter" type="string"
-                   default="&quot;&quot;">
+        <parameter name="filter" type="string" default="&quot;&quot;">
           <description>
             Defines the default filter for amplitude processing if
             no binding filter configuration has been provided.
