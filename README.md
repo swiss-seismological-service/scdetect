@@ -119,7 +119,7 @@ streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
     "triggerOnThreshold": 0.98,
     "triggerOffThreshold": 0,
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
-    "arrivalOffsetThreshold":"",  
+    "arrivalOffsetThreshold": 0.01,  
     "filter": "",
     "templateFilter": "",
     "streams": [
@@ -397,7 +397,7 @@ fallback values will be used.
     "triggerOffThreshold": 0,
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
     "templatePhase": "Pg",
-    "arrivalOffsetThreshold":"",  
+    "arrivalOffsetThreshold": 0.01,  
     "filter": "",
     "templateFilter": "",
     "initTime": 0,
@@ -586,9 +586,9 @@ including exemplary RecordStream configurations can be found
 
 Alternatively, the RecordStream can be defined making use of `scdetect`'s `-I [
 --record-url ] URI` CLI flag (Note that this is the standard CLI flag used for
-all SeisComP modules implementing SeisComP's `StreamApplication` interface.) combined with a local archive.
+all SeisComP modules implementing SeisComP's `StreamApplication` interface). 
 
-In that case the miniSEED data records in the local archive must be **sorted by end time**, especially in the case of multistream detection. This could be easily done using [scmssort](https://www.seiscomp.de/doc/apps/scmssort.html). 
+In case of combing RecordStream with a local archive, records must be <br/>**sorted by end time**, especially in the case of multistream detection. <br/> This could be easily done using [scmssort](https://www.seiscomp.de/doc/apps/scmssort.html). 
 
 In general, with regard to waveform data `scdetect` implements the following
 approach:
