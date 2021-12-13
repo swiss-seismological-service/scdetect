@@ -3,7 +3,7 @@
 #include <boost/functional/hash.hpp>
 #include <memory>
 
-#include "utils.h"
+#include "util/memory.h"
 
 namespace std {
 
@@ -56,7 +56,7 @@ RecordResamplerStore::get(double currentFrequency, double targetFrequency) {
   if (_cache.find(key) == _cache.end()) {
     _cache.emplace(
         key,
-        utils::make_unique<RecordResamplerStore::RecordResampler>(
+        util::make_unique<RecordResamplerStore::RecordResampler>(
             targetFrequency, _fp, _fs, _coefficientScale, _lanczosKernelWidth));
   }
 

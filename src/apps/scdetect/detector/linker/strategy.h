@@ -11,6 +11,7 @@ namespace detector {
 namespace linker {
 
 // Abstract interface for linker merging strategies
+//
 // - linker merging strategies define which `TemplateWaveformProcessor` results
 // are going to be used for linking
 class MergingStrategy {

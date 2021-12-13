@@ -10,18 +10,13 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "amplitudeprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace binding {
-
-// Parse the saturation threshold from `settings` identified by `parameter`
-//
-// - returns `boost::none` if no parameter could be found
-boost::optional<double> parseSaturationThreshold(
-    const Processing::Settings &settings, const std::string &parameter);
 
 struct StreamConfig {
   struct DeconvolutionConfig {
@@ -42,40 +37,6 @@ struct StreamConfig {
 
     explicit operator AmplitudeProcessor::DeconvolutionConfig() const;
 
-    // Savely sets the response taper length
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setResponseTaperLength(double length);
-    // Savely sets the response taper length from `settings` identified by
-    // `parameter`
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setResponseTaperLength(const Processing::Settings &settings,
-                                const std::string &parameter,
-                                const DeconvolutionConfig &defaultConfig);
-    // Savely sets the minimum response taper frequency
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setMinimumResponseTaperFrequency(double f);
-    // Savely sets the minimum response taper frequency from `settings`
-    // identified by `parameter`
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setMinimumResponseTaperFrequency(
-        const Processing::Settings &settings, const std::string &parameter,
-        const DeconvolutionConfig &defaultConfig);
-    // Savely sets the maximum response taper frequency
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setMaximumResponseTaperFrequency(double f);
-    // Savely sets the maximum response taper frequency from `settings`
-    // identified by `parameter`
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setMaximumResponseTaperFrequency(
-        const Processing::Settings &settings, const std::string &parameter,
-        const DeconvolutionConfig &defaultConfig);
-
     // Returns a string with debug information
     std::string debugString() const;
   };
@@ -86,48 +47,47 @@ struct StreamConfig {
 struct SensorLocationConfig {
   // Amplitude processing configuration
   struct AmplitudeProcessingConfig {
-    // Indicates whether the stream is enabled (`true`) or disabled (`false`)
-    bool enabled{true};
-    // The filter string identifier used for amplitude calculation
-    std::string filter;
-    // The filter's initialization time in seconds
-    double initTime{60};
-    // Defines the saturation threshold for the saturation check. If unset, no
-    // saturation check is performed.
-    boost::optional<double> saturationThreshold;
+    struct MLx {
+      // The filter string identifier used for amplitude calculation
+      std::string filter{"BW_BP(4,10,30)"};
+      // The filter's initialization time in seconds
+      double initTime{60};
+      // Defines the saturation threshold for the saturation check. If unset, no
+      // saturation check is performed.
+      boost::optional<double> saturationThreshold;
+    };
 
-    // Savely sets the filter
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setFilter(const std::string &filter);
-    // Savely sets the initialization time
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setInitTime(double initTime);
-    // Savely sets the filter and initialization time from `settings` identified
-    // by `parameterFilter` and `parameterInitTime`
-    //
-    // - if a lookup wasn't successful values are taken from `defaultConfig`
-    // - throws a `ValueException` if the values are invalid
-    void setFilter(const Processing::Settings &settings,
-                   const std::string &parameterFilter,
-                   const std::string &parameterInitTime,
-                   const AmplitudeProcessingConfig &defaultConfig);
-    // Savely sets the saturation threshold from `settings` identified by
-    // `parameter`
-    //
-    // - throws a `ValueException` if the value is invalid
-    void setSaturationThreshold(const Processing::Settings &settings,
-                                const std::string &parameter);
+    MLx mlx;
+
+    // Defines the amplitude types to be computed with regard to the sensor
+    // location
+    std::vector<std::string> amplitudeTypes{"MLx"};
+    // Indicates whether the amplitude calculation is enabled (`true`) or
+    // disabled (`false`)
+    bool enabled{true};
+  };
+
+  // Magnitude processing configuration
+  struct MagnitudeProcessingConfig {
+    // Defines the magnitude types to be computed with regard to the sensor
+    // location
+    std::vector<std::string> magnitudeTypes{"MLx"};
+    // Indicates whether the sensor location is enabled (`true`) or disabled
+    // (`false`)
+    bool enabled{true};
   };
 
   // Returns the Stream configuration for `chaCode`
   const StreamConfig &at(const std::string &chaCode) const;
 
-  AmplitudeProcessingConfig amplitudeProcessingConfig;
-
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
   StreamConfigs streamConfigs;
+
+  AmplitudeProcessingConfig amplitudeProcessingConfig;
+  MagnitudeProcessingConfig magnitudeProcessingConfig;
+
+  // The default stream configuration
+  StreamConfig _defaultStreamConfig;
 };
 
 // A container for station configuration
@@ -211,6 +171,84 @@ class Bindings {
 
   ConfigMap _stationConfigs;
 };
+
+// Returns the band and source code identifier from `chaCode`
+std::string getBandAndSourceCode(const std::string &chaCode);
+
+// Parse the saturation threshold from `settings` identified by `parameter`
+//
+// - returns `boost::none` if no parameter could be found
+boost::optional<double> parseSaturationThreshold(
+    const Processing::Settings &settings, const std::string &parameter);
+
+namespace detail {
+// Savely sets the filter at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setFilter(const std::string &filter, std::string &storageLocation);
+// Savely sets the initialization time at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setInitTime(double initTime, double &storageLocation);
+// Savely sets the filter (at `storageLocationFilter`) and initialization time
+// (at `storageLocationInitTime` )from `settings` identified by
+// `parameterFilter` and `parameterInitTime`
+//
+// - if a lookup wasn't successful values are taken from `defaultFilter` and
+// `defaultInitTime`, respectively
+// - throws a `ValueException` if the values are invalid
+void setFilter(const Processing::Settings &settings,
+               const std::string &parameterFilter,
+               const std::string &parameterInitTime,
+               const std::string &defaultFilter, double defaultInitTime,
+               std::string &storageLocationFilter,
+               double &storageLocationInitTime);
+// Savely sets the saturation threshold (at `storageLocation`) from `settings`
+// identified by `parameter`
+//
+// - throws a `ValueException` if the value is invalid
+void setSaturationThreshold(const Processing::Settings &settings,
+                            const std::string &parameter,
+                            boost::optional<double> &storageLocation);
+// Savely sets the response taper length at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setResponseTaperLength(double length, double &storageLocation);
+// Savely sets the response taper length from `settings` identified by
+// `parameter` at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setResponseTaperLength(const Processing::Settings &settings,
+                            const std::string &parameter,
+                            double &storageLocation,
+                            const boost::optional<double> & = boost::none);
+// Savely sets the response taper frequency at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setResponseTaperFrequency(double f, double &storageLocation);
+// Savely sets the minimum response taper frequency from `settings`
+// identified by `parameter` at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setResponseTaperFrequency(
+    const Processing::Settings &settings, const std::string &parameter,
+    double &storageLocation,
+    const boost::optional<double> &defaultValue = boost::none);
+
+void load(const Processing::Settings &settings,
+          const std::string &parameterPrefix, StreamConfig &storageLocation,
+          const StreamConfig &defaults);
+void load(const Processing::Settings &settings,
+          const std::string &parameterPrefix,
+          SensorLocationConfig::AmplitudeProcessingConfig &storageLocation,
+          const SensorLocationConfig::AmplitudeProcessingConfig &defaults);
+void load(const Processing::Settings &settings,
+          const std::string &parameterPrefix,
+          SensorLocationConfig::MagnitudeProcessingConfig &storageLocation,
+          const SensorLocationConfig::MagnitudeProcessingConfig &defaults);
+void validate(SensorLocationConfig &config);
+
+}  // namespace detail
 
 }  // namespace binding
 }  // namespace detect

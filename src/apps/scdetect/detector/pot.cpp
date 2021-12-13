@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../utils.h"
+#include "../util/floating_point_comparison.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -255,8 +255,8 @@ bool validatePickOffsets(const POT &lhs, const POT &rhs,
 
     for (const auto &p : lhsIdx) {
       try {
-        if (utils::greaterThan(std::abs(p.second - rhs_idx.at(p.first)), thres,
-                               tolerance)) {
+        if (util::greaterThan(std::abs(p.second - rhs_idx.at(p.first)), thres,
+                              tolerance)) {
           exceeded.emplace(streamId);
         }
       } catch (std::out_of_range &e) {
@@ -267,8 +267,8 @@ bool validatePickOffsets(const POT &lhs, const POT &rhs,
           return false;
         }
 
-        if (utils::greaterThan(std::abs(p.second + it->second), thres,
-                               tolerance)) {
+        if (util::greaterThan(std::abs(p.second + it->second), thres,
+                              tolerance)) {
           exceeded.emplace(streamId);
         }
       }

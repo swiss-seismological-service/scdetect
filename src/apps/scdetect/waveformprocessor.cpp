@@ -3,13 +3,10 @@
 #include <exception>
 
 #include "log.h"
-#include "utils.h"
 #include "waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
-
-WaveformProcessor::WaveformProcessor(const std::string &id) : Processor{id} {}
 
 WaveformProcessor::Result::~Result() {}
 
@@ -242,6 +239,18 @@ void WaveformProcessor::setupStream(StreamState &streamState,
 void WaveformProcessor::setStatus(Status status, double value) {
   _status = status;
   _statusValue = value;
+}
+
+std::unique_ptr<WaveformProcessor::Filter> createFilter(
+    const std::string &filter) {
+  std::string err;
+  std::unique_ptr<WaveformProcessor::Filter> ret{
+      WaveformProcessor::Filter::Create(filter, &err)};
+  if (!ret) {
+    throw WaveformProcessor::BaseException{"failed to compile filter (" +
+                                           filter + "): " + err};
+  }
+  return ret;
 }
 
 }  // namespace detect

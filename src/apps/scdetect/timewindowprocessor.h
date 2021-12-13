@@ -13,8 +13,6 @@ namespace detect {
 // `WaveformProcessor` implementation operating on a fixed time window
 class TimeWindowProcessor : public WaveformProcessor {
  public:
-  TimeWindowProcessor(const std::string &id);
-
   // Sets the time window for the data to be fed
   void setTimeWindow(const Core::TimeWindow &tw);
   // Returns the configured time window of the data to be fed

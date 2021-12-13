@@ -15,16 +15,15 @@ namespace detector {
 namespace linker {
 
 struct Association {
-  // The association's fit [-1,1]
-  double fit;
-  // The association's reference `TemplateWaveformProcessor` identifier
-  std::string refProcId;
-
   struct TemplateResult {
     Arrival arrival;
+    // Reference to the actual match result value
+    TemplateWaveformProcessor::MatchResult::LocalMaxima::const_iterator
+        resultIt;
     // Reference to the original template result
     TemplateWaveformProcessor::MatchResultCPtr matchResult;
   };
+
   // Associates `TemplateResult` with a processor (i.e. by means of the
   // processor's identifier)
   using TemplateResults = std::unordered_map<std::string, TemplateResult>;
@@ -32,6 +31,10 @@ struct Association {
 
   // The association's POT
   POT pot;
+  // The association's reference `TemplateWaveformProcessor` identifier
+  std::string refProcId;
+  // The association's fit [-1,1]
+  double fit;
 
   // Returns the total number of associated arrivals
   size_t getArrivalCount() const;

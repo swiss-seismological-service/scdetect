@@ -9,23 +9,22 @@
 #include <cmath>
 #include <memory>
 #include <numeric>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
 #include "../eventstore.h"
 #include "../log.h"
-#include "../operator/ringbuffer.h"
 #include "../settings.h"
-#include "../utils.h"
+#include "../util/memory.h"
+#include "../util/util.h"
+#include "../util/waveform_stream_id.h"
 #include "detectorwaveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-DetectorBuilder::DetectorBuilder(const std::string &id,
-                                 const std::string &originId)
+DetectorBuilder::DetectorBuilder(const std::string &originId)
     : _originId{originId} {
   DataModel::OriginCPtr origin{
       EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
@@ -38,17 +37,27 @@ DetectorBuilder::DetectorBuilder(const std::string &id,
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
   _product = std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{id, origin});
+      new DetectorWaveformProcessor{origin});
+}
+
+DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
+  _product->setId(id);
+  _product->_detector.setId(id);
+  return *this;
 }
 
 DetectorBuilder &DetectorBuilder::setConfig(
-    const PublishConfig &publishConfig, const DetectorConfig &detectorConfig,
-    bool playback) {
+    const config::PublishConfig &publishConfig,
+    const config::DetectorConfig &detectorConfig, bool playback) {
   _product->_publishConfig = publishConfig;
 
   _product->_config = detectorConfig;
 
   _product->_enabled = detectorConfig.enabled;
+
+  _product->setGapThreshold(Core::TimeSpan{detectorConfig.gapThreshold});
+  _product->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
+  _product->setGapInterpolation(detectorConfig.gapInterpolation);
 
   _product->_detector.setMergingStrategy(
       _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
@@ -80,15 +89,12 @@ DetectorBuilder &DetectorBuilder::setEventParameters() {
 }
 
 DetectorBuilder &DetectorBuilder::setStream(
-    const std::string &streamId, const StreamConfig &streamConfig,
+    const std::string &streamId, const config::StreamConfig &streamConfig,
     WaveformHandlerIface *waveformHandler) {
   const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
-  utils::WaveformStreamID templateWfStreamId{templateStreamId};
+  util::WaveformStreamID templateWfStreamId{templateStreamId};
 
-  // TODO(damb): Rather go for a logging adapter approach.
-  std::string logPrefix{streamId + std::string{" ("} + templateStreamId +
-                        std::string{"): "}};
-
+  logging::TaggedMessage msg{streamId + " (" + templateStreamId + ")"};
   // configure pick from arrival
   DataModel::PickPtr pick;
   DataModel::WaveformStreamID pickWaveformId;
@@ -116,13 +122,9 @@ DetectorBuilder &DetectorBuilder::setStream(
             templateWfStreamId.netCode(), templateWfStreamId.staCode(),
             templateWfStreamId.locCode(), pick->time().value())};
     if (!templateWfSensorLocation) {
-      auto msg{logPrefix +
-               std::string{
-                   "sensor location not found in inventory for time: time="} +
-               pick->time().value().iso()};
-
-      SCDETECT_LOG_WARNING("%s", msg.c_str());
-      throw builder::NoSensorLocation{msg};
+      msg.setText("sensor location not found in inventory for time: " +
+                  pick->time().value().iso());
+      throw builder::NoSensorLocation{logging::to_string(msg)};
     }
     pickWaveformId = pick->waveformID();
     auto pickWfSensorLocation{Client::Inventory::Instance()->getSensorLocation(
@@ -138,20 +140,16 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   if (!pick) {
     arrival.reset();
-    auto msg{logPrefix + std::string{"failed to load pick: origin="} +
-             _originId + std::string{", phase="} +
-             streamConfig.templateConfig.phase};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::BaseException{msg};
+    msg.setText("failed to load pick: origin=" + _originId +
+                ", phase=" + streamConfig.templateConfig.phase);
+    throw builder::NoPick{logging::to_string(msg)};
   }
 
-  std::ostringstream oss;
-  oss << utils::WaveformStreamID{pickWaveformId};
-  SCDETECT_LOG_DEBUG(
-      "%susing arrival pick: origin=%s, time=%s, phase=%s, stream=%s",
-      logPrefix.c_str(), _originId.c_str(), pick->time().value().iso().c_str(),
-      streamConfig.templateConfig.phase.c_str(), oss.str().c_str());
+  msg.setText("using arrival pick: origin=" + _originId +
+              ", time=" + pick->time().value().iso() +
+              ", phase=" + streamConfig.templateConfig.phase + ", stream=" +
+              util::to_string(util::WaveformStreamID{pickWaveformId}));
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
   auto wfStart{pick->time().value() +
                Core::TimeSpan{streamConfig.templateConfig.wfStart}};
@@ -159,27 +157,24 @@ DetectorBuilder &DetectorBuilder::setStream(
              Core::TimeSpan{streamConfig.templateConfig.wfEnd}};
 
   // load stream metadata from inventory
-  utils::WaveformStreamID wfStreamId{streamId};
+  util::WaveformStreamID wfStreamId{streamId};
   auto stream{Client::Inventory::Instance()->getStream(
       wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
       wfStreamId.chaCode(), wfStart)};
 
   if (!stream) {
-    auto msg{logPrefix +
-             std::string{"stream not found in inventory for epoch: start="} +
-             wfStart.iso() + std::string{", end="} + wfEnd.iso()};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::NoStream{msg};
+    msg.setText("failed to load stream from inventory: start=" + wfStart.iso() +
+                ", end=" + wfEnd.iso());
+    throw builder::NoStream{logging::to_string(msg)};
   }
 
-  SCDETECT_LOG_DEBUG(
-      "%sloaded stream from inventory for epoch: start=%s, "
-      "end=%s",
-      logPrefix.c_str(), wfStart.iso().c_str(), wfEnd.iso().c_str());
+  msg.setText("loaded stream from inventory for epoch: start=" + wfStart.iso() +
+              ", end=" + wfEnd.iso());
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
-  SCDETECT_LOG_DEBUG("Creating template processor (id=%s) ... ",
-                     streamConfig.templateId.c_str());
+  msg.setText("creating template waveform processor with id: " +
+              streamConfig.templateId);
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
   _product->_streamStates[streamId] = DetectorWaveformProcessor::StreamState{};
 
@@ -188,11 +183,11 @@ DetectorBuilder &DetectorBuilder::setStream(
   auto pickFilterId{pick->filterID()};
   auto templateWfFilterId{
       streamConfig.templateConfig.filter.value_or(pickFilterId)};
-  utils::replaceEscapedXMLFilterIdChars(templateWfFilterId);
+  util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
 
   std::unique_ptr<WaveformProcessor::Filter> rtTemplateFilter{nullptr};
   std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
-  utils::replaceEscapedXMLFilterIdChars(rtFilterId);
+  util::replaceEscapedXMLFilterIdChars(rtFilterId);
   // create template related filter (used during real-time stream
   // processing)
   if (!rtFilterId.empty()) {
@@ -200,11 +195,8 @@ DetectorBuilder &DetectorBuilder::setStream(
     rtTemplateFilter.reset(WaveformProcessor::Filter::Create(rtFilterId, &err));
 
     if (!rtTemplateFilter) {
-      auto msg{logPrefix + "compiling filter (" + rtFilterId +
-               ") failed: " + err};
-
-      SCDETECT_LOG_WARNING("%s", msg.c_str());
-      throw builder::BaseException{msg};
+      msg.setText("compiling filter (" + rtFilterId + ") failed: " + err);
+      throw builder::BaseException{logging::to_string(msg)};
     }
   }
 
@@ -228,17 +220,21 @@ DetectorBuilder &DetectorBuilder::setStream(
         templateWfStreamId.locCode(), templateWfStreamId.chaCode(),
         templateWfChunkStartTime, templateWfChunkEndTime, templateWfConfig);
   } catch (WaveformHandler::NoData &e) {
-    throw builder::NoWaveformData{
-        std::string{"Failed to load template waveform: "} + e.what()};
+    msg.setText("failed to load template waveform: " + std::string{e.what()});
+    throw builder::NoWaveformData{logging::to_string(msg)};
   } catch (std::exception &e) {
-    throw builder::BaseException{
-        std::string{"Failed to load template waveform: "} + e.what()};
+    msg.setText("failed to load template waveform: " + std::string{e.what()});
+    throw builder::BaseException{logging::to_string(msg)};
   }
 
   // template processor
-  auto templateProc{utils::make_unique<detector::TemplateWaveformProcessor>(
-      templateWfChunk, templateWfFilterId, wfStart, wfEnd,
-      streamConfig.templateId, _product.get())};
+  auto templateProc{util::make_unique<detector::TemplateWaveformProcessor>(
+      templateWfChunk, templateWfFilterId, wfStart, wfEnd, _product.get())};
+
+  templateProc->setId(_product->id().empty()
+                          ? streamConfig.templateId
+                          : _product->id() + settings::kProcessorIdSep +
+                                streamConfig.templateId);
 
   templateProc->setFilter(rtTemplateFilter.release(), streamConfig.initTime);
   if (streamConfig.targetSamplingFrequency) {
@@ -246,12 +242,13 @@ DetectorBuilder &DetectorBuilder::setStream(
         *streamConfig.targetSamplingFrequency);
   }
 
-  auto filterMsg{logPrefix + "filters configured: filter=\"" + rtFilterId +
-                 "\""};
+  std::string text{"filters configured: filter=\"" + rtFilterId + "\""};
   if (rtFilterId != templateWfFilterId) {
-    filterMsg += " (template_filter=\"" + templateWfFilterId + "\")";
+    text += " (template_filter=\"" + templateWfFilterId + "\")";
   }
-  SCDETECT_LOG_DEBUG_PROCESSOR(templateProc, "%s", filterMsg.c_str());
+  msg.setText(text);
+  SCDETECT_LOG_DEBUG_PROCESSOR(templateProc, "%s",
+                               logging::to_string(msg).c_str());
 
   TemplateProcessorConfig c{std::move(templateProc),
                             streamConfig.mergingThreshold,
@@ -266,29 +263,12 @@ DetectorBuilder &DetectorBuilder::setStream(
 
 void DetectorBuilder::finalize() {
   // use a POT to determine the max relative pick offset
-  detector::PickOffsetTable pot{_arrivalPicks};
-
-  // detector initialization time
-  Core::TimeSpan po{pot.pickOffset().value_or(0)};
-  if (po) {
-    using pair_type = TemplateProcessorConfigs::value_type;
-    const auto max{std::max_element(
-        std::begin(_processorConfigs), std::end(_processorConfigs),
-        [](const pair_type &lhs, const pair_type &rhs) {
-          return lhs.second.processor->initTime() <
-                 rhs.second.processor->initTime();
-        })};
-
-    _product->_initTime = (max->second.processor->initTime() > po
-                               ? max->second.processor->initTime()
-                               : po);
-
-  } else if (pot.size()) {
-    _product->_initTime =
-        _processorConfigs.cbegin()->second.processor->initTime();
-  } else {
+  auto hasNoChildren{_processorConfigs.empty()};
+  if (hasNoChildren) {
     _product->disable();
   }
+
+  _product->_initTime = Core::TimeSpan{0.0};
 
   const auto &cfg{_product->_config};
   _product->_detector.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
@@ -313,27 +293,10 @@ void DetectorBuilder::finalize() {
     _product->_detector.setMinArrivals(cfg.minArrivals);
   }
 
-  if (cfg.chunkSize < 0) {
-    _product->_detector.setChunkSize(boost::none);
-  } else {
-    _product->_detector.setChunkSize(Core::TimeSpan{cfg.chunkSize});
-  }
-
-  auto bufferingOperator{
-      utils::make_unique<waveform_operator::RingBufferOperator>(
-          _product.get())};
-  bufferingOperator->setGapThreshold(Core::TimeSpan{cfg.gapThreshold});
-  bufferingOperator->setGapTolerance(Core::TimeSpan{cfg.gapTolerance});
-  bufferingOperator->setGapInterpolation(cfg.gapInterpolation);
-
   std::unordered_set<std::string> usedPicks;
   for (auto &procConfigPair : _processorConfigs) {
     const auto &streamId{procConfigPair.first};
     auto &procConfig{procConfigPair.second};
-
-    bufferingOperator->add(streamId,
-                           Core::TimeSpan{std::max(30.0, cfg.chunkSize) *
-                                          settings::kBufferMultiplicator});
 
     const auto &meta{procConfig.metadata};
     boost::optional<std::string> phase_hint;
@@ -343,8 +306,7 @@ void DetectorBuilder::finalize() {
     }
     // initialize detection processing
     _product->_detector.add(
-        std::move(procConfig.processor), bufferingOperator->get(streamId),
-        streamId,
+        std::move(procConfig.processor), streamId,
         detector::Arrival{
             {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
              meta.pick->time().value() - _product->_origin->time().value()},
@@ -358,11 +320,9 @@ void DetectorBuilder::finalize() {
 
     usedPicks.emplace(meta.pick->publicID());
   }
-  _product->setOperator(bufferingOperator.release());
 
   // attach reference theoretical template arrivals to the product
   if (_product->_publishConfig.createTemplateArrivals) {
-    std::ostringstream oss;
     for (size_t i = 0; i < _product->_origin->arrivalCount(); ++i) {
       const auto &arrival{_product->_origin->arrival(i)};
       const auto &pick{
@@ -391,15 +351,13 @@ void DetectorBuilder::finalize() {
       } catch (Core::ValueException &e) {
       }
 
-      const utils::WaveformStreamID wfId{pick->waveformID()};
-      oss << wfId;
       _product->_publishConfig.theoreticalTemplateArrivals.push_back(
-          {{pick->time().value(), oss.str(), phaseHint,
-            pick->time().value() - _product->_origin->time().value(),
+          {{pick->time().value(),
+            util::to_string(util::WaveformStreamID{pick->waveformID()}),
+            phaseHint, pick->time().value() - _product->_origin->time().value(),
             lowerUncertainty, upperUncertainty},
            arrival->phase(),
            arrival->weight()});
-      oss.str("");
     }
   }
 }

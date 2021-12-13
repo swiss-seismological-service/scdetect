@@ -25,7 +25,9 @@
 #include <vector>
 
 #include "../amplitudeprocessor.h"
-#include "../utils.h"
+#include "../util/memory.h"
+#include "../util/util.h"
+#include "../util/waveform_stream_id.h"
 #include "../waveformprocessor.h"
 #include "fixture.h"
 #include "utils.h"
@@ -120,15 +122,15 @@ struct Sample {
 
   // Returns a reference to the buffer
   const detail::Buffer &at(
-      const utils::WaveformStreamID &waveformStreamId) const {
-    return _waveformBuffers.at(utils::to_string(waveformStreamId));
+      const util::WaveformStreamID &waveformStreamId) const {
+    return _waveformBuffers.at(util::to_string(waveformStreamId));
   }
 
   // Returns the waveform stream identifiers regarding the waveform data
-  std::vector<utils::WaveformStreamID> waveformStreamIds() const {
-    std::vector<utils::WaveformStreamID> retval;
+  std::vector<util::WaveformStreamID> waveformStreamIds() const {
+    std::vector<util::WaveformStreamID> retval;
     for (const auto &_waveformBuffersPair : _waveformBuffers) {
-      retval.push_back(utils::WaveformStreamID{_waveformBuffersPair.first});
+      retval.push_back(util::WaveformStreamID{_waveformBuffersPair.first});
     }
     return retval;
   }
@@ -230,9 +232,7 @@ struct Sample {
 // - does not implement any preprocessing
 class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
  public:
-  TestReducingAmplitudeProcessor(const std::string &id,
-                                 const Core::TimeWindow &tw)
-      : ReducingAmplitudeProcessor{id} {
+  TestReducingAmplitudeProcessor(const Core::TimeWindow &tw) {
     setTimeWindow(tw);
     _type = "Mtest";
     _unit = "M/S";
@@ -270,7 +270,7 @@ class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
     const auto numberOfStreams{data.size()};
 
     std::vector<double> samples;
-    for (size_t i = idxRange.begin; i <= idxRange.end; ++i) {
+    for (size_t i = idxRange.begin; i < idxRange.end; ++i) {
       double sum{0};
       for (size_t j = 0; j < numberOfStreams; ++j) {
         sum += data[j]->get(i);
@@ -278,8 +278,8 @@ class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
       samples.push_back(sum);
     }
 
-    return utils::make_smart<DoubleArray>(static_cast<int>(samples.size()),
-                                          samples.data());
+    return util::make_smart<DoubleArray>(static_cast<int>(samples.size()),
+                                         samples.data());
   }
 };
 
@@ -643,8 +643,7 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
     BOOST_FAIL("Missing signal time window.");
   }
 
-  TestReducingAmplitudeProcessor proc{utils::createUUID(),
-                                      *sample.signalTimeWindow()};
+  TestReducingAmplitudeProcessor proc{*sample.signalTimeWindow()};
   const auto &waveformStreamIds{sample.waveformStreamIds()};
   // initialize the processor
   for (const auto &waveformStreamId : waveformStreamIds) {

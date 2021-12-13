@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "../filter/crosscorrelation.h"
-#include "../utils.h"
+#include "../util/memory.h"
 
 namespace utf = boost::unit_test;
 namespace utf_data = utf::data;
@@ -97,8 +97,8 @@ Samples dataset{
 BOOST_TEST_DECORATOR(*utf::tolerance(testUnitTolerance))
 BOOST_DATA_TEST_CASE(crosscorrelation, utf_data::make(dataset)) {
   // create dummy record
-  auto templateTrace{utils::make_smart<GenericRecord>(
-      "NET", "STA", "LOC", "CHA", Core::Time::GMT(), 1.0)};
+  auto templateTrace{util::make_smart<GenericRecord>("NET", "STA", "LOC", "CHA",
+                                                     Core::Time::GMT(), 1.0)};
   templateTrace->setData(static_cast<int>(sample.templateData.size()),
                          sample.templateData.data(), Array::DOUBLE);
 

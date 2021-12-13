@@ -1,18 +1,18 @@
 #include "detectorwaveformprocessor.h"
 
 #include "../log.h"
+#include "../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 
 DetectorWaveformProcessor::DetectorWaveformProcessor(
-    const std::string &id, const DataModel::OriginCPtr &origin)
-    : WaveformProcessor{id}, _detector{this, origin}, _origin{origin} {}
+    const DataModel::OriginCPtr &origin)
+    : _detector{origin}, _origin{origin} {}
 
-DetectorBuilder DetectorWaveformProcessor::Create(const std::string &detectorId,
-                                                  const std::string &originId) {
-  return DetectorBuilder(detectorId, originId);
+DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
+  return DetectorBuilder(originId);
 }
 
 void DetectorWaveformProcessor::setFilter(Filter *filter,
@@ -38,7 +38,7 @@ void DetectorWaveformProcessor::terminate() {
 
   _detector.terminate();
   if (_detection) {
-    auto detection{utils::make_smart<Detection>()};
+    auto detection{util::make_smart<Detection>()};
     prepareDetection(detection, *_detection);
     emitResult(nullptr, detection);
 
@@ -47,7 +47,7 @@ void DetectorWaveformProcessor::terminate() {
   WaveformProcessor::terminate();
 }
 
-const PublishConfig &DetectorWaveformProcessor::publishConfig() const {
+const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
   return _publishConfig;
 }
 
@@ -60,7 +60,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
                                         const Record *record,
                                         const DoubleArray &filteredData) {
   try {
-    _detector.process(record->streamID());
+    _detector.process(record);
   } catch (detector::Detector::ProcessingError &e) {
     SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
                                    record->streamID().c_str(), e.what());
@@ -79,7 +79,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
 
   if (!finished()) {
     if (_detection) {
-      auto detection{utils::make_smart<Detection>()};
+      auto detection{util::make_smart<Detection>()};
       prepareDetection(detection, *_detection);
       emitResult(record, detection);
 
@@ -103,17 +103,6 @@ bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
   s.receivedSamples += data->size();
 
-  return true;
-}
-
-bool DetectorWaveformProcessor::enoughDataReceived(
-    const StreamState &streamState) const {
-  for (const auto &streamStatePair : _streamStates) {
-    const auto &state{streamStatePair.second};
-    if (state.receivedSamples <= state.neededSamples) {
-      return false;
-    }
-  }
   return true;
 }
 
@@ -142,6 +131,7 @@ void DetectorWaveformProcessor::prepareDetection(
       _publishConfig.createTemplateArrivals;
   d->publishConfig.originMethodId = _publishConfig.originMethodId;
   d->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
+  d->publishConfig.createMagnitudes = _publishConfig.createMagnitudes;
 
   if (_publishConfig.createTemplateArrivals) {
     for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {
