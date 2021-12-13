@@ -35,9 +35,9 @@ set(
     waveformprocessor.cpp
 )
 
-# add_definitions(
-#   -DSCDETECT_DEBUG
-# )
+add_definitions(
+  -DSCDETECT_DEBUG
+)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   add_compile_options(-fsanitize=address)
