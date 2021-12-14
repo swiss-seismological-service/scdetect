@@ -1443,7 +1443,8 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
           SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
         } else {
           msg.setText(
-              "Missing template family members. Skipping registration.");
+              "Missing template family members. Skipping template family "
+              "registration.");
           SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
         }
 
@@ -1463,6 +1464,13 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
         throw;
       } catch (builder::NoPick &e) {
         if (_config.skipReferenceConfigIfNoPick) {
+          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
+                               e.what());
+          continue;
+        }
+        throw;
+      } catch (builder::NoBindings &e) {
+        if (_config.skipReferenceConfigIfNoBindings) {
           SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
                                e.what());
           continue;
