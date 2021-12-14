@@ -522,7 +522,7 @@ SeisComP's [bindings2cfg](https://www.seiscomp.de/doc/apps/bindings2cfg.html)
 utility. E.g.
 
 ```bash
-$ bindings2cfg --key-dir ./etc/key -o config.scml
+$ bindings2cfg --key-dir path/to/key -o config.scml
 ```
 
 will dump the configuration into
@@ -530,7 +530,7 @@ a [SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
 formatted `config.scml` file, while
 
 ```bash
-$ bindings2cfg --key-dir ./etc/key \
+$ bindings2cfg --key-dir path/to/key \
   --plugins dbpostgresql -d postgresql://user:password@localhost/seiscomp
 ```
 
