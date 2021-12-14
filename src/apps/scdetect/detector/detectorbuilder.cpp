@@ -256,8 +256,6 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   _processorConfigs.emplace(streamId, std::move(c));
 
-  _arrivalPicks.push_back(detector::POT::ArrivalPick{arrival, pick});
-
   return *this;
 }
 
