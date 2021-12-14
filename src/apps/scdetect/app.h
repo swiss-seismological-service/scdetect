@@ -124,6 +124,12 @@ class Application : public Client::StreamApplication {
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
     bool skipReferenceConfigIfNoPick{true};
+    // Defines if a template family should be initialized although reference
+    // configurations could not be initialized due to missing bindings
+    // configuration.
+    // XXX(damb): For the time being, this configuration parameter is not
+    // provided to module users.
+    bool skipReferenceConfigIfNoBindings{true};
 
     // Input
     std::string pathTemplateJson;
