@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "../exception.h"
-#include "../processor.h"
+#include "../processing/processor.h"
 #include "../waveformoperator.h"
 #include "../waveformprocessor.h"
 #include "arrival.h"
@@ -30,7 +30,7 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-class Detector : public detect::Processor {
+class Detector : public detect::processing::Processor {
  public:
   Detector(const DataModel::OriginCPtr &origin);
   virtual ~Detector();

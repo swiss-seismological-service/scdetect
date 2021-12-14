@@ -13,7 +13,7 @@
 #include <memory>
 
 #include "mixin/gapinterpolate.h"
-#include "processor.h"
+#include "processing/processor.h"
 #include "stream.h"
 
 namespace Seiscomp {
@@ -32,7 +32,7 @@ class WaveformOperator;
 // just a single stream nor does it introduce the *concept of a station* (e.g.
 // by means of limiting the usage of maximum three channels).
 //
-class WaveformProcessor : public Processor,
+class WaveformProcessor : public processing::Processor,
                           public InterpolateGaps<WaveformProcessor> {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;

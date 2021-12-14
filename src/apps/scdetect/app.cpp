@@ -44,7 +44,7 @@
 #include "log.h"
 #include "magnitude/regression.h"
 #include "magnitudeprocessor.h"
-#include "processor.h"
+#include "processing/processor.h"
 #include "resamplerstore.h"
 #include "settings.h"
 #include "util/horizontal_components.h"

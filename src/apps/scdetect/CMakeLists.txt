@@ -34,7 +34,7 @@ set(
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
-    processor.cpp
+    processing/processor.cpp
     resamplerstore.cpp
     stream.cpp
     templatefamily.cpp

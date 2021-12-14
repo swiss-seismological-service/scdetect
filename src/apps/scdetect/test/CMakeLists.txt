@@ -51,7 +51,7 @@ set(SOURCES_integration
   ../magnitude/templatefamily.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
-  ../processor.cpp
+  ../processing/processor.cpp
   ../resamplerstore.cpp
   ../stream.cpp
   ../templatefamily.cpp
@@ -69,7 +69,7 @@ set(SOURCES_integration
 set(SOURCES_reducingamplitudeprocessor
   ../amplitudeprocessor.cpp
   ../exception.cpp
-  ../processor.cpp
+  ../processing/processor.cpp
   ../stream.cpp
   ../timewindowprocessor.cpp
   ../resamplerstore.cpp

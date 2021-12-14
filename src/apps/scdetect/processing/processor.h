@@ -1,13 +1,14 @@
-#ifndef SCDETECT_APPS_SCDETECT_PROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_PROCESSOR_H_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_PROCESSOR_H_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_PROCESSOR_H_
 
 #include <string>
 
-#include "exception.h"
-#include "log.h"
+#include "../exception.h"
+#include "../log.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 #define SCDETECT_LOG_DEBUG_PROCESSOR(processor_ptr, ...) \
   SCDETECT_LOG_DEBUG_TAGGED(processor_ptr->id(), __VA_ARGS__)
@@ -43,7 +44,8 @@ class Processor {
   std::string _id;
 };
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_PROCESSOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_PROCESSOR_H_

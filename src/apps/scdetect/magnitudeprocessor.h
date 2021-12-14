@@ -8,7 +8,7 @@
 
 #include "factory.h"
 #include "magnitude/templatefamily.h"
-#include "processor.h"
+#include "processing/processor.h"
 #include "templatefamily.h"
 
 namespace Seiscomp {
@@ -18,7 +18,7 @@ namespace detect {
 //
 // - the implementation is a slim version of
 // `Seiscomp::Processing::MagnitudeProcessor`
-class MagnitudeProcessor : public Processor {
+class MagnitudeProcessor : public processing::Processor {
  public:
   // XXX(damb): From libs/seiscomp/processing/magnitudeprocessor.h
   enum class Status {
