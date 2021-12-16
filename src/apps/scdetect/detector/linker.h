@@ -12,8 +12,8 @@
 
 #include "arrival.h"
 #include "linker/association.h"
+#include "linker/pot.h"
 #include "linker/strategy.h"
-#include "pot.h"
 #include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -89,6 +89,11 @@ class Linker {
  private:
   void createPot();
 
+  struct Candidate;
+  linker::POT createCandidatePOT(
+      const Candidate &candidate, const std::string &processorId,
+      const linker::Association::TemplateResult &newResult);
+
   Status _status{Status::kWaitingForData};
 
   // `TemplateWaveformProcessor` processor
@@ -104,7 +109,7 @@ class Linker {
   using Processors = std::unordered_map<std::string, Processor>;
   Processors _processors;
 
-  struct Event {
+  struct Candidate {
     // The time after the event is considered as expired
     Core::Time expired;
     // The final association
@@ -112,21 +117,21 @@ class Linker {
     // Time of the reference arrival pick
     Core::Time refPickTime;
 
-    Event(const Core::Time &expired);
+    Candidate(const Core::Time &expired);
     // Feeds the template result `res` to the event in order to be merged
     void feed(const std::string &procId,
-              const linker::Association::TemplateResult &res, const POT &pot);
+              const linker::Association::TemplateResult &res);
     // Returns the total number of arrivals
     size_t getArrivalCount() const;
     // Returns `true` if the event must be considered as expired
     bool isExpired(const Core::Time &now) const;
   };
 
-  using EventQueue = std::list<Event>;
-  EventQueue _queue;
+  using CandidateQueue = std::list<Candidate>;
+  CandidateQueue _queue;
 
-  // The reference POT
-  POT _pot;
+  // The linker's reference POT
+  linker::POT _pot;
   bool _potValid{false};
 
   // The arrival offset threshold; if `boost::none` arrival offset threshold

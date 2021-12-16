@@ -16,6 +16,7 @@
 #include "../util/floating_point_comparison.h"
 #include "../util/math.h"
 #include "../util/util.h"
+#include "arrival.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -191,7 +192,10 @@ void Detector::process(const Record *record) {
              result.getArrivalCount() >=
                  _currentResult.value().getArrivalCount())) {
           _currentResult = result;
-          _triggerProcId = result.refProcId;
+
+          // determine the processor with the first arrival
+          const auto sorted{sortByArrivalTime(result)};
+          _triggerProcId = sorted.at(0).processorId;
 
           updated = true;
         }
@@ -386,61 +390,39 @@ bool Detector::feed(const Record *record) {
 
 void Detector::prepareResult(const linker::Association &linkerResult,
                              Detector::Result &result) const {
-  const auto &refResult{linkerResult.results.at(linkerResult.refProcId)};
-  if (!refResult.matchResult) {
-    throw ProcessingError{
-        "Failed to prepare result. Reason: missing reference "
-        "processor match result"};
-  }
+  auto sorted{sortByArrivalTime(linkerResult)};
 
-  const auto refMatchResult{refResult.matchResult};
-  const auto &refStartTime{refMatchResult->timeWindow.startTime()};
-  const auto refPickOffset{
-      static_cast<double>(refResult.arrival.pick.time - refStartTime)};
+  const auto &referenceResult{sorted.at(0)};
+  const auto &referenceArrival{referenceResult.result.arrival};
+  const auto referenceMatchResult{referenceResult.result.matchResult};
+  const auto &referenceStartTime{referenceMatchResult->timeWindow.startTime()};
+  const auto referenceLag{
+      static_cast<double>(referenceArrival.pick.time - referenceStartTime)};
 
   std::unordered_set<std::string> usedChas;
   std::unordered_set<std::string> usedStas;
-  // pick offsets (detected arrivals)
-  std::vector<double> pickOffsets;
+  std::vector<double> alignedArrivalOffsets;
 
-  // TODO(damb): Compute the uncertainty of the arrival time
-  // w.r.t.:
-  // - the alignment offset of the original waveforms
-  //
-  // TODO(damb): Compute the uncertainty of the origin time under consideration
-  // of the:
-  // - the arrival offsets w.r.t. the reference arrival
-  const auto &refWaveformStreamId{refResult.arrival.pick.waveformStreamId};
-  const auto potOffsets{linkerResult.pot.getOffsets(refWaveformStreamId)};
   Detector::Result::TemplateResults templateResults;
-  for (const auto &resPair : linkerResult.results) {
-    const auto &procId{resPair.first};
-    const auto &templateResult{resPair.second};
+  for (const auto &result : sorted) {
+    const auto &procId{result.processorId};
+    const auto &templateResult{result.result};
     const auto &proc{_processors.at(procId)};
-
     if (templateResult.matchResult) {
+      const auto matchResult{templateResult.matchResult};
+      const auto &startTime{matchResult->timeWindow.startTime()};
+
+      auto arrivalOffset{templateResult.arrival.pick.time -
+                         referenceArrival.pick.time};
       // compute alignment correction using the POT offset (required, since
       // traces to be cross-correlated cannot be guaranteed to be aligned to
       // sub-sampling interval accuracy)
-      const auto &streamId{templateResult.arrival.pick.waveformStreamId};
-      const auto n{std::find_if(std::begin(potOffsets), std::end(potOffsets),
-                                [&streamId](const PickOffsetNode &n) {
-                                  return n.waveformStreamId == streamId;
-                                })};
-      if (n == potOffsets.end()) {
-        throw ProcessingError{
-            "Failed to prepare result. Reason: failed to lookup "
-            "offset from POT"};
-      }
+      const auto &alignmentCorrection{referenceStartTime + arrivalOffset -
+                                      startTime};
 
-      const auto matchResult{templateResult.matchResult};
-      const auto &startTime{matchResult->timeWindow.startTime()};
-      const auto &alignmentCorrection{
-          refStartTime + Core::TimeSpan{n->pickOffset} - startTime};
-
-      pickOffsets.push_back(
+      alignedArrivalOffsets.push_back(
           static_cast<double>(templateResult.arrival.pick.time - startTime) -
-          alignmentCorrection - refPickOffset);
+          alignmentCorrection - referenceLag);
 
       templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
                               Detector::Result::TemplateResult{
@@ -454,12 +436,12 @@ void Detector::prepareResult(const linker::Association &linkerResult,
   }
 
   // compute origin time
-  const auto &pickOffsetCorrection{
-      util::cma(pickOffsets.data(), pickOffsets.size())};
-  const auto &refOriginPickOffset{refResult.arrival.pick.offset};
-  result.originTime = refStartTime + Core::TimeSpan{refPickOffset} -
-                      refOriginPickOffset +
-                      Core::TimeSpan{pickOffsetCorrection};
+  const auto &arrivalOffsetCorrection{
+      util::cma(alignedArrivalOffsets.data(), alignedArrivalOffsets.size())};
+  const auto &referenceOriginArrivalOffset{referenceArrival.pick.offset};
+  result.originTime = referenceStartTime + Core::TimeSpan{referenceLag} -
+                      referenceOriginArrivalOffset +
+                      Core::TimeSpan{arrivalOffsetCorrection};
   result.fit = linkerResult.fit;
   // template results i.e. theoretical arrivals including some meta data
   result.templateResults = templateResults;
@@ -529,6 +511,20 @@ void Detector::storeTemplateResult(
 
 void Detector::storeLinkerResult(const linker::Association &linkerResult) {
   _resultQueue.emplace_back(linkerResult);
+}
+
+std::vector<Detector::TemplateResult> Detector::sortByArrivalTime(
+    const linker::Association &linkerResult) {
+  std::vector<TemplateResult> ret;
+  for (const auto &resultPair : linkerResult.results) {
+    ret.push_back({resultPair.second, resultPair.first});
+  }
+  std::sort(std::begin(ret), std::end(ret),
+            [](const TemplateResult &lhs, const TemplateResult &rhs) {
+              return lhs.result.arrival.pick.time <
+                     rhs.result.arrival.pick.time;
+            });
+  return ret;
 }
 
 }  // namespace detector

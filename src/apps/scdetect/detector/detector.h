@@ -169,6 +169,14 @@ class Detector : public detect::Processor {
   void storeLinkerResult(const linker::Association &linkerResult);
 
  private:
+  using ProcessorId = std::string;
+  struct TemplateResult {
+    linker::Association::TemplateResult result;
+    ProcessorId processorId;
+  };
+  static std::vector<TemplateResult> sortByArrivalTime(
+      const linker::Association &linkerResult);
+
   // Safety margin for linker on hold duration
   static const Core::TimeSpan _linkerSafetyMargin;
 
@@ -190,9 +198,9 @@ class Detector : public detect::Processor {
     std::unique_ptr<TemplateWaveformProcessor> processor;
   };
 
-  using ProcessorStates = std::unordered_map<std::string, ProcessorState>;
+  using ProcessorStates = std::unordered_map<ProcessorId, ProcessorState>;
   ProcessorStates _processors;
-  using ProcessorIdx = std::unordered_multimap<std::string, std::string>;
+  using ProcessorIdx = std::unordered_multimap<std::string, ProcessorId>;
   ProcessorIdx _processorIdx;
 
   // The detector's status

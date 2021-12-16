@@ -260,7 +260,6 @@ DetectorBuilder &DetectorBuilder::setStream(
 }
 
 void DetectorBuilder::finalize() {
-  // use a POT to determine the max relative pick offset
   auto hasNoChildren{_processorConfigs.empty()};
   if (hasNoChildren) {
     _product->disable();

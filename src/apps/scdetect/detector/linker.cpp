@@ -1,5 +1,6 @@
 #include "linker.h"
 
+#include <algorithm>
 #include <boost/functional/hash.hpp>
 #include <iterator>
 #include <unordered_set>
@@ -175,50 +176,34 @@ void Linker::process(const TemplateWaveformProcessor *proc,
 
     const auto &procId{proc->id()};
     auto resultIt{res.resultIt};
-    // merge result into existing events
-    for (auto eventIt = std::begin(_queue); eventIt != std::end(_queue);
-         ++eventIt) {
-      if (eventIt->getArrivalCount() < getProcessorCount()) {
-        auto &templResults{eventIt->association.results};
-        auto it{templResults.find(procId)};
-        if (it == templResults.end() ||
+    // merge result into existing candidates
+    for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
+         ++candidateIt) {
+      if (candidateIt->getArrivalCount() < getProcessorCount()) {
+        auto &candidateTemplateResults{candidateIt->association.results};
+        auto it{candidateTemplateResults.find(procId)};
+
+        bool newPick{it == candidateTemplateResults.end()};
+        if (newPick ||
             resultIt->coefficient > it->second.resultIt->coefficient) {
-          // create POT
-          std::vector<Arrival> arrivals{res.arrival};
-          std::unordered_set<std::string> wfIds;
-          for (const auto &templResultPair : templResults) {
-            const auto &a{templResultPair.second.arrival};
-            arrivals.push_back(a);
-            wfIds.emplace(a.pick.waveformStreamId);
-          }
-
-          POT pot{arrivals};
-
           if (_thresArrivalOffset) {
-            // prepare reference POT
-            _pot.disable(wfIds);
-
-            std::unordered_set<std::string> exceeded;
-            if (!validatePickOffsets(_pot, pot, exceeded,
-                                     *_thresArrivalOffset) ||
-                !exceeded.empty()) {
+            auto cmp{createCandidatePOT(*candidateIt, procId, res)};
+            if (!_pot.validateEnabledOffsets(cmp, *_thresArrivalOffset)) {
               continue;
             }
           }
-
-          eventIt->feed(procId, res, pot);
+          candidateIt->feed(procId, res);
         }
-        _pot.enable();
       }
     }
 
     const auto now{Core::Time::GMT()};
-    // create new event
-    Event event{now + _onHold};
-    event.feed(procId, res, POT{std::vector<Arrival>{res.arrival}});
-    _queue.emplace_back(event);
+    // create new candidate association
+    Candidate newCandidate{now + _onHold};
+    newCandidate.feed(procId, res);
+    _queue.emplace_back(newCandidate);
 
-    std::vector<EventQueue::iterator> ready;
+    std::vector<CandidateQueue::iterator> ready;
     for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
       const auto arrivalCount{it->getArrivalCount()};
       // emit results which are ready and surpass threshold
@@ -250,23 +235,61 @@ void Linker::emitResult(const linker::Association &res) {
 }
 
 void Linker::createPot() {
-  std::vector<Arrival> arrivals;
+  std::vector<linker::POT::Entry> entries;
   using pair_type = Processors::value_type;
   std::transform(_processors.cbegin(), _processors.cend(),
-                 back_inserter(arrivals),
-                 [](const pair_type &p) { return p.second.arrival; });
+                 back_inserter(entries), [](const pair_type &p) {
+                   return linker::POT::Entry{p.second.arrival.pick.time,
+                                             p.second.proc->id(), true};
+                 });
 
   // XXX(damb): The current implementation simply recreates the POT
-  _pot = POT(arrivals);
+  _pot = linker::POT(entries);
   _potValid = true;
 }
 
-/* ------------------------------------------------------------------------- */
-Linker::Event::Event(const Core::Time &expired) : expired{expired} {}
+linker::POT Linker::createCandidatePOT(
+    const Candidate &candidate, const std::string &processorId,
+    const linker::Association::TemplateResult &newResult) {
+  std::set<std::string> allProcessorIds;
+  for (const auto &processorsPair : _processors) {
+    allProcessorIds.emplace(processorsPair.first);
+  }
+  std::set<std::string> associatedProcessorId{processorId};
+  const auto &associatedCandidateTemplateResults{candidate.association.results};
+  for (const auto &associatedTemplateResultPair :
+       associatedCandidateTemplateResults) {
+    associatedProcessorId.emplace(associatedTemplateResultPair.first);
+  }
+  std::set<std::string> additionalProcessorIds;
+  std::set_difference(
+      std::begin(allProcessorIds), std::end(allProcessorIds),
+      std::begin(associatedProcessorId), std::end(associatedProcessorId),
+      std::inserter(additionalProcessorIds, std::end(additionalProcessorIds)));
 
-void Linker::Event::feed(const std::string &procId,
-                         const linker::Association::TemplateResult &res,
-                         const POT &pot) {
+  std::vector<linker::POT::Entry> candidatePOTEntries{
+      {newResult.arrival.pick.time, processorId, true}};
+  for (const auto &templateResultPair : associatedCandidateTemplateResults) {
+    const auto associatedProcId{templateResultPair.first};
+    if (processorId != associatedProcId) {
+      const auto &templateResult{templateResultPair.second};
+      candidatePOTEntries.push_back(
+          {templateResult.arrival.pick.time, associatedProcId, true});
+    }
+  }
+
+  for (const auto &p : additionalProcessorIds) {
+    candidatePOTEntries.push_back({Core::Time{}, p, false});
+  }
+
+  return linker::POT(candidatePOTEntries);
+}
+
+/* ------------------------------------------------------------------------- */
+Linker::Candidate::Candidate(const Core::Time &expired) : expired{expired} {}
+
+void Linker::Candidate::feed(const std::string &procId,
+                             const linker::Association::TemplateResult &res) {
   auto &templateResults{association.results};
   templateResults.emplace(procId, res);
 
@@ -279,18 +302,13 @@ void Linker::Event::feed(const std::string &procId,
 
   // compute the overall event's score
   association.fit = util::cma(fits.data(), fits.size());
-  association.pot = pot;
-  if (!refPickTime || res.arrival.pick.time < refPickTime) {
-    refPickTime = res.arrival.pick.time;
-    association.refProcId = procId;
-  }
 }
 
-size_t Linker::Event::getArrivalCount() const {
+size_t Linker::Candidate::getArrivalCount() const {
   return association.results.size();
 }
 
-bool Linker::Event::isExpired(const Core::Time &now) const {
+bool Linker::Candidate::isExpired(const Core::Time &now) const {
   return now >= expired;
 }
 
