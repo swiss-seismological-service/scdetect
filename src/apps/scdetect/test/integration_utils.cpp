@@ -268,8 +268,9 @@ void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
   // compare attributes since the `creationInfo` attribute differs, anyway
   BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
                    static_cast<double>(rhs->time().value()));
-  BOOST_TEST_CHECK(std::string{lhs->waveformID()} ==
-                   std::string{rhs->waveformID()});
+
+  waveformStreamIdCmp(lhs->waveformID(), rhs->waveformID());
+
   BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
 
@@ -294,6 +295,15 @@ void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs) {
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::PickCPtr p) {
     return p->creationInfo().agencyID();
   }));
+}
+
+void waveformStreamIdCmp(const DataModel::WaveformStreamID &lhs,
+                         const DataModel::WaveformStreamID &rhs) {
+  BOOST_TEST_CHECK(lhs.networkCode() == rhs.networkCode());
+  BOOST_TEST_CHECK(lhs.stationCode() == rhs.stationCode());
+  BOOST_TEST_CHECK(lhs.locationCode() == rhs.locationCode());
+  BOOST_TEST_CHECK(lhs.channelCode() == rhs.channelCode());
+  BOOST_TEST_CHECK(lhs.resourceURI() == rhs.resourceURI());
 }
 
 void originCmp(const DataModel::OriginCPtr &lhs,

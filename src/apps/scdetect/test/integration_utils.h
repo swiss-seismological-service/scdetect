@@ -9,6 +9,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/originquality.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <boost/filesystem.hpp>
 #include <ostream>
@@ -196,6 +197,10 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
 
 // Compare `DataModel::Pick` element-wise
 void pickCmp(const DataModel::PickCPtr &lhs, const DataModel::PickCPtr &rhs);
+
+// Compare `DataModel::WaveformStreamID` element wise
+void waveformStreamIdCmp(const DataModel::WaveformStreamID &lhs,
+                         const DataModel::WaveformStreamID &rhs);
 
 // Compare `DataModel::Origin` element-wise
 void originCmp(const DataModel::OriginCPtr &lhs,
