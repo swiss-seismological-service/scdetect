@@ -725,7 +725,8 @@ void Application::processDetection(
       processor->gapInterpolation(), processor->gapThreshold(),
       processor->gapTolerance()};
 
-  const auto createPick = [](const detector::Arrival &arrival) {
+  const auto createPick = [](const detector::Arrival &arrival,
+                             bool asTemplateArrivalPick) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
     if (!ret) {
       throw DuplicatePublicObjectId{"duplicate pick identifier"};
@@ -734,10 +735,17 @@ void Application::processDetection(
     ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
                                          arrival.pick.lowerUncertainty,
                                          arrival.pick.upperUncertainty});
-    util::WaveformStreamID wfStreamId{arrival.pick.waveformStreamId};
-    ret->setWaveformID(DataModel::WaveformStreamID{
-        wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
-        wfStreamId.chaCode(), ""});
+    util::WaveformStreamID waveformStreamId{arrival.pick.waveformStreamId};
+    if (asTemplateArrivalPick) {
+      ret->setWaveformID(DataModel::WaveformStreamID{
+          waveformStreamId.netCode(), waveformStreamId.staCode(),
+          waveformStreamId.locCode(), waveformStreamId.chaCode(), ""});
+    } else {
+      ret->setWaveformID(DataModel::WaveformStreamID{
+          waveformStreamId.netCode(), waveformStreamId.staCode(),
+          waveformStreamId.locCode(),
+          util::getBandAndSourceCode(waveformStreamId), ""});
+    }
     ret->setEvaluationMode(DataModel::EvaluationMode(DataModel::AUTOMATIC));
 
     if (arrival.pick.phaseHint) {
@@ -765,11 +773,30 @@ void Application::processDetection(
                    detection->publishConfig.createAmplitudes ||
                    detection->publishConfig.createMagnitudes};
   if (createPicks) {
+    using PhaseCode = std::string;
+    using ProcessedPhaseCodes = std::unordered_set<PhaseCode>;
+    using SensorLocationStreamId = std::string;
+    using SensorLocationStreamIdProcessedPhaseCodesMap =
+        std::unordered_map<SensorLocationStreamId, ProcessedPhaseCodes>;
+    SensorLocationStreamIdProcessedPhaseCodesMap processedPhaseCodes;
+
     for (const auto &resultPair : detection->templateResults) {
       const auto &res{resultPair.second};
 
+      auto sensorLocationStreamId{util::getSensorLocationStreamId(
+          util::WaveformStreamID{res.arrival.pick.waveformStreamId})};
+
+      auto &processed{processedPhaseCodes[sensorLocationStreamId]};
+      auto phaseAlreadyProcessed{
+          std::find(std::begin(processed), std::end(processed),
+                    res.arrival.phase) != std::end(processed)};
+      if (phaseAlreadyProcessed) {
+        // XXX(damb): assign a phase only once per sensor location
+        continue;
+      }
+
       try {
-        const auto pick{createPick(res.arrival)};
+        const auto pick{createPick(res.arrival, false)};
         if (!pick->add(createTemplateWaveformTimeInfoComment(res).release())) {
           SCDETECT_LOG_WARNING_PROCESSOR(processor,
                                          "Internal error: failed to add "
@@ -777,6 +804,8 @@ void Application::processDetection(
         }
 
         const auto arrival{createArrival(res.arrival, pick)};
+        processed.emplace(res.arrival.phase);
+
         if (detection->publishConfig.createArrivals) {
           detectionItem.arrivalPicks.push_back({arrival, pick});
         }
@@ -796,7 +825,7 @@ void Application::processDetection(
   if (detection->publishConfig.createTemplateArrivals) {
     for (const auto &a : detection->publishConfig.theoreticalTemplateArrivals) {
       try {
-        const auto pick{createPick(a)};
+        const auto pick{createPick(a, true)};
         const auto arrival{createArrival(a, pick)};
         detectionItem.arrivalPicks.push_back({arrival, pick});
       } catch (DuplicatePublicObjectId &e) {
