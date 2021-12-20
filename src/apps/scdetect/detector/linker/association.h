@@ -32,8 +32,8 @@ struct Association {
   // The association's fit [-1,1]
   double fit;
 
-  // Returns the total number of associated arrivals
-  size_t getArrivalCount() const;
+  // Returns the total number of associated processors
+  size_t processorCount() const;
   // Returns a string including debug information
   std::string debugString() const;
 };

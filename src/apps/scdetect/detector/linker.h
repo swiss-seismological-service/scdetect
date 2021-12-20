@@ -51,9 +51,9 @@ class Linker {
   // Returns the linker's status
   Status status() const;
   // Returns the number of associated channels
-  size_t getAssociatedChannelCount() const;
+  size_t channelCount() const;
   // Returns the number of associated processors
-  size_t getProcessorCount() const;
+  size_t processorCount() const;
 
   // Register the template waveform processor `proc` associated with the
   // template arrival `arrival` for linking.
@@ -121,8 +121,8 @@ class Linker {
     // Feeds the template result `res` to the event in order to be merged
     void feed(const std::string &procId,
               const linker::Association::TemplateResult &res);
-    // Returns the total number of arrivals
-    size_t getArrivalCount() const;
+    // Returns the number of associated processors
+    size_t associatedProcessorCount() const;
     // Returns `true` if the event must be considered as expired
     bool isExpired(const Core::Time &now) const;
   };

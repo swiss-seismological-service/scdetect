@@ -637,7 +637,7 @@ void Application::processDetection(
     const detector::DetectorWaveformProcessor::DetectionCPtr &detection) {
   SCDETECT_LOG_DEBUG_PROCESSOR(
       processor,
-      "Start processing detection (time=%s, detected_arrivals=%d) ...",
+      "Start processing detection (time=%s, associated_results=%d) ...",
       detection->time.iso().c_str(), detection->templateResults.size());
 
   Core::Time now{Core::Time::GMT()};

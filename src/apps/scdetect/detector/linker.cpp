@@ -54,7 +54,7 @@ void Linker::setMergingStrategy(
 
 Linker::Status Linker::status() const { return _status; }
 
-size_t Linker::getAssociatedChannelCount() const {
+size_t Linker::channelCount() const {
   std::unordered_set<std::string> wfIds;
   for (const auto &procPair : _processors) {
     wfIds.emplace(procPair.second.arrival.pick.waveformStreamId);
@@ -63,7 +63,7 @@ size_t Linker::getAssociatedChannelCount() const {
   return wfIds.size();
 }
 
-size_t Linker::getProcessorCount() const { return _processors.size(); }
+size_t Linker::processorCount() const { return _processors.size(); }
 
 void Linker::add(const TemplateWaveformProcessor *proc, const Arrival &arrival,
                  const boost::optional<double> &mergingThreshold) {
@@ -89,7 +89,8 @@ void Linker::terminate() {
   // flush pending events
   while (!_queue.empty()) {
     const auto event{_queue.front()};
-    if (event.getArrivalCount() >= _minArrivals.value_or(getProcessorCount()) &&
+    if (event.associatedProcessorCount() >=
+            _minArrivals.value_or(processorCount()) &&
         (!_thresAssociation || event.association.fit >= *_thresAssociation)) {
       emitResult(event.association);
     }
@@ -179,7 +180,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     // merge result into existing candidates
     for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
          ++candidateIt) {
-      if (candidateIt->getArrivalCount() < getProcessorCount()) {
+      if (candidateIt->associatedProcessorCount() < processorCount()) {
         auto &candidateTemplateResults{candidateIt->association.results};
         auto it{candidateTemplateResults.find(procId)};
 
@@ -205,11 +206,11 @@ void Linker::process(const TemplateWaveformProcessor *proc,
 
     std::vector<CandidateQueue::iterator> ready;
     for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
-      const auto arrivalCount{it->getArrivalCount()};
+      const auto arrivalCount{it->associatedProcessorCount()};
       // emit results which are ready and surpass threshold
-      if (arrivalCount == getProcessorCount() ||
+      if (arrivalCount == processorCount() ||
           (now >= it->expired &&
-           arrivalCount >= _minArrivals.value_or(getProcessorCount()))) {
+           arrivalCount >= _minArrivals.value_or(processorCount()))) {
         if (!_thresAssociation || it->association.fit >= *_thresAssociation) {
           emitResult(it->association);
         }
@@ -304,8 +305,8 @@ void Linker::Candidate::feed(const std::string &procId,
   association.fit = util::cma(fits.data(), fits.size());
 }
 
-size_t Linker::Candidate::getArrivalCount() const {
-  return association.results.size();
+size_t Linker::Candidate::associatedProcessorCount() const {
+  return association.processorCount();
 }
 
 bool Linker::Candidate::isExpired(const Core::Time &now) const {

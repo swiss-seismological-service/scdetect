@@ -189,8 +189,8 @@ void Detector::process(const Record *record) {
       if (result.fit > _thresTriggerOn.value_or(-1)) {
         if (!_currentResult ||
             (triggered() && result.fit > _currentResult.value().fit &&
-             result.getArrivalCount() >=
-                 _currentResult.value().getArrivalCount())) {
+             result.processorCount() >=
+                 _currentResult.value().processorCount())) {
           _currentResult = result;
 
           // determine the processor with the first arrival
@@ -259,7 +259,7 @@ void Detector::process(const Record *record) {
         if (endtime > *_triggerEnd ||
             result.fit < _thresTriggerOff.value_or(1) ||
             (util::almostEqual(_currentResult.value().fit, 1.0, 0.000001) &&
-             _currentResult.value().getArrivalCount() == getProcessorCount())) {
+             _currentResult.value().processorCount() == getProcessorCount())) {
           resetTrigger();
         }
       }
@@ -313,8 +313,7 @@ void Detector::terminate() {
       const auto &result{_resultQueue.front()};
 
       if (result.fit > _currentResult.value().fit &&
-          result.getArrivalCount() >=
-              _currentResult.value().getArrivalCount()) {
+          result.processorCount() >= _currentResult.value().processorCount()) {
         _currentResult = result;
       }
 
@@ -454,7 +453,7 @@ void Detector::prepareResult(const linker::Association &linkerResult,
   for (const auto &procPair : _processors) {
     associatedStations.emplace(procPair.second.sensorLocation.stationId);
   }
-  result.numChannelsAssociated = _linker.getAssociatedChannelCount();
+  result.numChannelsAssociated = _linker.channelCount();
   result.numStationsAssociated = associatedStations.size();
 }
 

@@ -9,11 +9,11 @@ namespace detect {
 namespace detector {
 namespace linker {
 
-size_t Association::getArrivalCount() const { return results.size(); }
+size_t Association::processorCount() const { return results.size(); }
 
 std::string Association::debugString() const {
-  return std::string{"fit=" + std::to_string(fit) +
-                     ", arrival_count=" + std::to_string(getArrivalCount())};
+  return std::string{"fit=" + std::to_string(fit) + ", associated_results=" +
+                     std::to_string(processorCount())};
 }
 
 }  // namespace linker
