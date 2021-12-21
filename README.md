@@ -380,8 +380,8 @@ configuration parameters:
   stream. The filter must be specified following the
   SeisComP's [filter grammar](https://www.seiscomp.de/doc/base/filter-grammar.html)
   syntax. Filtering may be disabled by means of explicitly defining the empty
-  string i.e. `""`. By default, the filter associated with the template pick is
-  applied.
+  string i.e. `""`. If no module default is configured, by default the filter
+  associated with the *template pick* is applied.
 
 - `"templateFilter"`: A string defining the filter during the template waveform
   generation. If `"templateFilter"` is undefined, but `"filter"` is
