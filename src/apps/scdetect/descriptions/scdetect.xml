@@ -33,10 +33,20 @@
         </parameter>
       </group>
       <group name="processing">
+        <parameter name="filter" type="string" default="">
+          <description>
+            Defines the default filter for detection related waveform
+            processing. If undefined the filter is set to the value defined by
+            the template pick (default behaviour).
+
+            Filtering may be disabled by means of explicitly
+            defining the value to the empty string i.e. "".
+          </description>
+        </parameter>
         <parameter name="initTime" type="int" default="60" unit="s">
           <description>
-            The default initTime defines a time span in seconds a
-            detector is blind after initialization. This time is needed to
+            The default filter related initTime defines a time span in seconds
+            a detector is blind after initialization. This time is needed to
             initialize the template processors and depends on it.
           </description>
         </parameter>

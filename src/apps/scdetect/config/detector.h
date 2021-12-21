@@ -17,15 +17,16 @@ namespace config {
 struct StreamConfig {
   // Stream related template configuration
   struct TemplateStreamConfig {
-    std::string phase{"Pg"};
+    // Defines a template specific filter
+    boost::optional<std::string> filter;
 
-    double wfStart{-2};
-    double wfEnd{2};
+    std::string phase{"Pg"};
 
     // Defines a template specific waveform stream id
     std::string wfStreamId;
-    // Defines a template specific filter
-    boost::optional<std::string> filter;
+
+    double wfStart{-2};
+    double wfEnd{2};
   };
   StreamConfig();
   StreamConfig(const std::string &wfStreamId, const std::string &filter,
@@ -37,12 +38,7 @@ struct StreamConfig {
 
   bool isValid() const;
 
-  // Template processor identifier
-  std::string templateId{util::createUUID()};
-
-  std::string wfStreamId;
-
-  double initTime{60};
+  TemplateStreamConfig templateConfig;
   // Defines the processing specific filter
   boost::optional<std::string> filter;
   // Defines a stream specific merging threshold for using cross-correlation
@@ -52,7 +48,12 @@ struct StreamConfig {
   // force resampling the data to be processed
   boost::optional<double> targetSamplingFrequency;
 
-  TemplateStreamConfig templateConfig;
+  // Template processor identifier
+  std::string templateId{util::createUUID()};
+
+  std::string wfStreamId;
+
+  double initTime{60};
 };
 
 struct DetectorConfig {
@@ -105,6 +106,13 @@ struct DetectorConfig {
 };
 
 struct PublishConfig {
+  std::vector<detector::Arrival> theoreticalTemplateArrivals;
+
+  // The origin method identifier
+  std::string originMethodId{"DETECT"};
+  std::string amplitudeMethodId{"DETECT"};
+  std::string magnitudeMethodId{"DETECT"};
+
   // Indicates whether to append *detected arrivals* to declared origins
   bool createArrivals{false};
   // Indicates whether to append *theoretical template arrivals* to declared
@@ -116,13 +124,6 @@ struct PublishConfig {
   // Indicates whether to both compute and create magnitudes for a declared
   // origin
   bool createMagnitudes{false};
-
-  // The origin method identifier
-  std::string originMethodId{"DETECT"};
-  std::string amplitudeMethodId{"DETECT"};
-  std::string magnitudeMethodId{"DETECT"};
-
-  std::vector<detector::Arrival> theoreticalTemplateArrivals;
 };
 
 class TemplateConfig {
@@ -159,15 +160,15 @@ class TemplateConfig {
   const_iterator cend() const { return _streamConfigs.cend(); }
 
  private:
-  std::string _detectorId{util::createUUID()};
-
-  std::string _originId;
-
-  PublishConfig _publishConfig;
+  StreamConfigs _streamConfigs;
 
   DetectorConfig _detectorConfig;
 
-  StreamConfigs _streamConfigs;
+  PublishConfig _publishConfig;
+
+  std::string _detectorId{util::createUUID()};
+
+  std::string _originId;
 };
 
 }  // namespace config

@@ -198,6 +198,14 @@ bool Application::validateParameters() {
     return false;
   }
 
+  if (_config.streamConfig.filter && !(*_config.streamConfig.filter).empty()) {
+    std::string err;
+    if (!config::validateFilter(*_config.streamConfig.filter, err)) {
+      SCDETECT_LOG_ERROR("Invalid configuration: 'filter': %s (%s)",
+                         (*_config.streamConfig.filter).c_str(), err.c_str());
+      return false;
+    }
+  }
   if (!util::isGeZero(_config.streamConfig.initTime)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'initTime': %f. Must be "
@@ -1768,6 +1776,10 @@ void Application::Config::init(const Client::Application *app) {
   } catch (...) {
   }
 
+  try {
+    streamConfig.filter = app->configGetString("processing.filter");
+  } catch (...) {
+  }
   try {
     streamConfig.initTime = app->configGetDouble("processing.initTime");
   } catch (...) {
