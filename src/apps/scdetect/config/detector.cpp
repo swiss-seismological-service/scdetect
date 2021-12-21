@@ -16,22 +16,22 @@ StreamConfig::StreamConfig(const std::string &wfStreamId,
                            const std::string &filter, const double initTime,
                            const TemplateStreamConfig &templateConfig,
                            const std::string &templateId)
-    : wfStreamId{wfStreamId},
-      initTime{initTime},
+    : templateConfig{templateConfig},
       filter{filter},
-      templateConfig{templateConfig} {}
+      wfStreamId{wfStreamId},
+      initTime{initTime} {}
 
 StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
                            const StreamConfig &defaults)
-    : templateId{pt.get<std::string>("templateId", util::createUUID())
+    : filter{pt.get_optional<std::string>("filter")},
+      mergingThreshold{pt.get_optional<double>("mergingThreshold")},
+      targetSamplingFrequency{
+          pt.get_optional<double>("targetSamplingFrequency")},
+      templateId{pt.get<std::string>("templateId", util::createUUID())
 
       },
       wfStreamId{pt.get<std::string>("waveformId")},
-      initTime{pt.get<double>("initTime", defaults.initTime)},
-      filter{pt.get_optional<std::string>("filter")},
-      mergingThreshold{pt.get_optional<double>("mergingThreshold")},
-      targetSamplingFrequency{
-          pt.get_optional<double>("targetSamplingFrequency")} {
+      initTime{pt.get<double>("initTime", defaults.initTime)} {
   templateConfig.phase =
       pt.get<std::string>("templatePhase", defaults.templateConfig.phase);
   templateConfig.wfStart =
