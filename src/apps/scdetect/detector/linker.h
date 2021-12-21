@@ -114,8 +114,6 @@ class Linker {
     Core::Time expired;
     // The final association
     linker::Association association;
-    // Time of the reference arrival pick
-    Core::Time refPickTime;
 
     Candidate(const Core::Time &expired);
     // Feeds the template result `res` to the event in order to be merged
