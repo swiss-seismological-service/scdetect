@@ -54,8 +54,12 @@ StreamConfig::StreamConfig(const boost::property_tree::ptree &pt,
   }
 
   templateConfig.filter = pt.get_optional<std::string>("templateFilter");
-  if (!templateConfig.filter && defaults.templateConfig.filter) {
-    templateConfig.filter = defaults.templateConfig.filter;
+  if (!templateConfig.filter) {
+    if (defaults.templateConfig.filter) {
+      templateConfig.filter = defaults.templateConfig.filter;
+    } else if (filter) {
+      templateConfig.filter = filter;
+    }
   }
 }
 
@@ -152,7 +156,10 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
   auto patchedStreamDefaults{streamDefaults};
   patchedStreamDefaults.initTime =
       pt.get<double>("initTime", streamDefaults.initTime);
-  patchedStreamDefaults.filter = pt.get_optional<std::string>("filter");
+  auto filter{pt.get_optional<std::string>("filter")};
+  if (filter) {
+    patchedStreamDefaults.filter = filter;
+  }
   patchedStreamDefaults.targetSamplingFrequency =
       pt.get_optional<double>("targetSamplingFrequency");
   patchedStreamDefaults.mergingThreshold =
@@ -163,8 +170,12 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       "templateWaveformStart", streamDefaults.templateConfig.wfStart);
   patchedStreamDefaults.templateConfig.wfEnd = pt.get<double>(
       "templateWaveformEnd", streamDefaults.templateConfig.wfEnd);
-  patchedStreamDefaults.templateConfig.filter =
-      pt.get_optional<std::string>("templateFilter");
+  auto templateFilter{pt.get_optional<std::string>("templateFilter")};
+  if (templateFilter) {
+    patchedStreamDefaults.templateConfig.filter = templateFilter;
+  } else if (filter) {
+    patchedStreamDefaults.templateConfig.filter = filter;
+  }
 
   // initialize stream configs
   for (const auto &streamConfigPair : pt.get_child("streams")) {
