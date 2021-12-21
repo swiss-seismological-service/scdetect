@@ -154,8 +154,8 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
             "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
             newArrival.pick.waveformStreamId.c_str(),
             res->timeWindow.startTime().iso().c_str(),
-            res->timeWindow.endTime().iso().c_str(), valueIt->coefficient,
-            valueIt->lag, time.iso().c_str());
+            res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+            valueIt->coefficient, valueIt->lag);
 #endif
         process(proc, templateResult);
       }
