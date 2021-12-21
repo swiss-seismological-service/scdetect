@@ -256,13 +256,10 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   _processorConfigs.emplace(streamId, std::move(c));
 
-  _arrivalPicks.push_back(detector::POT::ArrivalPick{arrival, pick});
-
   return *this;
 }
 
 void DetectorBuilder::finalize() {
-  // use a POT to determine the max relative pick offset
   auto hasNoChildren{_processorConfigs.empty()};
   if (hasNoChildren) {
     _product->disable();
@@ -284,7 +281,8 @@ void DetectorBuilder::finalize() {
   if (cfg.arrivalOffsetThreshold < 0) {
     _product->_detector.setArrivalOffsetThreshold(boost::none);
   } else {
-    _product->_detector.setArrivalOffsetThreshold(cfg.arrivalOffsetThreshold);
+    _product->_detector.setArrivalOffsetThreshold(
+        Core::TimeSpan{cfg.arrivalOffsetThreshold});
   }
 
   if (cfg.minArrivals < 0) {

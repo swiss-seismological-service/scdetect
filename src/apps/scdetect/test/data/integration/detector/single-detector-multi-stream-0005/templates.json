@@ -1,0 +1,24 @@
+[{
+  "detectorId": "detector-01",
+  "createArrivals": true,
+  "createTemplateArrivals": false,
+  "gapInterpolation": false,
+  "triggerOnThreshold": 0.98,
+  "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
+  "filter": "",
+  "templateFilter": "",
+  "initTime": 10,
+  "templateWaveformStart": -0.5,
+  "templateWaveformEnd": 2,
+  "templatePhase": "Sg",
+  "streams": [
+    {
+      "templateId": "template-01",
+      "waveformId": "8D.RAW2..HHE"
+   },
+   {
+      "templateId": "template-02",
+      "waveformId": "8D.RAW2..HHN"
+   }
+  ]
+}]

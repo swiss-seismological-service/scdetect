@@ -5,7 +5,7 @@
       <time>
         <value>2019-11-05T04:30:45.39993Z</value>
       </time>
-      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HHZ"/>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Pg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
       <comment>
@@ -17,7 +17,7 @@
       <time>
         <value>2019-11-05T04:30:49.80493Z</value>
       </time>
-      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HHZ"/>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Pg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
       <comment>

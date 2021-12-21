@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <EventParameters>
+    <pick publicID="Pick/20211220202653.622869.133">
+      <time>
+        <value>2019-11-05T05:23:50.59271Z</value>
+      </time>
+      <waveformID networkCode="CH" stationCode="SENIN" channelCode="HH"/>
+      <phaseHint>Sg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+      <comment>
+        <text>2019-11-05T04:23:50.09Z|2019-11-05T04:23:52.595Z|2019-11-05T04:23:50.592709Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
+    </pick>
+    <pick publicID="Pick/20211220202653.622976.134">
+      <time>
+        <value>2019-11-05T05:23:50.083442Z</value>
+      </time>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
+      <phaseHint>Sg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+      <comment>
+        <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
+    </pick>
+    <pick publicID="Pick/20211220202653.623054.135">
+      <time>
+        <value>2019-11-05T05:23:49.398533Z</value>
+      </time>
+      <waveformID networkCode="CH" stationCode="SENIN" channelCode="HH"/>
+      <phaseHint>Pg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+      <comment>
+        <text>2019-11-05T04:23:48.895Z|2019-11-05T04:23:51.4Z|2019-11-05T04:23:49.398532Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
+    </pick>
+    <pick publicID="Pick/20211220202653.623107.136">
+      <time>
+        <value>2019-11-05T05:23:49.09993Z</value>
+      </time>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
+      <phaseHint>Pg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+      <comment>
+        <text>2019-11-05T04:23:48.595Z|2019-11-05T04:23:51.1Z|2019-11-05T04:23:49.099929Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
+    </pick>
+    <origin publicID="Origin/20211220202653.622569.132">
+      <time>
+        <value>2019-11-05T05:23:47.640489Z</value>
+      </time>
+      <latitude>
+        <value>46.32480762</value>
+      </latitude>
+      <longitude>
+        <value>7.36023502</value>
+      </longitude>
+      <depth>
+        <value>4.813476562</value>
+      </depth>
+      <epicenterFixed>true</epicenterFixed>
+      <methodID>DETECT</methodID>
+      <quality>
+        <associatedPhaseCount>6</associatedPhaseCount>
+        <usedPhaseCount>6</usedPhaseCount>
+        <associatedStationCount>2</associatedStationCount>
+        <usedStationCount>2</usedStationCount>
+        <standardError>3.330669074e-16</standardError>
+        <azimuthalGap>60.62924056</azimuthalGap>
+        <maximumDistance>0.05701173792</maximumDistance>
+        <minimumDistance>0.03223286148</minimumDistance>
+        <medianDistance>0.05701173792</medianDistance>
+      </quality>
+      <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2021-12-20T20:26:53.622537Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-00</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
+      </comment>
+      <arrival>
+        <pickID>Pick/20211220202653.622869.133</pickID>
+        <phase>Sg</phase>
+        <weight>1.037711232</weight>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora34</author>
+          <creationTime>2021-12-20T20:26:53.622537Z</creationTime>
+        </creationInfo>
+      </arrival>
+      <arrival>
+        <pickID>Pick/20211220202653.622976.134</pickID>
+        <phase>Sg</phase>
+        <weight>1.007777254</weight>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora34</author>
+          <creationTime>2021-12-20T20:26:53.622537Z</creationTime>
+        </creationInfo>
+      </arrival>
+      <arrival>
+        <pickID>Pick/20211220202653.623054.135</pickID>
+        <phase>Pg</phase>
+        <weight>1.037711232</weight>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora34</author>
+          <creationTime>2021-12-20T20:26:53.622537Z</creationTime>
+        </creationInfo>
+      </arrival>
+      <arrival>
+        <pickID>Pick/20211220202653.623107.136</pickID>
+        <phase>Pg</phase>
+        <weight>1.037711232</weight>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora34</author>
+          <creationTime>2021-12-20T20:26:53.622537Z</creationTime>
+        </creationInfo>
+      </arrival>
+    </origin>
+  </EventParameters>
+</seiscomp>

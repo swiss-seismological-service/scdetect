@@ -100,9 +100,9 @@ class Detector : public detect::Processor {
   // Set the trigger thresholds
   void setTriggerThresholds(double triggerOn, double triggerOff = 1);
   // Set the maximum arrival offset threshold
-  void setArrivalOffsetThreshold(const boost::optional<double> &thres);
+  void setArrivalOffsetThreshold(const boost::optional<Core::TimeSpan> &thres);
   // Returns the arrival offset threshold configured
-  boost::optional<double> arrivalOffsetThreshold() const;
+  boost::optional<Core::TimeSpan> arrivalOffsetThreshold() const;
   // Configures the detector with a minimum number of arrivals required to
   // declare an event as a detection
   void setMinArrivals(const boost::optional<size_t> &n);
@@ -169,6 +169,14 @@ class Detector : public detect::Processor {
   void storeLinkerResult(const linker::Association &linkerResult);
 
  private:
+  using ProcessorId = std::string;
+  struct TemplateResult {
+    linker::Association::TemplateResult result;
+    ProcessorId processorId;
+  };
+  static std::vector<TemplateResult> sortByArrivalTime(
+      const linker::Association &linkerResult);
+
   // Safety margin for linker on hold duration
   static const Core::TimeSpan _linkerSafetyMargin;
 
@@ -190,9 +198,9 @@ class Detector : public detect::Processor {
     std::unique_ptr<TemplateWaveformProcessor> processor;
   };
 
-  using ProcessorStates = std::unordered_map<std::string, ProcessorState>;
+  using ProcessorStates = std::unordered_map<ProcessorId, ProcessorState>;
   ProcessorStates _processors;
-  using ProcessorIdx = std::unordered_multimap<std::string, std::string>;
+  using ProcessorIdx = std::unordered_multimap<std::string, ProcessorId>;
   ProcessorIdx _processorIdx;
 
   // The detector's status

@@ -119,7 +119,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   }
 
   detail::LocalMaxima maxima;
-  for (size_t i{static_cast<size_t>(startIdx)}; i < n; ++i) {
+  for (auto i{static_cast<size_t>(startIdx)}; i < n; ++i) {
     maxima.feed(filteredData[i], i);
   }
 
@@ -138,7 +138,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
     const auto t{static_cast<double>(matchIdx) / n};
 
     result->localMaxima.push_back(
-        MatchResult::Value{m.coefficient, tw.length() * t});
+        MatchResult::Value{Core::TimeSpan{tw.length() * t}, m.coefficient});
   }
 
   result->timeWindow = tw;

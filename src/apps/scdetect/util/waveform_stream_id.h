@@ -24,8 +24,10 @@ void tokenizeWaveformStreamId(const std::string &str,
 // identifiers are appended (e.g. `NET.STA.LOC.HH`)
 //
 // http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html
-std::string getSensorLocationStreamId(const WaveformStreamID &waveformId,
+std::string getSensorLocationStreamId(const WaveformStreamID &waveformStreamId,
                                       bool includeBandAndSourceCode = false);
+
+std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId);
 
 class WaveformStreamID {
  public:

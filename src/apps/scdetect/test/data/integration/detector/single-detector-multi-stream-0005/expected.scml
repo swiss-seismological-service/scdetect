@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <EventParameters>
+    <pick publicID="Pick/20211220144627.377144.93">
+      <time>
+        <value>2019-11-05T05:23:50.083442Z</value>
+      </time>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
+      <phaseHint>Sg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+      <comment>
+        <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
+    </pick>
+    <origin publicID="Origin/20211220144627.376872.92">
+      <time>
+        <value>2019-11-05T05:23:47.640489Z</value>
+      </time>
+      <latitude>
+        <value>46.32480762</value>
+      </latitude>
+      <longitude>
+        <value>7.36023502</value>
+      </longitude>
+      <depth>
+        <value>4.813476562</value>
+      </depth>
+      <epicenterFixed>true</epicenterFixed>
+      <methodID>DETECT</methodID>
+      <quality>
+        <associatedPhaseCount>2</associatedPhaseCount>
+        <usedPhaseCount>2</usedPhaseCount>
+        <associatedStationCount>1</associatedStationCount>
+        <usedStationCount>1</usedStationCount>
+        <standardError>1.110223025e-15</standardError>
+        <maximumDistance>0.03223286148</maximumDistance>
+        <minimumDistance>0.03223286148</minimumDistance>
+        <medianDistance>0.03223286148</medianDistance>
+      </quality>
+      <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2021-12-20T14:46:27.376802Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
+      </comment>
+      <arrival>
+        <pickID>Pick/20211220144627.377144.93</pickID>
+        <phase>Sg</phase>
+        <weight>1.007777254</weight>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora34</author>
+          <creationTime>2021-12-20T14:46:27.376802Z</creationTime>
+        </creationInfo>
+      </arrival>
+    </origin>
+  </EventParameters>
+</seiscomp>

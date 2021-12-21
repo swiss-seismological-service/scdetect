@@ -6,7 +6,6 @@
 #include <unordered_map>
 
 #include "../arrival.h"
-#include "../pot.h"
 #include "../templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -26,18 +25,15 @@ struct Association {
 
   // Associates `TemplateResult` with a processor (i.e. by means of the
   // processor's identifier)
-  using TemplateResults = std::unordered_map<std::string, TemplateResult>;
+  using ProcessorId = std::string;
+  using TemplateResults = std::unordered_map<ProcessorId, TemplateResult>;
   TemplateResults results;
 
-  // The association's POT
-  POT pot;
-  // The association's reference `TemplateWaveformProcessor` identifier
-  std::string refProcId;
   // The association's fit [-1,1]
   double fit;
 
-  // Returns the total number of associated arrivals
-  size_t getArrivalCount() const;
+  // Returns the total number of associated processors
+  size_t processorCount() const;
   // Returns a string including debug information
   std::string debugString() const;
 };

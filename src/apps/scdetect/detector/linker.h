@@ -12,8 +12,8 @@
 
 #include "arrival.h"
 #include "linker/association.h"
+#include "linker/pot.h"
 #include "linker/strategy.h"
-#include "pot.h"
 #include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -30,9 +30,9 @@ class Linker {
   enum class Status { kWaitingForData, kTerminated };
 
   // Sets the arrival offset threshold
-  void setThresArrivalOffset(const boost::optional<double> &thres);
+  void setThresArrivalOffset(const boost::optional<Core::TimeSpan> &thres);
   // Returns the current arrival offset threshold
-  boost::optional<double> thresArrivalOffset() const;
+  boost::optional<Core::TimeSpan> thresArrivalOffset() const;
   // Sets the association threshold
   void setThresAssociation(const boost::optional<double> &thres);
   // Returns the association threshold
@@ -51,9 +51,9 @@ class Linker {
   // Returns the linker's status
   Status status() const;
   // Returns the number of associated channels
-  size_t getAssociatedChannelCount() const;
+  size_t channelCount() const;
   // Returns the number of associated processors
-  size_t getProcessorCount() const;
+  size_t processorCount() const;
 
   // Register the template waveform processor `proc` associated with the
   // template arrival `arrival` for linking.
@@ -72,22 +72,27 @@ class Linker {
 
   // Feeds the `proc`'s result `res` to the linker
   void feed(const TemplateWaveformProcessor *proc,
-            const TemplateWaveformProcessor::MatchResultCPtr &res);
+            const TemplateWaveformProcessor::MatchResultCPtr &matchResult);
 
   using PublishResultCallback =
-      std::function<void(const linker::Association &res)>;
+      std::function<void(const linker::Association &)>;
   // Set the publish callback function
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
   // Processes the result `res` from `proc`
   void process(const TemplateWaveformProcessor *proc,
-               const linker::Association::TemplateResult &res);
+               const linker::Association::TemplateResult &result);
   // Emit a result
-  void emitResult(const linker::Association &res);
+  void emitResult(const linker::Association &result);
 
  private:
   void createPot();
+
+  struct Candidate;
+  linker::POT createCandidatePOT(
+      const Candidate &candidate, const std::string &processorId,
+      const linker::Association::TemplateResult &newResult);
 
   Status _status{Status::kWaitingForData};
 
@@ -104,36 +109,34 @@ class Linker {
   using Processors = std::unordered_map<std::string, Processor>;
   Processors _processors;
 
-  struct Event {
-    // The time after the event is considered as expired
-    Core::Time expired;
+  struct Candidate {
     // The final association
     linker::Association association;
-    // Time of the reference arrival pick
-    Core::Time refPickTime;
+    // The time after the event is considered as expired
+    Core::Time expired;
 
-    Event(const Core::Time &expired);
+    Candidate(const Core::Time &expired);
     // Feeds the template result `res` to the event in order to be merged
     void feed(const std::string &procId,
-              const linker::Association::TemplateResult &res, const POT &pot);
-    // Returns the total number of arrivals
-    size_t getArrivalCount() const;
+              const linker::Association::TemplateResult &res);
+    // Returns the number of associated processors
+    size_t associatedProcessorCount() const;
     // Returns `true` if the event must be considered as expired
     bool isExpired(const Core::Time &now) const;
   };
 
-  using EventQueue = std::list<Event>;
-  EventQueue _queue;
+  using CandidateQueue = std::list<Candidate>;
+  CandidateQueue _queue;
 
-  // The reference POT
-  POT _pot;
+  // The linker's reference POT
+  linker::POT _pot;
   bool _potValid{false};
 
   // The arrival offset threshold; if `boost::none` arrival offset threshold
   // validation is disabled; the default arrival offset corresponds to twice
   // the maximum accuracy `scdetect` is operating when it comes to trimming
   // waveforms (1 micro second (i.e. 1 us)).
-  boost::optional<double> _thresArrivalOffset{2.0e-6};
+  boost::optional<Core::TimeSpan> _thresArrivalOffset{2.0e-6};
   // The association threshold indicating when template results are taken into
   // consideration
   boost::optional<double> _thresAssociation;

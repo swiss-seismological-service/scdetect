@@ -182,6 +182,16 @@ Samples dataset{
      /*customFlags=*/
      {std::make_shared<cli::FlagAmplitudesForce>(false),
       std::make_shared<cli::FlagMagnitudesForce>(false)}},
+    {"templates.json",
+     "inventory.scml",
+     "catalog.scml",
+     "data.mseed",
+     /*starttime=*/"2019-11-05T05:10:00",
+     "expected.scml",
+     /*pathSample=*/"integration/base/single-detector-multi-stream-0001",
+     /*customFlags=*/
+     {std::make_shared<cli::FlagAmplitudesForce>(false),
+      std::make_shared<cli::FlagMagnitudesForce>(false)}},
 
     // base: multi detector - single stream
     {"templates.json",
@@ -245,6 +255,16 @@ Samples dataset{
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/detector/single-detector-multi-stream-0004",
+     /*customFlags=*/
+     {std::make_shared<cli::FlagAmplitudesForce>(false),
+      std::make_shared<cli::FlagMagnitudesForce>(false)}},
+    {"templates.json",
+     "inventory.scml",
+     "catalog.scml",
+     "data.mseed",
+     /*starttime=*/"2019-11-05T05:10:00",
+     "expected.scml",
+     /*pathSample=*/"integration/detector/single-detector-multi-stream-0005",
      /*customFlags=*/
      {std::make_shared<cli::FlagAmplitudesForce>(false),
       std::make_shared<cli::FlagMagnitudesForce>(false)}},

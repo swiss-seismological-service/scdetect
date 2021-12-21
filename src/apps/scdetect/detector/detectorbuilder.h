@@ -9,13 +9,11 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "../builder.h"
 #include "../config/detector.h"
 #include "../waveform.h"
 #include "linker/strategy.h"
-#include "pot.h"
 #include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -65,8 +63,6 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
   };
 
   std::string _originId;
-
-  std::vector<POT::ArrivalPick> _arrivalPicks;
 
   using TemplateProcessorConfigs =
       std::unordered_map<std::string, TemplateProcessorConfig>;

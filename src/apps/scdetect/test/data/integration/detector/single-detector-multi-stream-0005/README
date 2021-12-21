@@ -1,0 +1,17 @@
+Multi-channel detection (single arrival)
+
+- Configuration:
+
+  + Two channels referring one and the same station/sensor location. A unique
+  arrival (i.e. "Sg") is referenced in order to extract the template waveform
+  data.
+  + During detection the streams have zero pick offset.
+
+- Data and streams:
+
+```
+8D.RAW2..HHE | 2019-11-05T04:19:58.070000Z - 2019-11-05T04:26:01.655000Z | 200.0 Hz, 72718 samples
+8D.RAW2..HHN | 2019-11-05T04:19:59.140000Z - 2019-11-05T04:26:01.985000Z | 200.0 Hz, 72570 samples
+8D.RAW2..HHE | 2019-11-05T05:09:58.240000Z - 2019-11-05T05:35:00.425000Z | 200.0 Hz, 300438 samples
+8D.RAW2..HHN | 2019-11-05T05:09:59.400000Z - 2019-11-05T05:35:01.035000Z | 200.0 Hz, 300328 samples
+```

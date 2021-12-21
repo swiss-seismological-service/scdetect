@@ -19,14 +19,18 @@ void tokenizeWaveformStreamId(const std::string &str,
   Core::split(tokens, str, WaveformStreamID::delimiter.c_str(), false);
 }
 
-std::string getSensorLocationStreamId(const WaveformStreamID &waveformId,
+std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId) {
+  return waveformStreamId.chaCode().substr(0, 2);
+}
+
+std::string getSensorLocationStreamId(const WaveformStreamID &waveformStreamId,
                                       bool includeBandAndSourceCode) {
-  return waveformId.netCode() + WaveformStreamID::delimiter +
-         waveformId.staCode() + WaveformStreamID::delimiter +
-         waveformId.locCode() +
-         (includeBandAndSourceCode
-              ? WaveformStreamID::delimiter + waveformId.chaCode()
-              : "");
+  return waveformStreamId.netCode() + WaveformStreamID::delimiter +
+         waveformStreamId.staCode() + WaveformStreamID::delimiter +
+         waveformStreamId.locCode() +
+         (includeBandAndSourceCode ? WaveformStreamID::delimiter +
+                                         getBandAndSourceCode(waveformStreamId)
+                                   : "");
 }
 
 const std::string WaveformStreamID::delimiter{"."};
