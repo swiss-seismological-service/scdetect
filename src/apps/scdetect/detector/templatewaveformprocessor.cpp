@@ -138,7 +138,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
     const auto t{static_cast<double>(matchIdx) / n};
 
     result->localMaxima.push_back(
-        MatchResult::Value{m.coefficient, tw.length() * t});
+        MatchResult::Value{Core::TimeSpan{tw.length() * t}, m.coefficient});
   }
 
   result->timeWindow = tw;

@@ -52,8 +52,8 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Result {
     struct Value {
+      Core::TimeSpan lag;
       double coefficient;
-      double lag;  // seconds
     };
 
     using LocalMaxima = std::vector<Value>;

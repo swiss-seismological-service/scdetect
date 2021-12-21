@@ -143,7 +143,7 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
               newArrival.pick.waveformStreamId.c_str(),
               res->timeWindow.startTime().iso().c_str(),
               res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
-              valueIt->coefficient, valueIt->lag);
+              valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
           continue;
         }
@@ -155,7 +155,7 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
             newArrival.pick.waveformStreamId.c_str(),
             res->timeWindow.startTime().iso().c_str(),
             res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
-            valueIt->coefficient, valueIt->lag);
+            valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
         process(proc, templateResult);
       }
