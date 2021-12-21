@@ -30,9 +30,9 @@ class Linker {
   enum class Status { kWaitingForData, kTerminated };
 
   // Sets the arrival offset threshold
-  void setThresArrivalOffset(const boost::optional<double> &thres);
+  void setThresArrivalOffset(const boost::optional<Core::TimeSpan> &thres);
   // Returns the current arrival offset threshold
-  boost::optional<double> thresArrivalOffset() const;
+  boost::optional<Core::TimeSpan> thresArrivalOffset() const;
   // Sets the association threshold
   void setThresAssociation(const boost::optional<double> &thres);
   // Returns the association threshold
@@ -136,7 +136,7 @@ class Linker {
   // validation is disabled; the default arrival offset corresponds to twice
   // the maximum accuracy `scdetect` is operating when it comes to trimming
   // waveforms (1 micro second (i.e. 1 us)).
-  boost::optional<double> _thresArrivalOffset{2.0e-6};
+  boost::optional<Core::TimeSpan> _thresArrivalOffset{2.0e-6};
   // The association threshold indicating when template results are taken into
   // consideration
   boost::optional<double> _thresAssociation;

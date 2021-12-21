@@ -64,7 +64,7 @@ class POT {
   // `other`
   // - returns `true` if the validation was successful or `false` if not,
   // respectively.
-  bool validateEnabledOffsets(const POT& other, double thres = 0);
+  bool validateEnabledOffsets(const POT& other, Core::TimeSpan thres);
 
  private:
   static const double tableDefault;

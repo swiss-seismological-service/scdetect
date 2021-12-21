@@ -100,9 +100,9 @@ class Detector : public detect::Processor {
   // Set the trigger thresholds
   void setTriggerThresholds(double triggerOn, double triggerOff = 1);
   // Set the maximum arrival offset threshold
-  void setArrivalOffsetThreshold(const boost::optional<double> &thres);
+  void setArrivalOffsetThreshold(const boost::optional<Core::TimeSpan> &thres);
   // Returns the arrival offset threshold configured
-  boost::optional<double> arrivalOffsetThreshold() const;
+  boost::optional<Core::TimeSpan> arrivalOffsetThreshold() const;
   // Configures the detector with a minimum number of arrivals required to
   // declare an event as a detection
   void setMinArrivals(const boost::optional<size_t> &n);

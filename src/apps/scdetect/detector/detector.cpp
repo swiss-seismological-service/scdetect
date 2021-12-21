@@ -63,11 +63,12 @@ void Detector::setTriggerThresholds(double triggerOn, double triggerOff) {
   }
 }
 
-void Detector::setArrivalOffsetThreshold(const boost::optional<double> &thres) {
+void Detector::setArrivalOffsetThreshold(
+    const boost::optional<Core::TimeSpan> &thres) {
   _linker.setThresArrivalOffset(thres);
 }
 
-boost::optional<double> Detector::arrivalOffsetThreshold() const {
+boost::optional<Core::TimeSpan> Detector::arrivalOffsetThreshold() const {
   return _linker.thresArrivalOffset();
 }
 

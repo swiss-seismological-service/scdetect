@@ -16,11 +16,12 @@ Linker::Linker(const Core::TimeSpan &onHold, double arrivalOffsetThres)
 
 Linker::~Linker() {}
 
-void Linker::setThresArrivalOffset(const boost::optional<double> &thres) {
+void Linker::setThresArrivalOffset(
+    const boost::optional<Core::TimeSpan> &thres) {
   _thresArrivalOffset = thres;
 }
 
-boost::optional<double> Linker::thresArrivalOffset() const {
+boost::optional<Core::TimeSpan> Linker::thresArrivalOffset() const {
   return _thresArrivalOffset;
 }
 

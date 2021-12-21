@@ -281,7 +281,8 @@ void DetectorBuilder::finalize() {
   if (cfg.arrivalOffsetThreshold < 0) {
     _product->_detector.setArrivalOffsetThreshold(boost::none);
   } else {
-    _product->_detector.setArrivalOffsetThreshold(cfg.arrivalOffsetThreshold);
+    _product->_detector.setArrivalOffsetThreshold(
+        Core::TimeSpan{cfg.arrivalOffsetThreshold});
   }
 
   if (cfg.minArrivals < 0) {

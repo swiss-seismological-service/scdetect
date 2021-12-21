@@ -88,7 +88,7 @@ void POT::disable(const std::string &processorId) {
   setEnable(processorId, false);
 }
 
-bool POT::validateEnabledOffsets(const POT &other, double thres) {
+bool POT::validateEnabledOffsets(const POT &other, Core::TimeSpan thres) {
   if (size() != other.size()) {
     return false;
   }
@@ -113,7 +113,7 @@ bool POT::validateEnabledOffsets(const POT &other, double thres) {
       if (mask[i][j] && validEntry(_offsets[i][j]) &&
           validEntry(other._offsets[i][j]) &&
           util::greaterThan(std::abs(_offsets[i][j] - other._offsets[i][j]),
-                            thres, tolerance)) {
+                            static_cast<double>(thres), tolerance)) {
         return false;
       }
     }
