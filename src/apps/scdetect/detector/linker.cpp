@@ -120,11 +120,12 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
     if (templateStartTime) {
       // XXX(damb): recompute the pickOffset; the template proc might have
       // changed the underlying template waveform (due to resampling)
-      const auto pickOffset{linkerProc.arrival.pick.time - *templateStartTime};
+      const auto currentPickOffset{linkerProc.arrival.pick.time -
+                                   *templateStartTime};
       for (auto valueIt{res->localMaxima.begin()};
            valueIt != res->localMaxima.end(); ++valueIt) {
         const auto time{res->timeWindow.startTime() +
-                        Core::TimeSpan{valueIt->lag} + pickOffset};
+                        Core::TimeSpan{valueIt->lag} + currentPickOffset};
         newArrival.pick.time = time;
 
         linker::Association::TemplateResult templateResult{newArrival, valueIt,
