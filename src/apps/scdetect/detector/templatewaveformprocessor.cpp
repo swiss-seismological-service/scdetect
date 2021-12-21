@@ -119,7 +119,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   }
 
   detail::LocalMaxima maxima;
-  for (size_t i{static_cast<size_t>(startIdx)}; i < n; ++i) {
+  for (auto i{static_cast<size_t>(startIdx)}; i < n; ++i) {
     maxima.feed(filteredData[i], i);
   }
 
