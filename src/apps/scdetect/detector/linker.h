@@ -110,10 +110,10 @@ class Linker {
   Processors _processors;
 
   struct Candidate {
-    // The time after the event is considered as expired
-    Core::Time expired;
     // The final association
     linker::Association association;
+    // The time after the event is considered as expired
+    Core::Time expired;
 
     Candidate(const Core::Time &expired);
     // Feeds the template result `res` to the event in order to be merged
