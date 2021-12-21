@@ -72,19 +72,19 @@ class Linker {
 
   // Feeds the `proc`'s result `res` to the linker
   void feed(const TemplateWaveformProcessor *proc,
-            const TemplateWaveformProcessor::MatchResultCPtr &res);
+            const TemplateWaveformProcessor::MatchResultCPtr &matchResult);
 
   using PublishResultCallback =
-      std::function<void(const linker::Association &res)>;
+      std::function<void(const linker::Association &)>;
   // Set the publish callback function
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
   // Processes the result `res` from `proc`
   void process(const TemplateWaveformProcessor *proc,
-               const linker::Association::TemplateResult &res);
+               const linker::Association::TemplateResult &result);
   // Emit a result
-  void emitResult(const linker::Association &res);
+  void emitResult(const linker::Association &result);
 
  private:
   void createPot();

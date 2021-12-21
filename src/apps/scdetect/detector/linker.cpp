@@ -100,9 +100,10 @@ void Linker::terminate() {
   _status = Status::kTerminated;
 }
 
-void Linker::feed(const TemplateWaveformProcessor *proc,
-                  const TemplateWaveformProcessor::MatchResultCPtr &res) {
-  if (!proc || !res) {
+void Linker::feed(
+    const TemplateWaveformProcessor *proc,
+    const TemplateWaveformProcessor::MatchResultCPtr &matchResult) {
+  if (!proc || !matchResult) {
     return;
   }
 
@@ -122,14 +123,14 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
       // changed the underlying template waveform (due to resampling)
       const auto currentPickOffset{linkerProc.arrival.pick.time -
                                    *templateStartTime};
-      for (auto valueIt{res->localMaxima.begin()};
-           valueIt != res->localMaxima.end(); ++valueIt) {
-        const auto time{res->timeWindow.startTime() +
-                        Core::TimeSpan{valueIt->lag} + currentPickOffset};
+      for (auto valueIt{matchResult->localMaxima.begin()};
+           valueIt != matchResult->localMaxima.end(); ++valueIt) {
+        const auto time{matchResult->timeWindow.startTime() + valueIt->lag +
+                        currentPickOffset};
         newArrival.pick.time = time;
 
         linker::Association::TemplateResult templateResult{newArrival, valueIt,
-                                                           res};
+                                                           matchResult};
         // filter/drop based on merging strategy
         if (_mergingStrategy && _thresAssociation &&
             !_mergingStrategy->operator()(
@@ -141,9 +142,10 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
               "[%s] [%s - %s] Dropping result due to merging "
               "strategy applied: time=%s, fit=%9f, lag=%10f",
               newArrival.pick.waveformStreamId.c_str(),
-              res->timeWindow.startTime().iso().c_str(),
-              res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
-              valueIt->coefficient, static_cast<double>(valueIt->lag));
+              matchResult->timeWindow.startTime().iso().c_str(),
+              matchResult->timeWindow.endTime().iso().c_str(),
+              time.iso().c_str(), valueIt->coefficient,
+              static_cast<double>(valueIt->lag));
 #endif
           continue;
         }
@@ -153,8 +155,8 @@ void Linker::feed(const TemplateWaveformProcessor *proc,
             proc,
             "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
             newArrival.pick.waveformStreamId.c_str(),
-            res->timeWindow.startTime().iso().c_str(),
-            res->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+            matchResult->timeWindow.startTime().iso().c_str(),
+            matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
             valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
         process(proc, templateResult);
@@ -168,7 +170,7 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 }
 
 void Linker::process(const TemplateWaveformProcessor *proc,
-                     const linker::Association::TemplateResult &res) {
+                     const linker::Association::TemplateResult &result) {
   if (!_processors.empty()) {
     // update POT
     if (!_potValid) {
@@ -177,7 +179,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     _pot.enable();
 
     const auto &procId{proc->id()};
-    auto resultIt{res.resultIt};
+    auto resultIt{result.resultIt};
     // merge result into existing candidates
     for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
          ++candidateIt) {
@@ -189,12 +191,12 @@ void Linker::process(const TemplateWaveformProcessor *proc,
         if (newPick ||
             resultIt->coefficient > it->second.resultIt->coefficient) {
           if (_thresArrivalOffset) {
-            auto cmp{createCandidatePOT(*candidateIt, procId, res)};
+            auto cmp{createCandidatePOT(*candidateIt, procId, result)};
             if (!_pot.validateEnabledOffsets(cmp, *_thresArrivalOffset)) {
               continue;
             }
           }
-          candidateIt->feed(procId, res);
+          candidateIt->feed(procId, result);
         }
       }
     }
@@ -202,7 +204,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     const auto now{Core::Time::GMT()};
     // create new candidate association
     Candidate newCandidate{now + _onHold};
-    newCandidate.feed(procId, res);
+    newCandidate.feed(procId, result);
     _queue.emplace_back(newCandidate);
 
     std::vector<CandidateQueue::iterator> ready;
@@ -230,9 +232,9 @@ void Linker::process(const TemplateWaveformProcessor *proc,
   }
 }
 
-void Linker::emitResult(const linker::Association &res) {
+void Linker::emitResult(const linker::Association &result) {
   if (_resultCallback) {
-    _resultCallback.value()(res);
+    _resultCallback.value()(result);
   }
 }
 
