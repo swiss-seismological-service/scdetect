@@ -190,7 +190,7 @@ configuration parameters:
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
   to `NOW`. If data arrive later than the value specified it is not used,
   anymore. Note that data latency is not validated if `scdetect` is run in
-  *playback mode*.
+  [*playback mode*](#playback).
 
 - `"methodId"`: The origin method identifier which will be added to declared
   origins.
@@ -816,6 +816,24 @@ approach:
 
 2. **Processing**: Start processing the waveform data from either the
    *real-time* or the *archive* RecordStream configured.
+
+#### Playback
+
+`scdetect` may be used to process archived waveform data in the so-called
+*playback mode*. A good starting point is
+the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/waveformplayback.html)
+.
+
+Here, some additional important notes (which may repeat parts of
+the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/waveformplayback.html)):
+
+- `scdetect`'s playback mode is enabled with the `--playback` CLI flag.
+- The maximum record latency (configurable by means of the `"maximumLatency"`
+  detector configuration parameter) is not validated if `scdetect` is run in
+  playback mode.
+- When reading data from a local archive, make sure the records are **sorted by
+  end time**. Sorting miniSEED records is easily done
+  using [scmssort](https://www.seiscomp.de/doc/apps/scmssort.html).
 
 #### Caching waveform data
 
