@@ -185,14 +185,16 @@ DetectorBuilder &DetectorBuilder::setStream(
       streamConfig.templateConfig.filter.value_or(pickFilterId)};
   util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
 
-  std::unique_ptr<WaveformProcessor::Filter> rtTemplateFilter{nullptr};
+  std::unique_ptr<processing::WaveformProcessor::Filter> rtTemplateFilter{
+      nullptr};
   std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
   util::replaceEscapedXMLFilterIdChars(rtFilterId);
   // create template related filter (used during real-time stream
   // processing)
   if (!rtFilterId.empty()) {
     std::string err;
-    rtTemplateFilter.reset(WaveformProcessor::Filter::Create(rtFilterId, &err));
+    rtTemplateFilter.reset(
+        processing::WaveformProcessor::Filter::Create(rtFilterId, &err));
 
     if (!rtTemplateFilter) {
       msg.setText("compiling filter (" + rtFilterId + ") failed: " + err);

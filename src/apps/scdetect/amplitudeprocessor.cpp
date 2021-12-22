@@ -18,7 +18,6 @@
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
 #include "waveform.h"
-#include "waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -241,8 +240,8 @@ boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
   return boost::none;
 }
 
-WaveformProcessor::StreamState &ReducingAmplitudeProcessor::streamState(
-    const Record *record) {
+processing::WaveformProcessor::StreamState &
+ReducingAmplitudeProcessor::streamState(const Record *record) {
   return _streams.at(record->streamID()).streamState;
 }
 
@@ -432,7 +431,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   return WaveformProcessor::store(record);
 }
 
-bool ReducingAmplitudeProcessor::fill(detect::StreamState &streamState,
+bool ReducingAmplitudeProcessor::fill(processing::StreamState &streamState,
                                       const Record *record,
                                       DoubleArrayPtr &data) {
   auto retval{WaveformProcessor::fill(streamState, record, data)};

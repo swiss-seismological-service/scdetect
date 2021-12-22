@@ -12,8 +12,7 @@
 #include <unordered_map>
 
 #include "../config/detector.h"
-#include "../waveformoperator.h"
-#include "../waveformprocessor.h"
+#include "../processing/waveform_processor.h"
 #include "detector.h"
 #include "detectorbuilder.h"
 
@@ -22,7 +21,7 @@ namespace detect {
 namespace detector {
 
 // Detector waveform processor implementation
-class DetectorWaveformProcessor : public WaveformProcessor {
+class DetectorWaveformProcessor : public processing::WaveformProcessor {
   DetectorWaveformProcessor(const DataModel::OriginCPtr &origin);
 
  public:
@@ -68,7 +67,7 @@ class DetectorWaveformProcessor : public WaveformProcessor {
 
   void reset(StreamState &streamState) override;
 
-  bool fill(detect::StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   // Callback function storing `res`
@@ -79,7 +78,8 @@ class DetectorWaveformProcessor : public WaveformProcessor {
  private:
   using WaveformStreamID = std::string;
   using StreamStates =
-      std::unordered_map<WaveformStreamID, WaveformProcessor::StreamState>;
+      std::unordered_map<WaveformStreamID,
+                         processing::WaveformProcessor::StreamState>;
   StreamStates _streamStates;
 
   config::DetectorConfig _config;

@@ -1,7 +1,8 @@
-#include "waveformoperator.h"
+#include "waveform_operator.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 WaveformOperator::WaveformOperator() {}
 
@@ -19,5 +20,6 @@ bool WaveformOperator::store(const Record *record) {
   return false;
 }
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp

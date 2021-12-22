@@ -21,11 +21,11 @@
 #include "builder.h"
 #include "eventstore.h"
 #include "log.h"
+#include "processing/waveform_processor.h"
 #include "settings.h"
 #include "util/horizontal_components.h"
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
-#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -259,8 +259,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       rmsAmplitudeProcessor.setEnvironment(origin, sensorLocation, {pick});
 
       rmsAmplitudeProcessor.setResultCallback(
-          [this](const WaveformProcessor* proc, const Record* rec,
-                 const WaveformProcessor::ResultCPtr& res) {
+          [this](const processing::WaveformProcessor* proc, const Record* rec,
+                 const processing::WaveformProcessor::ResultCPtr& res) {
             storeAmplitude(dynamic_cast<const AmplitudeProcessor*>(proc), rec,
                            boost::dynamic_pointer_cast<
                                const AmplitudeProcessor::Amplitude>(res));
@@ -280,7 +280,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         if (!amplitudeProcessingConfig.mlx.filter.empty()) {
           try {
             rmsAmplitudeProcessor.setFilter(
-                createFilter(amplitudeProcessingConfig.mlx.filter).release(),
+                processing::createFilter(amplitudeProcessingConfig.mlx.filter)
+                    .release(),
                 amplitudeProcessingConfig.mlx.initTime);
             SCDETECT_LOG_DEBUG_TAGGED(
                 rmsAmplitudeProcessor.id(),
@@ -288,7 +289,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
                 "init_time=%f",
                 amplitudeProcessingConfig.mlx.filter.c_str(),
                 amplitudeProcessingConfig.mlx.initTime);
-          } catch (WaveformProcessor::BaseException& e) {
+          } catch (processing::WaveformProcessor::BaseException& e) {
             msg.setText(e.what());
             throw builder::BaseException{logging::to_string(msg)};
           }
@@ -337,7 +338,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       } catch (std::out_of_range&) {
         msg.setText("failed to load bindings configuration");
         throw builder::NoBindings{logging::to_string(msg)};
-      } catch (WaveformProcessor::BaseException& e) {
+      } catch (processing::WaveformProcessor::BaseException& e) {
         msg.setText("failed to load data");
         throw builder::BaseException{logging::to_string(msg)};
       } catch (Exception& e) {
@@ -347,7 +348,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       }
 
       if (rmsAmplitudeProcessor.status() !=
-          WaveformProcessor::Status::kFinished) {
+          processing::WaveformProcessor::Status::kFinished) {
         msg.setText(
             "failed to compute rms amplitude: status=" +
             std::to_string(util::asInteger(rmsAmplitudeProcessor.status())));

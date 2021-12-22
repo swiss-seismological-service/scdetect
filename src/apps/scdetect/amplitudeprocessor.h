@@ -19,8 +19,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "timewindowprocessor.h"
-#include "waveformoperator.h"
+#include "processing/timewindow_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -30,7 +29,7 @@ namespace detect {
 // - alternative implementation to `Processing::AmplitudeProcessor`
 // - XXX(damb): currently, the concept of a *trigger* is not provided. Instead,
 // amplitudes are computed based on the `TimeWindowProcessor`'s time window.
-class AmplitudeProcessor : public TimeWindowProcessor {
+class AmplitudeProcessor : public processing::TimeWindowProcessor {
  public:
   struct Config {
     // Defines the beginning of the time window used for amplitude analysis
@@ -240,7 +239,7 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
   bool store(const Record *record) override;
 
-  bool fill(detect::StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   bool processIfEnoughDataReceived(StreamState &streamState,

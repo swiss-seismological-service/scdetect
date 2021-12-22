@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
 
 #include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
@@ -12,12 +12,13 @@
 #include <functional>
 #include <memory>
 
-#include "mixin/gapinterpolate.h"
-#include "processing/processor.h"
+#include "mixin/gap_interpolate.h"
+#include "processor.h"
 #include "stream.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 class WaveformOperator;
 
@@ -32,7 +33,7 @@ class WaveformOperator;
 // just a single stream nor does it introduce the *concept of a station* (e.g.
 // by means of limiting the usage of maximum three channels).
 //
-class WaveformProcessor : public processing::Processor,
+class WaveformProcessor : public Processor,
                           public InterpolateGaps<WaveformProcessor> {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
@@ -161,7 +162,7 @@ class WaveformProcessor : public processing::Processor,
 
  protected:
   // Describes the current state of a stream
-  struct StreamState : public detect::StreamState {
+  struct StreamState : public processing::StreamState {
     ~StreamState() override;
 
     // Number of samples required to finish initialization
@@ -188,7 +189,7 @@ class WaveformProcessor : public processing::Processor,
   virtual void reset(StreamState &streamState);
 
   // Fill data and perform filtering (if required)
-  bool fill(detect::StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   // Check whether data exceeds saturation threshold. The default
@@ -233,7 +234,8 @@ class WaveformProcessor : public processing::Processor,
 std::unique_ptr<WaveformProcessor::Filter> createFilter(
     const std::string &filter);
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_

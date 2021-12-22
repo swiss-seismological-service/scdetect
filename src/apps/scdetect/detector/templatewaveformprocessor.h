@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "../filter/crosscorrelation.h"
-#include "../waveformprocessor.h"
+#include "../processing/waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -39,7 +39,7 @@ struct LocalMaxima {
 // Template waveform processor implementation
 // - implements resampling and filtering
 // - applies the cross-correlation algorithm
-class TemplateWaveformProcessor : public WaveformProcessor {
+class TemplateWaveformProcessor : public processing::WaveformProcessor {
  public:
   // Creates a `TemplateWaveformProcessor`. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
@@ -86,7 +86,7 @@ class TemplateWaveformProcessor : public WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
-  bool fill(detect::StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   void setupStream(StreamState &streamState, const Record *record) override;

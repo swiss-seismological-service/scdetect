@@ -13,7 +13,6 @@
 #include "../settings.h"
 #include "../util/memory.h"
 #include "../waveform.h"
-#include "../waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -95,8 +94,8 @@ Core::TimeSpan TemplateWaveformProcessor::templateDuration() const {
   return Core::TimeSpan{_crossCorrelation.templateLength()};
 }
 
-WaveformProcessor::StreamState &TemplateWaveformProcessor::streamState(
-    const Record *record) {
+processing::WaveformProcessor::StreamState &
+TemplateWaveformProcessor::streamState(const Record *record) {
   return _streamState;
 }
 
@@ -146,7 +145,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   emitResult(record, result.get());
 }
 
-bool TemplateWaveformProcessor::fill(detect::StreamState &streamState,
+bool TemplateWaveformProcessor::fill(processing::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
   if (WaveformProcessor::fill(streamState, record, data)) {

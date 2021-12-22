@@ -1,12 +1,12 @@
-#include "waveformprocessor.h"
+#include "waveform_processor.h"
 
 #include <exception>
 
-#include "log.h"
-#include "waveformoperator.h"
+#include "waveform_operator.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 WaveformProcessor::Result::~Result() {}
 
@@ -148,7 +148,7 @@ void WaveformProcessor::reset(StreamState &streamState) {
   streamState.lastRecord.reset();
 }
 
-bool WaveformProcessor::fill(detect::StreamState &streamState,
+bool WaveformProcessor::fill(processing::StreamState &streamState,
                              const Record *record, DoubleArrayPtr &data) {
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
 
@@ -253,5 +253,6 @@ std::unique_ptr<WaveformProcessor::Filter> createFilter(
   return ret;
 }
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp

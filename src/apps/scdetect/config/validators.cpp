@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
+#include "../processing/waveform_processor.h"
 #include "../settings.h"
-#include "../waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -30,7 +30,7 @@ bool validateSamplingFrequency(double samplingFrequency) {
 }
 
 bool validateFilter(const std::string &filterId, std::string &err) {
-  auto filter{WaveformProcessor::Filter::Create(filterId, &err)};
+  auto filter{processing::WaveformProcessor::Filter::Create(filterId, &err)};
   if (!filter) {
     return false;
   }

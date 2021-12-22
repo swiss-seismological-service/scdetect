@@ -18,8 +18,7 @@
 
 #include "../exception.h"
 #include "../processing/processor.h"
-#include "../waveformoperator.h"
-#include "../waveformprocessor.h"
+#include "../processing/waveform_operator.h"
 #include "arrival.h"
 #include "linker.h"
 #include "linker/association.h"

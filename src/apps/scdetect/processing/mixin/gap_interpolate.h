@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPLATE_H_
-#define SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPLATE_H_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPLATE_H_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPLATE_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
@@ -9,6 +9,7 @@
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 // Mixin which provides facilities for gap interpolation
 template <typename TGapInterpolateable>
@@ -58,9 +59,10 @@ class InterpolateGaps {
   Core::TimeSpan _gapTolerance;
 };
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#include "gapinterpolate.ipp"
+#include "gap_interpolate.ipp"
 
-#endif  // SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPLATE_H_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPLATE_H_

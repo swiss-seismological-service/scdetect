@@ -12,15 +12,16 @@ namespace Seiscomp {
 namespace detect {
 namespace waveform_operator {
 
-RingBufferOperator::RingBufferOperator(WaveformProcessor *waveformProcessor)
+RingBufferOperator::RingBufferOperator(
+    processing::WaveformProcessor *waveformProcessor)
     : _processor{waveformProcessor} {}
 
-RingBufferOperator::RingBufferOperator(WaveformProcessor *waveformProcessor,
-                                       Core::TimeSpan bufferSize)
+RingBufferOperator::RingBufferOperator(
+    processing::WaveformProcessor *waveformProcessor, Core::TimeSpan bufferSize)
     : _bufferSize{bufferSize}, _processor{waveformProcessor} {}
 
 RingBufferOperator::RingBufferOperator(
-    WaveformProcessor *waveformProcessor, Core::TimeSpan bufferSize,
+    processing::WaveformProcessor *waveformProcessor, Core::TimeSpan bufferSize,
     const std::vector<WaveformStreamID> &wfStreamIds)
     : _bufferSize{bufferSize}, _processor{waveformProcessor} {
   for (const auto &wfStreamId : wfStreamIds) {
@@ -41,22 +42,23 @@ void RingBufferOperator::setGapThreshold(const Core::TimeSpan &duration) {
   }
 }
 
-WaveformProcessor::Status RingBufferOperator::feed(const Record *record) {
+processing::WaveformProcessor::Status RingBufferOperator::feed(
+    const Record *record) {
   if (record->sampleCount() == 0)
-    return WaveformProcessor::Status::kWaitingForData;
+    return processing::WaveformProcessor::Status::kWaitingForData;
 
   auto it{_streamConfigs.find(record->streamID())};
   if (it == _streamConfigs.end()) {
-    return WaveformProcessor::Status::kWaitingForData;
+    return processing::WaveformProcessor::Status::kWaitingForData;
   }
 
   if (store(it->second.streamState, record)) {
     WaveformOperator::store(record);
 
-    return WaveformProcessor::Status::kInProgress;
+    return processing::WaveformProcessor::Status::kInProgress;
   }
 
-  return WaveformProcessor::Status::kError;
+  return processing::WaveformProcessor::Status::kError;
 }
 
 void RingBufferOperator::reset() { _streamConfigs.clear(); }
@@ -76,8 +78,8 @@ void RingBufferOperator::add(WaveformStreamID wfStreamId,
   }
 
   _streamConfigs.emplace(
-      wfStreamId,
-      StreamConfig{StreamState{}, std::make_shared<RingBuffer>(bufferSize)});
+      wfStreamId, StreamConfig{processing::StreamState{},
+                               std::make_shared<RingBuffer>(bufferSize)});
 }
 
 const std::shared_ptr<RingBuffer> &RingBufferOperator::get(
@@ -85,7 +87,8 @@ const std::shared_ptr<RingBuffer> &RingBufferOperator::get(
   return _streamConfigs.at(wfStreamId).streamBuffer;
 }
 
-bool RingBufferOperator::store(StreamState &streamState, const Record *record) {
+bool RingBufferOperator::store(processing::StreamState &streamState,
+                               const Record *record) {
   if (!record->data()) return false;
 
   DoubleArrayPtr data{
@@ -129,8 +132,8 @@ bool RingBufferOperator::store(StreamState &streamState, const Record *record) {
   return fill(streamState, record, data);
 }
 
-bool RingBufferOperator::fill(StreamState &streamState, const Record *record,
-                              DoubleArrayPtr &data) {
+bool RingBufferOperator::fill(processing::StreamState &streamState,
+                              const Record *record, DoubleArrayPtr &data) {
   auto &buffer{_streamConfigs.at(record->streamID()).streamBuffer};
   // buffer record
   auto retval{buffer->feed(record)};
@@ -144,7 +147,7 @@ bool RingBufferOperator::fill(StreamState &streamState, const Record *record,
   return retval;
 }
 
-void RingBufferOperator::setupStream(StreamState &streamState,
+void RingBufferOperator::setupStream(processing::StreamState &streamState,
                                      const Record *record) {
   const auto &f{record->samplingFrequency()};
   streamState.samplingFrequency = f;
@@ -157,7 +160,7 @@ void RingBufferOperator::setupStream(StreamState &streamState,
   streamState.dataTimeWindow = record->timeWindow();
 }
 
-void RingBufferOperator::reset(StreamState &streamState) {
+void RingBufferOperator::reset(processing::StreamState &streamState) {
   streamState.lastRecord.reset();
 }
 

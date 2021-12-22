@@ -52,16 +52,16 @@ set(SOURCES_integration
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processing/processor.cpp
+  ../processing/stream.cpp
+  ../processing/timewindow_processor.cpp
+  ../processing/waveform_operator.cpp
+  ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
-  ../stream.cpp
   ../templatefamily.cpp
-  ../timewindowprocessor.cpp
   ../util/horizontal_components.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../waveform.cpp
-  ../waveformoperator.cpp
-  ../waveformprocessor.cpp
   fixture.cpp
   integration_utils.cpp
 )
@@ -70,14 +70,14 @@ set(SOURCES_reducingamplitudeprocessor
   ../amplitudeprocessor.cpp
   ../exception.cpp
   ../processing/processor.cpp
-  ../stream.cpp
-  ../timewindowprocessor.cpp
+  ../processing/stream.cpp
+  ../processing/timewindow_processor.cpp
+  ../processing/waveform_operator.cpp
+  ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../waveform.cpp
-  ../waveformoperator.cpp
-  ../waveformprocessor.cpp
   fixture.cpp
 )
 

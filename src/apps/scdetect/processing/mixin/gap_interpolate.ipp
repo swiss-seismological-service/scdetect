@@ -1,13 +1,14 @@
-#ifndef SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPOLATE_IPP_
-#define SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPOLATE_IPP_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPOLATE_IPP_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPOLATE_IPP_
 
 #include <seiscomp/core/genericrecord.h>
 
-#include "../log.h"
-#include "../util/memory.h"
+#include "../../log.h"
+#include "../../util/memory.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 template <typename TGapInterpolateable>
 InterpolateGaps<TGapInterpolateable>::~InterpolateGaps() {}
@@ -131,7 +132,8 @@ void InterpolateGaps<TGapInterpolateable>::setMinimumGapThreshold(
   }
 }
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MIXIN_GAPINTERPOLATE_IPP_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPOLATE_IPP_

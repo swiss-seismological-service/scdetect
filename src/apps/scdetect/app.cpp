@@ -45,6 +45,7 @@
 #include "magnitude/regression.h"
 #include "magnitudeprocessor.h"
 #include "processing/processor.h"
+#include "processing/waveform_processor.h"
 #include "resamplerstore.h"
 #include "settings.h"
 #include "util/horizontal_components.h"
@@ -52,7 +53,6 @@
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
 #include "version.h"
-#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -1170,8 +1170,8 @@ bool Application::initDetectors(std::ifstream &ifs,
         std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
             detectorBuilder.build()};
         detectorPtr->setResultCallback(
-            [this](const WaveformProcessor *proc, const Record *rec,
-                   const WaveformProcessor::ResultCPtr res) {
+            [this](const processing::WaveformProcessor *proc, const Record *rec,
+                   const processing::WaveformProcessor::ResultCPtr res) {
               processDetection(
                   dynamic_cast<const detector::DetectorWaveformProcessor *>(
                       proc),
@@ -1306,9 +1306,9 @@ bool Application::initAmplitudeProcessors(
 
       rmsAmplitudeProcessor->setResultCallback(
           [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
-           magnitudeProcessorId](const WaveformProcessor *proc,
-                                 const Record *rec,
-                                 const WaveformProcessor::ResultCPtr res) {
+           magnitudeProcessorId](
+              const processing::WaveformProcessor *proc, const Record *rec,
+              const processing::WaveformProcessor::ResultCPtr res) {
             DataModel::AmplitudePtr amplitude;
             // create amplitude
             try {
@@ -1370,14 +1370,14 @@ bool Application::initAmplitudeProcessors(
         util::replaceEscapedXMLFilterIdChars(filter);
         try {
           rmsAmplitudeProcessor->setFilter(
-              createFilter(filter).release(),
+              processing::createFilter(filter).release(),
               amplitudeProcessingConfig.mlx.initTime);
           SCDETECT_LOG_DEBUG_TAGGED(
               rmsAmplitudeProcessor->id(),
               "Configured amplitude processor filter: filter=\"%s\", "
               "init_time=%f",
               filter.c_str(), amplitudeProcessingConfig.mlx.initTime);
-        } catch (WaveformProcessor::BaseException &e) {
+        } catch (processing::WaveformProcessor::BaseException &e) {
           throw BaseException{sensorLocationStreamId + ": " + e.what()};
         }
       } else {

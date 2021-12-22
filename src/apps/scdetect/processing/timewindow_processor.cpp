@@ -1,7 +1,8 @@
-#include "timewindowprocessor.h"
+#include "timewindow_processor.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 void TimeWindowProcessor::setTimeWindow(const Core::TimeWindow &tw) {
   if (!tw) {
@@ -46,5 +47,6 @@ bool TimeWindowProcessor::store(const Record *record) {
   return WaveformProcessor::store(record);
 }
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp

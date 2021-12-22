@@ -3,21 +3,21 @@
 
 #include <memory>
 
+#include "../processing/waveform_operator.h"
+#include "../processing/waveform_processor.h"
 #include "../resamplerstore.h"
-#include "../waveformoperator.h"
-#include "../waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace waveform_operator {
 
-class ResamplingOperator : public WaveformOperator {
+class ResamplingOperator : public processing::WaveformOperator {
  public:
   using RecordResampler = RecordResamplerStore::RecordResampler;
 
   ResamplingOperator(std::unique_ptr<RecordResampler> recordResampler);
 
-  WaveformProcessor::Status feed(const Record *record) override;
+  processing::WaveformProcessor::Status feed(const Record *record) override;
 
   void reset() override;
 

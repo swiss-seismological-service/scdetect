@@ -51,8 +51,8 @@ const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
   return _publishConfig;
 }
 
-WaveformProcessor::StreamState &DetectorWaveformProcessor::streamState(
-    const Record *record) {
+processing::WaveformProcessor::StreamState &
+DetectorWaveformProcessor::streamState(const Record *record) {
   return _streamStates.at(record->streamID());
 }
 
@@ -95,7 +95,7 @@ void DetectorWaveformProcessor::reset(StreamState &streamState) {
   WaveformProcessor::reset(streamState);
 }
 
-bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,
+bool DetectorWaveformProcessor::fill(processing::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
   // XXX(damb): `DetectorWaveformProcessor` does neither implement filtering

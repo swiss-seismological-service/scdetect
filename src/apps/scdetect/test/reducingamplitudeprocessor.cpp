@@ -25,10 +25,10 @@
 #include <vector>
 
 #include "../amplitudeprocessor.h"
+#include "../processing/waveform_processor.h"
 #include "../util/memory.h"
 #include "../util/util.h"
 #include "../util/waveform_stream_id.h"
-#include "../waveformprocessor.h"
 #include "fixture.h"
 #include "utils.h"
 
@@ -70,9 +70,10 @@ struct Sample {
   using WaveformDataSource = boost::variant2::variant<fs::path, WaveformLoader>;
 
   Sample(const std::string &description,
-         const WaveformProcessor::PublishResultCallback &validatorCallback,
+         const processing::WaveformProcessor::PublishResultCallback
+             &validatorCallback,
          const fs::path &pathDataSource,
-         WaveformProcessor::Status expectedStatus,
+         processing::WaveformProcessor::Status expectedStatus,
          const boost::optional<Core::TimeWindow> &timeWindow = boost::none,
          const boost::optional<Filter> &filter = boost::none)
       : description{description},
@@ -82,9 +83,10 @@ struct Sample {
         timeWindow{timeWindow},
         filter{filter} {}
   Sample(const std::string &description,
-         const WaveformProcessor::PublishResultCallback &validatorCallback,
+         const processing::WaveformProcessor::PublishResultCallback
+             &validatorCallback,
          const WaveformLoader &waveformLoader,
-         WaveformProcessor::Status expectedStatus,
+         processing::WaveformProcessor::Status expectedStatus,
          const boost::optional<Core::TimeWindow> &timeWindow = boost::none,
          const boost::optional<Filter> &filter = boost::none)
       : description{description},
@@ -99,9 +101,9 @@ struct Sample {
 
   WaveformDataSource waveformDataSource;
   // Callback evaluating the test
-  WaveformProcessor::PublishResultCallback validatorCallback;
+  processing::WaveformProcessor::PublishResultCallback validatorCallback;
   // Defines the processor's eventually expected status
-  WaveformProcessor::Status expectedStatus;
+  processing::WaveformProcessor::Status expectedStatus;
   // Defines an optional time window for processing
   boost::optional<Core::TimeWindow> timeWindow;
   // Defines the optional processing filter
@@ -288,8 +290,8 @@ using Samples = std::vector<ds::Sample>;
 Samples dataset{
     {/*description=*/"single stream, single record (constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -303,11 +305,11 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"single stream, single record, apply filter",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -328,7 +330,7 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
@@ -337,8 +339,8 @@ Samples dataset{
     {/*description=*/
      "single stream, single record (too short, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {},
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        const auto startTime{
@@ -349,15 +351,15 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kWaitingForData,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/
      "single stream, multi records (equal length, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -380,12 +382,12 @@ Samples dataset{
          startTime += recordDuration;
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"single stream, multi records (not equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -409,14 +411,14 @@ Samples dataset{
          startTime += recordDuration;
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 360}},
     {/*description=*/"multi streams, single record (constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -435,12 +437,12 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"multi streams, single record (different record "
                      "starttime), apply filter",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -478,7 +480,7 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
@@ -486,8 +488,8 @@ Samples dataset{
     {/*description=*/"multi streams, multi records (equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -514,15 +516,15 @@ Samples dataset{
          startTime += recordDuration;
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/"multi streams, single record (one of them is too short, "
                      "constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {},
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        double samplingFrequency{1};
@@ -546,15 +548,15 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kWaitingForData,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/"multi streams, single record (different sampling "
                      "frequency, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {},
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        auto startTime{
@@ -575,15 +577,16 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kInvalidSamplingFreq,
+     /*expectedStatus=*/
+     processing::WaveformProcessor::Status::kInvalidSamplingFreq,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 120}},
     {/*description=*/"multi streams, single record (different record start "
                      "time, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
+     [](const processing::WaveformProcessor *proc, const Record *record,
+        const processing::WaveformProcessor::ResultCPtr &result) {
        auto amplitude{
            boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
                result)};
@@ -619,7 +622,7 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 120}},
@@ -656,7 +659,7 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
   proc.setResultCallback(sample.validatorCallback);
   if (sample.filter) {
     std::string err;
-    auto procFilter{WaveformProcessor::Filter::Create(
+    auto procFilter{processing::WaveformProcessor::Filter::Create(
         sample.filter.value().filterStringId, &err)};
     if (!procFilter) {
       BOOST_FAIL("Invalid filter string identifier: " +
