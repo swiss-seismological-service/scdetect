@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "../processing/mixin/gap_interpolate.h"
+#include "../processing/detail/gap_interpolate.h"
 #include "../processing/stream.h"
 #include "../processing/waveform_operator.h"
 #include "../processing/waveform_processor.h"
@@ -21,10 +21,10 @@ namespace waveform_operator {
 
 // `WaveformOperator` implementation providing buffering facilities for `N`
 // streams
+//
 // - implements gap interpolation facilities
-class RingBufferOperator
-    : public processing::WaveformOperator,
-      public processing::InterpolateGaps<RingBufferOperator> {
+class RingBufferOperator : public processing::WaveformOperator,
+                           public processing::detail::InterpolateGaps {
  public:
   using WaveformStreamID = std::string;
   using RingBuffer = Seiscomp::RingBuffer;
@@ -35,11 +35,6 @@ class RingBufferOperator
   RingBufferOperator(processing::WaveformProcessor *waveformProcessor,
                      Core::TimeSpan bufferSize,
                      const std::vector<WaveformStreamID> &wfStreamIds);
-
-  // Sets the threshold (i.e. the minimum gap length) for gap interpolation
-  //
-  // - may imply resetting streams including the related buffer
-  void setGapThreshold(const Core::TimeSpan &duration) override;
 
   processing::WaveformProcessor::Status feed(const Record *record) override;
 

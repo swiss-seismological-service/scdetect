@@ -12,7 +12,7 @@
 #include <functional>
 #include <memory>
 
-#include "mixin/gap_interpolate.h"
+#include "detail/gap_interpolate.h"
 #include "processor.h"
 #include "stream.h"
 
@@ -33,8 +33,7 @@ class WaveformOperator;
 // just a single stream nor does it introduce the *concept of a station* (e.g.
 // by means of limiting the usage of maximum three channels).
 //
-class WaveformProcessor : public Processor,
-                          public InterpolateGaps<WaveformProcessor> {
+class WaveformProcessor : public Processor, public detail::InterpolateGaps {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
 

@@ -51,6 +51,7 @@ set(SOURCES_integration
   ../magnitude/templatefamily.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
+  ../processing/detail/gap_interpolate.cpp
   ../processing/processor.cpp
   ../processing/stream.cpp
   ../processing/timewindow_processor.cpp
@@ -69,6 +70,7 @@ set(SOURCES_integration
 set(SOURCES_reducingamplitudeprocessor
   ../amplitudeprocessor.cpp
   ../exception.cpp
+  ../processing/detail/gap_interpolate.cpp
   ../processing/processor.cpp
   ../processing/stream.cpp
   ../processing/timewindow_processor.cpp

@@ -29,19 +29,6 @@ RingBufferOperator::RingBufferOperator(
   }
 }
 
-void RingBufferOperator::setGapThreshold(const Core::TimeSpan &duration) {
-  if (duration && duration > Core::TimeSpan{0.0}) {
-    for (auto &streamConfigPair : _streamConfigs) {
-      auto &streamState{streamConfigPair.second.streamState};
-      if (streamState.gapThreshold != duration) {
-        reset(streamState);
-      }
-    }
-
-    _gapThreshold = duration;
-  }
-}
-
 processing::WaveformProcessor::Status RingBufferOperator::feed(
     const Record *record) {
   if (record->sampleCount() == 0)

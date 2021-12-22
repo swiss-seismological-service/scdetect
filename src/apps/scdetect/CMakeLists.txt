@@ -34,6 +34,7 @@ set(
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
+    processing/detail/gap_interpolate.cpp
     processing/processor.cpp
     processing/stream.cpp
     processing/timewindow_processor.cpp

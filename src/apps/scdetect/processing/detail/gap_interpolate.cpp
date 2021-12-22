@@ -1,5 +1,4 @@
-#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPOLATE_IPP_
-#define SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPOLATE_IPP_
+#include "gap_interpolate.h"
 
 #include <seiscomp/core/genericrecord.h>
 
@@ -9,51 +8,34 @@
 namespace Seiscomp {
 namespace detect {
 namespace processing {
+namespace detail {
 
-template <typename TGapInterpolateable>
-InterpolateGaps<TGapInterpolateable>::~InterpolateGaps() {}
-
-template <typename TGapInterpolateable>
-void InterpolateGaps<TGapInterpolateable>::setGapInterpolation(
-    bool gapInterpolation) {
+void InterpolateGaps::setGapInterpolation(bool gapInterpolation) {
   _gapInterpolation = gapInterpolation;
 }
 
-template <typename TGapInterpolateable>
-bool InterpolateGaps<TGapInterpolateable>::gapInterpolation() const {
-  return _gapInterpolation;
-}
+bool InterpolateGaps::gapInterpolation() const { return _gapInterpolation; }
 
-template <typename TGapInterpolateable>
-void InterpolateGaps<TGapInterpolateable>::setGapThreshold(
-    const Core::TimeSpan &duration) {
+void InterpolateGaps::setGapThreshold(const Core::TimeSpan &duration) {
   _gapThreshold = duration;
 }
 
-template <typename TGapInterpolateable>
-const Core::TimeSpan InterpolateGaps<TGapInterpolateable>::gapThreshold()
-    const {
+const Core::TimeSpan &InterpolateGaps::gapThreshold() const {
   return _gapThreshold;
 }
 
-template <typename TGapInterpolateable>
-void InterpolateGaps<TGapInterpolateable>::setGapTolerance(
-    const Core::TimeSpan &duration) {
+void InterpolateGaps::setGapTolerance(const Core::TimeSpan &duration) {
   if (duration && duration > Core::TimeSpan{0.0}) {
     _gapTolerance = duration;
   }
 }
 
-template <typename TGapInterpolateable>
-const Core::TimeSpan InterpolateGaps<TGapInterpolateable>::gapTolerance()
-    const {
+const Core::TimeSpan &InterpolateGaps::gapTolerance() const {
   return _gapTolerance;
 }
 
-template <typename TGapInterpolateable>
-bool InterpolateGaps<TGapInterpolateable>::handleGap(StreamState &streamState,
-                                                     const Record *record,
-                                                     DoubleArrayPtr &data) {
+bool InterpolateGaps::handleGap(StreamState &streamState, const Record *record,
+                                DoubleArrayPtr &data) {
   Core::TimeSpan gap{record->startTime() -
                      streamState.dataTimeWindow.endTime() -
                      /*one usec*/ Core::TimeSpan(0, 1)};
@@ -82,10 +64,9 @@ bool InterpolateGaps<TGapInterpolateable>::handleGap(StreamState &streamState,
   return true;
 }
 
-template <typename TGapInterpolateable>
-bool InterpolateGaps<TGapInterpolateable>::fillGap(
-    StreamState &streamState, const Record *record,
-    const Core::TimeSpan &duration, double nextSample, size_t missingSamples) {
+bool InterpolateGaps::fillGap(StreamState &streamState, const Record *record,
+                              const Core::TimeSpan &duration, double nextSample,
+                              size_t missingSamples) {
   if (duration <= _gapTolerance) {
     if (_gapInterpolation) {
       auto filled{util::make_unique<GenericRecord>(
@@ -103,6 +84,7 @@ bool InterpolateGaps<TGapInterpolateable>::fillGap(
       }
 
       filled->setData(missingSamples, dataPtr->typedData(), Array::DOUBLE);
+
       fill(streamState, /*record=*/filled.release(), dataPtr);
 
       return true;
@@ -112,9 +94,9 @@ bool InterpolateGaps<TGapInterpolateable>::fillGap(
   return false;
 }
 
-template <typename TGapInterpolateable>
-void InterpolateGaps<TGapInterpolateable>::setMinimumGapThreshold(
-    StreamState &streamState, const Record *record, const std::string &logTag) {
+void InterpolateGaps::setMinimumGapThreshold(StreamState &streamState,
+                                             const Record *record,
+                                             const std::string &logTag) {
   streamState.gapThreshold = _gapThreshold;
 
   const Core::TimeSpan minThres{2 * 1.0 / record->samplingFrequency()};
@@ -132,8 +114,7 @@ void InterpolateGaps<TGapInterpolateable>::setMinimumGapThreshold(
   }
 }
 
+}  // namespace detail
 }  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
-
-#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_MIXIN_GAPINTERPOLATE_IPP_
