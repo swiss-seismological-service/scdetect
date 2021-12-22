@@ -38,9 +38,9 @@ class InterpolateGaps {
   bool handleGap(StreamState &streamState, const Record *record,
                  DoubleArrayPtr &data);
   // Fill gaps
-  virtual bool fillGap(StreamState &streamState, const Record *record,
-                       const Core::TimeSpan &duration, double nextSample,
-                       size_t missingSamples);
+  bool fillGap(StreamState &streamState, const Record *record,
+               const Core::TimeSpan &duration, double nextSample,
+               size_t missingSamples);
 
   // Sets the `streamState` specific minimum gap length
   void setMinimumGapThreshold(StreamState &streamState, const Record *record,
