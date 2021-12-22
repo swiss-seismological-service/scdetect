@@ -60,7 +60,11 @@ class Builder {
   // finalize the product
   virtual void finalize();
 
-  std::unique_ptr<TProduct> _product{nullptr};
+  void setProduct(std::unique_ptr<TProduct> &&product);
+  TProduct *product();
+
+ private:
+  std::unique_ptr<TProduct> _product;
 };
 
 #include "builder.ipp"

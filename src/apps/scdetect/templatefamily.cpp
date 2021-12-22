@@ -38,12 +38,12 @@ TemplateFamily::Builder::Builder(
     : _templateFamilyConfig{templateFamilyConfig} {
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
-  _product = std::unique_ptr<TemplateFamily>{new TemplateFamily{}};
+  setProduct(std::unique_ptr<TemplateFamily>{new TemplateFamily{}});
 }
 
 TemplateFamily::Builder& TemplateFamily::Builder::setId(
     const boost::optional<std::string>& id) {
-  _product->_id = id.value_or(_templateFamilyConfig.id());
+  product()->_id = id.value_or(_templateFamilyConfig.id());
   return *this;
 }
 
@@ -161,7 +161,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
     }
   }
 
-  _product->_magnitudeType = configuredMagnitudeType;
+  product()->_magnitudeType = configuredMagnitudeType;
 
   return *this;
 }
@@ -381,7 +381,7 @@ void TemplateFamily::Builder::finalize() {
       auto& member{sensorLocationConfigPair.second};
       if (member.amplitude && member.magnitude) {
         member.config.sensorLocationId = sensorLocationId;
-        _product->_members.push_back(member);
+        product()->_members.push_back(member);
       }
     }
   }
