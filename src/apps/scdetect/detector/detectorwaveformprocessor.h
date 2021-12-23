@@ -55,8 +55,6 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
   friend class DetectorBuilder;
   static DetectorBuilder Create(const std::string &originId);
 
-  void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
-
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishDetectionCallback &callback);
 

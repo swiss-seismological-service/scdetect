@@ -42,13 +42,9 @@ TemplateWaveformProcessor::TemplateWaveformProcessor(
     : _crossCorrelation{waveform, filterId, templateStartTime,
                         templateEndTime} {}
 
-void TemplateWaveformProcessor::setFilter(Filter *filter,
+void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> &&filter,
                                           const Core::TimeSpan &initTime) {
-  if (_streamState.filter) {
-    delete _streamState.filter;
-  }
-
-  _streamState.filter = filter;
+  _streamState.filter = std::move(filter);
   _initTime =
       std::max(initTime, Core::TimeSpan{_crossCorrelation.templateLength()});
 }
@@ -63,16 +59,8 @@ const Core::TimeWindow &TemplateWaveformProcessor::processed() const {
 }
 
 void TemplateWaveformProcessor::reset() {
-  Filter *tmp{_streamState.filter};
-
-  _streamState = StreamState{};
-  if (tmp) {
-    _streamState.filter = tmp->clone();
-    delete tmp;
-  }
-
+  WaveformProcessor::reset(_streamState);
   _crossCorrelation.reset();
-
   WaveformProcessor::reset();
 }
 

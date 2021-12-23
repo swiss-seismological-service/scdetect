@@ -81,12 +81,6 @@ void WaveformProcessor::terminate() {
 
 void WaveformProcessor::close() const {}
 
-WaveformProcessor::StreamState::~StreamState() {
-  if (filter) {
-    delete filter;
-  }
-}
-
 bool WaveformProcessor::store(const Record *record) {
   if (WaveformProcessor::Status::kInProgress < status() || !record->data())
     return false;
@@ -142,7 +136,12 @@ bool WaveformProcessor::store(const Record *record) {
 }
 
 void WaveformProcessor::reset(StreamState &streamState) {
-  streamState.lastRecord.reset();
+  std::unique_ptr<Filter> tmp{std::move(streamState.filter)};
+
+  streamState = StreamState{};
+  if (tmp) {
+    streamState.filter.reset(tmp->clone());
+  }
 }
 
 bool WaveformProcessor::fill(processing::StreamState &streamState,

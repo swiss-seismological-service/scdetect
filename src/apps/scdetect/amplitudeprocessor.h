@@ -202,11 +202,12 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
 // - TODO(damb): implement SNR facilities
 class ReducingAmplitudeProcessor : public AmplitudeProcessor {
  public:
-  // Sets the `filter` for all registered streams
+  // Sets the common filter `filter` for all registered streams
   //
   // - configuring the `filter` can be done only before the first record was
   // fed or after resetting the processor
-  void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
+  void setFilter(std::unique_ptr<Filter> &&filter,
+                 const Core::TimeSpan &initTime);
 
   bool feed(const Record *record) override;
 

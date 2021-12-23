@@ -1,3 +1,4 @@
+#include <memory>
 #define SEISCOMP_TEST_MODULE test_reducingamplitudeprocessor
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
@@ -631,16 +632,14 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
              AmplitudeProcessor::DeconvolutionConfig{});
   }
   proc.setResultCallback(sample.validatorCallback);
-  if (sample.filter) {
-    std::string err;
-    auto procFilter{processing::WaveformProcessor::Filter::Create(
-        sample.filter.value().filterStringId, &err)};
-    if (!procFilter) {
-      BOOST_FAIL("Invalid filter string identifier: " +
-                 sample.filter.value().filterStringId);
+  if (sample.filter && !sample.filter.value().filterStringId.empty()) {
+    try {
+      proc.setFilter(
+          processing::createFilter(sample.filter.value().filterStringId),
+          sample.filter.value().initTime);
+    } catch (processing::WaveformProcessor::BaseException &e) {
+      BOOST_FAIL("failed to configure filter: " + std::string{e.what()});
     }
-
-    proc.setFilter(procFilter, sample.filter.value().initTime);
   }
 
   // feed data

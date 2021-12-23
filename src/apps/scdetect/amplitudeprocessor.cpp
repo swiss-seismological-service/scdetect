@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <cstddef>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 
@@ -171,14 +172,16 @@ void AmplitudeProcessor::emitAmplitude(const Record *record,
 }
 
 /* ------------------------------------------------------------------------- */
-void ReducingAmplitudeProcessor::setFilter(Filter *filter,
+void ReducingAmplitudeProcessor::setFilter(std::unique_ptr<Filter> &&filter,
                                            const Core::TimeSpan &initTime) {
-  if (!locked()) {
-    _filter.reset(filter);
-    _initTime = initTime;
-
-    setTimeWindow(timeWindow());
+  if (locked()) {
+    return;
   }
+
+  _filter = std::move(filter);
+  _initTime = initTime;
+
+  setTimeWindow(timeWindow());
 }
 
 bool ReducingAmplitudeProcessor::feed(const Record *record) {
@@ -203,22 +206,25 @@ void ReducingAmplitudeProcessor::reset() {
   }
 
   _commonSamplingFrequency = boost::none;
+  WaveformProcessor::reset();
 }
 
 void ReducingAmplitudeProcessor::add(
     const std::string &netCode, const std::string &staCode,
     const std::string &locCode, const Processing::Stream &streamConfig,
     const AmplitudeProcessor::DeconvolutionConfig &deconvolutionConfig) {
-  if (!locked()) {
-    StreamItem stream;
-    stream.streamConfig = streamConfig;
-    stream.deconvolutionConfig = deconvolutionConfig;
-
-    const util::WaveformStreamID waveformStreamId{netCode, staCode, locCode,
-                                                  streamConfig.code()};
-
-    _streams.emplace(util::to_string(waveformStreamId), stream);
+  if (locked()) {
+    return;
   }
+
+  StreamItem stream;
+  stream.streamConfig = streamConfig;
+  stream.deconvolutionConfig = deconvolutionConfig;
+
+  const util::WaveformStreamID waveformStreamId{netCode, staCode, locCode,
+                                                streamConfig.code()};
+
+  _streams.emplace(util::to_string(waveformStreamId), std::move(stream));
 }
 
 std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
@@ -419,25 +425,32 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
     return false;
   }
 
-  auto differenceGreaterEqualSampleTolerance{
-      (Core::TimeSpan{record->timeWindow().startTime() -
-                      safetyTimeWindow().startTime()}
-           .abs() >= Core::TimeSpan{1.0 / record->samplingFrequency()})};
-  // trim the first incoming stream records equally at the front to a common
-  // start time
-  if (isFirstStreamRecord &&
-      record->timeWindow().startTime() < safetyTimeWindow().startTime() &&
-      differenceGreaterEqualSampleTolerance) {
-    auto firstRecord{util::make_smart<GenericRecord>(*record)};
-    // the caller is required to copy the data
-    // https://github.com/SeisComP/common/issues/38
-    firstRecord->setData(
-        dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE)));
+  if (isFirstStreamRecord) {
+    // initialize filter
+    if (_filter) {
+      auto &s{streamState(record)};
+      s.filter.reset(_filter->clone());
+    }
 
-    waveform::trim(
-        *firstRecord,
-        Core::TimeWindow{safetyTimeWindow().startTime(), record->endTime()});
-    return WaveformProcessor::store(firstRecord.get());
+    auto differenceGreaterEqualSampleTolerance{
+        (Core::TimeSpan{record->timeWindow().startTime() -
+                        safetyTimeWindow().startTime()}
+             .abs() >= Core::TimeSpan{1.0 / record->samplingFrequency()})};
+    // trim the first incoming stream records equally at the front to a common
+    // start time
+    if (record->timeWindow().startTime() < safetyTimeWindow().startTime() &&
+        differenceGreaterEqualSampleTolerance) {
+      auto firstRecord{util::make_smart<GenericRecord>(*record)};
+      // the caller is required to copy the data
+      // https://github.com/SeisComP/common/issues/38
+      firstRecord->setData(
+          dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE)));
+
+      waveform::trim(
+          *firstRecord,
+          Core::TimeWindow{safetyTimeWindow().startTime(), record->endTime()});
+      return WaveformProcessor::store(firstRecord.get());
+    }
   }
 
   return WaveformProcessor::store(record);

@@ -278,8 +278,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         if (!amplitudeProcessingConfig.mlx.filter.empty()) {
           try {
             rmsAmplitudeProcessor.setFilter(
-                processing::createFilter(amplitudeProcessingConfig.mlx.filter)
-                    .release(),
+                processing::createFilter(amplitudeProcessingConfig.mlx.filter),
                 amplitudeProcessingConfig.mlx.initTime);
             SCDETECT_LOG_DEBUG_TAGGED(
                 rmsAmplitudeProcessor.id(),

@@ -185,19 +185,16 @@ DetectorBuilder &DetectorBuilder::setStream(
       streamConfig.templateConfig.filter.value_or(pickFilterId)};
   util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
 
-  std::unique_ptr<processing::WaveformProcessor::Filter> rtTemplateFilter{
-      nullptr};
+  std::unique_ptr<processing::WaveformProcessor::Filter> rtTemplateFilter;
   std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
   util::replaceEscapedXMLFilterIdChars(rtFilterId);
   // create template related filter (used during real-time stream
   // processing)
   if (!rtFilterId.empty()) {
-    std::string err;
-    rtTemplateFilter.reset(
-        processing::WaveformProcessor::Filter::Create(rtFilterId, &err));
-
-    if (!rtTemplateFilter) {
-      msg.setText("compiling filter (" + rtFilterId + ") failed: " + err);
+    try {
+      rtTemplateFilter = processing::createFilter(rtFilterId);
+    } catch (processing::WaveformProcessor::BaseException &e) {
+      msg.setText(e.what());
       throw builder::BaseException{logging::to_string(msg)};
     }
   }
@@ -238,7 +235,7 @@ DetectorBuilder &DetectorBuilder::setStream(
                           : product()->id() + settings::kProcessorIdSep +
                                 streamConfig.templateId);
 
-  templateProc->setFilter(rtTemplateFilter.release(), streamConfig.initTime);
+  templateProc->setFilter(std::move(rtTemplateFilter), streamConfig.initTime);
   if (streamConfig.targetSamplingFrequency) {
     templateProc->setTargetSamplingFrequency(
         *streamConfig.targetSamplingFrequency);

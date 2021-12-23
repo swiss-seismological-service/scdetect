@@ -16,11 +16,6 @@ DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
   return DetectorBuilder(originId);
 }
 
-void DetectorWaveformProcessor::setFilter(Filter *filter,
-                                          const Core::TimeSpan &initTime) {
-  // XXX(damb): `DetectorWaveformProcessor` doesn't implement filter facilities
-}
-
 void DetectorWaveformProcessor::setResultCallback(
     const PublishDetectionCallback &callback) {
   _detectionCallback = callback;

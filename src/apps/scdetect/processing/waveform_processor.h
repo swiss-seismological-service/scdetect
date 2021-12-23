@@ -95,11 +95,6 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
     kTravelTimeEstimateFailed,
   };
 
-  // Sets the filter to apply
-  //
-  // - the `filter` pointer passed is owned by the `WaveformProcessor`
-  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
-
   void enable();
   void disable();
   bool enabled() const;
@@ -148,7 +143,8 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
  protected:
   // Describes the current state of a stream
   struct StreamState : public processing::StreamState {
-    ~StreamState() override;
+    // The filter (if used)
+    std::unique_ptr<Filter> filter;
 
     // Number of samples required to finish initialization
     size_t neededSamples{0};
@@ -156,9 +152,6 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
     size_t receivedSamples{0};
     // Initialization state
     bool initialized{false};
-
-    // The filter (if used)
-    Filter *filter{nullptr};
   };
 
   virtual StreamState &streamState(const Record *record) = 0;

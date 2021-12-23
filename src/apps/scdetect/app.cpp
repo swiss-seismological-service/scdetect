@@ -1364,7 +1364,7 @@ bool Application::initAmplitudeProcessors(
         util::replaceEscapedXMLFilterIdChars(filter);
         try {
           rmsAmplitudeProcessor->setFilter(
-              processing::createFilter(filter).release(),
+              processing::createFilter(filter),
               amplitudeProcessingConfig.mlx.initTime);
           SCDETECT_LOG_DEBUG_TAGGED(
               rmsAmplitudeProcessor->id(),

@@ -7,6 +7,7 @@
 
 #include <boost/optional.hpp>
 #include <cstdlib>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -66,7 +67,9 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   using PublishMatchResultCallback = std::function<void(
       const TemplateWaveformProcessor *, const Record *, MatchResultCPtr)>;
 
-  void setFilter(Filter *filter, const Core::TimeSpan &initTime = 0.0) override;
+  // Sets `filter` with the corresponding filter `initTime`
+  void setFilter(std::unique_ptr<Filter> &&filter,
+                 const Core::TimeSpan &initTime = 0.0);
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishMatchResultCallback &callback);
 
