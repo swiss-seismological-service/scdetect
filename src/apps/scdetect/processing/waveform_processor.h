@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
 
-#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/timewindow.h>
@@ -9,7 +8,6 @@
 #include <seiscomp/math/filter.h>
 
 #include <boost/optional/optional.hpp>
-#include <functional>
 #include <memory>
 
 #include "detail/gap_interpolate.h"
@@ -36,15 +34,6 @@ class WaveformOperator;
 class WaveformProcessor : public Processor, public detail::InterpolateGaps {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
-
-  DEFINE_SMARTPOINTER(Result);
-  class Result : public Core::BaseObject {
-   public:
-    virtual ~Result();
-  };
-
-  using PublishResultCallback = std::function<void(
-      const WaveformProcessor *, const Record *, const ResultCPtr)>;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
@@ -114,9 +103,6 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   void enable();
   void disable();
   bool enabled() const;
-
-  // Sets the result callback in order to publish processing results
-  void setResultCallback(const PublishResultCallback &callback);
 
   // Enables/disables validating whether data is saturated.
   //
@@ -207,7 +193,6 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // execute the `process()` method.
   virtual bool enoughDataReceived(const StreamState &streamState) const;
 
-  virtual void emitResult(const Record *record, const ResultCPtr &result);
   // Setup and initialize the stream
   virtual void setupStream(StreamState &streamState, const Record *record);
 
@@ -217,8 +202,6 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
 
   // WaveformProcessor initialization time
   Core::TimeSpan _initTime;
-
-  PublishResultCallback _resultCallback;
 
   std::unique_ptr<WaveformOperator> _waveformOperator;
 

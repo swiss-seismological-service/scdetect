@@ -259,11 +259,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       rmsAmplitudeProcessor.setEnvironment(origin, sensorLocation, {pick});
 
       rmsAmplitudeProcessor.setResultCallback(
-          [this](const processing::WaveformProcessor* proc, const Record* rec,
-                 const processing::WaveformProcessor::ResultCPtr& res) {
-            storeAmplitude(dynamic_cast<const AmplitudeProcessor*>(proc), rec,
-                           boost::dynamic_pointer_cast<
-                               const AmplitudeProcessor::Amplitude>(res));
+          [this](const AmplitudeProcessor* proc, const Record* rec,
+                 AmplitudeProcessor::AmplitudeCPtr amplitude) {
+            storeAmplitude(proc, rec, amplitude);
           });
 
       try {

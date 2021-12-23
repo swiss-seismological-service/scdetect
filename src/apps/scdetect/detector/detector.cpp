@@ -100,12 +100,9 @@ void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
                    const Detector::SensorLocation &loc,
                    const boost::optional<double> &mergingThreshold) {
   proc->setResultCallback(
-      [this](const processing::WaveformProcessor *proc, const Record *rec,
-             const processing::WaveformProcessor::ResultCPtr &res) {
-        storeTemplateResult(
-            dynamic_cast<const TemplateWaveformProcessor *>(proc), rec,
-            boost::dynamic_pointer_cast<
-                const TemplateWaveformProcessor::MatchResult>(res));
+      [this](const TemplateWaveformProcessor *processor, const Record *record,
+             TemplateWaveformProcessor::MatchResultCPtr result) {
+        storeTemplateResult(processor, record, result);
       });
 
   // XXX(damb): Replace the arrival with a *pseudo arrival* i.e. an arrival

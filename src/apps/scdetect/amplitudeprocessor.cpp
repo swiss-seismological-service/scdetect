@@ -22,6 +22,11 @@
 namespace Seiscomp {
 namespace detect {
 
+void AmplitudeProcessor::setResultCallback(
+    const PublishAmplitudeCallback &callback) {
+  _resultCallback = callback;
+}
+
 void AmplitudeProcessor::setSignalBegin(
     const boost::optional<Core::TimeSpan> &signalBegin) {
   if (!signalBegin) {
@@ -156,6 +161,13 @@ bool AmplitudeProcessor::deriveData(StreamState &streamState,
   }
 
   return true;
+}
+
+void AmplitudeProcessor::emitAmplitude(const Record *record,
+                                       const AmplitudeCPtr &amplitude) {
+  if (enabled() && _resultCallback) {
+    _resultCallback(this, record, amplitude);
+  }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -387,7 +399,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   amplitude->time.end = static_cast<double>(signalEndTime - signalStartTime);
 
   setStatus(Status::kFinished, 100);
-  emitResult(record, amplitude);
+  emitAmplitude(record, amplitude);
 }
 
 bool ReducingAmplitudeProcessor::store(const Record *record) {

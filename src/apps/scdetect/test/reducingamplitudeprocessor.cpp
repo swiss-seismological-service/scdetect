@@ -70,8 +70,7 @@ struct Sample {
   using WaveformDataSource = boost::variant2::variant<fs::path, WaveformLoader>;
 
   Sample(const std::string &description,
-         const processing::WaveformProcessor::PublishResultCallback
-             &validatorCallback,
+         const AmplitudeProcessor::PublishAmplitudeCallback &validatorCallback,
          const fs::path &pathDataSource,
          processing::WaveformProcessor::Status expectedStatus,
          const boost::optional<Core::TimeWindow> &timeWindow = boost::none,
@@ -83,8 +82,7 @@ struct Sample {
         timeWindow{timeWindow},
         filter{filter} {}
   Sample(const std::string &description,
-         const processing::WaveformProcessor::PublishResultCallback
-             &validatorCallback,
+         const AmplitudeProcessor::PublishAmplitudeCallback &validatorCallback,
          const WaveformLoader &waveformLoader,
          processing::WaveformProcessor::Status expectedStatus,
          const boost::optional<Core::TimeWindow> &timeWindow = boost::none,
@@ -101,7 +99,7 @@ struct Sample {
 
   WaveformDataSource waveformDataSource;
   // Callback evaluating the test
-  processing::WaveformProcessor::PublishResultCallback validatorCallback;
+  AmplitudeProcessor::PublishAmplitudeCallback validatorCallback;
   // Defines the processor's eventually expected status
   processing::WaveformProcessor::Status expectedStatus;
   // Defines an optional time window for processing
@@ -290,11 +288,8 @@ using Samples = std::vector<ds::Sample>;
 Samples dataset{
     {/*description=*/"single stream, single record (constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 1.0);
      },
      /*waveformLoader=*/
@@ -308,11 +303,8 @@ Samples dataset{
      /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"single stream, single record, apply filter",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 9.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
@@ -339,8 +331,8 @@ Samples dataset{
     {/*description=*/
      "single stream, single record (too short, constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {},
+     [](const AmplitudeProcessor *, const Record *,
+        const AmplitudeProcessor::AmplitudeCPtr) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        const auto startTime{
@@ -358,11 +350,8 @@ Samples dataset{
     {/*description=*/
      "single stream, multi records (equal length, constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 2.0);
      },
      /*waveformLoader=*/
@@ -386,11 +375,8 @@ Samples dataset{
     {/*description=*/"single stream, multi records (not equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 2.0);
      },
      /*waveformLoader=*/
@@ -417,11 +403,8 @@ Samples dataset{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 360}},
     {/*description=*/"multi streams, single record (constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        const AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 15.0);
      },
      /*waveformLoader=*/
@@ -441,11 +424,8 @@ Samples dataset{
     {/*description=*/"multi streams, single record (different record "
                      "starttime), apply filter",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 18.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
@@ -488,11 +468,8 @@ Samples dataset{
     {/*description=*/"multi streams, multi records (equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 15.0);
      },
      /*waveformLoader=*/
@@ -523,8 +500,8 @@ Samples dataset{
     {/*description=*/"multi streams, single record (one of them is too short, "
                      "constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {},
+     [](const AmplitudeProcessor *, const Record *,
+        AmplitudeProcessor::AmplitudeCPtr) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        double samplingFrequency{1};
@@ -555,8 +532,8 @@ Samples dataset{
     {/*description=*/"multi streams, single record (different sampling "
                      "frequency, constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {},
+     [](const AmplitudeProcessor *, const Record *,
+        AmplitudeProcessor::AmplitudeCPtr) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        auto startTime{
@@ -585,11 +562,8 @@ Samples dataset{
     {/*description=*/"multi streams, single record (different record start "
                      "time, constant sample values)",
      /*validatorCallback=*/
-     [](const processing::WaveformProcessor *proc, const Record *record,
-        const processing::WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        const AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 3.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==

@@ -44,11 +44,18 @@ TemplateWaveformProcessor::TemplateWaveformProcessor(
 
 void TemplateWaveformProcessor::setFilter(Filter *filter,
                                           const Core::TimeSpan &initTime) {
-  if (_streamState.filter) delete _streamState.filter;
+  if (_streamState.filter) {
+    delete _streamState.filter;
+  }
 
   _streamState.filter = filter;
   _initTime =
       std::max(initTime, Core::TimeSpan{_crossCorrelation.templateLength()});
+}
+
+void TemplateWaveformProcessor::setResultCallback(
+    const PublishMatchResultCallback &callback) {
+  _resultCallback = callback;
 }
 
 const Core::TimeWindow &TemplateWaveformProcessor::processed() const {
@@ -179,6 +186,13 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
   }
 
   _crossCorrelation.setSamplingFrequency(_targetSamplingFrequency.value_or(f));
+}
+
+void TemplateWaveformProcessor::emitResult(const Record *record,
+                                           const MatchResultCPtr &result) {
+  if (enabled() && _resultCallback) {
+    _resultCallback(this, record, result);
+  }
 }
 
 }  // namespace detector

@@ -8,24 +8,21 @@ namespace Seiscomp {
 namespace detect {
 namespace processing {
 
-WaveformProcessor::Result::~Result() {}
-
 void WaveformProcessor::enable() {
-  if (_enabled) return;
+  if (_enabled) {
+    return;
+  }
   _enabled = true;
 }
 
 void WaveformProcessor::disable() {
-  if (!_enabled) return;
+  if (!_enabled) {
+    return;
+  }
   _enabled = false;
 }
 
 bool WaveformProcessor::enabled() const { return _enabled; }
-
-void WaveformProcessor::setResultCallback(
-    const PublishResultCallback &callback) {
-  _resultCallback = callback;
-}
 
 void WaveformProcessor::setSaturationThreshold(
     const boost::optional<double> &threshold) {
@@ -204,11 +201,6 @@ bool WaveformProcessor::processIfEnoughDataReceived(
 bool WaveformProcessor::enoughDataReceived(
     const StreamState &streamState) const {
   return streamState.receivedSamples >= streamState.neededSamples;
-}
-
-void WaveformProcessor::emitResult(const Record *record,
-                                   const ResultCPtr &result) {
-  if (enabled() && _resultCallback) _resultCallback(this, record, result);
 }
 
 void WaveformProcessor::setupStream(StreamState &streamState,

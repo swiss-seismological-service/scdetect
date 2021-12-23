@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_
 
+#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/record.h>
@@ -80,7 +81,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   };
 
   DEFINE_SMARTPOINTER(Amplitude);
-  struct Amplitude : WaveformProcessor::Result {
+  struct Amplitude : Core::BaseObject {
     AmplitudeValue value;
     AmplitudeTime time;
 
@@ -94,6 +95,11 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     // measured
     boost::optional<double> snr;
   };
+  using PublishAmplitudeCallback = std::function<void(
+      const AmplitudeProcessor *, const Record *, AmplitudeCPtr)>;
+
+  // Sets the `callback` in order to publish detections
+  void setResultCallback(const PublishAmplitudeCallback &callback);
 
   // Configures the beginning of the time window used for amplitude calculation
   // (with regard to the beginning of the overall time window)
@@ -174,10 +180,14 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   virtual bool deriveData(StreamState &streamState, int numberOfDerivations,
                           DoubleArray &data);
 
+  void emitAmplitude(const Record *record, const AmplitudeCPtr &amplitude);
+
   // Amplitude processor configuration
   Config _config;
   // Amplitude processor *environment*
   Environment _environment;
+
+  PublishAmplitudeCallback _resultCallback;
 
   // The amplitude type
   std::string _type;

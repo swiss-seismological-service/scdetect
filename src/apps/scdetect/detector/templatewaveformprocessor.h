@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATEWAVEFORMPROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_TEMPLATEWAVEFORMPROCESSOR_H_
 
+#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
@@ -50,7 +51,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
                             const Processor *p = nullptr);
 
   DEFINE_SMARTPOINTER(MatchResult);
-  struct MatchResult : public Result {
+  struct MatchResult : public Core::BaseObject {
     struct Value {
       Core::TimeSpan lag;
       double coefficient;
@@ -62,8 +63,12 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
     // Time window for w.r.t. the match results
     Core::TimeWindow timeWindow;
   };
+  using PublishMatchResultCallback = std::function<void(
+      const TemplateWaveformProcessor *, const Record *, MatchResultCPtr)>;
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime = 0.0) override;
+  // Sets the `callback` in order to publish detections
+  void setResultCallback(const PublishMatchResultCallback &callback);
 
   // Returns the time window processed and correlated
   const Core::TimeWindow &processed() const;
@@ -91,8 +96,12 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
 
   void setupStream(StreamState &streamState, const Record *record) override;
 
+  void emitResult(const Record *record, const MatchResultCPtr &result);
+
  private:
   StreamState _streamState;
+
+  PublishMatchResultCallback _resultCallback;
 
   // The optional target sampling frequency (used for on-the-fly resampling)
   boost::optional<double> _targetSamplingFrequency;

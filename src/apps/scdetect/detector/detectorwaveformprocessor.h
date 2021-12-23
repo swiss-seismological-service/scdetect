@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_DETECTOR_DETECTORWAVEFORMPROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_DETECTOR_DETECTORWAVEFORMPROCESSOR_H_
 
+#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
@@ -22,14 +23,14 @@ namespace detector {
 
 // Detector waveform processor implementation
 class DetectorWaveformProcessor : public processing::WaveformProcessor {
-  DetectorWaveformProcessor(const DataModel::OriginCPtr &origin);
+  explicit DetectorWaveformProcessor(const DataModel::OriginCPtr &origin);
 
  public:
   DEFINE_SMARTPOINTER(Detection);
-  struct Detection : public Result {
+  struct Detection : public Core::BaseObject {
     double fit{};
 
-    Core::Time time{};
+    Core::Time time;
     double latitude{};
     double longitude{};
     double depth{};
@@ -48,11 +49,16 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
     // Template specific results
     TemplateResults templateResults;
   };
+  using PublishDetectionCallback = std::function<void(
+      const DetectorWaveformProcessor *, const Record *, DetectionCPtr)>;
 
   friend class DetectorBuilder;
   static DetectorBuilder Create(const std::string &originId);
 
   void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
+
+  // Sets the `callback` in order to publish detections
+  void setResultCallback(const PublishDetectionCallback &callback);
 
   void reset() override;
   void terminate() override;
@@ -75,6 +81,8 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
   // Prepares the detection from `res`
   void prepareDetection(DetectionPtr &d, const Detector::Result &res);
 
+  void emitDetection(const Record *record, const DetectionCPtr &detection);
+
  private:
   using WaveformStreamID = std::string;
   using StreamStates =
@@ -85,6 +93,9 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
   config::DetectorConfig _config;
 
   Detector _detector;
+
+  PublishDetectionCallback _detectionCallback;
+
   boost::optional<Detector::Result> _detection;
 
   // Reference to the *template* origin

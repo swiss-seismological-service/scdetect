@@ -1170,16 +1170,13 @@ bool Application::initDetectors(std::ifstream &ifs,
         std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
             detectorBuilder.build()};
         detectorPtr->setResultCallback(
-            [this](const processing::WaveformProcessor *proc, const Record *rec,
-                   const processing::WaveformProcessor::ResultCPtr res) {
-              processDetection(
-                  dynamic_cast<const detector::DetectorWaveformProcessor *>(
-                      proc),
-                  rec,
-                  boost::dynamic_pointer_cast<
-                      const detector::DetectorWaveformProcessor::Detection>(
-                      res));
+            [this](
+                const detector::DetectorWaveformProcessor *processor,
+                const Record *record,
+                detector::DetectorWaveformProcessor::DetectionCPtr detection) {
+              processDetection(processor, record, detection);
             });
+
         for (const auto &streamId : streamIds)
           _detectors.emplace(streamId, detectorPtr);
 
@@ -1306,17 +1303,14 @@ bool Application::initAmplitudeProcessors(
 
       rmsAmplitudeProcessor->setResultCallback(
           [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
-           magnitudeProcessorId](
-              const processing::WaveformProcessor *proc, const Record *rec,
-              const processing::WaveformProcessor::ResultCPtr res) {
+           magnitudeProcessorId](const AmplitudeProcessor *processor,
+                                 const Record *record,
+                                 AmplitudeProcessor::AmplitudeCPtr result) {
             DataModel::AmplitudePtr amplitude;
             // create amplitude
             try {
-              amplitude = createAmplitude(
-                  dynamic_cast<const AmplitudeProcessor *>(proc), rec,
-                  boost::dynamic_pointer_cast<
-                      const AmplitudeProcessor::Amplitude>(res),
-                  boost::none, magnitudeType);
+              amplitude = createAmplitude(processor, record, result,
+                                          boost::none, magnitudeType);
 
               if (!amplitude) {
                 --detectionItem->numberOfRequiredAmplitudes;
@@ -1325,7 +1319,7 @@ bool Application::initAmplitudeProcessors(
             } catch (Exception &e) {
               --detectionItem->numberOfRequiredAmplitudes;
               SCDETECT_LOG_WARNING_PROCESSOR(
-                  proc, "Failed to create amplitude: %s", e.what());
+                  processor, "Failed to create amplitude: %s", e.what());
             }
 
             detectionItem->amplitudes.emplace_back(amplitude);
