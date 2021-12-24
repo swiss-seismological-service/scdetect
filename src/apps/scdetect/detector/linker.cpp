@@ -117,50 +117,46 @@ void Linker::feed(
     // create a new arrival from a *template arrival*
     auto newArrival{linkerProc.arrival};
 
-    const auto templateStartTime{linkerProc.proc->templateStartTime()};
-    if (templateStartTime) {
-      // XXX(damb): recompute the pickOffset; the template proc might have
-      // changed the underlying template waveform (due to resampling)
-      const auto currentPickOffset{linkerProc.arrival.pick.time -
-                                   *templateStartTime};
-      for (auto valueIt{matchResult->localMaxima.begin()};
-           valueIt != matchResult->localMaxima.end(); ++valueIt) {
-        const auto time{matchResult->timeWindow.startTime() + valueIt->lag +
-                        currentPickOffset};
-        newArrival.pick.time = time;
+    // XXX(damb): recompute the pickOffset; the template proc might have
+    // changed the underlying template waveform (due to resampling)
+    const auto currentPickOffset{linkerProc.arrival.pick.time -
+                                 linkerProc.proc->templateStartTime()};
+    for (auto valueIt{matchResult->localMaxima.begin()};
+         valueIt != matchResult->localMaxima.end(); ++valueIt) {
+      const auto time{matchResult->timeWindow.startTime() + valueIt->lag +
+                      currentPickOffset};
+      newArrival.pick.time = time;
 
-        linker::Association::TemplateResult templateResult{newArrival, valueIt,
-                                                           matchResult};
-        // filter/drop based on merging strategy
-        if (_mergingStrategy && _thresAssociation &&
-            !_mergingStrategy->operator()(
-                templateResult, *_thresAssociation,
-                linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
-#ifdef SCDETECT_DEBUG
-          SCDETECT_LOG_DEBUG_PROCESSOR(
-              proc,
-              "[%s] [%s - %s] Dropping result due to merging "
-              "strategy applied: time=%s, fit=%9f, lag=%10f",
-              newArrival.pick.waveformStreamId.c_str(),
-              matchResult->timeWindow.startTime().iso().c_str(),
-              matchResult->timeWindow.endTime().iso().c_str(),
-              time.iso().c_str(), valueIt->coefficient,
-              static_cast<double>(valueIt->lag));
-#endif
-          continue;
-        }
-
+      linker::Association::TemplateResult templateResult{newArrival, valueIt,
+                                                         matchResult};
+      // filter/drop based on merging strategy
+      if (_mergingStrategy && _thresAssociation &&
+          !_mergingStrategy->operator()(
+              templateResult, *_thresAssociation,
+              linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
 #ifdef SCDETECT_DEBUG
         SCDETECT_LOG_DEBUG_PROCESSOR(
             proc,
-            "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
+            "[%s] [%s - %s] Dropping result due to merging "
+            "strategy applied: time=%s, fit=%9f, lag=%10f",
             newArrival.pick.waveformStreamId.c_str(),
             matchResult->timeWindow.startTime().iso().c_str(),
             matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
             valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
-        process(proc, templateResult);
+        continue;
       }
+
+#ifdef SCDETECT_DEBUG
+      SCDETECT_LOG_DEBUG_PROCESSOR(
+          proc,
+          "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
+          newArrival.pick.waveformStreamId.c_str(),
+          matchResult->timeWindow.startTime().iso().c_str(),
+          matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+          valueIt->coefficient, static_cast<double>(valueIt->lag));
+#endif
+      process(proc, templateResult);
     }
   }
 }

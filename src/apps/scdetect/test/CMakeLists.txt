@@ -9,6 +9,7 @@ SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
   ../filter.cpp
   ../resamplerstore.cpp
+  ../template_waveform.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../waveform.cpp
@@ -59,6 +60,7 @@ set(SOURCES_integration
   ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
   ../templatefamily.cpp
+  ../template_waveform.cpp
   ../util/horizontal_components.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp

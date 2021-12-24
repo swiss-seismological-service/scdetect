@@ -214,7 +214,7 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   // template processor
   auto templateProc{util::make_unique<detector::TemplateWaveformProcessor>(
-      templateWfChunk, templateWfFilterId, wfStart, wfEnd, product())};
+      templateWfChunk, wfStart, wfEnd, templateWfFilterId)};
 
   templateProc->setId(product()->id().empty()
                           ? streamConfig.templateId

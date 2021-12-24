@@ -424,8 +424,8 @@ void Detector::prepareResult(const linker::Association &linkerResult,
       templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
                               Detector::Result::TemplateResult{
                                   templateResult.arrival, proc.sensorLocation,
-                                  *proc.processor->templateStartTime(),
-                                  *proc.processor->templateEndTime(),
+                                  proc.processor->templateStartTime(),
+                                  proc.processor->templateEndTime(),
                                   proc.templateWaveformReferenceTime});
       usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
       usedStas.emplace(proc.sensorLocation.stationId);

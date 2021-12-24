@@ -7,31 +7,35 @@
 #include <boost/algorithm/string/join.hpp>
 #include <cfenv>
 #include <cmath>
-#include <string>
 
 #include "../filter.h"
 #include "../log.h"
 #include "../util/math.h"
-#include "../util/memory.h"
-#include "../waveform.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace filter {
 
 template <typename TData>
-CrossCorrelation<TData>::CrossCorrelation() {}
-
-template <typename TData>
 CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &waveform)
-    : _initialized{true},
-      _templateWaveform{waveform},
-      _samplingFrequency{waveform->samplingFrequency()} {
-  setupFilter(*_samplingFrequency);
+    : _templateWaveform{TemplateWaveform{waveform}} {
+  setupFilter(waveform->samplingFrequency());
 }
 
 template <typename TData>
-CrossCorrelation<TData>::~CrossCorrelation() {}
+CrossCorrelation<TData>::CrossCorrelation(
+    const GenericRecordCPtr &waveform,
+    const boost::optional<Core::Time> &templateStartTime,
+    const boost::optional<Core::Time> &templateEndTime,
+    const boost::optional<std::string> &filter,
+    boost::optional<double> samplingFrequency)
+    : _templateWaveform{TemplateWaveform{waveform, templateStartTime,
+                                         templateEndTime, filter,
+                                         samplingFrequency}} {
+  if (samplingFrequency) {
+    setupFilter(*samplingFrequency);
+  }
+}
 
 template <typename TData>
 void CrossCorrelation<TData>::apply(size_t nData, TData *data) {
@@ -55,8 +59,9 @@ void CrossCorrelation<TData>::reset() {
   _sumData = 0;
 
   const double *samples_template_wf{
-      TypedArray<TData>::ConstCast(_templateWaveform->data())->typedData()};
-  const int n{_templateWaveform->data()->size()};
+      TypedArray<TData>::ConstCast(_templateWaveform.waveform().data())
+          ->typedData()};
+  const int n{_templateWaveform.waveform().data()->size()};
   _sumTemplateWaveform = 0;
   _sumSquaredTemplateWaveform = 0;
   for (int i = 0; i < n; ++i) {
@@ -80,36 +85,23 @@ void CrossCorrelation<TData>::setSamplingFrequency(double sampling_frequency) {
 }
 
 template <typename TData>
+const GenericRecord &CrossCorrelation<TData>::templateWaveform() const {
+  return _templateWaveform.waveform();
+}
+
+template <typename TData>
 double CrossCorrelation<TData>::samplingFrequency() const {
-  return _samplingFrequency.value_or(0);
+  return _templateWaveform.samplingFrequency();
 }
 
 template <typename TData>
-size_t CrossCorrelation<TData>::templateSize() const {
-  return _initialized ? _templateWaveform->sampleCount() : 0;
+Core::Time CrossCorrelation<TData>::templateStartTime() const {
+  return _templateWaveform.startTime();
 }
 
 template <typename TData>
-double CrossCorrelation<TData>::templateLength() const {
-  return _initialized ? _templateWaveform->timeWindow().length() : 0;
-}
-
-template <typename TData>
-boost::optional<const Core::Time> CrossCorrelation<TData>::templateStartTime()
-    const {
-  if (_initialized) {
-    return _templateWaveform->startTime();
-  }
-  return boost::none;
-}
-
-template <typename TData>
-boost::optional<const Core::Time> CrossCorrelation<TData>::templateEndTime()
-    const {
-  if (_initialized) {
-    return _templateWaveform->endTime();
-  }
-  return boost::none;
+Core::Time CrossCorrelation<TData>::templateEndTime() const {
+  return _templateWaveform.endTime();
 }
 
 template <typename TData>
@@ -170,7 +162,8 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
 
   const auto n{_buffer.capacity()};
   const TData *samplesTemplateWf{
-      TypedArray<TData>::ConstCast(_templateWaveform->data())->typedData()};
+      TypedArray<TData>::ConstCast(_templateWaveform.waveform().data())
+          ->typedData()};
   // cross-correlation loop
   for (size_t i = 0; i < nData; ++i) {
     const TData newSample{data[i]};
@@ -216,90 +209,14 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
 
 template <typename TData>
 void CrossCorrelation<TData>::setupFilter(double samplingFrequency) {
+  _initialized = false;
   if (samplingFrequency <= 0) {
     return;
   }
 
+  _templateWaveform.setSamplingFrequency(samplingFrequency);
   reset();
-}
-
-/* ------------------------------------------------------------------------ */
-template <typename TData>
-AdaptiveCrossCorrelation<TData>::AdaptiveCrossCorrelation(
-    const GenericRecordCPtr &waveform, const std::string filterId,
-    const Core::Time &templateStartTime, const Core::Time &templateEndTime,
-    double samplingFrequency)
-    : _wf{waveform},
-      _filterId{filterId},
-      _templateStartTime{templateStartTime},
-      _templateEndTime{templateEndTime} {
-  this->setSamplingFrequency(samplingFrequency);
-}
-
-template <typename TData>
-void AdaptiveCrossCorrelation<TData>::setupFilter(double samplingFrequency) {
-  this->_initialized = false;
-  if (samplingFrequency <= 0) {
-    return;
-  }
-
-  if (this->_samplingFrequency &&
-      this->_samplingFrequency == samplingFrequency) {
-    this->reset();
-    this->_initialized = true;
-  } else if (!this->_samplingFrequency ||
-             this->_samplingFrequency != samplingFrequency) {
-    this->_samplingFrequency = samplingFrequency;
-    createTemplateWaveform(*this->_samplingFrequency);
-    this->reset();
-    this->_initialized = true;
-  }
-}
-
-template <typename TData>
-void AdaptiveCrossCorrelation<TData>::createTemplateWaveform(
-    double targetFrequency) {
-  // XXX(damb): Assume, the data is demeaned, already.
-  auto wf{util::make_smart<GenericRecord>(*_wf)};
-
-  // resample
-  if (wf->samplingFrequency() != targetFrequency) {
-    if (!waveform::resample(*wf, targetFrequency)) {
-      throw BaseException{
-          Core::stringify("failed to resample template waveform "
-                          "(samplingFrequency=%f): targetFrequency=%f",
-                          _wf->samplingFrequency(), targetFrequency)};
-    }
-    SCDETECT_LOG_DEBUG(
-        "Resampled template waveform (samplingFrequency=%f): "
-        "targetFrequency=%f",
-        _wf->samplingFrequency(), targetFrequency);
-  }
-  // filter
-  if (!_filterId.empty()) {
-    if (!waveform::filter(*wf, _filterId)) {
-      throw BaseException{
-          Core::stringify("failed to filter template waveform: filter=%s,"
-                          "start=%s, end=%s",
-                          _filterId.c_str(), wf->startTime().iso().c_str(),
-                          wf->endTime().iso().c_str())};
-    }
-    SCDETECT_LOG_DEBUG(
-        "Filtered template waveform (samplingFrequency=%f): "
-        "filter_id=%s",
-        wf->samplingFrequency(), _filterId.c_str());
-  }
-  // trim
-  Core::TimeWindow tw{_templateStartTime, _templateEndTime};
-  if (!waveform::trim(*wf, tw)) {
-    throw BaseException{Core::stringify(
-        "failed to trim template waveform (wfStart=%s, wfEnd=%s): "
-        "start=%s, end=%s",
-        wf->startTime().iso().c_str(), wf->endTime().iso().c_str(),
-        _templateStartTime.iso().c_str(), _templateEndTime.iso().c_str())};
-  }
-
-  this->_templateWaveform = wf;
+  _initialized = true;
 }
 
 }  // namespace filter

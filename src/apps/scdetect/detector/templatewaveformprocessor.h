@@ -39,6 +39,7 @@ struct LocalMaxima {
 }  // namespace detail
 
 // Template waveform processor implementation
+//
 // - implements resampling and filtering
 // - applies the cross-correlation algorithm
 class TemplateWaveformProcessor : public processing::WaveformProcessor {
@@ -46,10 +47,9 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   // Creates a `TemplateWaveformProcessor`. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
   TemplateWaveformProcessor(const GenericRecordCPtr &waveform,
-                            const std::string filterId,
                             const Core::Time &templateStartTime,
                             const Core::Time &templateEndTime,
-                            const Processor *p = nullptr);
+                            const std::string &filter);
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Core::BaseObject {
@@ -81,10 +81,13 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   void setTargetSamplingFrequency(double f);
   boost::optional<double> targetSamplingFrequency() const;
 
+  // Returns the underlying template waveform
+  const GenericRecord &templateWaveform() const;
+
   // Returns the template waveform starttime
-  boost::optional<const Core::Time> templateStartTime() const;
+  Core::Time templateStartTime() const;
   // Returns the template waveform endtime
-  boost::optional<const Core::Time> templateEndTime() const;
+  Core::Time templateEndTime() const;
   // Returns the template waveform duration
   Core::TimeSpan templateDuration() const;
 
@@ -109,7 +112,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   // The optional target sampling frequency (used for on-the-fly resampling)
   boost::optional<double> _targetSamplingFrequency;
   // The in-place cross-correlation filter
-  filter::AdaptiveCrossCorrelation<double> _crossCorrelation;
+  filter::CrossCorrelation<double> _crossCorrelation;
 };
 
 }  // namespace detector

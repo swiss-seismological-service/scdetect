@@ -41,6 +41,7 @@ set(
     processing/waveform_operator.cpp
     processing/waveform_processor.cpp
     resamplerstore.cpp
+    template_waveform.cpp
     templatefamily.cpp
     util/horizontal_components.cpp
     util/util.cpp
