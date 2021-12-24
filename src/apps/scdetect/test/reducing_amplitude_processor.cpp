@@ -1,4 +1,3 @@
-#include <memory>
 #define SEISCOMP_TEST_MODULE test_reducingamplitudeprocessor
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
@@ -21,6 +20,7 @@
 #include <boost/variant2/variant.hpp>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>

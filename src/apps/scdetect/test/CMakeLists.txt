@@ -1,7 +1,7 @@
 set(TESTS
   filter_crosscorrelation.cpp
   integration.cpp
-  reducingamplitudeprocessor.cpp
+  reducing_amplitude_processor.cpp
   util_math_cma.cpp
 )
 
@@ -67,7 +67,7 @@ set(SOURCES_integration
   integration_utils.cpp
 )
 
-set(SOURCES_reducingamplitudeprocessor
+set(SOURCES_reducing_amplitude_processor
   ../amplitudeprocessor.cpp
   ../exception.cpp
   ../processing/detail/gap_interpolate.cpp
