@@ -306,7 +306,7 @@ Samples dataset{
      /*validatorCallback=*/
      [](const AmplitudeProcessor *proc, const Record *record,
         AmplitudeProcessor::AmplitudeCPtr amplitude) {
-       BOOST_TEST_CHECK(amplitude->value.value == 9.0);
+       BOOST_TEST_CHECK(amplitude->value.value == 18.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
            Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T").iso());
@@ -328,7 +328,7 @@ Samples dataset{
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
      /*filter=*/
-     ds::Sample::Filter{"self()", Core::TimeSpan{9.0}}},
+     ds::Sample::Filter{"self()*2", Core::TimeSpan{9.0}}},
     {/*description=*/
      "single stream, single record (too short, constant sample values)",
      /*validatorCallback=*/
@@ -427,7 +427,7 @@ Samples dataset{
      /*validatorCallback=*/
      [](const AmplitudeProcessor *proc, const Record *record,
         AmplitudeProcessor::AmplitudeCPtr amplitude) {
-       BOOST_TEST_CHECK(amplitude->value.value == 18.0);
+       BOOST_TEST_CHECK(amplitude->value.value == 36.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
            Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T").iso());
@@ -465,7 +465,7 @@ Samples dataset{
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
-     /*filter=*/ds::Sample::Filter{"self()", Core::TimeSpan{9.0}}},
+     /*filter=*/ds::Sample::Filter{"self()*2", Core::TimeSpan{9.0}}},
     {/*description=*/"multi streams, multi records (equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
