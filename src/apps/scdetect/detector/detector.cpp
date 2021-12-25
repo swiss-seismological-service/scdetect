@@ -93,7 +93,7 @@ boost::optional<Core::TimeSpan> Detector::maxLatency() const {
   return _maxLatency;
 }
 
-size_t Detector::getProcessorCount() const { return _processors.size(); }
+size_t Detector::processorCount() const { return _processors.size(); }
 
 void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
                    const std::string &waveformStreamId, const Arrival &arrival,

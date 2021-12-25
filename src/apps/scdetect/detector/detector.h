@@ -116,7 +116,7 @@ class Detector : public detect::processing::Processor {
   // Returns the maximum allowed data latency configured
   boost::optional<Core::TimeSpan> maxLatency() const;
   // Returns the number of registered template processors
-  size_t getProcessorCount() const;
+  size_t processorCount() const;
 
   // Register the template waveform processor `proc`. Records are identified by
   // the waveform stream identifier `waveformStreamId`. `proc` is registered
