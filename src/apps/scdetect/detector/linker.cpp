@@ -14,8 +14,6 @@ namespace detector {
 Linker::Linker(const Core::TimeSpan &onHold, double arrivalOffsetThres)
     : _thresArrivalOffset{arrivalOffsetThres}, _onHold{onHold} {}
 
-Linker::~Linker() {}
-
 void Linker::setThresArrivalOffset(
     const boost::optional<Core::TimeSpan> &thres) {
   _thresArrivalOffset = thres;

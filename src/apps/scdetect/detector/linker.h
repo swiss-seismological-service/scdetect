@@ -25,7 +25,6 @@ class Linker {
  public:
   Linker(const Core::TimeSpan &onHold = 0.0,
          double arrivalOffsetThres = 2.0e-6);
-  virtual ~Linker();
 
   enum class Status { kWaitingForData, kTerminated };
 
