@@ -16,6 +16,7 @@
 #include "../processing/waveform_processor.h"
 #include "detector.h"
 #include "detectorbuilder.h"
+#include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -62,6 +63,12 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
   void terminate() override;
 
   const config::PublishConfig &publishConfig() const;
+
+  // Returns the underlying template waveform processor identified by
+  // `processorId`
+  //
+  // - returns a `nullptr` if no processor is identified by `processorId`
+  const TemplateWaveformProcessor *processor(const std::string &processorId);
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;

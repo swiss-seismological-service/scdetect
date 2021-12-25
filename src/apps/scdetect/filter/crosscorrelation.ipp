@@ -24,16 +24,10 @@ CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &waveform)
 
 template <typename TData>
 CrossCorrelation<TData>::CrossCorrelation(
-    const GenericRecordCPtr &waveform,
-    const boost::optional<Core::Time> &templateStartTime,
-    const boost::optional<Core::Time> &templateEndTime,
-    const boost::optional<std::string> &filter,
-    boost::optional<double> samplingFrequency)
-    : _templateWaveform{TemplateWaveform{waveform, templateStartTime,
-                                         templateEndTime, filter,
-                                         samplingFrequency}} {
-  if (samplingFrequency) {
-    setupFilter(*samplingFrequency);
+    const TemplateWaveform &templateWaveform)
+    : _templateWaveform{templateWaveform} {
+  if (_templateWaveform.processingConfig().samplingFrequency) {
+    setupFilter(*_templateWaveform.processingConfig().samplingFrequency);
   }
 }
 
@@ -85,23 +79,13 @@ void CrossCorrelation<TData>::setSamplingFrequency(double sampling_frequency) {
 }
 
 template <typename TData>
-const GenericRecord &CrossCorrelation<TData>::templateWaveform() const {
-  return _templateWaveform.waveform();
+const TemplateWaveform &CrossCorrelation<TData>::templateWaveform() const {
+  return _templateWaveform;
 }
 
 template <typename TData>
 double CrossCorrelation<TData>::samplingFrequency() const {
   return _templateWaveform.samplingFrequency();
-}
-
-template <typename TData>
-Core::Time CrossCorrelation<TData>::templateStartTime() const {
-  return _templateWaveform.startTime();
-}
-
-template <typename TData>
-Core::Time CrossCorrelation<TData>::templateEndTime() const {
-  return _templateWaveform.endTime();
 }
 
 template <typename TData>

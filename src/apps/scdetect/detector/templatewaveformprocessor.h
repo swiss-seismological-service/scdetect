@@ -14,6 +14,7 @@
 
 #include "../filter/crosscorrelation.h"
 #include "../processing/waveform_processor.h"
+#include "../template_waveform.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -46,10 +47,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
  public:
   // Creates a `TemplateWaveformProcessor`. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
-  TemplateWaveformProcessor(const GenericRecordCPtr &waveform,
-                            const Core::Time &templateStartTime,
-                            const Core::Time &templateEndTime,
-                            const std::string &filter);
+  explicit TemplateWaveformProcessor(const TemplateWaveform &templateWaveform);
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Core::BaseObject {
@@ -82,14 +80,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   boost::optional<double> targetSamplingFrequency() const;
 
   // Returns the underlying template waveform
-  const GenericRecord &templateWaveform() const;
-
-  // Returns the template waveform starttime
-  Core::Time templateStartTime() const;
-  // Returns the template waveform endtime
-  Core::Time templateEndTime() const;
-  // Returns the template waveform duration
-  Core::TimeSpan templateDuration() const;
+  const TemplateWaveform &templateWaveform() const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;

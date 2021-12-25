@@ -119,8 +119,9 @@ void Linker::feed(
 
     // XXX(damb): recompute the pickOffset; the template proc might have
     // changed the underlying template waveform (due to resampling)
-    const auto currentPickOffset{linkerProc.arrival.pick.time -
-                                 linkerProc.proc->templateStartTime()};
+    const auto currentPickOffset{
+        linkerProc.arrival.pick.time -
+        linkerProc.proc->templateWaveform().startTime()};
     for (auto valueIt{matchResult->localMaxima.begin()};
          valueIt != matchResult->localMaxima.end(); ++valueIt) {
       const auto time{matchResult->timeWindow.startTime() + valueIt->lag +

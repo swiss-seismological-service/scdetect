@@ -28,18 +28,8 @@ class CrossCorrelation {
   //
   // - It is a bug if `waveform` is not a valid pointer.
   explicit CrossCorrelation(const GenericRecordCPtr &waveform);
-
-  // Creates an `CrossCorrelation` filter from the *demeaned* raw `waveform`
-  // chunk. The final waveform used for template matching is created on-the-fly
-  // based on `filterId`, `templateStartTime`, `templateEndTime` and the
-  // configured target `samplingFrequency`.
-  //
-  // - It is a bug if `waveform` is not a valid pointer.
-  CrossCorrelation(const GenericRecordCPtr &waveform,
-                   const boost::optional<Core::Time> &templateStartTime,
-                   const boost::optional<Core::Time> &templateEndTime,
-                   const boost::optional<std::string> &filter,
-                   boost::optional<double> samplingFrequency = boost::none);
+  // Creates an `CrossCorrelation` filter from `templateWaveform`
+  explicit CrossCorrelation(const TemplateWaveform &templateWaveform);
 
   virtual ~CrossCorrelation() = default;
 
@@ -59,15 +49,7 @@ class CrossCorrelation {
   // Returns the configured sampling frequency
   double samplingFrequency() const;
 
-  // Returns the template waveform
-  const GenericRecord &templateWaveform() const;
-
-  // Returns the template waveform starttime which might be different from the
-  // starttime configured (due to both sampling rate accuracy and rounding)
-  Core::Time templateStartTime() const;
-  // Returns the template waveform endtime which might be different from the
-  // starttime configured (due to both sampling rate accuracy and rounding)
-  Core::Time templateEndTime() const;
+  const TemplateWaveform &templateWaveform() const;
 
  protected:
   // Compute the actual cross-correlation

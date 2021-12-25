@@ -15,6 +15,7 @@
 #include "../eventstore.h"
 #include "../log.h"
 #include "../settings.h"
+#include "../template_waveform.h"
 #include "../util/memory.h"
 #include "../util/util.h"
 #include "../util/waveform_stream_id.h"
@@ -151,75 +152,75 @@ DetectorBuilder &DetectorBuilder::setStream(
               util::to_string(util::WaveformStreamID{pickWaveformId}));
   SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
-  auto wfStart{pick->time().value() +
-               Core::TimeSpan{streamConfig.templateConfig.wfStart}};
-  auto wfEnd{pick->time().value() +
-             Core::TimeSpan{streamConfig.templateConfig.wfEnd}};
+  auto templateWaveformStartTime{
+      pick->time().value() +
+      Core::TimeSpan{streamConfig.templateConfig.wfStart}};
+  auto templateWaveformEndTime{
+      pick->time().value() + Core::TimeSpan{streamConfig.templateConfig.wfEnd}};
 
   // load stream metadata from inventory
   util::WaveformStreamID wfStreamId{streamId};
-  auto stream{Client::Inventory::Instance()->getStream(
+  auto *stream{Client::Inventory::Instance()->getStream(
       wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
-      wfStreamId.chaCode(), wfStart)};
+      wfStreamId.chaCode(), templateWaveformStartTime)};
 
   if (!stream) {
-    msg.setText("failed to load stream from inventory: start=" + wfStart.iso() +
-                ", end=" + wfEnd.iso());
+    msg.setText("failed to load stream from inventory: start=" +
+                templateWaveformStartTime.iso() +
+                ", end=" + templateWaveformEndTime.iso());
     throw builder::NoStream{logging::to_string(msg)};
   }
 
-  msg.setText("loaded stream from inventory for epoch: start=" + wfStart.iso() +
-              ", end=" + wfEnd.iso());
+  msg.setText("loaded stream from inventory for epoch: start=" +
+              templateWaveformStartTime.iso() +
+              ", end=" + templateWaveformEndTime.iso());
   SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
+  const auto templateWaveformProcessorId{
+      product()->id().empty() ? streamConfig.templateId
+                              : product()->id() + settings::kProcessorIdSep +
+                                    streamConfig.templateId};
   msg.setText("creating template waveform processor with id: " +
-              streamConfig.templateId);
+              templateWaveformProcessorId);
   SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
   product()->_streamStates[streamId] = DetectorWaveformProcessor::StreamState{};
 
   // template related filter configuration (used for template waveform
   // processing)
+  TemplateWaveform::ProcessingConfig processingConfig;
+  processingConfig.templateStartTime = templateWaveformStartTime;
+  processingConfig.templateEndTime = templateWaveformEndTime;
+  processingConfig.safetyMargin = settings::kTemplateWaveformResampleMargin;
+  processingConfig.detrend = false;
+  processingConfig.demean = true;
+
   auto pickFilterId{pick->filterID()};
   auto templateWfFilterId{
       streamConfig.templateConfig.filter.value_or(pickFilterId)};
-  util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
-
-  // prepare a demeaned waveform chunk (used for template waveform processor
-  // configuration)
-  auto margin{settings::kTemplateWaveformResampleMargin};
   if (!templateWfFilterId.empty()) {
-    margin = std::max(margin, streamConfig.initTime);
+    util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
+    processingConfig.filter = templateWfFilterId;
+    processingConfig.initTime = Core::TimeSpan{streamConfig.initTime};
   }
-  Core::TimeSpan templateWfChunkMargin{margin};
-  Core::Time templateWfChunkStartTime{wfStart - templateWfChunkMargin};
-  Core::Time templateWfChunkEndTime{wfEnd + templateWfChunkMargin};
 
-  WaveformHandlerIface::ProcessingConfig templateWfConfig;
-  templateWfConfig.demean = true;
-
-  GenericRecordCPtr templateWfChunk;
+  // template waveform processor
+  std::unique_ptr<detector::TemplateWaveformProcessor>
+      templateWaveformProcessor;
   try {
-    templateWfChunk = waveformHandler->get(
-        templateWfStreamId.netCode(), templateWfStreamId.staCode(),
-        templateWfStreamId.locCode(), templateWfStreamId.chaCode(),
-        templateWfChunkStartTime, templateWfChunkEndTime, templateWfConfig);
+    templateWaveformProcessor =
+        util::make_unique<detector::TemplateWaveformProcessor>(
+            TemplateWaveform::load(
+                waveformHandler, templateWfStreamId.netCode(),
+                templateWfStreamId.staCode(), templateWfStreamId.locCode(),
+                templateWfStreamId.chaCode(), processingConfig));
+
   } catch (WaveformHandler::NoData &e) {
     msg.setText("failed to load template waveform: " + std::string{e.what()});
     throw builder::NoWaveformData{logging::to_string(msg)};
-  } catch (std::exception &e) {
-    msg.setText("failed to load template waveform: " + std::string{e.what()});
-    throw builder::BaseException{logging::to_string(msg)};
   }
 
-  // template processor
-  auto templateProc{util::make_unique<detector::TemplateWaveformProcessor>(
-      templateWfChunk, wfStart, wfEnd, templateWfFilterId)};
-
-  templateProc->setId(product()->id().empty()
-                          ? streamConfig.templateId
-                          : product()->id() + settings::kProcessorIdSep +
-                                streamConfig.templateId);
+  templateWaveformProcessor->setId(templateWaveformProcessorId);
 
   std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
   // configure template related filter (used during real-time stream
@@ -227,8 +228,8 @@ DetectorBuilder &DetectorBuilder::setStream(
   if (!rtFilterId.empty()) {
     util::replaceEscapedXMLFilterIdChars(rtFilterId);
     try {
-      templateProc->setFilter(processing::createFilter(rtFilterId),
-                              streamConfig.initTime);
+      templateWaveformProcessor->setFilter(processing::createFilter(rtFilterId),
+                                           streamConfig.initTime);
     } catch (processing::WaveformProcessor::BaseException &e) {
       msg.setText(e.what());
       throw builder::BaseException{logging::to_string(msg)};
@@ -236,7 +237,7 @@ DetectorBuilder &DetectorBuilder::setStream(
   }
 
   if (streamConfig.targetSamplingFrequency) {
-    templateProc->setTargetSamplingFrequency(
+    templateWaveformProcessor->setTargetSamplingFrequency(
         *streamConfig.targetSamplingFrequency);
   }
 
@@ -245,10 +246,10 @@ DetectorBuilder &DetectorBuilder::setStream(
     text += " (template_filter=\"" + templateWfFilterId + "\")";
   }
   msg.setText(text);
-  SCDETECT_LOG_DEBUG_PROCESSOR(templateProc, "%s",
+  SCDETECT_LOG_DEBUG_PROCESSOR(templateWaveformProcessor, "%s",
                                logging::to_string(msg).c_str());
 
-  TemplateProcessorConfig c{std::move(templateProc),
+  TemplateProcessorConfig c{std::move(templateWaveformProcessor),
                             streamConfig.mergingThreshold,
                             {stream->sensorLocation(), pick, arrival}};
 
