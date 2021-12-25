@@ -190,6 +190,7 @@ class Detector : public detect::processing::Processor {
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
+    ~ProcessorState() = default;
 
     // The sensor location w.r.t. the template waveform `processor`
     SensorLocation sensorLocation;
