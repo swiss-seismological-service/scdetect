@@ -90,7 +90,7 @@ class WaveformHandler : public WaveformHandlerIface {
     NoData();
   };
 
-  WaveformHandler(const std::string &recordStreamUrl);
+  explicit WaveformHandler(const std::string &recordStreamUrl);
 
   GenericRecordCPtr get(
       const DataModel::WaveformStreamID &id, const Core::TimeWindow &tw,
@@ -144,7 +144,7 @@ class Cached : public WaveformHandlerIface {
       const WaveformHandlerIface::ProcessingConfig &config) override;
 
  protected:
-  Cached(WaveformHandlerIfacePtr waveformHandler, bool raw = false);
+  explicit Cached(WaveformHandlerIfacePtr waveformHandler, bool raw = false);
 
   virtual void makeCacheKey(
       const std::string &netCode, const std::string &staCode,
@@ -188,7 +188,8 @@ class FileSystemCache : public Cached {
 DEFINE_SMARTPOINTER(InMemoryCache);
 class InMemoryCache : public Cached {
  public:
-  InMemoryCache(WaveformHandlerIfacePtr waveformHandler, bool raw = false);
+  explicit InMemoryCache(WaveformHandlerIfacePtr waveformHandler,
+                         bool raw = false);
 
  protected:
   GenericRecordCPtr get(const std::string &key) override;
