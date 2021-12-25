@@ -67,8 +67,6 @@ Application::Application(int argc, char **argv)
   setPrimaryMessagingGroup("LOCATION");
 }
 
-Application::~Application() {}
-
 Application::BaseException::BaseException()
     : Exception{"base application exception"} {}
 

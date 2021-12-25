@@ -53,8 +53,6 @@ class WaveformHandlerIface : public Core::BaseObject {
     bool demean{true};
   };
 
-  virtual ~WaveformHandlerIface() {}
-
   virtual GenericRecordCPtr get(const DataModel::WaveformStreamID &id,
                                 const Core::TimeWindow &tw,
                                 const ProcessingConfig &config) = 0;
