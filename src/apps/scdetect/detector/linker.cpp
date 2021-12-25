@@ -11,7 +11,8 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-Linker::Linker(const Core::TimeSpan &onHold, double arrivalOffsetThres)
+Linker::Linker(const Core::TimeSpan &onHold,
+               const Core::TimeSpan &arrivalOffsetThres)
     : _thresArrivalOffset{arrivalOffsetThres}, _onHold{onHold} {}
 
 void Linker::setThresArrivalOffset(
