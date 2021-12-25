@@ -31,7 +31,7 @@ namespace detector {
 
 class Detector : public detect::processing::Processor {
  public:
-  Detector(const DataModel::OriginCPtr &origin);
+  explicit Detector(const DataModel::OriginCPtr &origin);
 
   class BaseException : public Processor::BaseException {
    public:
