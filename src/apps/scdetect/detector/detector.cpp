@@ -31,8 +31,6 @@ Detector::Detector(const DataModel::OriginCPtr &origin)
   });
 }
 
-Detector::~Detector() {}
-
 Detector::BaseException::BaseException()
     : Processor::BaseException{"base detector exception"} {}
 

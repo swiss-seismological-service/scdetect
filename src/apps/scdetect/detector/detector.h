@@ -32,7 +32,6 @@ namespace detector {
 class Detector : public detect::processing::Processor {
  public:
   Detector(const DataModel::OriginCPtr &origin);
-  virtual ~Detector();
 
   class BaseException : public Processor::BaseException {
    public:
