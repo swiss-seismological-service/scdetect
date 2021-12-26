@@ -159,6 +159,7 @@ class Detector : public detect::processing::Processor {
   // Emit the detection result
   void emitResult(const Result &result);
 
+ private:
   // Callback storing results from `TemplateWaveformProcessor`
   void storeTemplateResult(
       const TemplateWaveformProcessor *processor, const Record *record,
@@ -167,7 +168,6 @@ class Detector : public detect::processing::Processor {
   // Callback storing results from the linker
   void storeLinkerResult(const linker::Association &linkerResult);
 
- private:
   using ProcessorId = std::string;
   struct TemplateResult {
     linker::Association::TemplateResult result;
