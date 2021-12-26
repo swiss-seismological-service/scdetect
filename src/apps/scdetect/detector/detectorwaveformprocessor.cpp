@@ -61,7 +61,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
                                         const Record *record,
                                         const DoubleArray &filteredData) {
   try {
-    _detector.process(record);
+    _detector.feed(record);
   } catch (detector::Detector::ProcessingError &e) {
     SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
                                    record->streamID().c_str(), e.what());

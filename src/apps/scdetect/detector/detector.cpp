@@ -153,7 +153,7 @@ void Detector::remove(const std::string &waveformStreamId) {
   }
 }
 
-void Detector::process(const Record *record) {
+void Detector::feed(const Record *record) {
   if (status() == Status::kTerminated) {
     throw BaseException{"error while processing: status=" +
                         std::to_string(util::asInteger(Status::kTerminated))};
@@ -165,9 +165,10 @@ void Detector::process(const Record *record) {
       return;
     }
 
-    // feed data to template processors
-    if (!feed(record)) {
-      throw ProcessingError{"error while feeding data to template processors"};
+    // process data by means of underlying template processors
+    if (!process(record)) {
+      throw ProcessingError{
+          "error while while processing data with template processors"};
     }
 
     // XXX(damb): A side-note on trigger facilities when it comes to the
@@ -351,7 +352,7 @@ bool Detector::hasAcceptableLatency(const Record *record) {
   return true;
 }
 
-bool Detector::feed(const Record *record) {
+bool Detector::process(const Record *record) {
   auto range{_processorIdx.equal_range(record->streamID())};
   for (auto rit{range.first}; rit != range.second; ++rit) {
     const auto &procId{rit->second};

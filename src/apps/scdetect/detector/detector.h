@@ -129,7 +129,8 @@ class Detector : public detect::processing::Processor {
   // Removes the processors processing streams identified by `waveformStreamId`
   void remove(const std::string &waveformStreamId);
 
-  void process(const Record *record);
+  // Feeds `record` to the detector
+  void feed(const Record *record);
   // Reset the detector
   void reset();
   // Terminates the detector
@@ -144,8 +145,8 @@ class Detector : public detect::processing::Processor {
   // Returns `true` if `record` has an acceptable latency, else `false`
   bool hasAcceptableLatency(const Record *record);
 
-  // Feed data to template processors
-  bool feed(const Record *record);
+  // Process data with underlying template processors
+  bool process(const Record *record);
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;
