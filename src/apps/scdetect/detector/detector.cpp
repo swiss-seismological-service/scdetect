@@ -344,14 +344,6 @@ void Detector::setResultCallback(const PublishResultCallback &callback) {
   _resultCallback = callback;
 }
 
-bool Detector::hasAcceptableLatency(const Record *record) {
-  if (_maxLatency) {
-    return record->endTime() > Core::Time::GMT() - *_maxLatency;
-  }
-
-  return true;
-}
-
 bool Detector::process(const Record *record) {
   auto range{_processorIdx.equal_range(record->streamID())};
   for (auto rit{range.first}; rit != range.second; ++rit) {
@@ -381,6 +373,14 @@ bool Detector::process(const Record *record) {
     if (procState.processor->finished()) {
       return false;
     }
+  }
+
+  return true;
+}
+
+bool Detector::hasAcceptableLatency(const Record *record) {
+  if (_maxLatency) {
+    return record->endTime() > Core::Time::GMT() - *_maxLatency;
   }
 
   return true;
@@ -456,6 +456,12 @@ void Detector::prepareResult(const linker::Association &linkerResult,
   result.numStationsAssociated = associatedStations.size();
 }
 
+void Detector::emitResult(const Detector::Result &result) {
+  if (_resultCallback) {
+    _resultCallback.value()(result);
+  }
+}
+
 void Detector::resetProcessing() {
   _currentResult = boost::none;
   // enable processors
@@ -477,12 +483,6 @@ void Detector::resetProcessors() {
                   p.second.processor->reset();
                   p.second.dataTimeWindowFed = Core::TimeWindow{};
                 });
-}
-
-void Detector::emitResult(const Detector::Result &result) {
-  if (_resultCallback) {
-    _resultCallback.value()(result);
-  }
 }
 
 void Detector::storeTemplateResult(

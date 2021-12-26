@@ -142,22 +142,23 @@ class Detector : public detect::processing::Processor {
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
+  // Process data with underlying template processors
+  bool process(const Record *record);
   // Returns `true` if `record` has an acceptable latency, else `false`
   bool hasAcceptableLatency(const Record *record);
 
-  // Process data with underlying template processors
-  bool process(const Record *record);
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;
+  // Emit the detection result
+  void emitResult(const Result &result);
+
   // Reset the processor's processing facilities
   void resetProcessing();
   // Reset the trigger
   void resetTrigger();
   // Reset the currently enabled processors
   void resetProcessors();
-  // Emit the detection result
-  void emitResult(const Result &result);
 
  private:
   // Callback storing results from `TemplateWaveformProcessor`
