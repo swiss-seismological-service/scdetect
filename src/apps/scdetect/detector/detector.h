@@ -147,6 +147,14 @@ class Detector : public detect::processing::Processor {
   // Returns `true` if `record` has an acceptable latency, else `false`
   bool hasAcceptableLatency(const Record *record);
 
+  void processResultQueue();
+
+  void processLinkerResult(const linker::Association &result);
+
+  void disableProcessorsNotContributing(const linker::Association &result);
+
+  std::string triggerProcessorId(const linker::Association &result);
+
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;

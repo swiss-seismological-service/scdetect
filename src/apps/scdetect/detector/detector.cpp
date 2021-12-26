@@ -159,140 +159,38 @@ void Detector::feed(const Record *record) {
                         std::to_string(util::asInteger(Status::kTerminated))};
   }
 
-  if (!_processors.empty()) {
-    if (!hasAcceptableLatency(record)) {
-      // nothing to do
-      return;
+  if (!hasAcceptableLatency(record)) {
+    // nothing to do
+    return;
+  }
+
+  // process data by means of underlying template processors
+  if (!process(record)) {
+    throw ProcessingError{
+        "error while while processing data with template processors"};
+  }
+
+  processResultQueue();
+
+  // overall processed endtime
+  Core::TimeWindow processed;
+  for (const auto &procPair : _processors) {
+    const auto procProcessed{procPair.second.processor->processed()};
+    if (!procProcessed) {
+      processed.setLength(0);
+      break;
     }
 
-    // process data by means of underlying template processors
-    if (!process(record)) {
-      throw ProcessingError{
-          "error while while processing data with template processors"};
+    if (_processed && _processed.endTime() < procProcessed.endTime()) {
+      processed = processed | procProcessed;
+    } else {
+      processed = procProcessed;
     }
+  }
+  _processed = processed;
 
-    // XXX(damb): A side-note on trigger facilities when it comes to the
-    // linker:
-    // - The linker processes only those template results which are fed to the
-    // linker i.e. the linker is not aware of the the fact whether a template
-    // waveform processor is enabled or disabled, respectively.
-    // - Thus, the detector processor can force the linker into a *triggered
-    // state* by only feeding data to those processors which are part of the
-    // triggering event.
-
-    // process linker results
-    while (!_resultQueue.empty()) {
-      const auto &result{_resultQueue.front()};
-
-      bool updated{false};
-      if (result.fit > _thresTriggerOn.value_or(-1)) {
-        if (!_currentResult ||
-            (triggered() && result.fit > _currentResult.value().fit &&
-             result.processorCount() >=
-                 _currentResult.value().processorCount())) {
-          _currentResult = result;
-
-          // determine the processor with the first arrival
-          const auto sorted{sortByArrivalTime(result)};
-          _triggerProcId = sorted.at(0).processorId;
-
-          updated = true;
-        }
-      }
-
-      bool withTrigger{_triggerProcId &&
-                       _processors.find(*_triggerProcId) != _processors.end() &&
-                       _triggerDuration &&
-                       *_triggerDuration > Core::TimeSpan{0.0}};
-
-      // enable trigger
-      if (withTrigger) {
-        const auto &endtime{_processors.at(_triggerProcId.value())
-                                .processor->processed()
-                                .endTime()};
-
-        if (!triggered() &&
-            _currentResult.value().fit >= _thresTriggerOn.value_or(-1)) {
-          _triggerEnd = endtime + *_triggerDuration;
-          SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
-                                       result.debugString().c_str());
-
-          // disable those processors not contributing to the triggering event
-          std::vector<std::string> contributing;
-          std::transform(
-              std::begin(result.results), std::end(result.results),
-              std::back_inserter(contributing),
-              [](const linker::Association::TemplateResults::value_type &p) {
-                return p.first;
-              });
-          std::for_each(std::begin(_processors), std::end(_processors),
-                        [](ProcessorStates::value_type &p) {
-                          p.second.processor->disable();
-                        });
-          std::for_each(std::begin(contributing), std::end(contributing),
-                        [this](const std::string &proc_id) {
-                          _processors.at(proc_id).processor->enable();
-                        });
-
-        } else if (triggered() && updated) {
-          SCDETECT_LOG_DEBUG_PROCESSOR(
-              this, "Detector result (triggered, updating) %s",
-              result.debugString().c_str());
-        }
-      } else {
-        SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result %s",
-                                     result.debugString().c_str());
-      }
-
-      if (triggered()) {
-        if (!updated && result.fit <= _currentResult.value().fit &&
-            result.fit >= _thresTriggerOff.value_or(1)) {
-          SCDETECT_LOG_DEBUG_PROCESSOR(
-              this, "Detector result (triggered, dropped) %s",
-              result.debugString().c_str());
-        }
-
-        const auto &endtime{
-            _processors.at(*_triggerProcId).processor->processed().endTime()};
-        // disable trigger if required
-        if (endtime > *_triggerEnd ||
-            result.fit < _thresTriggerOff.value_or(1) ||
-            (util::almostEqual(_currentResult.value().fit, 1.0, 0.000001) &&
-             _currentResult.value().processorCount() == getProcessorCount())) {
-          resetTrigger();
-        }
-      }
-
-      // emit detection
-      if (!triggered()) {
-        Result prepared;
-        prepareResult(*_currentResult, prepared);
-        emitResult(prepared);
-      }
-
-      _resultQueue.pop_front();
-    }
-
-    // overall processed endtime
-    Core::TimeWindow processed;
-    for (const auto &procPair : _processors) {
-      const auto procProcessed{procPair.second.processor->processed()};
-      if (!procProcessed) {
-        processed.setLength(0);
-        break;
-      } else {
-        if (_processed && _processed.endTime() < procProcessed.endTime()) {
-          processed = processed | procProcessed;
-        } else {
-          processed = procProcessed;
-        }
-      }
-    }
-    _processed = processed;
-
-    if (!triggered()) {
-      resetProcessing();
-    }
+  if (!triggered()) {
+    resetProcessing();
   }
 }
 
@@ -384,6 +282,109 @@ bool Detector::hasAcceptableLatency(const Record *record) {
   }
 
   return true;
+}
+
+void Detector::processResultQueue() {
+  while (!_resultQueue.empty()) {
+    processLinkerResult(_resultQueue.front());
+    _resultQueue.pop_front();
+  }
+}
+
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+void Detector::processLinkerResult(const linker::Association &result) {
+  const auto triggerOnThreshold{_thresTriggerOn.value_or(-1)};
+  const auto triggerOffThreshold{_thresTriggerOff.value_or(1)};
+
+  if (result.fit > triggerOnThreshold) {
+    if (!_currentResult) {
+      _currentResult = result;
+
+      // set trigger duration
+      if (_triggerDuration && *_triggerDuration > Core::TimeSpan{0.0}) {
+        SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
+                                     result.debugString().c_str());
+        _triggerProcId = triggerProcessorId(result);
+        const auto &endtime{
+            _processors.at(*_triggerProcId).processor->processed().endTime()};
+        _triggerEnd = endtime + *_triggerDuration;
+        // XXX(damb): A side-note on trigger facilities when it comes to the
+        // linker:
+        // - The linker processes only those template results which are fed to
+        // the linker i.e. the linker is not aware of the the fact whether a
+        // template waveform processor is enabled or disabled, respectively.
+        // - Thus, the detector processor can force the linker into a *triggered
+        // state* by only feeding data to those processors which are part of the
+        // triggering event.
+        disableProcessorsNotContributing(result);
+      } else {
+        SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result %s",
+                                     result.debugString().c_str());
+      }
+    } else if (triggered() && result.fit > _currentResult.value().fit &&
+               result.processorCount() >=
+                   _currentResult.value().processorCount()) {
+      SCDETECT_LOG_DEBUG_PROCESSOR(this,
+                                   "Detector result (triggered, updating) %s",
+                                   result.debugString().c_str());
+      _currentResult = result;
+      const auto triggerProcessorId{this->triggerProcessorId(result)};
+      if (_triggerProcId != triggerProcessorId) {
+        _triggerProcId = triggerProcessorId;
+        const auto &endtime{
+            _processors.at(*_triggerProcId).processor->processed().endTime()};
+        _triggerEnd = endtime + *_triggerDuration;
+        disableProcessorsNotContributing(result);
+      }
+    }
+  }
+
+  if (triggered()) {
+    if (result.fit <= _currentResult.value().fit &&
+        result.fit >= triggerOffThreshold) {
+      SCDETECT_LOG_DEBUG_PROCESSOR(this,
+                                   "Detector result (triggered, dropped) %s",
+                                   result.debugString().c_str());
+    }
+
+    const auto &endtime{
+        _processors.at(*_triggerProcId).processor->processed().endTime()};
+    const auto expired{endtime > *_triggerEnd};
+    // disable trigger if required
+    if (expired || result.fit < triggerOffThreshold) {
+      resetTrigger();
+    }
+  }
+
+  // emit detection
+  if (!triggered()) {
+    Result prepared;
+    prepareResult(*_currentResult, prepared);
+    emitResult(prepared);
+  }
+}
+
+void Detector::disableProcessorsNotContributing(
+    const linker::Association &result) {
+  // disable those processors not contributing to the triggering event
+  std::vector<std::string> contributing;
+  std::transform(std::begin(result.results), std::end(result.results),
+                 std::back_inserter(contributing),
+                 [](const linker::Association::TemplateResults::value_type &p) {
+                   return p.first;
+                 });
+  std::for_each(
+      std::begin(_processors), std::end(_processors),
+      [](ProcessorStates::value_type &p) { p.second.processor->disable(); });
+  std::for_each(std::begin(contributing), std::end(contributing),
+                [this](const std::string &proc_id) {
+                  _processors.at(proc_id).processor->enable();
+                });
+}
+
+std::string Detector::triggerProcessorId(const linker::Association &result) {
+  // determine the processor with the first arrival
+  return sortByArrivalTime(result).at(0).processorId;
 }
 
 void Detector::prepareResult(const linker::Association &linkerResult,
