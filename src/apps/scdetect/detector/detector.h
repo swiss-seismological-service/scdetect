@@ -144,7 +144,6 @@ class Detector : public detect::processing::Processor {
   // Returns `true` if `record` has an acceptable latency, else `false`
   bool hasAcceptableLatency(const Record *record);
 
-  using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
   // Feed data to template processors
   bool feed(const Record *record);
   // Prepare detection
