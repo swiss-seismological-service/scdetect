@@ -1,7 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_RMS_H_
 #define SCDETECT_APPS_SCDETECT_AMPLITUDE_RMS_H_
 
-#include "../amplitude_processor.h"
+#include "../reducing_amplitude_processor.h"
 
 namespace Seiscomp {
 namespace detect {

@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "amplitude/rms.h"
-#include "amplitude_processor.h"
 #include "config/exception.h"
 #include "config/validators.h"
 #include "detector/arrival.h"

@@ -25,12 +25,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "amplitude_processor.h"
 #include "binding.h"
 #include "config/detector.h"
 #include "config/template_family.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
+#include "reducing_amplitude_processor.h"
 #include "waveform.h"
 
 namespace Seiscomp {

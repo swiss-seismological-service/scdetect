@@ -22,6 +22,7 @@ set(SOURCES_util_math_cma
 set(SOURCES_integration
   ../amplitude/rms.cpp
   ../amplitude_processor.cpp
+  ../reducing_amplitude_processor.cpp
   ../app.cpp
   ../binding.cpp
   ../builder.cpp
@@ -71,6 +72,7 @@ set(SOURCES_integration
 
 set(SOURCES_reducing_amplitude_processor
   ../amplitude_processor.cpp
+  ../reducing_amplitude_processor.cpp
   ../exception.cpp
   ../processing/detail/gap_interpolate.cpp
   ../processing/processor.cpp

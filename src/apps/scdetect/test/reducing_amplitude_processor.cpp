@@ -1,4 +1,7 @@
 #define SEISCOMP_TEST_MODULE test_reducingamplitudeprocessor
+
+#include "../reducing_amplitude_processor.h"
+
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/recordsequence.h>
@@ -25,7 +28,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../amplitude_processor.h"
 #include "../processing/waveform_processor.h"
 #include "../util/memory.h"
 #include "../util/util.h"
