@@ -95,6 +95,8 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
     kTravelTimeEstimateFailed,
   };
 
+  ~WaveformProcessor() override;
+
   void enable();
   void disable();
   bool enabled() const;
@@ -120,7 +122,7 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   void setOperator(WaveformOperator *op);
   // Returns the processor's initialization time; by default this corresponds
   // to the processor's filter initialization time
-  virtual const Core::TimeSpan initTime() const;
+  virtual Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
   // `Status::kInProgress`.

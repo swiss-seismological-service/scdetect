@@ -8,6 +8,8 @@ namespace Seiscomp {
 namespace detect {
 namespace processing {
 
+WaveformProcessor::~WaveformProcessor() { close(); }
+
 void WaveformProcessor::enable() {
   if (_enabled) {
     return;
@@ -45,7 +47,7 @@ void WaveformProcessor::setOperator(WaveformOperator *op) {
   }
 }
 
-const Core::TimeSpan WaveformProcessor::initTime() const { return _initTime; }
+Core::TimeSpan WaveformProcessor::initTime() const { return _initTime; }
 
 bool WaveformProcessor::finished() const {
   return Status::kInProgress < _status;
@@ -81,9 +83,12 @@ void WaveformProcessor::terminate() {
 
 void WaveformProcessor::close() const {}
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool WaveformProcessor::store(const Record *record) {
-  if (WaveformProcessor::Status::kInProgress < status() || !record->data())
+  if (WaveformProcessor::Status::kInProgress < status() ||
+      !static_cast<bool>(record->data())) {
     return false;
+  }
 
   try {
     StreamState &currentStreamState{streamState(record)};
@@ -123,7 +128,9 @@ bool WaveformProcessor::store(const Record *record) {
     currentStreamState.lastSample = (*data)[data->size() - 1];
 
     fill(currentStreamState, record, data);
-    if (Status::kInProgress < status()) return false;
+    if (Status::kInProgress < status()) {
+      return false;
+    }
 
     processIfEnoughDataReceived(currentStreamState, record, *data);
 
@@ -156,7 +163,7 @@ bool WaveformProcessor::fill(processing::StreamState &streamState,
   }
 
   if (s.filter) {
-    auto samples{data->typedData()};
+    auto *samples{data->typedData()};
     s.filter->apply(n, samples);
   }
 
@@ -164,7 +171,7 @@ bool WaveformProcessor::fill(processing::StreamState &streamState,
 }
 
 bool WaveformProcessor::checkIfSaturated(DoubleArrayPtr &data) {
-  const auto samples{data->typedData()};
+  const auto *samples{data->typedData()};
   for (int i = 0; i < data->size(); ++i) {
     if (fabs(samples[i]) >= *_saturationThreshold) {
       setStatus(Status::kDataClipped, samples[i]);
