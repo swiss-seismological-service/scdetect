@@ -1,4 +1,4 @@
-#include "amplitudeprocessor.h"
+#include "amplitude_processor.h"
 
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/math/filter/iirdifferentiate.h>

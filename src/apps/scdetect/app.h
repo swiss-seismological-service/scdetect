@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "amplitudeprocessor.h"
+#include "amplitude_processor.h"
 #include "binding.h"
 #include "config/detector.h"
 #include "config/template_family.h"

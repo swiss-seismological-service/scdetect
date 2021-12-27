@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "amplitudeprocessor.h"
+#include "amplitude_processor.h"
 
 namespace Seiscomp {
 namespace detect {

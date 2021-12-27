@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../amplitudeprocessor.h"
+#include "../amplitude_processor.h"
 #include "../processing/waveform_processor.h"
 #include "../util/memory.h"
 #include "../util/util.h"

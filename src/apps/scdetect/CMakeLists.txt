@@ -3,7 +3,7 @@ set(DETECT_TARGET scdetect)
 set(
   DETECT_SOURCES
     amplitude/rms.cpp
-    amplitudeprocessor.cpp
+    amplitude_processor.cpp
     app.cpp
     binding.cpp
     config/detector.cpp

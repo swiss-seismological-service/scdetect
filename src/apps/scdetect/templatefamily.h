@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-#include "amplitudeprocessor.h"
+#include "amplitude_processor.h"
 #include "binding.h"
 #include "builder.h"
 #include "config/template_family.h"

@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "amplitude/rms.h"
-#include "amplitudeprocessor.h"
+#include "amplitude_processor.h"
 #include "binding.h"
 #include "builder.h"
 #include "eventstore.h"
