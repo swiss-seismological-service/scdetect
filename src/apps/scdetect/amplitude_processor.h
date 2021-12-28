@@ -139,6 +139,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     size_t end;
   };
 
+  using Buffer = DoubleArray;
 
   // Compute the noise from `data` in the window defined by `idxRange`. While
   // `noiseOffset` refers to an offset applied when computing the noise the

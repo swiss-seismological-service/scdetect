@@ -85,8 +85,6 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
   bool enoughDataReceived(const StreamState &streamState) const override;
 
-  using Buffer = DoubleArray;
-
   struct StreamItem {
     // Stream configuration including sensor response etc.
     Processing::Stream streamConfig;
