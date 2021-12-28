@@ -25,7 +25,7 @@ class RMSAmplitude : public ReducingAmplitudeProcessor {
     kMeterPerSecondsSquared,
   };
 
-  // Computes time time window based on environment picks
+  // Computes time window based on environment picks
   void computeTimeWindow() override;
 
  protected:
