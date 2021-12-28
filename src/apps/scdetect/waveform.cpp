@@ -132,7 +132,7 @@ bool resample(GenericRecord &trace, double targetFrequency) {
 }
 
 void demean(GenericRecord &trace) {
-  auto data{DoubleArray::Cast(trace.data())};
+  auto *data{DoubleArray::Cast(trace.data())};
   demean(*data);
   trace.dataUpdated();
 }
