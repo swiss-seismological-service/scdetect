@@ -139,10 +139,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     size_t end;
   };
 
-  // Compute the amplitude from `data` in `idxRange`
-  virtual void computeAmplitude(const DoubleArray &data,
-                                const IndexRange &idxRange,
-                                Amplitude &amplitude) = 0;
 
   // Compute the noise from `data` in the window defined by `idxRange`. While
   // `noiseOffset` refers to an offset applied when computing the noise the

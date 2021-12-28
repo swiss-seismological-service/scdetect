@@ -58,6 +58,11 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
       const std::vector<DoubleArray const *> &data,
       const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) = 0;
 
+  // Compute the amplitude from `data` in `idxRange`
+  virtual void computeAmplitude(const DoubleArray &data,
+                                const IndexRange &idxRange,
+                                Amplitude &amplitude) = 0;
+
   // Compute an overall signal-to-noise ratio
   virtual boost::optional<double> reduceNoiseData(
       const std::vector<DoubleArray const *> &data,
