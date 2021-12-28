@@ -27,6 +27,8 @@ bool filter(DoubleArray &data, const std::string &filterId,
 bool resample(GenericRecord &trace, double targetFrequency);
 void demean(GenericRecord &trace);
 void demean(DoubleArray &data);
+void detrend(GenericRecord &trace);
+void detrend(DoubleArray &data);
 bool write(const GenericRecord &trace, std::ostream &out);
 bool read(GenericRecord &trace, std::istream &in);
 

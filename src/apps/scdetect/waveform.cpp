@@ -6,6 +6,7 @@
 #include <seiscomp/io/records/mseedrecord.h>
 #include <seiscomp/io/recordstream.h>
 #include <seiscomp/math/filter.h>
+#include <seiscomp/math/mean.h>
 #include <seiscomp/utils/files.h>
 
 #include <boost/algorithm/string/join.hpp>
@@ -139,6 +140,19 @@ void demean(GenericRecord &trace) {
 void demean(DoubleArray &data) {
   const auto mean{util::cma(data.typedData(), data.size())};
   data -= mean;
+}
+
+void detrend(GenericRecord &trace) {
+  auto *data{DoubleArray::Cast(trace.data())};
+  detrend(*data);
+  trace.dataUpdated();
+}
+
+void detrend(DoubleArray &data) {
+  double m, n;  // NOLINT
+  // remove linear trend
+  Math::Statistics::computeLinearTrend(data.size(), data.typedData(), m, n);
+  Math::Statistics::detrend(data.size(), data.typedData(), m, n);
 }
 
 bool write(const GenericRecord &trace, std::ostream &out) {

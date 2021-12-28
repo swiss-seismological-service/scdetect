@@ -2,9 +2,10 @@
 
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/math/filter/iirdifferentiate.h>
-#include <seiscomp/math/mean.h>
 #include <seiscomp/system/environment.h>
 #include <seiscomp/utils/files.h>
+
+#include "waveform.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -112,11 +113,7 @@ bool AmplitudeProcessor::deconvolveData(StreamState &streamState,
                                         const DeconvolutionConfig &config,
                                         int numberOfIntegrations,
                                         DoubleArray &data) {
-  double m, n;
-  // remove linear trend
-  Math::Statistics::computeLinearTrend(data.size(), data.typedData(), m, n);
-  Math::Statistics::detrend(data.size(), data.typedData(), m, n);
-
+  waveform::detrend(data);
   // XXX(damb): integration is implemented by means of deconvolution i.e. by
   // means of adding an additional zero to the nominator of the rational
   // transfer function
