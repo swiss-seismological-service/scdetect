@@ -70,10 +70,6 @@ const AmplitudeProcessor::Environment &AmplitudeProcessor::environment() const {
 
 void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
 
-void AmplitudeProcessor::preprocessData(
-    StreamState &streamState, const Processing::Stream &streamConfig,
-    const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
-
 bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
                                       const IndexRange &idxRange,
                                       NoiseInfo &noiseInfo) {
@@ -107,6 +103,10 @@ bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
 
   return true;
 }
+
+void AmplitudeProcessor::preprocessData(
+    StreamState &streamState, const Processing::Stream &streamConfig,
+    const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
 
 bool AmplitudeProcessor::deconvolveData(StreamState &streamState,
                                         Processing::Response *resp,
