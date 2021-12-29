@@ -137,7 +137,6 @@ streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
         "templateWaveformStart": -2,
         "templateWaveformEnd": 2,
         "waveformId": "CH.GRIMS..HHZ",
-        "templateWaveformId": "CH.GRIMS..HHZ",
         "templatePhase": "Pg"
       },
       {
@@ -146,7 +145,6 @@ streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
         "templateWaveformStart": -3,
         "templateWaveformEnd": 1,
         "waveformId": "CH.HASLI..HHZ",
-        "templateWaveformId": "CH.HASLI..HHZ",
         "templatePhase": "Pg"
       }
     ]
@@ -337,6 +335,9 @@ configuration parameters:
   Note that the string is parsed and matched against `NET`, `STA`, `LOC`, `CHA`
   codes.
 
+  By default, the template waveform is created based on the same waveform stream
+  identifier. See also `"templateWaveformId"`.
+
 - `"mergingThreshold"`: Optionally defines a stream configuration specific
   threshold (`[-1, 1]`) which is used exclusively if `"mergingStrategy"` is set
   to `"greaterEqualMergingThreshold"`. If `"mergingThreshold"` is not configured
@@ -346,12 +347,16 @@ configuration parameters:
 
 - `"templateWaveformId"`: A string defining an alternative waveform stream
   identifier referring to the stream used for the template waveform creation. If
-  not defined, the template waveform is created from the stream specified by
-  the `"waveformId"` configuration parameter. While for the phase code lookup
-  the *sensor location* is used (i.e. the `CHA`
+  not defined, the template waveform is used as defined by the `"waveformId"`
+  configuration parameter. While for the phase code lookup the *sensor location*
+  is used (i.e. the `CHA`
   component of the waveform stream identifier is neglected) for template
   waveform creation all waveform stream identifier components are taken into
   account.
+
+> **NOTE**: When specifying a `"templateWaveformId"` different from
+> `"waveformId"`, `scdetect` will not correct potentially differing sensor
+> responses.
 
 - `"templatePhase"`: Required. A string defining the template phase code used
   for the template waveform creation. It is the phase code which defines the
@@ -437,15 +442,13 @@ fallback values will be used.
         "templateId": "template-01",
         "templateWaveformStart": -2,
         "templateWaveformEnd": 2,
-        "waveformId": "CH.GRIMS..HHZ",
-        "templateWaveformId": "CH.GRIMS..HHZ"
+        "waveformId": "CH.GRIMS..HHZ"
       },
       {
         "templateId": "template-02",
         "templateWaveformStart": -3,
         "templateWaveformEnd": 1,
         "waveformId": "CH.HASLI..HHZ",
-        "templateWaveformId": "CH.HASLI..HHZ",
         "templatePhase": "Sg"
       }
     ]
