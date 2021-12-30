@@ -182,12 +182,14 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // Amplitude processor *environment*
   Environment _environment;
 
-  PublishAmplitudeCallback _resultCallback;
-
   // The amplitude type
   std::string _type;
   // The amplitude unit
   std::string _unit;
+
+ private:
+  // The callback invoked when there is an amplitude to publish
+  PublishAmplitudeCallback _resultCallback;
 };
 
 }  // namespace detect
