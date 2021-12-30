@@ -70,6 +70,10 @@ const AmplitudeProcessor::Environment &AmplitudeProcessor::environment() const {
 
 void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
 
+void AmplitudeProcessor::setType(std::string type) { _type = std::move(type); }
+
+void AmplitudeProcessor::setUnit(std::string unit) { _unit = std::move(unit); }
+
 bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
                                       const IndexRange &idxRange,
                                       NoiseInfo &noiseInfo) {

@@ -65,8 +65,8 @@ struct TimeInfo {
 }  // namespace
 
 RMSAmplitude::RMSAmplitude() {
-  _type = "Mrms";
-  _unit = "M/S";
+  setType("Mrms");
+  setUnit("M/S");
 }
 
 void RMSAmplitude::computeTimeWindow() {

@@ -235,10 +235,10 @@ struct Sample {
 // - does not implement any preprocessing
 class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
  public:
-  TestReducingAmplitudeProcessor(const Core::TimeWindow &tw) {
+  explicit TestReducingAmplitudeProcessor(const Core::TimeWindow &tw) {
     setTimeWindow(tw);
-    _type = "Mtest";
-    _unit = "M/S";
+    setType("Mtest");
+    setUnit("M/S");
   }
 
   void computeTimeWindow() override {

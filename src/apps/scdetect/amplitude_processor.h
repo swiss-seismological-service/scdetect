@@ -141,6 +141,11 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
 
   using Buffer = DoubleArray;
 
+  // Sets the type of amplitudes the amplitude processor is producing
+  void setType(std::string type);
+  // Sets the unit of amplitudes the amplitude processor is producing
+  void setUnit(std::string unit);
+
   // Compute the noise from `data` in the window defined by `idxRange`. While
   // `noiseOffset` refers to an offset applied when computing the noise the
   // `noiseAmplitude` refers to the noise amplitude computed.
@@ -180,14 +185,14 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // Amplitude processor configuration
   Config _config;
 
+ private:
+  // Amplitude processor *environment*
+  Environment _environment;
+
   // The amplitude type
   std::string _type;
   // The amplitude unit
   std::string _unit;
-
- private:
-  // Amplitude processor *environment*
-  Environment _environment;
 
   // The callback invoked when there is an amplitude to publish
   PublishAmplitudeCallback _resultCallback;
