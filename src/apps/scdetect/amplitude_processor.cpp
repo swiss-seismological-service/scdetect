@@ -78,11 +78,17 @@ bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
                                       const IndexRange &idxRange,
                                       NoiseInfo &noiseInfo) {
   // compute offset and rms within the time window
-  size_t beginIdx{idxRange.begin}, endIdx{idxRange.end};
-  if (beginIdx < 0) beginIdx = 0;
-  if (endIdx < 0) return false;
-  if (endIdx > static_cast<size_t>(data.size()))
-    endIdx = static_cast<size_t>(data.size());
+  std::size_t beginIdx{idxRange.begin};
+  std::size_t endIdx{idxRange.end};
+  if (beginIdx < 0) {
+    beginIdx = 0;
+  }
+  if (endIdx < 0) {
+    return false;
+  }
+  if (endIdx > static_cast<std::size_t>(data.size())) {
+    endIdx = static_cast<std::size_t>(data.size());
+  }
 
   // If noise window is zero return an amplitude and offset of zero as well.
   if (endIdx - beginIdx == 0) {
@@ -102,8 +108,8 @@ bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
   // compute rms while removing offset
   double amplitude{2 * sliced->rms(offset)};
 
-  if (offset) noiseInfo.offset = offset;
-  if (amplitude) noiseInfo.amplitude = amplitude;
+  noiseInfo.offset = offset;
+  noiseInfo.amplitude = amplitude;
 
   return true;
 }
