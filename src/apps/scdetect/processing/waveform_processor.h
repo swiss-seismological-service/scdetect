@@ -176,7 +176,7 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // implementation does not perform any check
   //
   // - returns `true` in case `data` is saturated, else `false`
-  virtual bool checkIfSaturated(DoubleArrayPtr &data);
+  virtual bool checkIfSaturated(const DoubleArray &data);
 
   // Wrapper method for both `enoughDataReceived()` and `process()`. Returns
   // `true` if `process` was called, else `false`

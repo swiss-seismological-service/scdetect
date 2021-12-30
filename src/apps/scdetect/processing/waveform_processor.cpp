@@ -1,5 +1,6 @@
 #include "waveform_processor.h"
 
+#include <cassert>
 #include <exception>
 
 #include "waveform_operator.h"
@@ -158,7 +159,7 @@ bool WaveformProcessor::fill(processing::StreamState &streamState,
   const auto n{static_cast<size_t>(data->size())};
   s.receivedSamples += n;
 
-  if (_saturationThreshold && checkIfSaturated(data)) {
+  if (_saturationThreshold && checkIfSaturated(*data)) {
     return false;
   }
 
@@ -170,9 +171,10 @@ bool WaveformProcessor::fill(processing::StreamState &streamState,
   return true;
 }
 
-bool WaveformProcessor::checkIfSaturated(DoubleArrayPtr &data) {
-  const auto *samples{data->typedData()};
-  for (int i = 0; i < data->size(); ++i) {
+bool WaveformProcessor::checkIfSaturated(const DoubleArray &data) {
+  assert(_saturationThreshold);
+  const auto *samples{data.typedData()};
+  for (int i = 0; i < data.size(); ++i) {
     if (fabs(samples[i]) >= *_saturationThreshold) {
       setStatus(Status::kDataClipped, samples[i]);
       return true;
