@@ -79,8 +79,8 @@ void RMSAmplitude::computeTimeWindow() {
   for (const auto &pick : env.picks) {
     pickTimes.push_back(pick->time().value());
     for (size_t i = 0; i < pick->commentCount(); ++i) {
-      const auto comment{pick->comment(i)};
-      if (comment &&
+      const auto *comment{pick->comment(i)};
+      if (static_cast<bool>(comment) &&
           comment->id() == settings::kTemplateWaveformTimeInfoPickCommentId) {
         TimeInfo timeInfo;
         std::stringstream ss{comment->text()};
@@ -88,13 +88,13 @@ void RMSAmplitude::computeTimeWindow() {
           continue;
         }
 
-        if (!maxTemplateWaveformStartTimeOffset ||
+        if (!static_cast<bool>(maxTemplateWaveformStartTimeOffset) ||
             timeInfo.referenceTime - timeInfo.startTime >
                 maxTemplateWaveformStartTimeOffset) {
           maxTemplateWaveformStartTimeOffset =
               timeInfo.referenceTime - timeInfo.startTime;
         }
-        if (!maxTemplateWaveformEndTimeOffset ||
+        if (!static_cast<bool>(maxTemplateWaveformEndTimeOffset) ||
             timeInfo.endTime - timeInfo.referenceTime >
                 maxTemplateWaveformEndTimeOffset) {
           maxTemplateWaveformEndTimeOffset =
@@ -104,7 +104,8 @@ void RMSAmplitude::computeTimeWindow() {
     }
   }
 
-  if (!maxTemplateWaveformEndTimeOffset || !maxTemplateWaveformEndTimeOffset) {
+  if (!(static_cast<bool>(maxTemplateWaveformEndTimeOffset) &&
+        static_cast<bool>(maxTemplateWaveformEndTimeOffset))) {
     throw Processor::BaseException{"failed to determine required time window"};
   }
 
