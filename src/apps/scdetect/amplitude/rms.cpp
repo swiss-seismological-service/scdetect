@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/optional/optional.hpp>
+#include <cassert>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -69,15 +70,13 @@ RMSAmplitude::RMSAmplitude() {
 }
 
 void RMSAmplitude::computeTimeWindow() {
-  if (_environment.picks.empty()) {
-    throw Processor::BaseException(
-        "failed to compute time window: missing picks");
-  }
+  const auto &env{environment()};
+  assert(!env.picks.empty());
 
   std::vector<Core::Time> pickTimes;
   Core::TimeSpan maxTemplateWaveformStartTimeOffset;
   Core::TimeSpan maxTemplateWaveformEndTimeOffset;
-  for (const auto &pick : _environment.picks) {
+  for (const auto &pick : env.picks) {
     pickTimes.push_back(pick->time().value());
     for (size_t i = 0; i < pick->commentCount(); ++i) {
       const auto comment{pick->comment(i)};
@@ -207,8 +206,11 @@ void RMSAmplitude::computeAmplitude(const DoubleArray &data,
 }
 
 void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
+  const auto &env{environment()};
+  assert(!env.picks.empty());
+
   std::vector<std::string> publicIds;
-  for (const auto &pick : _environment.picks) {
+  for (const auto &pick : env.picks) {
     publicIds.push_back(pick->publicID());
   }
 
@@ -231,7 +233,8 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
 
   // forward reference of the detector which declared the origin
   {
-    const auto &origin{_environment.hypocenter};
+    const auto &origin{env.hypocenter};
+    assert(origin);
     for (std::size_t i = 0; i < origin->commentCount(); ++i) {
       if (origin->comment(i)->id() == settings::kDetectorIdCommentId) {
         auto comment{util::make_smart<DataModel::Comment>()};

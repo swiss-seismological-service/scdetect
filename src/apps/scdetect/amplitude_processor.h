@@ -179,8 +179,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
 
   // Amplitude processor configuration
   Config _config;
-  // Amplitude processor *environment*
-  Environment _environment;
 
   // The amplitude type
   std::string _type;
@@ -188,6 +186,9 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   std::string _unit;
 
  private:
+  // Amplitude processor *environment*
+  Environment _environment;
+
   // The callback invoked when there is an amplitude to publish
   PublishAmplitudeCallback _resultCallback;
 };
