@@ -19,6 +19,13 @@ void tokenizeWaveformStreamId(const std::string &str,
   Core::split(tokens, str, WaveformStreamID::delimiter.c_str(), false);
 }
 
+std::string join(const std::string &netCode, const std::string &staCode,
+                 const std::string &locCode, const std::string &chaCode) {
+  return netCode + WaveformStreamID::delimiter + staCode +
+         WaveformStreamID::delimiter + locCode +
+         (chaCode.empty() ? "" : WaveformStreamID::delimiter + chaCode);
+}
+
 std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId) {
   return waveformStreamId.chaCode().substr(0, 2);
 }

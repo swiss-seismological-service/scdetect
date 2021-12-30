@@ -17,6 +17,9 @@ std::string to_string(const WaveformStreamID &waveformStreamId);
 void tokenizeWaveformStreamId(const std::string &str,
                               std::vector<std::string> &tokens);
 
+std::string join(const std::string &netCode, const std::string &staCode,
+                 const std::string &locCode, const std::string &chaCode = "");
+
 // Returns the sensor location stream identifier i.e. in the form
 // `NET.STA.LOC`.
 //
