@@ -1,5 +1,6 @@
 #include "binding.h"
 
+#include <seiscomp/core/strings.h>
 #include <seiscomp/datamodel/configstation.h>
 #include <seiscomp/datamodel/parameter.h>
 #include <seiscomp/datamodel/parameterset.h>
@@ -15,7 +16,6 @@
 #include "config/validators.h"
 #include "exception.h"
 #include "log.h"
-#include "seiscomp/core/strings.h"
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
