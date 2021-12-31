@@ -1,8 +1,6 @@
 #ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_RATIO_H_
 #define SCDETECT_APPS_SCDETECT_AMPLITUDE_RATIO_H_
 
-#include <seiscomp/core/genericrecord.h>
-
 #include "../amplitude_processor.h"
 #include "../template_waveform.h"
 
@@ -12,10 +10,10 @@ namespace amplitude {
 
 // Compute the amplitude ratio between the template waveform and the detected
 // event
-class Ratio : public AmplitudeProcessor {
+class RatioAmplitude : public AmplitudeProcessor {
  public:
-  Ratio() = default;
-  explicit Ratio(TemplateWaveform templateWaveform);
+  RatioAmplitude() = default;
+  explicit RatioAmplitude(TemplateWaveform templateWaveform);
 
   // Computes time window based on the template waveform and the environment
   // pick time
@@ -24,7 +22,7 @@ class Ratio : public AmplitudeProcessor {
   void setTemplateWaveform(TemplateWaveform templateWaveform);
 
  protected:
-  StreamState &streamState(const Record *record) override;
+  StreamState *streamState(const Record *record) override;
 
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;

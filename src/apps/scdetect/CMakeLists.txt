@@ -2,8 +2,13 @@ set(DETECT_TARGET scdetect)
 
 set(
   DETECT_SOURCES
+    amplitude/factory.cpp
+    amplitude/ratio.cpp
+    amplitude/mlx.cpp
+    amplitude/mrelative.cpp
     amplitude/rms.cpp
     amplitude_processor.cpp
+    combining_amplitude_processor.cpp
     reducing_amplitude_processor.cpp
     app.cpp
     binding.cpp

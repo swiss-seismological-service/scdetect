@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "amplitude_processor.h"
+#include "processing/waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -69,7 +70,8 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
       const std::vector<IndexRange> &idxRanges,
       const std::vector<NoiseInfo> &noiseInfos);
 
-  StreamState &streamState(const Record *record) override;
+  processing::WaveformProcessor::StreamState *streamState(
+      const Record *record) override;
 
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;

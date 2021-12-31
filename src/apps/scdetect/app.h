@@ -217,9 +217,17 @@ class Application : public Client::StreamApplication {
     // Picks and arrivals which are associated to the detection (i.e. both
     // detected picks and *template picks*)
     ArrivalPicks arrivalPicks;
-    using AmplitudePicks = std::vector<DataModel::PickCPtr>;
+
+    using ProcessorId = std::string;
+    using WaveformStreamId = std::string;
+    struct Pick {
+      // The authorative full waveform stream identifier
+      WaveformStreamId authorativeWaveformStreamId;
+      DataModel::PickCPtr pick;
+    };
+    using AmplitudePickMap = std::unordered_map<ProcessorId, Pick>;
     // Picks used for amplitude calculation
-    AmplitudePicks amplitudePicks;
+    AmplitudePickMap amplitudePickMap;
 
     DataModel::OriginPtr origin;
 
@@ -252,6 +260,12 @@ class Application : public Client::StreamApplication {
     }
   };
 
+  // Initialize amplitude processor factory
+  static bool initAmplitudeProcessorFactory();
+
+  // Initialize magnitude processor factory callbacks
+  static bool initMagnitudeProcessorFactories();
+
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
 
@@ -262,10 +276,9 @@ class Application : public Client::StreamApplication {
                      TemplateConfigs &templateConfigs);
 
   // Initialize amplitude processors
-  //
-  // - XXX(damb): The current implementation supports RMS based amplitude
-  // processors to be initialized, only
-  bool initAmplitudeProcessors(std::shared_ptr<DetectionItem> &detectionItem);
+  bool initAmplitudeProcessors(
+      std::shared_ptr<DetectionItem> &detectionItem,
+      const detector::DetectorWaveformProcessor &processorProcessor);
 
   // Initialize template families
   //
@@ -273,10 +286,6 @@ class Application : public Client::StreamApplication {
   bool initTemplateFamilies(std::ifstream &ifs,
                             WaveformHandlerIface *waveformHandler,
                             const TemplateConfigs &templateConfigs);
-
-  // Initialize magnitude processor factory callbacks
-  bool initMagnitudeProcessorFactories();
-
   // Creates an amplitude
   //
   // - if `amplitudeType` is passed it overrides the default value
@@ -291,12 +300,14 @@ class Application : public Client::StreamApplication {
       const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
       const std::string &methodId = "", const std::string &processorId = "");
 
-  // Registers an amplitude processor
+  using WaveformStreamId = std::string;
+  // Registers an amplitude `processor` for `waveformStreamIds`
   void registerAmplitudeProcessor(
-      const std::shared_ptr<ReducingAmplitudeProcessor> &processor);
+      const std::vector<WaveformStreamId> &waveformStreamIds,
+      const std::shared_ptr<AmplitudeProcessor> &processor);
   // Removes an amplitude processor
   void removeAmplitudeProcessor(
-      const std::shared_ptr<ReducingAmplitudeProcessor> &processor);
+      const std::shared_ptr<AmplitudeProcessor> &processor);
 
   // Registers a detection
   void registerDetection(const std::shared_ptr<DetectionItem> &detection);
@@ -324,7 +335,6 @@ class Application : public Client::StreamApplication {
 
   DataModel::EventParametersPtr _ep;
 
-  using WaveformStreamId = std::string;
   using DetectorMap = std::unordered_multimap<
       WaveformStreamId, std::shared_ptr<detector::DetectorWaveformProcessor>>;
   DetectorMap _detectors;
@@ -346,11 +356,16 @@ class Application : public Client::StreamApplication {
 
   using AmplitudeProcessors =
       std::unordered_multimap<WaveformStreamId,
-                              std::shared_ptr<ReducingAmplitudeProcessor>>;
+                              std::shared_ptr<AmplitudeProcessor>>;
   AmplitudeProcessors _amplitudeProcessors;
+  using ProcessorId = std::string;
+  using AmplitudeProcessorIdx =
+      std::unordered_map<ProcessorId, std::vector<WaveformStreamId>>;
+  AmplitudeProcessorIdx _amplitudeProcessorIdx;
 
   struct AmplitudeProcessorQueueItem {
-    std::shared_ptr<ReducingAmplitudeProcessor> amplitudeProcessor;
+    std::vector<WaveformStreamId> waveformStreamIds;
+    std::shared_ptr<AmplitudeProcessor> amplitudeProcessor;
   };
   using AmplitudeProcessorQueue = std::list<AmplitudeProcessorQueueItem>;
   // The queue used for amplitude processor registration

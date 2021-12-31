@@ -101,9 +101,9 @@ boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
   return boost::none;
 }
 
-processing::WaveformProcessor::StreamState &
+processing::WaveformProcessor::StreamState *
 ReducingAmplitudeProcessor::streamState(const Record *record) {
-  return _streams.at(record->streamID()).streamState;
+  return &_streams.at(record->streamID()).streamState;
 }
 
 void ReducingAmplitudeProcessor::process(StreamState &streamState,
@@ -253,9 +253,12 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
 bool ReducingAmplitudeProcessor::store(const Record *record) {
   bool isFirstStreamRecord{false};
+  auto *currentStreamState{streamState(record)};
+  assert(currentStreamState);
+
   // check if stream is known
   try {
-    isFirstStreamRecord = !static_cast<bool>(streamState(record).lastRecord);
+    isFirstStreamRecord = !static_cast<bool>(currentStreamState->lastRecord);
   } catch (std::out_of_range &) {
     return false;
   }
@@ -271,8 +274,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   if (isFirstStreamRecord) {
     // initialize filter
     if (_filter) {
-      auto &s{streamState(record)};
-      s.filter.reset(_filter->clone());
+      currentStreamState->filter.reset(_filter->clone());
     }
 
     auto differenceGreaterEqualSampleTolerance{
@@ -292,11 +294,12 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
       waveform::trim(
           *firstRecord,
           Core::TimeWindow{safetyTimeWindow().startTime(), record->endTime()});
-      return WaveformProcessor::store(firstRecord.get());  // NOLINT
+
+      return processing::TimeWindowProcessor::store(firstRecord.get());
     }
   }
 
-  return WaveformProcessor::store(record);  // NOLINT
+  return processing::TimeWindowProcessor::store(record);
 }
 
 bool ReducingAmplitudeProcessor::fill(processing::StreamState &streamState,

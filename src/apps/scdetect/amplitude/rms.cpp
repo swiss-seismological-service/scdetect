@@ -1,25 +1,32 @@
 #include "rms.h"
 
+#include <seiscomp/client/inventory.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/strings.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/comment.h>
+#include <seiscomp/processing/stream.h>
 
 #include <algorithm>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/optional/optional.hpp>
 #include <cassert>
 #include <cmath>
+#include <exception>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "../log.h"
 #include "../settings.h"
+#include "../util/horizontal_components.h"
 #include "../util/math.h"
 #include "../util/memory.h"
 #include "../util/util.h"
+#include "../util/waveform_stream_id.h"
+#include "factory.h"
 
 namespace Seiscomp {
 namespace detect {

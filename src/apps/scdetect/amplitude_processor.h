@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "amplitude/factory.h"
 #include "processing/timewindow_processor.h"
 
 namespace Seiscomp {
@@ -30,6 +31,14 @@ namespace detect {
 // amplitudes are computed based on the `TimeWindowProcessor`'s time window.
 class AmplitudeProcessor : public processing::TimeWindowProcessor {
  public:
+  using Factory = amplitude::Factory;
+
+  class BaseException : public Processor::BaseException {
+   public:
+    using Processor::BaseException::BaseException;
+    BaseException();
+  };
+
   struct Config {
     // Defines the beginning of the time window used for amplitude analysis
     // with regard to the beginning of the overall time window
@@ -40,7 +49,10 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   };
 
   struct DeconvolutionConfig {
-    // Indicates whether deconvolution is enabled `true` or not `false`
+    DeconvolutionConfig() = default;
+    explicit DeconvolutionConfig(
+        const binding::StreamConfig::DeconvolutionConfig &config);
+    // Indicates whether deconvolution is enabled `true` or whether not `false`
     bool enabled{false};
     // Taper length in seconds when deconvolving the data
     double responseTaperLength{5};

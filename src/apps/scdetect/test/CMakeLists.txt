@@ -20,8 +20,13 @@ set(SOURCES_util_math_cma
 )
 
 set(SOURCES_integration
+  ../amplitude/factory.cpp
+  ../amplitude/ratio.cpp
+  ../amplitude/mlx.cpp
+  ../amplitude/mrelative.cpp
   ../amplitude/rms.cpp
   ../amplitude_processor.cpp
+  ../combining_amplitude_processor.cpp
   ../reducing_amplitude_processor.cpp
   ../app.cpp
   ../binding.cpp

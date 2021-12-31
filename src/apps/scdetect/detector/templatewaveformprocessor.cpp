@@ -77,9 +77,9 @@ const TemplateWaveform &TemplateWaveformProcessor::templateWaveform() const {
   return _crossCorrelation.templateWaveform();
 }
 
-processing::WaveformProcessor::StreamState &
+processing::WaveformProcessor::StreamState *
 TemplateWaveformProcessor::streamState(const Record *record) {
-  return _streamState;
+  return &_streamState;
 }
 
 void TemplateWaveformProcessor::process(StreamState &streamState,

@@ -4,14 +4,16 @@
 #include <cstddef>
 
 #include "../util/memory.h"
+#include "../util/util.h"
+#include "../util/waveform_stream_id.h"
 #include "../waveform.h"
-#include "seiscomp/core/timewindow.h"
+#include "factory.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
-Ratio::Ratio(TemplateWaveform templateWaveform)
+RatioAmplitude::RatioAmplitude(TemplateWaveform templateWaveform)
     : _templateWaveform{std::move(templateWaveform)} {
   assert(_templateWaveform.referenceTime());
   assert(_templateWaveform.configuredStartTime());
@@ -20,7 +22,7 @@ Ratio::Ratio(TemplateWaveform templateWaveform)
   initTemplateWaveform();
 }
 
-void Ratio::computeTimeWindow() {
+void RatioAmplitude::computeTimeWindow() {
   const auto pickTime{environment().picks.front()->time().value()};
   assert((static_cast<bool>(pickTime)));
   assert((_templateWaveform.referenceTime()));
@@ -33,7 +35,7 @@ void Ratio::computeTimeWindow() {
                                  pickTime + trailingReferenceTimeOffset});
 }
 
-void Ratio::setTemplateWaveform(TemplateWaveform templateWaveform) {
+void RatioAmplitude::setTemplateWaveform(TemplateWaveform templateWaveform) {
   assert(_templateWaveform.referenceTime());
   assert(_templateWaveform.configuredStartTime());
   assert(_templateWaveform.configuredEndTime());
@@ -42,13 +44,14 @@ void Ratio::setTemplateWaveform(TemplateWaveform templateWaveform) {
   initTemplateWaveform();
 }
 
-processing::WaveformProcessor::StreamState &Ratio::streamState(
-    const Record *record) {  // NOLINT(misc-unused-parameters)
-  return _streamState;
+processing::WaveformProcessor::StreamState *RatioAmplitude::streamState(
+    const Record *record)  // NOLINT(misc-unused-parameters)
+{
+  return &_streamState;
 }
 
-void Ratio::process(StreamState &streamState, const Record *record,
-                    const DoubleArray &filteredData) {
+void RatioAmplitude::process(StreamState &streamState, const Record *record,
+                             const DoubleArray &filteredData) {
   // TODO(damb): compute SNR
   assert((environment().picks.size() == 1));
   setStatus(Status::kInProgress, 1);
@@ -85,7 +88,7 @@ void Ratio::process(StreamState &streamState, const Record *record,
     return;
   }
 
-  auto processingConfig{_templateWaveform.processingConfig()};
+  const auto &processingConfig{_templateWaveform.processingConfig()};
   // preprocess the data
   if (processingConfig.detrend) {
     waveform::detrend(_buffer);
@@ -110,7 +113,7 @@ void Ratio::process(StreamState &streamState, const Record *record,
   _buffer.setData(signalEndIdx - signalBeginIdx,
                   _buffer.typedData() + signalBeginIdx);
 
-  if (finished()) {
+  if (!(_saturationThreshold && checkIfSaturated(_buffer))) {
     return;
   }
 
@@ -132,8 +135,8 @@ void Ratio::process(StreamState &streamState, const Record *record,
   emitAmplitude(record, amplitude);
 }
 
-bool Ratio::fill(processing::StreamState &streamState, const Record *record,
-                 DoubleArrayPtr &data) {
+bool RatioAmplitude::fill(processing::StreamState &streamState,
+                          const Record *record, DoubleArrayPtr &data) {
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
 
   const auto n{static_cast<size_t>(data->size())};
@@ -141,14 +144,11 @@ bool Ratio::fill(processing::StreamState &streamState, const Record *record,
 
   // XXX(damb): no filter is applied, here. Data is going to be processed in
   // the same way as the underlying template waveform.
-  auto ret{!(_saturationThreshold && checkIfSaturated(data))};
-  if (ret) {
-    _buffer.append(data->size(), data->typedData());
-  }
-  return ret;
+  _buffer.append(data->size(), data->typedData());
+  return true;
 }
 
-void Ratio::initTemplateWaveform() {
+void RatioAmplitude::initTemplateWaveform() {
   auto processingConfig{_templateWaveform.processingConfig()};
   processingConfig.detrend = true;
   processingConfig.demean = true;

@@ -83,7 +83,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   const TemplateWaveform &templateWaveform() const;
 
  protected:
-  WaveformProcessor::StreamState &streamState(const Record *record) override;
+  WaveformProcessor::StreamState *streamState(const Record *record) override;
 
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;

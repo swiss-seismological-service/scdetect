@@ -57,9 +57,9 @@ const TemplateWaveformProcessor *DetectorWaveformProcessor::processor(
   return _detector.processor(processorId);
 }
 
-processing::WaveformProcessor::StreamState &
+processing::WaveformProcessor::StreamState *
 DetectorWaveformProcessor::streamState(const Record *record) {
-  return _streamStates.at(record->streamID());
+  return &_streamStates.at(record->streamID());
 }
 
 void DetectorWaveformProcessor::process(StreamState &streamState,

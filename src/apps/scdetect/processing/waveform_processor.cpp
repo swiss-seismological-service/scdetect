@@ -84,6 +84,9 @@ void WaveformProcessor::terminate() {
 
 void WaveformProcessor::close() const {}
 
+void WaveformProcessor::process(StreamState &streamState, const Record *record,
+                                const DoubleArray &filteredData) {}
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool WaveformProcessor::store(const Record *record) {
   if (WaveformProcessor::Status::kInProgress < status() ||
@@ -92,50 +95,51 @@ bool WaveformProcessor::store(const Record *record) {
   }
 
   try {
-    StreamState &currentStreamState{streamState(record)};
+    auto *currentStreamState{streamState(record)};
+    assert(currentStreamState);
 
     DoubleArrayPtr data{
         dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-    if (currentStreamState.lastRecord) {
-      if (record == currentStreamState.lastRecord) {
+    if (currentStreamState->lastRecord) {
+      if (record == currentStreamState->lastRecord) {
         return false;
       } else if (record->samplingFrequency() !=
-                 currentStreamState.samplingFrequency) {
+                 currentStreamState->samplingFrequency) {
         SCDETECT_LOG_WARNING_PROCESSOR(
             this,
             "%s: sampling frequency changed, resetting stream (sfreq_record != "
             "sfreq_stream): %f != %f",
             record->streamID().c_str(), record->samplingFrequency(),
-            currentStreamState.samplingFrequency);
+            currentStreamState->samplingFrequency);
 
-        reset(currentStreamState);
-      } else if (!handleGap(currentStreamState, record, data)) {
+        reset(*currentStreamState);
+      } else if (!handleGap(*currentStreamState, record, data)) {
         return false;
       }
 
-      currentStreamState.dataTimeWindow.setEndTime(record->endTime());
+      currentStreamState->dataTimeWindow.setEndTime(record->endTime());
     }
 
-    if (!currentStreamState.lastRecord) {
+    if (!currentStreamState->lastRecord) {
       try {
-        setupStream(currentStreamState, record);
+        setupStream(*currentStreamState, record);
       } catch (std::exception &e) {
         SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: Failed to setup stream: %s",
                                        record->streamID().c_str(), e.what());
         return false;
       }
     }
-    currentStreamState.lastSample = (*data)[data->size() - 1];
+    currentStreamState->lastSample = (*data)[data->size() - 1];
 
-    fill(currentStreamState, record, data);
+    fill(*currentStreamState, record, data);
     if (Status::kInProgress < status()) {
       return false;
     }
 
-    processIfEnoughDataReceived(currentStreamState, record, *data);
+    processIfEnoughDataReceived(*currentStreamState, record, *data);
 
-    currentStreamState.lastRecord = record;
+    currentStreamState->lastRecord = record;
 
   } catch (...) {
     return false;

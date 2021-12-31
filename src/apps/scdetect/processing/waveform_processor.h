@@ -156,12 +156,12 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
     bool initialized{false};
   };
 
-  virtual StreamState &streamState(const Record *record) = 0;
+  virtual StreamState *streamState(const Record *record) = 0;
 
   // Virtual method that must be used in derived classes to analyse a
   // data stream. Both the raw record and the filtered data array is passed.
   virtual void process(StreamState &streamState, const Record *record,
-                       const DoubleArray &filteredData) = 0;
+                       const DoubleArray &filteredData);
   // Store the record
   virtual bool store(const Record *record);
 

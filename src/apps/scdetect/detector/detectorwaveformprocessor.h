@@ -72,7 +72,7 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
       const std::string &processorId) const;
 
  protected:
-  WaveformProcessor::StreamState &streamState(const Record *record) override;
+  WaveformProcessor::StreamState *streamState(const Record *record) override;
 
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;

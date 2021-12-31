@@ -24,16 +24,6 @@ namespace Seiscomp {
 namespace detect {
 namespace binding {
 
-StreamConfig::DeconvolutionConfig::operator AmplitudeProcessor::
-    DeconvolutionConfig() const {
-  AmplitudeProcessor::DeconvolutionConfig retval;
-  retval.enabled = enabled;
-  retval.responseTaperLength = responseTaperLength;
-  retval.minimumResponseTaperFrequency = minimumResponseTaperFrequency;
-  retval.maximumResponseTaperFrequency = maximumResponseTaperFrequency;
-  return retval;
-}
-
 std::string StreamConfig::DeconvolutionConfig::debugString() const {
   return "enabled: " + std::to_string(enabled) +
          ", responseTaperLength: " + std::to_string(responseTaperLength) +

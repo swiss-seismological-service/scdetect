@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_BINDING_H_
 
 #include <seiscomp/config/config.h>
+#include <seiscomp/core/datetime.h>
 #include <seiscomp/datamodel/configmodule.h>
 #include <seiscomp/processing/processor.h>
 #include <seiscomp/utils/keyvalues.h>
@@ -11,8 +12,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "amplitude_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -35,8 +34,6 @@ struct StreamConfig {
     // than or equal to zero disables left-hand side tapering.
     double maximumResponseTaperFrequency{0};
 
-    explicit operator AmplitudeProcessor::DeconvolutionConfig() const;
-
     // Returns a string with debug information
     std::string debugString() const;
   };
@@ -57,11 +54,22 @@ struct SensorLocationConfig {
       boost::optional<double> saturationThreshold;
     };
 
+    struct MRelative {
+      // The filter string identifier used for amplitude calculation
+      std::string filter;
+      // The filter's initialization time in seconds
+      Core::TimeSpan initTime{60};
+      // Defines the saturation threshold for the saturation check. If unset, no
+      // saturation check is performed.
+      boost::optional<double> saturationThreshold;
+    };
+
     MLx mlx;
+    MRelative mrelative;
 
     // Defines the amplitude types to be computed with regard to the sensor
     // location
-    std::vector<std::string> amplitudeTypes{"MLx"};
+    std::vector<std::string> amplitudeTypes{"MLx", "MRelative"};
     // Indicates whether the amplitude calculation is enabled (`true`) or
     // disabled (`false`)
     bool enabled{true};

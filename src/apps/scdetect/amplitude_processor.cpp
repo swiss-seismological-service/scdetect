@@ -10,6 +10,16 @@
 namespace Seiscomp {
 namespace detect {
 
+AmplitudeProcessor::BaseException::BaseException()
+    : BaseException{"base amplitude processor exception"} {}
+
+AmplitudeProcessor::DeconvolutionConfig::DeconvolutionConfig(
+    const binding::StreamConfig::DeconvolutionConfig &config)
+    : enabled{config.enabled},
+      responseTaperLength{config.responseTaperLength},
+      minimumResponseTaperFrequency{config.minimumResponseTaperFrequency},
+      maximumResponseTaperFrequency{config.maximumResponseTaperFrequency} {}
+
 void AmplitudeProcessor::setResultCallback(
     const PublishAmplitudeCallback &callback) {
   _resultCallback = callback;

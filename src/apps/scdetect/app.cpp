@@ -31,9 +31,11 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include "amplitude/rms.h"
+#include "amplitude/factory.h"
+#include "amplitude_processor.h"
 #include "config/exception.h"
 #include "config/validators.h"
 #include "detector/arrival.h"
@@ -390,6 +392,7 @@ bool Application::init() {
       return false;
     }
 
+    initAmplitudeProcessorFactory();
     initMagnitudeProcessorFactories();
   }
 
@@ -584,10 +587,10 @@ void Application::handleRecord(Record *rec) {
 
   // register pending amplitude processors
   while (!_amplitudeProcessorQueue.empty()) {
-    const auto &amplitudeProcessor{
-        _amplitudeProcessorQueue.front().amplitudeProcessor};
+    const auto &amplitudeProcessorItem{_amplitudeProcessorQueue.front()};
     _amplitudeProcessorQueue.pop_front();
-    registerAmplitudeProcessor(amplitudeProcessor);
+    registerAmplitudeProcessor(amplitudeProcessorItem.waveformStreamIds,
+                               amplitudeProcessorItem.amplitudeProcessor);
   }
 
   _detectionRegistrationBlocked = true;
@@ -783,15 +786,6 @@ void Application::processDetection(
       auto sensorLocationStreamId{util::getSensorLocationStreamId(
           util::WaveformStreamID{res.arrival.pick.waveformStreamId})};
 
-      auto &processed{processedPhaseCodes[sensorLocationStreamId]};
-      auto phaseAlreadyProcessed{
-          std::find(std::begin(processed), std::end(processed),
-                    res.arrival.phase) != std::end(processed)};
-      if (phaseAlreadyProcessed) {
-        // XXX(damb): assign a phase only once per sensor location
-        continue;
-      }
-
       try {
         const auto pick{createPick(res.arrival, false)};
         if (!pick->add(createTemplateWaveformTimeInfoComment(res).release())) {
@@ -800,15 +794,22 @@ void Application::processDetection(
                                          "template waveform time info comment");
         }
 
-        const auto arrival{createArrival(res.arrival, pick)};
-        processed.emplace(res.arrival.phase);
-
-        if (detection->publishConfig.createArrivals) {
+        auto &processed{processedPhaseCodes[sensorLocationStreamId]};
+        auto phaseAlreadyProcessed{
+            std::find(std::begin(processed), std::end(processed),
+                      res.arrival.phase) != std::end(processed)};
+        // XXX(damb): assign a phase only once per sensor location
+        if (detection->publishConfig.createArrivals && !phaseAlreadyProcessed) {
+          const auto arrival{createArrival(res.arrival, pick)};
           detectionItem.arrivalPicks.push_back({arrival, pick});
+          processed.emplace(res.arrival.phase);
         }
+
         if (detection->publishConfig.createAmplitudes ||
             detection->publishConfig.createMagnitudes) {
-          detectionItem.amplitudePicks.push_back(pick);
+          detectionItem.amplitudePickMap.emplace(
+              resultPair.first,
+              DetectionItem::Pick{res.arrival.pick.waveformStreamId, pick});
         }
       } catch (DuplicatePublicObjectId &e) {
         SCDETECT_LOG_WARNING_PROCESSOR(processor, "Internal error: %s",
@@ -852,7 +853,7 @@ void Application::processDetection(
         std::make_shared<DetectionItem>(std::move(detectionItem))};
     registerDetection(detectionItemPtr);
 
-    initAmplitudeProcessors(detectionItemPtr);
+    initAmplitudeProcessors(detectionItemPtr, *processor);
   } else {
     publishDetection(detectionItem);
   }
@@ -1003,6 +1004,23 @@ DataModel::AmplitudePtr Application::createAmplitude(
   }
 
   return amp;
+}
+
+bool Application::initAmplitudeProcessorFactory() {
+  AmplitudeProcessor::Factory::registerFactory(
+      "MLx", AmplitudeProcessor::Factory::createMLx);
+  AmplitudeProcessor::Factory::registerFactory(
+      "MRelative", AmplitudeProcessor::Factory::createMRelative);
+
+  return true;
+}
+
+bool Application::initMagnitudeProcessorFactories() {
+  MagnitudeProcessor::Factory::registerFactory("MLx", []() {
+    return util::make_unique<magnitude::MLxFixedSlopeRegressionMagnitude>();
+  });
+
+  return true;
 }
 
 bool Application::loadEvents(const std::string &eventDb,
@@ -1209,13 +1227,18 @@ bool Application::initDetectors(std::ifstream &ifs,
 }
 
 bool Application::initAmplitudeProcessors(
-    std::shared_ptr<DetectionItem> &detectionItem) {
-  using SensorLocationPickMap = std::unordered_map<std::string, Picks>;
+    std::shared_ptr<DetectionItem> &detectionItem,
+    const detector::DetectorWaveformProcessor &detectorProcessor) {
+  using PickMap = std::pair<DetectionItem::ProcessorId, DetectionItem::Pick>;
+  using SensorLocationPickMap = std::multimap<std::string, PickMap>;
   SensorLocationPickMap sensorLocationPickMap;
   // gather unique sensor locations which have amplitude calculation enabled
   // (requires bindings to be configured)
-  for (const auto &pick : detectionItem->amplitudePicks) {
-    const util::WaveformStreamID waveformStreamId{pick->waveformID()};
+  for (const auto &pickMapPair : detectionItem->amplitudePickMap) {
+    const auto &processorId{pickMapPair.first};
+    const auto &pick{pickMapPair.second};
+    const util::WaveformStreamID waveformStreamId{
+        pick.authorativeWaveformStreamId};
     try {
       auto hasAmplitudeCalculationEnabled{
           _bindings
@@ -1223,10 +1246,9 @@ bool Application::initAmplitudeProcessors(
                   waveformStreamId.locCode(), waveformStreamId.chaCode())
               .amplitudeProcessingConfig.enabled};
       if (hasAmplitudeCalculationEnabled) {
-        auto &sensorLocationPicks{
-            sensorLocationPickMap[util::getSensorLocationStreamId(
-                waveformStreamId, true)]};
-        sensorLocationPicks.push_back(pick);
+        sensorLocationPickMap.emplace(
+            util::getSensorLocationStreamId(waveformStreamId, true),
+            std::make_pair(processorId, pick));
       }
     } catch (std::out_of_range &) {
       continue;
@@ -1234,14 +1256,6 @@ bool Application::initAmplitudeProcessors(
   }
 
   for (const auto &sensorLocationPickMapPair : sensorLocationPickMap) {
-    auto picks{sensorLocationPickMapPair.second};
-    // choose arbitrarily the earliest pick w.r.t. a sensor location
-    std::sort(std::begin(picks), std::end(picks),
-              [](const Picks::value_type &lhs, const Picks::value_type &rhs) {
-                return lhs->time().value() < rhs->time().value();
-              });
-    auto &earliestPick{picks.front()};
-
     const auto &sensorLocationStreamId{sensorLocationPickMapPair.first};
     std::vector<std::string> sensorLocationStreamIdTokens;
     util::tokenizeWaveformStreamId(sensorLocationStreamId,
@@ -1252,29 +1266,30 @@ bool Application::initAmplitudeProcessors(
         sensorLocationStreamIdTokens[2], sensorLocationStreamIdTokens[3])};
     auto &amplitudeTypes{
         sensorLocationBindings.amplitudeProcessingConfig.amplitudeTypes};
-    // TODO(damb):
-    // - implement a factory for creating amplitude processors
+
     for (const auto &amplitudeType : amplitudeTypes) {
-      if (amplitudeType != "MLx") {
-        continue;
+      std::vector<std::string> waveformStreamIds;
+
+      amplitude::factory::Detection detection;
+      detection.origin = detectionItem->origin;
+      detection.sensorLocationStreamId = sensorLocationStreamId;
+
+      auto range{sensorLocationPickMap.equal_range(sensorLocationStreamId)};
+      for (auto i{range.first}; i != range.second; ++i) {
+        const auto &pickPair{i->second};
+        waveformStreamIds.push_back(
+            pickPair.second.authorativeWaveformStreamId);
+
+        detection.pickMap.emplace(
+            pickPair.first, amplitude::factory::Detection::Pick{
+                                pickPair.second.authorativeWaveformStreamId,
+                                pickPair.second.pick});
       }
 
-      auto rmsAmplitudeProcessor{util::make_unique<amplitude::RMSAmplitude>()};
-      rmsAmplitudeProcessor->setId(detectionItem->detectorId +
-                                   settings::kProcessorIdSep +
-                                   util::createUUID());
-      // XXX(damb): do not provide a sensor location (currently not required)
-      rmsAmplitudeProcessor->setEnvironment(detectionItem->origin, nullptr,
-                                            picks);
+      auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
+          amplitudeType, _bindings, detection, detectorProcessor)};
 
-      rmsAmplitudeProcessor->computeTimeWindow();
-      rmsAmplitudeProcessor->setGapInterpolation(
-          detectionItem->config.gapInterpolation);
-      rmsAmplitudeProcessor->setGapThreshold(
-          detectionItem->config.gapThreshold);
-      rmsAmplitudeProcessor->setGapTolerance(
-          detectionItem->config.gapTolerance);
-
+      // configure callback
       bool magnitudesForcedEnabled{_config.magnitudesForceMode &&
                                    *_config.magnitudesForceMode};
       bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
@@ -1283,26 +1298,26 @@ bool Application::initAmplitudeProcessors(
       const auto &magnitudeProcessingConfig{
           sensorLocationBindings.magnitudeProcessingConfig};
       const auto magnitudeType{amplitudeType};
-
       bool magnitudeCalculationEnabled{
           magnitudesForcedEnabled ||
           (!magnitudesForcedDisabled &&
-           detectionItem->detection->publishConfig.createMagnitudes &&
+           detectorProcessor.publishConfig().createMagnitudes &&
            magnitudeProcessingConfig.enabled &&
            std::find(std::begin(magnitudeProcessingConfig.magnitudeTypes),
                      std::end(magnitudeProcessingConfig.magnitudeTypes),
                      magnitudeType) !=
                std::end(magnitudeProcessingConfig.magnitudeTypes))};
-      auto magnitudeProcessorId{detectionItem->detectorId +
+      auto magnitudeProcessorId{detectorProcessor.id() +
                                 settings::kProcessorIdSep + util::createUUID()};
 
       ++detectionItem->numberOfRequiredAmplitudes;
 
-      rmsAmplitudeProcessor->setResultCallback(
+      amplitudeProcessor->setResultCallback(
           [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
            magnitudeProcessorId](const AmplitudeProcessor *processor,
                                  const Record *record,
                                  AmplitudeProcessor::AmplitudeCPtr result) {
+            assert(processor);
             DataModel::AmplitudePtr amplitude;
             // create amplitude
             try {
@@ -1350,76 +1365,9 @@ bool Application::initAmplitudeProcessors(
             }
           });
 
-      const auto &amplitudeProcessingConfig{
-          sensorLocationBindings.amplitudeProcessingConfig};
-      rmsAmplitudeProcessor->setSaturationThreshold(
-          amplitudeProcessingConfig.mlx.saturationThreshold);
-
-      // configure amplitude processing filter
-      if (!amplitudeProcessingConfig.mlx.filter.empty()) {
-        auto filter{amplitudeProcessingConfig.mlx.filter};
-        util::replaceEscapedXMLFilterIdChars(filter);
-        try {
-          rmsAmplitudeProcessor->setFilter(
-              processing::createFilter(filter),
-              amplitudeProcessingConfig.mlx.initTime);
-          SCDETECT_LOG_DEBUG_TAGGED(
-              rmsAmplitudeProcessor->id(),
-              "Configured amplitude processor filter: filter=\"%s\", "
-              "init_time=%f",
-              filter.c_str(), amplitudeProcessingConfig.mlx.initTime);
-        } catch (processing::WaveformProcessor::BaseException &e) {
-          throw BaseException{sensorLocationStreamId + ": " + e.what()};
-        }
-      } else {
-        SCDETECT_LOG_DEBUG_TAGGED(
-            rmsAmplitudeProcessor->id(),
-            "Configured amplitude processor with no filter: filter=\"\"");
-      }
-
       try {
-        const util::HorizontalComponents horizontalComponents{
-            Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
-            sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
-            sensorLocationStreamIdTokens[3], earliestPick->time().value()};
-
-        for (auto s : horizontalComponents) {
-          Processing::Stream stream;
-          stream.init(s);
-
-          AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
-          try {
-            deconvolutionConfig =
-                static_cast<AmplitudeProcessor::DeconvolutionConfig>(
-                    sensorLocationBindings.at(s->code()).deconvolutionConfig);
-          } catch (std::out_of_range &e) {
-            binding::StreamConfig::DeconvolutionConfig fallback;
-            SCDETECT_LOG_WARNING(
-                "%s: failed to look up deconvolution configuration related "
-                "bindings (channel code: \"%s\") required for amplitude "
-                "processor configuration (%s); use fallback configuration, "
-                "instead: \"%s\"",
-                sensorLocationStreamId.c_str(), s->code().c_str(), e.what(),
-                fallback.debugString().c_str());
-            deconvolutionConfig =
-                static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
-          }
-
-          rmsAmplitudeProcessor->add(
-              horizontalComponents.netCode(), horizontalComponents.staCode(),
-              horizontalComponents.locCode(), stream, deconvolutionConfig);
-        }
-      } catch (Exception &e) {
-        logging::TaggedMessage msg{
-            sensorLocationStreamId,
-            std::string{e.what()} +
-                "(pick_time=" + earliestPick->time().value().iso() + ")"};
-        SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
-        continue;
-      }
-
-      try {
-        registerAmplitudeProcessor(std::move(rmsAmplitudeProcessor));
+        registerAmplitudeProcessor(waveformStreamIds,
+                                   std::move(amplitudeProcessor));
       } catch (Exception &e) {
         SCDETECT_LOG_WARNING("Failed to register amplitude processor: %s",
                              e.what());
@@ -1533,14 +1481,6 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
   return true;
 }
 
-bool Application::initMagnitudeProcessorFactories() {
-  MagnitudeProcessor::Factory::registerFactory("MLx", []() {
-    return util::make_unique<magnitude::MLxFixedSlopeRegressionMagnitude>();
-  });
-
-  return true;
-}
-
 DataModel::StationMagnitudePtr Application::createMagnitude(
     const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
     const std::string &methodId, const std::string &processorId) {
@@ -1567,14 +1507,14 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
 }
 
 void Application::registerAmplitudeProcessor(
-    const std::shared_ptr<ReducingAmplitudeProcessor> &processor) {
+    const std::vector<WaveformStreamId> &waveformStreamIds,
+    const std::shared_ptr<AmplitudeProcessor> &processor) {
   if (_amplitudeProcessorRegistrationBlocked) {
     _amplitudeProcessorQueue.emplace_back(
-        AmplitudeProcessorQueueItem{processor});
+        AmplitudeProcessorQueueItem{waveformStreamIds, processor});
     return;
   }
 
-  const auto &waveformStreamIds{processor->waveformStreamIds()};
   for (const auto &waveformStreamId : waveformStreamIds) {
     _amplitudeProcessors.emplace(waveformStreamId, processor);
     SCDETECT_LOG_DEBUG("[%s] Added amplitude processor with id: %s",
@@ -1582,6 +1522,7 @@ void Application::registerAmplitudeProcessor(
     SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
                        _amplitudeProcessors.size());
   }
+  _amplitudeProcessorIdx.emplace(processor->id(), waveformStreamIds);
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     if (!processor->finished()) {
@@ -1631,14 +1572,14 @@ void Application::registerAmplitudeProcessor(
 }
 
 void Application::removeAmplitudeProcessor(
-    const std::shared_ptr<ReducingAmplitudeProcessor> &processor) {
+    const std::shared_ptr<AmplitudeProcessor> &processor) {
   if (_amplitudeProcessorRegistrationBlocked) {
     _amplitudeProcessorRemovalQueue.emplace_back(
-        AmplitudeProcessorQueueItem{processor});
+        AmplitudeProcessorQueueItem{{}, processor});
     return;
   }
 
-  const auto waveformStreamIds{processor->waveformStreamIds()};
+  const auto waveformStreamIds{_amplitudeProcessorIdx.at(processor->id())};
   for (const auto &waveformStreamId : waveformStreamIds) {
     auto range{_amplitudeProcessors.equal_range(waveformStreamId)};
     auto it{range.first};
@@ -1654,6 +1595,8 @@ void Application::removeAmplitudeProcessor(
       }
     }
   }
+
+  _amplitudeProcessorIdx.erase(processor->id());
 
   // check pending registration queue
   auto it{std::begin(_amplitudeProcessorQueue)};
