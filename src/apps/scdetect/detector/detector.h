@@ -120,7 +120,8 @@ class Detector : public detect::processing::Processor {
   // Returns the template waveform processor identified by `processorId`
   //
   // - returns `nullptr` if there is no processor with `processorId` registered
-  const TemplateWaveformProcessor *processor(const std::string &processorId);
+  const TemplateWaveformProcessor *processor(
+      const std::string &processorId) const;
 
   // Register the template waveform processor `proc`. Records are identified by
   // the waveform stream identifier `waveformStreamId`. `proc` is registered

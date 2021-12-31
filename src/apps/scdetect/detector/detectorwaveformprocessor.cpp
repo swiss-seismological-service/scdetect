@@ -53,7 +53,7 @@ const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
 }
 
 const TemplateWaveformProcessor *DetectorWaveformProcessor::processor(
-    const std::string &processorId) {
+    const std::string &processorId) const {
   return _detector.processor(processorId);
 }
 

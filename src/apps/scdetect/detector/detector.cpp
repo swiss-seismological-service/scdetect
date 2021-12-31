@@ -95,7 +95,7 @@ boost::optional<Core::TimeSpan> Detector::maxLatency() const {
 size_t Detector::processorCount() const { return _processors.size(); }
 
 const TemplateWaveformProcessor *Detector::processor(
-    const std::string &processorId) {
+    const std::string &processorId) const {
   try {
     return _processors.at(processorId).processor.get();
   } catch (std::out_of_range &) {

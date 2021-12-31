@@ -68,7 +68,8 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
   // `processorId`
   //
   // - returns a `nullptr` if no processor is identified by `processorId`
-  const TemplateWaveformProcessor *processor(const std::string &processorId);
+  const TemplateWaveformProcessor *processor(
+      const std::string &processorId) const;
 
  protected:
   WaveformProcessor::StreamState &streamState(const Record *record) override;
