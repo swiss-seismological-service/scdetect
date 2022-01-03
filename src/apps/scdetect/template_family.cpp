@@ -1,4 +1,4 @@
-#include "templatefamily.h"
+#include "template_family.h"
 
 #include <seiscomp/client/inventory.h>
 #include <seiscomp/core/exceptions.h>

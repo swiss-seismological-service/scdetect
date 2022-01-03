@@ -13,9 +13,9 @@
 #include <vector>
 
 #include "../log.h"
-#include "../magnitudeprocessor.h"
+#include "../magnitude_processor.h"
 #include "../util/math.h"
-#include "templatefamily.h"
+#include "template_family.h"
 
 namespace Seiscomp {
 namespace detect {

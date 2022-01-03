@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "../magnitudeprocessor.h"
+#include "../magnitude_processor.h"
 
 namespace Seiscomp {
 namespace detect {

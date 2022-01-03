@@ -44,7 +44,7 @@
 #include "eventstore.h"
 #include "log.h"
 #include "magnitude/regression.h"
-#include "magnitudeprocessor.h"
+#include "magnitude_processor.h"
 #include "processing/processor.h"
 #include "processing/waveform_processor.h"
 #include "resamplerstore.h"

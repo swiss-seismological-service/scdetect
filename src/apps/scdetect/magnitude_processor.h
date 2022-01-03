@@ -7,9 +7,9 @@
 #include <unordered_map>
 
 #include "factory.h"
-#include "magnitude/templatefamily.h"
+#include "magnitude/template_family.h"
 #include "processing/processor.h"
-#include "templatefamily.h"
+#include "template_family.h"
 
 namespace Seiscomp {
 namespace detect {

@@ -1,6 +1,6 @@
 #include "range.h"
 
-#include "../../magnitudeprocessor.h"
+#include "../../magnitude_processor.h"
 #include "../util.h"
 
 namespace Seiscomp {

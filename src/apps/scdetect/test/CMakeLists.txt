@@ -50,12 +50,12 @@ set(SOURCES_integration
   ../exception.cpp
   ../filter.cpp
   ../log.cpp
-  ../magnitudeprocessor.cpp
+  ../magnitude_processor.cpp
   ../magnitude/decorator/range.cpp
   ../magnitude/decorator.cpp
   ../magnitude/regression.cpp
   ../magnitude/util.cpp
-  ../magnitude/templatefamily.cpp
+  ../magnitude/template_family.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processing/detail/gap_interpolate.cpp
@@ -65,7 +65,7 @@ set(SOURCES_integration
   ../processing/waveform_operator.cpp
   ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
-  ../templatefamily.cpp
+  ../template_family.cpp
   ../template_waveform.cpp
   ../util/horizontal_components.cpp
   ../util/util.cpp

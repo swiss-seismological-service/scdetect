@@ -31,12 +31,12 @@ set(
     exception.cpp
     filter.cpp
     log.cpp
-    magnitudeprocessor.cpp
+    magnitude_processor.cpp
     magnitude/decorator/range.cpp
     magnitude/decorator.cpp
     magnitude/regression.cpp
     magnitude/util.cpp
-    magnitude/templatefamily.cpp
+    magnitude/template_family.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
@@ -48,7 +48,7 @@ set(
     processing/waveform_processor.cpp
     resamplerstore.cpp
     template_waveform.cpp
-    templatefamily.cpp
+    template_family.cpp
     util/horizontal_components.cpp
     util/util.cpp
     util/waveform_stream_id.cpp

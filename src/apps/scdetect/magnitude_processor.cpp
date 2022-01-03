@@ -1,4 +1,4 @@
-#include "magnitudeprocessor.h"
+#include "magnitude_processor.h"
 
 #include <seiscomp/utils/units.h>
 

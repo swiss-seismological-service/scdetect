@@ -1,4 +1,4 @@
-#include "templatefamily.h"
+#include "template_family.h"
 
 namespace Seiscomp {
 namespace detect {
