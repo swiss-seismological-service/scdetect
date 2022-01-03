@@ -11,9 +11,8 @@ double Decorator::compute(const DataModel::Amplitude* amplitude) {
   return _decorated->compute(amplitude);
 }
 
-void Decorator::finalizeMagnitude(
-    DataModel::StationMagnitude* magnitude) const {
-  _decorated->finalizeMagnitude(magnitude);
+void Decorator::finalize(DataModel::StationMagnitude* magnitude) const {
+  _decorated->finalize(magnitude);
 }
 
 MagnitudeProcessor* Decorator::decorated() { return _decorated.get(); }

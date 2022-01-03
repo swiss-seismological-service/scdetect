@@ -36,7 +36,7 @@ double MagnitudeProcessor::compute(const DataModel::Amplitude* amplitude) {
   return computeMagnitude(amplitude);
 }
 
-void MagnitudeProcessor::finalizeMagnitude(
+void MagnitudeProcessor::finalize(
     DataModel::StationMagnitude* magnitude) const {}
 
 double MagnitudeProcessor::convertAmplitude(

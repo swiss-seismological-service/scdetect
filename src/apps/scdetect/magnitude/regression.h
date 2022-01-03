@@ -42,9 +42,8 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
     _bMean = boost::none;
   }
 
-  void finalizeMagnitude(
-      DataModel::StationMagnitude* stationMagnitude) const override {
-    stationMagnitude->setType(type());
+  void finalize(DataModel::StationMagnitude* magnitude) const override {
+    magnitude->setType(type());
   }
 
  protected:

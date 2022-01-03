@@ -1501,7 +1501,7 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
   mag->setAmplitudeID(amplitude->publicID());
   mag->setMethodID(methodId);
 
-  proc->finalizeMagnitude(mag.get());
+  proc->finalize(mag.get());
 
   return mag;
 }

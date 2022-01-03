@@ -123,7 +123,7 @@ class MagnitudeProcessor : public processing::Processor {
   virtual double compute(const DataModel::Amplitude* amplitude);
 
   // Finalizes the `magnitude` created by client code
-  virtual void finalizeMagnitude(DataModel::StationMagnitude* magnitude) const;
+  virtual void finalize(DataModel::StationMagnitude* magnitude) const;
 
  protected:
   virtual double computeMagnitude(const DataModel::Amplitude* amplitude) = 0;
