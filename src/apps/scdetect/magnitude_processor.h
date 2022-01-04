@@ -117,7 +117,7 @@ class MagnitudeProcessor : public processing::Processor {
   // Returns the amplitude type of used for computing the magnitude
   //
   // - the default implementation returns `type()`
-  std::string amplitudeType() const;
+  virtual std::string amplitudeType() const;
 
   // Computes the magnitude from `amplitude`
   virtual double compute(const DataModel::Amplitude* amplitude);
