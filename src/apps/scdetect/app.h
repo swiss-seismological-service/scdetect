@@ -281,7 +281,7 @@ class Application : public Client::StreamApplication {
   // Initialize amplitude processors
   bool initAmplitudeProcessors(
       std::shared_ptr<DetectionItem> &detectionItem,
-      const detector::DetectorWaveformProcessor &processorProcessor);
+      const detector::DetectorWaveformProcessor &detectorProcessor);
 
   // Initialize template families
   //
