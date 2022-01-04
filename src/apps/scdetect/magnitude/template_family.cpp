@@ -7,7 +7,7 @@ namespace magnitude {
 void TemplateFamilyBased::addAmplitudeMagnitude(
     DataModel::AmplitudeCPtr amplitude,
     DataModel::StationMagnitudeCPtr magnitude) {
-  _amplitudeMagnitudes.push_back({amplitude, magnitude});
+  _amplitudeMagnitudes.push_back({std::move(amplitude), std::move(magnitude)});
 }
 
 void TemplateFamilyBased::resetAmplitudeMagnitudes() {
