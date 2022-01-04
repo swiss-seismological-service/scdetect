@@ -33,7 +33,7 @@ class MagnitudeProcessor : public processing::Processor {
     //! Given amplitude SNR is out of range to continue processing
     kSNROutOfRange,
     //! Either the origin or the sensor location hasn't been set in call to
-    // computeMagnitude
+    // compute
     kMetaDataRequired,
     //! The epicentre is out of supported regions
     kEpicenterOutOfRegions,
