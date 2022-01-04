@@ -56,7 +56,8 @@ class MagnitudeProcessor : public processing::Processor {
   // Base class for all MagnitudeProcessor related exceptions
   class BaseException : public Processor::BaseException {
    public:
-    BaseException(const std::string& msg, Status status = Status::kError);
+    explicit BaseException(const std::string& msg,
+                           Status status = Status::kError);
     BaseException();
 
     // Sets the exception's status
