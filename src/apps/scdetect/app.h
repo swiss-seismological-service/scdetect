@@ -264,7 +264,7 @@ class Application : public Client::StreamApplication {
   static bool initAmplitudeProcessorFactory();
 
   // Initialize magnitude processor factory callbacks
-  static bool initMagnitudeProcessorFactories();
+  static bool initMagnitudeProcessorFactory();
 
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
@@ -297,8 +297,8 @@ class Application : public Client::StreamApplication {
 
   // Computes a magnitude based on `amplitude`
   DataModel::StationMagnitudePtr createMagnitude(
-      const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
-      const std::string &methodId = "", const std::string &processorId = "");
+      const DataModel::Amplitude &amplitude, const std::string &methodId = "",
+      const std::string &processorId = "");
 
   using WaveformStreamId = std::string;
   // Registers an amplitude `processor` for `waveformStreamIds`

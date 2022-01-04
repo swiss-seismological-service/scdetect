@@ -53,7 +53,9 @@ set(SOURCES_integration
   ../magnitude_processor.cpp
   ../magnitude/decorator/range.cpp
   ../magnitude/decorator.cpp
-  ../magnitude/regression.cpp
+  ../magnitude/factory.cpp
+  ../magnitude/mlx.cpp
+  ../magnitude/mrelative.cpp
   ../magnitude/util.cpp
   ../magnitude/template_family.cpp
   ../operator/resample.cpp

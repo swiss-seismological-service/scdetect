@@ -109,18 +109,6 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
   static const std::ratio<Num, Denom> _slope;
 };
 
-class MwxFixedSlopeRegressionMagnitude
-    : public FixedSlopeRegressionMagnitude<2, 3> {
- public:
-  MwxFixedSlopeRegressionMagnitude();
-};
-
-class MLxFixedSlopeRegressionMagnitude
-    : public FixedSlopeRegressionMagnitude<1> {
- public:
-  MLxFixedSlopeRegressionMagnitude();
-};
-
 }  // namespace magnitude
 }  // namespace detect
 }  // namespace Seiscomp

@@ -362,6 +362,8 @@ bool Application::init() {
     _bindings.load(&configuration(), configModule(), name());
   }
 
+  initAmplitudeProcessorFactory();
+
   bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
                                 !*_config.magnitudesForceMode};
   // TODO (damb):
@@ -392,8 +394,7 @@ bool Application::init() {
       return false;
     }
 
-    initAmplitudeProcessorFactory();
-    initMagnitudeProcessorFactories();
+    initMagnitudeProcessorFactory();
   }
 
   // free memory after initialization
@@ -1015,10 +1016,11 @@ bool Application::initAmplitudeProcessorFactory() {
   return true;
 }
 
-bool Application::initMagnitudeProcessorFactories() {
-  MagnitudeProcessor::Factory::registerFactory("MLx", []() {
-    return util::make_unique<magnitude::MLxFixedSlopeRegressionMagnitude>();
-  });
+bool Application::initMagnitudeProcessorFactory() {
+  MagnitudeProcessor::Factory::registerFactory(
+      "MLx", MagnitudeProcessor::Factory::createMLx);
+  MagnitudeProcessor::Factory::registerFactory(
+      "MRelative", MagnitudeProcessor::Factory::createMRelative);
 
   return true;
 }
@@ -1340,8 +1342,7 @@ bool Application::initAmplitudeProcessors(
               ++detectionItem->numberOfRequiredMagnitudes;
               // create station magnitude
               try {
-                auto mag{createMagnitude(amplitude.get(), magnitudeType, "",
-                                         magnitudeProcessorId)};
+                auto mag{createMagnitude(*amplitude, "", magnitudeProcessorId)};
                 if (!mag) {
                   --detectionItem->numberOfRequiredMagnitudes;
                   return;
@@ -1413,8 +1414,7 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
                                 .setAmplitudes(waveformHandler, _bindings)
                                 .build()};
         if (!templateFamily->empty()) {
-          MagnitudeProcessor::Factory::registerTemplateFamily(
-              std::move(templateFamily));
+          MagnitudeProcessor::Factory::add(std::move(templateFamily));
           msg.setText("Registered template family");
           SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
         } else {
@@ -1482,28 +1482,28 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
 }
 
 DataModel::StationMagnitudePtr Application::createMagnitude(
-    const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
-    const std::string &methodId, const std::string &processorId) {
-  auto proc{MagnitudeProcessor::Factory::create(amplitude, magnitudeType,
-                                                processorId)};
-  if (!proc) {
-    throw BaseException("failed to create magnitude processor");
+    const DataModel::Amplitude &amplitude, const std::string &methodId,
+    const std::string &processorId) {
+  try {
+    auto proc{MagnitudeProcessor::Factory::create(amplitude.type(), amplitude,
+                                                  processorId)};
+    auto magnitudeValue{proc->compute(&amplitude)};
+
+    DataModel::StationMagnitudePtr mag{DataModel::StationMagnitude::Create()};
+    if (!mag) {
+      throw DuplicatePublicObjectId{"duplicate station magnitude identifier"};
+    }
+
+    mag->setMagnitude(DataModel::RealQuantity{magnitudeValue});
+    mag->setAmplitudeID(amplitude.publicID());
+    mag->setMethodID(methodId);
+
+    proc->finalize(mag.get());
+    return mag;
+  } catch (MagnitudeProcessor::Factory::BaseException &e) {
+    throw BaseException("failed to create magnitude processor (" +
+                        std::string{e.what()} + ")");
   }
-
-  auto magnitudeValue{proc->compute(amplitude)};
-
-  DataModel::StationMagnitudePtr mag{DataModel::StationMagnitude::Create()};
-  if (!mag) {
-    throw DuplicatePublicObjectId{"duplicate station magnitude identifier"};
-  }
-
-  mag->setMagnitude(DataModel::RealQuantity{magnitudeValue});
-  mag->setAmplitudeID(amplitude->publicID());
-  mag->setMethodID(methodId);
-
-  proc->finalize(mag.get());
-
-  return mag;
 }
 
 void Application::registerAmplitudeProcessor(

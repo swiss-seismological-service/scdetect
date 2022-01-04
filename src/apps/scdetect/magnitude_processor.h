@@ -6,10 +6,8 @@
 #include <memory>
 #include <unordered_map>
 
-#include "factory.h"
-#include "magnitude/template_family.h"
+#include "magnitude/factory.h"
 #include "processing/processor.h"
-#include "template_family.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -69,48 +67,7 @@ class MagnitudeProcessor : public processing::Processor {
     Status _status{Status::kError};
   };
 
-  class Factory {
-    using AdaptedFactory = detect::Factory<MagnitudeProcessor, std::string>;
-
-   public:
-    using CallbackType = AdaptedFactory::CallbackType;
-
-    static bool registerFactory(const std::string& id, CallbackType callback);
-
-    static bool unregisterFactory(const std::string& id);
-
-    // Emerges the magnitude processor based on `amplitude` or (as a fallback)
-    // from `id`
-    static std::unique_ptr<MagnitudeProcessor> create(
-        const DataModel::Amplitude* amplitude, const std::string& id = "",
-        const std::string& processorId = "");
-
-    // Register a template family
-    static void registerTemplateFamily(
-        std::unique_ptr<TemplateFamily>&& templateFamily);
-    // Unregister a template family
-    static void unregisterTemplateFamily(const std::string& detectorId,
-                                         const std::string& sensorLocationId);
-
-   private:
-    using DetectorId = std::string;
-    using SensorLocationId = std::string;
-    static bool configureTemplateFamily(
-        magnitude::TemplateFamilyBased* processor,
-        const DataModel::Amplitude* amplitude, const DetectorId& detectorId,
-        const SensorLocationId& sensorLocationId,
-        const std::string& magnitudeType,
-        std::shared_ptr<TemplateFamily>& templateFamily);
-    static bool configureLimits(
-        std::unique_ptr<MagnitudeProcessor>& ret, const DetectorId& detectorId,
-        const SensorLocationId& sensorLocationId,
-        const std::shared_ptr<TemplateFamily>& templateFamily);
-
-    using TemplateFamilies = std::unordered_map<
-        DetectorId,
-        std::unordered_map<SensorLocationId, std::shared_ptr<TemplateFamily>>>;
-    static TemplateFamilies& templateFamilies();
-  };
+  using Factory = magnitude::Factory;
 
   // Returns the type of the magnitude
   const std::string& type() const;
