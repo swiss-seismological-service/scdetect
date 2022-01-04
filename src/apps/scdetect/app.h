@@ -266,6 +266,9 @@ class Application : public Client::StreamApplication {
   // Initialize magnitude processor factory callbacks
   static bool initMagnitudeProcessorFactory();
 
+  // Initialize station magnitudes
+  static bool initStationMagnitudes(const TemplateConfigs &templateConfigs);
+
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
 
@@ -286,6 +289,7 @@ class Application : public Client::StreamApplication {
   bool initTemplateFamilies(std::ifstream &ifs,
                             WaveformHandlerIface *waveformHandler,
                             const TemplateConfigs &templateConfigs);
+
   // Creates an amplitude
   //
   // - if `amplitudeType` is passed it overrides the default value

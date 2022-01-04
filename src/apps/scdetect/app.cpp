@@ -1,6 +1,7 @@
 #include "app.h"
 
 #include <seiscomp/core/arrayfactory.h>
+#include <seiscomp/core/exceptions.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/strings.h>
 #include <seiscomp/core/timewindow.h>
@@ -12,6 +13,7 @@
 #include <seiscomp/datamodel/realquantity.h>
 #include <seiscomp/datamodel/timequantity.h>
 #include <seiscomp/datamodel/timewindow.h>
+#include <seiscomp/datamodel/waveformstreamid.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/math/geo.h>
@@ -26,6 +28,7 @@
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <exception>
 #include <ios>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -399,6 +402,78 @@ bool Application::init() {
 
   // free memory after initialization
   EventStore::Instance().reset();
+
+  return true;
+}
+
+bool Application::initStationMagnitudes(
+    const TemplateConfigs &templateConfigs) {
+  const auto &matchingMagnitudeTypes{
+      settings::kValidPrioritizedStationMagnitudeTypes};
+
+  for (const auto &templateConfig : templateConfigs) {
+    using SensorLocationMagnitudeMap =
+        std::unordered_map<std::string, DataModel::StationMagnitudeCPtr>;
+    SensorLocationMagnitudeMap sensorLocationMagnitudeMap;
+    // collect unique sensor locations
+    for (const auto &streamConfigPair : templateConfig) {
+      sensorLocationMagnitudeMap[util::getSensorLocationStreamId(
+          util::WaveformStreamID{streamConfigPair.first})];
+    }
+
+    const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
+        templateConfig.originId())};
+    // collect station magnitudes
+    for (std::size_t i{0}; i < origin->stationMagnitudeCount(); ++i) {
+      const auto stationMagnitude{origin->stationMagnitude(i)};
+      const auto magType{std::find(std::begin(matchingMagnitudeTypes),
+                                   std::end(matchingMagnitudeTypes),
+                                   stationMagnitude->type())};
+
+      const auto unknownMagnitudeType{magType == matchingMagnitudeTypes.end()};
+      if (unknownMagnitudeType) {
+        continue;
+      }
+
+      try {
+        auto &mag{sensorLocationMagnitudeMap.at(util::getSensorLocationStreamId(
+            util::WaveformStreamID{stationMagnitude->waveformID()}))};
+
+        if (mag) {
+          // check if *better* magnitude type
+          const auto currentMagType{
+              std::find(std::begin(matchingMagnitudeTypes),
+                        std::end(matchingMagnitudeTypes), mag->type())};
+          if (std::distance(std::begin(matchingMagnitudeTypes), magType) >
+              std::distance(std::begin(matchingMagnitudeTypes),
+                            currentMagType)) {
+            continue;
+          }
+        }
+
+        mag = stationMagnitude;
+      } catch (Core::ValueException &) {
+        // missing waveform stream identifier
+        continue;
+      } catch (std::out_of_range &) {
+        // unknown sensor location
+        continue;
+      }
+    }
+
+    // register station magnitudes
+    for (const auto &sensorLocationMagnitudeMapPair :
+         sensorLocationMagnitudeMap) {
+      const auto &sensorLocationId{sensorLocationMagnitudeMapPair.first};
+      const auto &mag{sensorLocationMagnitudeMapPair.second};
+      if (!mag) {
+        continue;
+      }
+
+      MagnitudeProcessor::Factory::add(templateConfig.detectorId(),
+                                       sensorLocationId, mag);
+    }
+  }
 
   return true;
 }
