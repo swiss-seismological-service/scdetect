@@ -128,10 +128,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
           }
 
           auto magnitudeSensorLocationId{util::getSensorLocationStreamId(
-              util::WaveformStreamID{waveformStreamId.networkCode(),
-                                     waveformStreamId.stationCode(),
-                                     waveformStreamId.locationCode(),
-                                     waveformStreamId.channelCode()})};
+              util::WaveformStreamID{waveformStreamId})};
           if (magnitudeSensorLocationId != sensorLocationId) {
             continue;
           }
