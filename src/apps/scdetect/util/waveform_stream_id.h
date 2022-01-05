@@ -30,6 +30,9 @@ std::string join(const std::string &netCode, const std::string &staCode,
 std::string getSensorLocationStreamId(const WaveformStreamID &waveformStreamId,
                                       bool includeBandAndSourceCode = false);
 
+std::string getSensorLocationStreamId(const std::string &waveformStreamId,
+                                      bool includeBandAndSourceCode = false);
+
 std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId);
 
 class WaveformStreamID {
