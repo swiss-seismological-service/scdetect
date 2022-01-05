@@ -399,8 +399,8 @@
 
             <group name="MLx">
               <description>
-                Defines configuration parameters for of amplitudes required for the
-                template family amplitude-magnitude regression magnitude
+                Defines configuration parameters for amplitudes required for
+                the template family amplitude-magnitude regression magnitude
                 estimation. Note that this amplitude type requires sensor
                 responses to be configured.
               </description>
