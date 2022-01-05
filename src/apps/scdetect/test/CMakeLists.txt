@@ -1,7 +1,7 @@
 set(TESTS
   filter_crosscorrelation.cpp
   integration.cpp
-  reducingamplitudeprocessor.cpp
+  reducing_amplitude_processor.cpp
   util_math_cma.cpp
 )
 
@@ -51,33 +51,35 @@ set(SOURCES_integration
   ../magnitude/templatefamily.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
-  ../processor.cpp
+  ../processing/detail/gap_interpolate.cpp
+  ../processing/processor.cpp
+  ../processing/stream.cpp
+  ../processing/timewindow_processor.cpp
+  ../processing/waveform_operator.cpp
+  ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
-  ../stream.cpp
   ../templatefamily.cpp
-  ../timewindowprocessor.cpp
   ../util/horizontal_components.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../waveform.cpp
-  ../waveformoperator.cpp
-  ../waveformprocessor.cpp
   fixture.cpp
   integration_utils.cpp
 )
 
-set(SOURCES_reducingamplitudeprocessor
+set(SOURCES_reducing_amplitude_processor
   ../amplitudeprocessor.cpp
   ../exception.cpp
-  ../processor.cpp
-  ../stream.cpp
-  ../timewindowprocessor.cpp
+  ../processing/detail/gap_interpolate.cpp
+  ../processing/processor.cpp
+  ../processing/stream.cpp
+  ../processing/timewindow_processor.cpp
+  ../processing/waveform_operator.cpp
+  ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../waveform.cpp
-  ../waveformoperator.cpp
-  ../waveformprocessor.cpp
   fixture.cpp
 )
 

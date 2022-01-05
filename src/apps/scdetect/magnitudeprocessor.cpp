@@ -7,6 +7,7 @@
 #include "log.h"
 #include "magnitude/decorator/range.h"
 #include "magnitude/util.h"
+#include "util/memory.h"
 
 namespace Seiscomp {
 namespace detect {

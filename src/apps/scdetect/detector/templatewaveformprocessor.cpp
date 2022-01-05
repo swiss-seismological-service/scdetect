@@ -13,7 +13,6 @@
 #include "../settings.h"
 #include "../util/memory.h"
 #include "../waveform.h"
-#include "../waveformoperator.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -43,13 +42,16 @@ TemplateWaveformProcessor::TemplateWaveformProcessor(
     : _crossCorrelation{waveform, filterId, templateStartTime,
                         templateEndTime} {}
 
-void TemplateWaveformProcessor::setFilter(Filter *filter,
+void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> &&filter,
                                           const Core::TimeSpan &initTime) {
-  if (_streamState.filter) delete _streamState.filter;
-
-  _streamState.filter = filter;
+  _streamState.filter = std::move(filter);
   _initTime =
       std::max(initTime, Core::TimeSpan{_crossCorrelation.templateLength()});
+}
+
+void TemplateWaveformProcessor::setResultCallback(
+    const PublishMatchResultCallback &callback) {
+  _resultCallback = callback;
 }
 
 const Core::TimeWindow &TemplateWaveformProcessor::processed() const {
@@ -57,16 +59,8 @@ const Core::TimeWindow &TemplateWaveformProcessor::processed() const {
 }
 
 void TemplateWaveformProcessor::reset() {
-  Filter *tmp{_streamState.filter};
-
-  _streamState = StreamState{};
-  if (tmp) {
-    _streamState.filter = tmp->clone();
-    delete tmp;
-  }
-
+  WaveformProcessor::reset(_streamState);
   _crossCorrelation.reset();
-
   WaveformProcessor::reset();
 }
 
@@ -95,8 +89,8 @@ Core::TimeSpan TemplateWaveformProcessor::templateDuration() const {
   return Core::TimeSpan{_crossCorrelation.templateLength()};
 }
 
-WaveformProcessor::StreamState &TemplateWaveformProcessor::streamState(
-    const Record *record) {
+processing::WaveformProcessor::StreamState &
+TemplateWaveformProcessor::streamState(const Record *record) {
   return _streamState;
 }
 
@@ -146,7 +140,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   emitResult(record, result.get());
 }
 
-bool TemplateWaveformProcessor::fill(detect::StreamState &streamState,
+bool TemplateWaveformProcessor::fill(processing::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
   if (WaveformProcessor::fill(streamState, record, data)) {
@@ -163,7 +157,7 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
   const auto f{streamState.samplingFrequency};
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: samplingFrequency=%f",
                                f);
-  if (_targetSamplingFrequency && _targetSamplingFrequency != f) {
+  if (_targetSamplingFrequency && *_targetSamplingFrequency != f) {
     SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                  "Reinitialize stream: samplingFrequency=%f",
                                  _targetSamplingFrequency);
@@ -180,6 +174,13 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
   }
 
   _crossCorrelation.setSamplingFrequency(_targetSamplingFrequency.value_or(f));
+}
+
+void TemplateWaveformProcessor::emitResult(const Record *record,
+                                           const MatchResultCPtr &result) {
+  if (enabled() && _resultCallback) {
+    _resultCallback(this, record, result);
+  }
 }
 
 }  // namespace detector

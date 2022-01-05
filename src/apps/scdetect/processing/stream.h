@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_STREAM_H_
-#define SCDETECT_APPS_SCDETECT_STREAM_H_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_STREAM_H_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_STREAM_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
@@ -7,6 +7,7 @@
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 struct StreamState {
   virtual ~StreamState();
@@ -22,7 +23,8 @@ struct StreamState {
   Core::TimeSpan gapThreshold;
 };
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_STREAM_H_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_STREAM_H_

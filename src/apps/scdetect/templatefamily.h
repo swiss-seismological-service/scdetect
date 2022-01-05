@@ -50,7 +50,7 @@ class TemplateFamily {
   // combination
   class Builder : public detect::Builder<TemplateFamily> {
    public:
-    Builder(const config::TemplateFamilyConfig& templateFamilyConfig);
+    explicit Builder(const config::TemplateFamilyConfig& templateFamilyConfig);
     // Sets the template family's identifier
     //
     // - allows to explicitly ovveride the `id` (by default the identifier from

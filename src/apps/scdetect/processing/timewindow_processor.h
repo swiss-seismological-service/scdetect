@@ -1,14 +1,15 @@
-#ifndef SCDETECT_APPS_SCDETECT_TIMEWINDOWPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_TIMEWINDOWPROCESSOR_H_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_TIMEWINDOWPROCESSOR_H_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_TIMEWINDOWPROCESSOR_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
-#include "waveformoperator.h"
-#include "waveformprocessor.h"
+#include "waveform_operator.h"
+#include "waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 // `WaveformProcessor` implementation operating on a fixed time window
 class TimeWindowProcessor : public WaveformProcessor {
@@ -35,7 +36,8 @@ class TimeWindowProcessor : public WaveformProcessor {
   Core::TimeWindow _safetyTimeWindow;
 };
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_TIMEWINDOWPROCESSOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_TIMEWINDOWPROCESSOR_H_

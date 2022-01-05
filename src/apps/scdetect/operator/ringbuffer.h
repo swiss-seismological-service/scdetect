@@ -10,10 +10,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "../mixin/gapinterpolate.h"
-#include "../stream.h"
-#include "../waveformoperator.h"
-#include "../waveformprocessor.h"
+#include "../processing/detail/gap_interpolate.h"
+#include "../processing/stream.h"
+#include "../processing/waveform_operator.h"
+#include "../processing/waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -21,26 +21,22 @@ namespace waveform_operator {
 
 // `WaveformOperator` implementation providing buffering facilities for `N`
 // streams
+//
 // - implements gap interpolation facilities
-class RingBufferOperator : public WaveformOperator,
-                           public InterpolateGaps<RingBufferOperator> {
+class RingBufferOperator : public processing::WaveformOperator,
+                           public processing::detail::InterpolateGaps {
  public:
   using WaveformStreamID = std::string;
   using RingBuffer = Seiscomp::RingBuffer;
 
-  RingBufferOperator(WaveformProcessor *waveformProcessor);
-  RingBufferOperator(WaveformProcessor *waveformProcessor,
+  RingBufferOperator(processing::WaveformProcessor *waveformProcessor);
+  RingBufferOperator(processing::WaveformProcessor *waveformProcessor,
                      Core::TimeSpan bufferSize);
-  RingBufferOperator(WaveformProcessor *waveformProcessor,
+  RingBufferOperator(processing::WaveformProcessor *waveformProcessor,
                      Core::TimeSpan bufferSize,
                      const std::vector<WaveformStreamID> &wfStreamIds);
 
-  // Sets the threshold (i.e. the minimum gap length) for gap interpolation
-  //
-  // - may imply resetting streams including the related buffer
-  void setGapThreshold(const Core::TimeSpan &duration) override;
-
-  WaveformProcessor::Status feed(const Record *record) override;
+  processing::WaveformProcessor::Status feed(const Record *record) override;
 
   void reset() override;
 
@@ -54,18 +50,18 @@ class RingBufferOperator : public WaveformOperator,
   const std::shared_ptr<RingBuffer> &get(WaveformStreamID wfStreamId);
 
  protected:
-  bool store(StreamState &streamState, const Record *record);
+  bool store(processing::StreamState &streamState, const Record *record);
 
-  bool fill(StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
-  void setupStream(StreamState &streamState, const Record *record);
+  void setupStream(processing::StreamState &streamState, const Record *record);
 
-  void reset(StreamState &streamState);
+  void reset(processing::StreamState &streamState);
 
  private:
   struct StreamConfig {
-    StreamState streamState;
+    processing::StreamState streamState;
 
     // Reference to the stream buffer
     std::shared_ptr<RingBuffer> streamBuffer;
@@ -77,7 +73,7 @@ class RingBufferOperator : public WaveformOperator,
   Core::TimeSpan _bufferSize{60};
 
   // Reference to the processor using the operator
-  WaveformProcessor *_processor;
+  processing::WaveformProcessor *_processor;
 };
 
 }  // namespace waveform_operator

@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_
 #define SCDETECT_APPS_SCDETECT_AMPLITUDEPROCESSOR_H_
 
+#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/record.h>
@@ -19,8 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "timewindowprocessor.h"
-#include "waveformoperator.h"
+#include "processing/timewindow_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -30,7 +30,7 @@ namespace detect {
 // - alternative implementation to `Processing::AmplitudeProcessor`
 // - XXX(damb): currently, the concept of a *trigger* is not provided. Instead,
 // amplitudes are computed based on the `TimeWindowProcessor`'s time window.
-class AmplitudeProcessor : public TimeWindowProcessor {
+class AmplitudeProcessor : public processing::TimeWindowProcessor {
  public:
   struct Config {
     // Defines the beginning of the time window used for amplitude analysis
@@ -81,7 +81,7 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   };
 
   DEFINE_SMARTPOINTER(Amplitude);
-  struct Amplitude : WaveformProcessor::Result {
+  struct Amplitude : Core::BaseObject {
     AmplitudeValue value;
     AmplitudeTime time;
 
@@ -95,6 +95,11 @@ class AmplitudeProcessor : public TimeWindowProcessor {
     // measured
     boost::optional<double> snr;
   };
+  using PublishAmplitudeCallback = std::function<void(
+      const AmplitudeProcessor *, const Record *, AmplitudeCPtr)>;
+
+  // Sets the `callback` in order to publish detections
+  void setResultCallback(const PublishAmplitudeCallback &callback);
 
   // Configures the beginning of the time window used for amplitude calculation
   // (with regard to the beginning of the overall time window)
@@ -175,10 +180,14 @@ class AmplitudeProcessor : public TimeWindowProcessor {
   virtual bool deriveData(StreamState &streamState, int numberOfDerivations,
                           DoubleArray &data);
 
+  void emitAmplitude(const Record *record, const AmplitudeCPtr &amplitude);
+
   // Amplitude processor configuration
   Config _config;
   // Amplitude processor *environment*
   Environment _environment;
+
+  PublishAmplitudeCallback _resultCallback;
 
   // The amplitude type
   std::string _type;
@@ -193,11 +202,12 @@ class AmplitudeProcessor : public TimeWindowProcessor {
 // - TODO(damb): implement SNR facilities
 class ReducingAmplitudeProcessor : public AmplitudeProcessor {
  public:
-  // Sets the `filter` for all registered streams
+  // Sets the common filter `filter` for all registered streams
   //
   // - configuring the `filter` can be done only before the first record was
   // fed or after resetting the processor
-  void setFilter(Filter *filter, const Core::TimeSpan &initTime) override;
+  void setFilter(std::unique_ptr<Filter> &&filter,
+                 const Core::TimeSpan &initTime);
 
   bool feed(const Record *record) override;
 
@@ -240,7 +250,7 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 
   bool store(const Record *record) override;
 
-  bool fill(detect::StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   bool processIfEnoughDataReceived(StreamState &streamState,

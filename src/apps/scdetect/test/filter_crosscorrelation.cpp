@@ -66,15 +66,16 @@ R1<T, A2...> Join(R1<R2<T, A2...>, A1...> const &outer) {
                                    return size + inner.size();
                                  }));
 
-  for (auto const &inner : outer)
+  for (auto const &inner : outer) {
     joined.insert(joined.end(), inner.begin(), inner.end());
+  }
   return joined;
 }
 
 }  // namespace ds
 
 using Samples = std::vector<ds::Sample>;
-Samples dataset{
+const Samples dataset{
     {/*templateData=*/{1, 2, 1}, /*data=*/{{1, 1}},
      /*expected=*/{{-0.5, 0.5}}},
     {/*templateData=*/{1, 2, 1}, /*data=*/{{1, 1, 1}},

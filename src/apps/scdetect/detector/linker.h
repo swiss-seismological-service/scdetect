@@ -23,9 +23,8 @@ namespace detector {
 // Associates `TemplateWaveformProcessor` results
 class Linker {
  public:
-  Linker(const Core::TimeSpan &onHold = 0.0,
-         double arrivalOffsetThres = 2.0e-6);
-  virtual ~Linker();
+  Linker(const Core::TimeSpan &onHold = Core::TimeSpan{0.0},
+         const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{2.0e-6});
 
   enum class Status { kWaitingForData, kTerminated };
 

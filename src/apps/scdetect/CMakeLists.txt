@@ -34,17 +34,18 @@ set(
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
-    processor.cpp
+    processing/detail/gap_interpolate.cpp
+    processing/processor.cpp
+    processing/stream.cpp
+    processing/timewindow_processor.cpp
+    processing/waveform_operator.cpp
+    processing/waveform_processor.cpp
     resamplerstore.cpp
-    stream.cpp
     templatefamily.cpp
-    timewindowprocessor.cpp
     util/horizontal_components.cpp
     util/util.cpp
     util/waveform_stream_id.cpp
     waveform.cpp
-    waveformoperator.cpp
-    waveformprocessor.cpp
 )
 
 # add_definitions(

@@ -42,10 +42,10 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
  protected:
   void finalize() override;
 
+ private:
   bool isValidArrival(const DataModel::ArrivalCPtr arrival,
                       const DataModel::PickCPtr pick);
 
- private:
   struct TemplateProcessorConfig {
     // Template matching processor
     std::unique_ptr<TemplateWaveformProcessor> processor;

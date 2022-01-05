@@ -1,31 +1,30 @@
-#include "waveformprocessor.h"
+#include "waveform_processor.h"
 
 #include <exception>
 
-#include "log.h"
-#include "waveformoperator.h"
+#include "waveform_operator.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
-WaveformProcessor::Result::~Result() {}
+WaveformProcessor::~WaveformProcessor() { close(); }
 
 void WaveformProcessor::enable() {
-  if (_enabled) return;
+  if (_enabled) {
+    return;
+  }
   _enabled = true;
 }
 
 void WaveformProcessor::disable() {
-  if (!_enabled) return;
+  if (!_enabled) {
+    return;
+  }
   _enabled = false;
 }
 
 bool WaveformProcessor::enabled() const { return _enabled; }
-
-void WaveformProcessor::setResultCallback(
-    const PublishResultCallback &callback) {
-  _resultCallback = callback;
-}
 
 void WaveformProcessor::setSaturationThreshold(
     const boost::optional<double> &threshold) {
@@ -48,7 +47,7 @@ void WaveformProcessor::setOperator(WaveformOperator *op) {
   }
 }
 
-const Core::TimeSpan WaveformProcessor::initTime() const { return _initTime; }
+Core::TimeSpan WaveformProcessor::initTime() const { return _initTime; }
 
 bool WaveformProcessor::finished() const {
   return Status::kInProgress < _status;
@@ -84,15 +83,12 @@ void WaveformProcessor::terminate() {
 
 void WaveformProcessor::close() const {}
 
-WaveformProcessor::StreamState::~StreamState() {
-  if (filter) {
-    delete filter;
-  }
-}
-
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool WaveformProcessor::store(const Record *record) {
-  if (WaveformProcessor::Status::kInProgress < status() || !record->data())
+  if (WaveformProcessor::Status::kInProgress < status() ||
+      !static_cast<bool>(record->data())) {
     return false;
+  }
 
   try {
     StreamState &currentStreamState{streamState(record)};
@@ -132,7 +128,9 @@ bool WaveformProcessor::store(const Record *record) {
     currentStreamState.lastSample = (*data)[data->size() - 1];
 
     fill(currentStreamState, record, data);
-    if (Status::kInProgress < status()) return false;
+    if (Status::kInProgress < status()) {
+      return false;
+    }
 
     processIfEnoughDataReceived(currentStreamState, record, *data);
 
@@ -145,10 +143,15 @@ bool WaveformProcessor::store(const Record *record) {
 }
 
 void WaveformProcessor::reset(StreamState &streamState) {
-  streamState.lastRecord.reset();
+  std::unique_ptr<Filter> tmp{std::move(streamState.filter)};
+
+  streamState = StreamState{};
+  if (tmp) {
+    streamState.filter.reset(tmp->clone());
+  }
 }
 
-bool WaveformProcessor::fill(detect::StreamState &streamState,
+bool WaveformProcessor::fill(processing::StreamState &streamState,
                              const Record *record, DoubleArrayPtr &data) {
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
 
@@ -160,7 +163,7 @@ bool WaveformProcessor::fill(detect::StreamState &streamState,
   }
 
   if (s.filter) {
-    auto samples{data->typedData()};
+    auto *samples{data->typedData()};
     s.filter->apply(n, samples);
   }
 
@@ -168,7 +171,7 @@ bool WaveformProcessor::fill(detect::StreamState &streamState,
 }
 
 bool WaveformProcessor::checkIfSaturated(DoubleArrayPtr &data) {
-  const auto samples{data->typedData()};
+  const auto *samples{data->typedData()};
   for (int i = 0; i < data->size(); ++i) {
     if (fabs(samples[i]) >= *_saturationThreshold) {
       setStatus(Status::kDataClipped, samples[i]);
@@ -204,11 +207,6 @@ bool WaveformProcessor::processIfEnoughDataReceived(
 bool WaveformProcessor::enoughDataReceived(
     const StreamState &streamState) const {
   return streamState.receivedSamples >= streamState.neededSamples;
-}
-
-void WaveformProcessor::emitResult(const Record *record,
-                                   const ResultCPtr &result) {
-  if (enabled() && _resultCallback) _resultCallback(this, record, result);
 }
 
 void WaveformProcessor::setupStream(StreamState &streamState,
@@ -253,5 +251,6 @@ std::unique_ptr<WaveformProcessor::Filter> createFilter(
   return ret;
 }
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp

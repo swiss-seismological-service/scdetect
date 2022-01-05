@@ -2,6 +2,7 @@
 
 #include "../log.h"
 #include "../util/memory.h"
+#include "detectorbuilder.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -15,9 +16,9 @@ DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
   return DetectorBuilder(originId);
 }
 
-void DetectorWaveformProcessor::setFilter(Filter *filter,
-                                          const Core::TimeSpan &initTime) {
-  // XXX(damb): `DetectorWaveformProcessor` doesn't implement filter facilities
+void DetectorWaveformProcessor::setResultCallback(
+    const PublishDetectionCallback &callback) {
+  _detectionCallback = callback;
 }
 
 void DetectorWaveformProcessor::reset() {
@@ -40,7 +41,7 @@ void DetectorWaveformProcessor::terminate() {
   if (_detection) {
     auto detection{util::make_smart<Detection>()};
     prepareDetection(detection, *_detection);
-    emitResult(nullptr, detection);
+    emitDetection(nullptr, detection);
 
     _detection = boost::none;
   }
@@ -51,8 +52,8 @@ const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
   return _publishConfig;
 }
 
-WaveformProcessor::StreamState &DetectorWaveformProcessor::streamState(
-    const Record *record) {
+processing::WaveformProcessor::StreamState &
+DetectorWaveformProcessor::streamState(const Record *record) {
   return _streamStates.at(record->streamID());
 }
 
@@ -60,7 +61,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
                                         const Record *record,
                                         const DoubleArray &filteredData) {
   try {
-    _detector.process(record);
+    _detector.feed(record);
   } catch (detector::Detector::ProcessingError &e) {
     SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
                                    record->streamID().c_str(), e.what());
@@ -81,7 +82,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
     if (_detection) {
       auto detection{util::make_smart<Detection>()};
       prepareDetection(detection, *_detection);
-      emitResult(record, detection);
+      emitDetection(record, detection);
 
       _detection = boost::none;
     }
@@ -95,7 +96,7 @@ void DetectorWaveformProcessor::reset(StreamState &streamState) {
   WaveformProcessor::reset(streamState);
 }
 
-bool DetectorWaveformProcessor::fill(detect::StreamState &streamState,
+bool DetectorWaveformProcessor::fill(processing::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {
   // XXX(damb): `DetectorWaveformProcessor` does neither implement filtering
@@ -148,6 +149,12 @@ void DetectorWaveformProcessor::prepareDetection(
     for (auto &templateResultPair : d->templateResults) {
       templateResultPair.second.arrival.pick.time += timeCorrection;
     }
+  }
+}
+void DetectorWaveformProcessor::emitDetection(const Record *record,
+                                              const DetectionCPtr &detection) {
+  if (enabled() && _detectionCallback) {
+    _detectionCallback(this, record, detection);
   }
 }
 

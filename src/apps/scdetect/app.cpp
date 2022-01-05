@@ -44,7 +44,8 @@
 #include "log.h"
 #include "magnitude/regression.h"
 #include "magnitudeprocessor.h"
-#include "processor.h"
+#include "processing/processor.h"
+#include "processing/waveform_processor.h"
 #include "resamplerstore.h"
 #include "settings.h"
 #include "util/horizontal_components.h"
@@ -52,7 +53,6 @@
 #include "util/util.h"
 #include "util/waveform_stream_id.h"
 #include "version.h"
-#include "waveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -66,8 +66,6 @@ Application::Application(int argc, char **argv)
 
   setPrimaryMessagingGroup("LOCATION");
 }
-
-Application::~Application() {}
 
 Application::BaseException::BaseException()
     : Exception{"base application exception"} {}
@@ -1170,16 +1168,13 @@ bool Application::initDetectors(std::ifstream &ifs,
         std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
             detectorBuilder.build()};
         detectorPtr->setResultCallback(
-            [this](const WaveformProcessor *proc, const Record *rec,
-                   const WaveformProcessor::ResultCPtr res) {
-              processDetection(
-                  dynamic_cast<const detector::DetectorWaveformProcessor *>(
-                      proc),
-                  rec,
-                  boost::dynamic_pointer_cast<
-                      const detector::DetectorWaveformProcessor::Detection>(
-                      res));
+            [this](
+                const detector::DetectorWaveformProcessor *processor,
+                const Record *record,
+                detector::DetectorWaveformProcessor::DetectionCPtr detection) {
+              processDetection(processor, record, detection);
             });
+
         for (const auto &streamId : streamIds)
           _detectors.emplace(streamId, detectorPtr);
 
@@ -1306,17 +1301,14 @@ bool Application::initAmplitudeProcessors(
 
       rmsAmplitudeProcessor->setResultCallback(
           [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
-           magnitudeProcessorId](const WaveformProcessor *proc,
-                                 const Record *rec,
-                                 const WaveformProcessor::ResultCPtr res) {
+           magnitudeProcessorId](const AmplitudeProcessor *processor,
+                                 const Record *record,
+                                 AmplitudeProcessor::AmplitudeCPtr result) {
             DataModel::AmplitudePtr amplitude;
             // create amplitude
             try {
-              amplitude = createAmplitude(
-                  dynamic_cast<const AmplitudeProcessor *>(proc), rec,
-                  boost::dynamic_pointer_cast<
-                      const AmplitudeProcessor::Amplitude>(res),
-                  boost::none, magnitudeType);
+              amplitude = createAmplitude(processor, record, result,
+                                          boost::none, magnitudeType);
 
               if (!amplitude) {
                 --detectionItem->numberOfRequiredAmplitudes;
@@ -1325,7 +1317,7 @@ bool Application::initAmplitudeProcessors(
             } catch (Exception &e) {
               --detectionItem->numberOfRequiredAmplitudes;
               SCDETECT_LOG_WARNING_PROCESSOR(
-                  proc, "Failed to create amplitude: %s", e.what());
+                  processor, "Failed to create amplitude: %s", e.what());
             }
 
             detectionItem->amplitudes.emplace_back(amplitude);
@@ -1370,14 +1362,14 @@ bool Application::initAmplitudeProcessors(
         util::replaceEscapedXMLFilterIdChars(filter);
         try {
           rmsAmplitudeProcessor->setFilter(
-              createFilter(filter).release(),
+              processing::createFilter(filter),
               amplitudeProcessingConfig.mlx.initTime);
           SCDETECT_LOG_DEBUG_TAGGED(
               rmsAmplitudeProcessor->id(),
               "Configured amplitude processor filter: filter=\"%s\", "
               "init_time=%f",
               filter.c_str(), amplitudeProcessingConfig.mlx.initTime);
-        } catch (WaveformProcessor::BaseException &e) {
+        } catch (processing::WaveformProcessor::BaseException &e) {
           throw BaseException{sensorLocationStreamId + ": " + e.what()};
         }
       } else {

@@ -1,7 +1,6 @@
-#ifndef SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
+#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
+#define SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
 
-#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/timewindow.h>
@@ -9,15 +8,15 @@
 #include <seiscomp/math/filter.h>
 
 #include <boost/optional/optional.hpp>
-#include <functional>
 #include <memory>
 
-#include "mixin/gapinterpolate.h"
+#include "detail/gap_interpolate.h"
 #include "processor.h"
 #include "stream.h"
 
 namespace Seiscomp {
 namespace detect {
+namespace processing {
 
 class WaveformOperator;
 
@@ -32,19 +31,9 @@ class WaveformOperator;
 // just a single stream nor does it introduce the *concept of a station* (e.g.
 // by means of limiting the usage of maximum three channels).
 //
-class WaveformProcessor : public Processor,
-                          public InterpolateGaps<WaveformProcessor> {
+class WaveformProcessor : public Processor, public detail::InterpolateGaps {
  public:
   using Filter = Math::Filtering::InPlaceFilter<double>;
-
-  DEFINE_SMARTPOINTER(Result);
-  class Result : public Core::BaseObject {
-   public:
-    virtual ~Result();
-  };
-
-  using PublishResultCallback = std::function<void(
-      const WaveformProcessor *, const Record *, const ResultCPtr)>;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
@@ -106,17 +95,11 @@ class WaveformProcessor : public Processor,
     kTravelTimeEstimateFailed,
   };
 
-  // Sets the filter to apply
-  //
-  // - the `filter` pointer passed is owned by the `WaveformProcessor`
-  virtual void setFilter(Filter *filter, const Core::TimeSpan &initTime) = 0;
+  ~WaveformProcessor() override;
 
   void enable();
   void disable();
   bool enabled() const;
-
-  // Sets the result callback in order to publish processing results
-  void setResultCallback(const PublishResultCallback &callback);
 
   // Enables/disables validating whether data is saturated.
   //
@@ -139,7 +122,7 @@ class WaveformProcessor : public Processor,
   void setOperator(WaveformOperator *op);
   // Returns the processor's initialization time; by default this corresponds
   // to the processor's filter initialization time
-  virtual const Core::TimeSpan initTime() const;
+  virtual Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
   // `Status::kInProgress`.
@@ -161,8 +144,9 @@ class WaveformProcessor : public Processor,
 
  protected:
   // Describes the current state of a stream
-  struct StreamState : public detect::StreamState {
-    ~StreamState() override;
+  struct StreamState : public processing::StreamState {
+    // The filter (if used)
+    std::unique_ptr<Filter> filter;
 
     // Number of samples required to finish initialization
     size_t neededSamples{0};
@@ -170,9 +154,6 @@ class WaveformProcessor : public Processor,
     size_t receivedSamples{0};
     // Initialization state
     bool initialized{false};
-
-    // The filter (if used)
-    Filter *filter{nullptr};
   };
 
   virtual StreamState &streamState(const Record *record) = 0;
@@ -188,7 +169,7 @@ class WaveformProcessor : public Processor,
   virtual void reset(StreamState &streamState);
 
   // Fill data and perform filtering (if required)
-  bool fill(detect::StreamState &streamState, const Record *record,
+  bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   // Check whether data exceeds saturation threshold. The default
@@ -207,7 +188,6 @@ class WaveformProcessor : public Processor,
   // execute the `process()` method.
   virtual bool enoughDataReceived(const StreamState &streamState) const;
 
-  virtual void emitResult(const Record *record, const ResultCPtr &result);
   // Setup and initialize the stream
   virtual void setupStream(StreamState &streamState, const Record *record);
 
@@ -217,8 +197,6 @@ class WaveformProcessor : public Processor,
 
   // WaveformProcessor initialization time
   Core::TimeSpan _initTime;
-
-  PublishResultCallback _resultCallback;
 
   std::unique_ptr<WaveformOperator> _waveformOperator;
 
@@ -233,7 +211,8 @@ class WaveformProcessor : public Processor,
 std::unique_ptr<WaveformProcessor::Filter> createFilter(
     const std::string &filter);
 
+}  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_WAVEFORMPROCESSOR_H_
+#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_

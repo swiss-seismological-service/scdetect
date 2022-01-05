@@ -17,9 +17,8 @@
 #include <vector>
 
 #include "../exception.h"
-#include "../processor.h"
-#include "../waveformoperator.h"
-#include "../waveformprocessor.h"
+#include "../processing/processor.h"
+#include "../processing/waveform_operator.h"
 #include "arrival.h"
 #include "linker.h"
 #include "linker/association.h"
@@ -30,10 +29,9 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-class Detector : public detect::Processor {
+class Detector : public detect::processing::Processor {
  public:
-  Detector(const DataModel::OriginCPtr &origin);
-  virtual ~Detector();
+  explicit Detector(const DataModel::OriginCPtr &origin);
 
   class BaseException : public Processor::BaseException {
    public:
@@ -117,7 +115,7 @@ class Detector : public detect::Processor {
   // Returns the maximum allowed data latency configured
   boost::optional<Core::TimeSpan> maxLatency() const;
   // Returns the number of registered template processors
-  size_t getProcessorCount() const;
+  size_t processorCount() const;
 
   // Register the template waveform processor `proc`. Records are identified by
   // the waveform stream identifier `waveformStreamId`. `proc` is registered
@@ -130,7 +128,8 @@ class Detector : public detect::Processor {
   // Removes the processors processing streams identified by `waveformStreamId`
   void remove(const std::string &waveformStreamId);
 
-  void process(const Record *record);
+  // Feeds `record` to the detector
+  void feed(const Record *record);
   // Reset the detector
   void reset();
   // Terminates the detector
@@ -142,24 +141,33 @@ class Detector : public detect::Processor {
   void setResultCallback(const PublishResultCallback &callback);
 
  protected:
+  // Process data with underlying template processors
+  bool process(const Record *record);
   // Returns `true` if `record` has an acceptable latency, else `false`
   bool hasAcceptableLatency(const Record *record);
 
-  using TimeWindows = std::unordered_map<std::string, Core::TimeWindow>;
-  // Feed data to template processors
-  bool feed(const Record *record);
+  void processResultQueue();
+
+  void processLinkerResult(const linker::Association &result);
+
+  void disableProcessorsNotContributing(const linker::Association &result);
+
+  std::string triggerProcessorId(const linker::Association &result);
+
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;
+  // Emit the detection result
+  void emitResult(const Result &result);
+
   // Reset the processor's processing facilities
   void resetProcessing();
   // Reset the trigger
   void resetTrigger();
   // Reset the currently enabled processors
   void resetProcessors();
-  // Emit the detection result
-  void emitResult(const Result &result);
 
+ private:
   // Callback storing results from `TemplateWaveformProcessor`
   void storeTemplateResult(
       const TemplateWaveformProcessor *processor, const Record *record,
@@ -168,7 +176,6 @@ class Detector : public detect::Processor {
   // Callback storing results from the linker
   void storeLinkerResult(const linker::Association &linkerResult);
 
- private:
   using ProcessorId = std::string;
   struct TemplateResult {
     linker::Association::TemplateResult result;
@@ -183,6 +190,7 @@ class Detector : public detect::Processor {
   struct ProcessorState {
     ProcessorState(ProcessorState &&other) = default;
     ProcessorState &operator=(ProcessorState &&other) = default;
+    ~ProcessorState() = default;
 
     // The sensor location w.r.t. the template waveform `processor`
     SensorLocation sensorLocation;

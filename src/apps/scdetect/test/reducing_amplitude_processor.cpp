@@ -20,15 +20,16 @@
 #include <boost/variant2/variant.hpp>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "../amplitudeprocessor.h"
+#include "../processing/waveform_processor.h"
 #include "../util/memory.h"
 #include "../util/util.h"
 #include "../util/waveform_stream_id.h"
-#include "../waveformprocessor.h"
 #include "fixture.h"
 #include "utils.h"
 
@@ -70,9 +71,9 @@ struct Sample {
   using WaveformDataSource = boost::variant2::variant<fs::path, WaveformLoader>;
 
   Sample(const std::string &description,
-         const WaveformProcessor::PublishResultCallback &validatorCallback,
+         const AmplitudeProcessor::PublishAmplitudeCallback &validatorCallback,
          const fs::path &pathDataSource,
-         WaveformProcessor::Status expectedStatus,
+         processing::WaveformProcessor::Status expectedStatus,
          const boost::optional<Core::TimeWindow> &timeWindow = boost::none,
          const boost::optional<Filter> &filter = boost::none)
       : description{description},
@@ -82,9 +83,9 @@ struct Sample {
         timeWindow{timeWindow},
         filter{filter} {}
   Sample(const std::string &description,
-         const WaveformProcessor::PublishResultCallback &validatorCallback,
+         const AmplitudeProcessor::PublishAmplitudeCallback &validatorCallback,
          const WaveformLoader &waveformLoader,
-         WaveformProcessor::Status expectedStatus,
+         processing::WaveformProcessor::Status expectedStatus,
          const boost::optional<Core::TimeWindow> &timeWindow = boost::none,
          const boost::optional<Filter> &filter = boost::none)
       : description{description},
@@ -99,9 +100,9 @@ struct Sample {
 
   WaveformDataSource waveformDataSource;
   // Callback evaluating the test
-  WaveformProcessor::PublishResultCallback validatorCallback;
+  AmplitudeProcessor::PublishAmplitudeCallback validatorCallback;
   // Defines the processor's eventually expected status
-  WaveformProcessor::Status expectedStatus;
+  processing::WaveformProcessor::Status expectedStatus;
   // Defines an optional time window for processing
   boost::optional<Core::TimeWindow> timeWindow;
   // Defines the optional processing filter
@@ -288,11 +289,8 @@ using Samples = std::vector<ds::Sample>;
 Samples dataset{
     {/*description=*/"single stream, single record (constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 1.0);
      },
      /*waveformLoader=*/
@@ -303,15 +301,12 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"single stream, single record, apply filter",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
-       BOOST_TEST_CHECK(amplitude->value.value == 9.0);
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
+       BOOST_TEST_CHECK(amplitude->value.value == 18.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
            Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T").iso());
@@ -328,17 +323,17 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
      /*filter=*/
-     ds::Sample::Filter{"self()", Core::TimeSpan{9.0}}},
+     ds::Sample::Filter{"self()*2", Core::TimeSpan{9.0}}},
     {/*description=*/
      "single stream, single record (too short, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {},
+     [](const AmplitudeProcessor *, const Record *,
+        const AmplitudeProcessor::AmplitudeCPtr) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        const auto startTime{
@@ -349,18 +344,15 @@ Samples dataset{
          BOOST_FAIL("Failed to feed record");
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kWaitingForData,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/
      "single stream, multi records (equal length, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 2.0);
      },
      /*waveformLoader=*/
@@ -380,15 +372,12 @@ Samples dataset{
          startTime += recordDuration;
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"single stream, multi records (not equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 2.0);
      },
      /*waveformLoader=*/
@@ -409,17 +398,14 @@ Samples dataset{
          startTime += recordDuration;
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 360}},
     {/*description=*/"multi streams, single record (constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        const AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 15.0);
      },
      /*waveformLoader=*/
@@ -435,16 +421,13 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished},
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished},
     {/*description=*/"multi streams, single record (different record "
                      "starttime), apply filter",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
-       BOOST_TEST_CHECK(amplitude->value.value == 18.0);
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
+       BOOST_TEST_CHECK(amplitude->value.value == 36.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
            Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T").iso());
@@ -478,19 +461,16 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 5},
-     /*filter=*/ds::Sample::Filter{"self()", Core::TimeSpan{9.0}}},
+     /*filter=*/ds::Sample::Filter{"self()*2", Core::TimeSpan{9.0}}},
     {/*description=*/"multi streams, multi records (equal length, constant "
                      "sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 15.0);
      },
      /*waveformLoader=*/
@@ -514,15 +494,15 @@ Samples dataset{
          startTime += recordDuration;
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/"multi streams, single record (one of them is too short, "
                      "constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {},
+     [](const AmplitudeProcessor *, const Record *,
+        AmplitudeProcessor::AmplitudeCPtr) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        double samplingFrequency{1};
@@ -546,15 +526,15 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kWaitingForData,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kWaitingForData,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 180}},
     {/*description=*/"multi streams, single record (different sampling "
                      "frequency, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {},
+     [](const AmplitudeProcessor *, const Record *,
+        AmplitudeProcessor::AmplitudeCPtr) {},
      /*waveformLoader=*/
      [](ds::Sample::WaveformBuffers &buffers) {
        auto startTime{
@@ -575,18 +555,16 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kInvalidSamplingFreq,
+     /*expectedStatus=*/
+     processing::WaveformProcessor::Status::kInvalidSamplingFreq,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:00:00", "%Y-%m-%dT%T"), 120}},
     {/*description=*/"multi streams, single record (different record start "
                      "time, constant sample values)",
      /*validatorCallback=*/
-     [](const WaveformProcessor *proc, const Record *record,
-        const WaveformProcessor::ResultCPtr &result) {
-       auto amplitude{
-           boost::dynamic_pointer_cast<const AmplitudeProcessor::Amplitude>(
-               result)};
+     [](const AmplitudeProcessor *proc, const Record *record,
+        const AmplitudeProcessor::AmplitudeCPtr amplitude) {
        BOOST_TEST_CHECK(amplitude->value.value == 3.0);
        BOOST_TEST_CHECK(
            amplitude->time.reference.iso() ==
@@ -619,7 +597,7 @@ Samples dataset{
          }
        }
      },
-     /*expectedStatus=*/WaveformProcessor::Status::kFinished,
+     /*expectedStatus=*/processing::WaveformProcessor::Status::kFinished,
      /*timeWindow=*/
      Core::TimeWindow{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 120}},
@@ -654,16 +632,14 @@ BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
              AmplitudeProcessor::DeconvolutionConfig{});
   }
   proc.setResultCallback(sample.validatorCallback);
-  if (sample.filter) {
-    std::string err;
-    auto procFilter{WaveformProcessor::Filter::Create(
-        sample.filter.value().filterStringId, &err)};
-    if (!procFilter) {
-      BOOST_FAIL("Invalid filter string identifier: " +
-                 sample.filter.value().filterStringId);
+  if (sample.filter && !sample.filter.value().filterStringId.empty()) {
+    try {
+      proc.setFilter(
+          processing::createFilter(sample.filter.value().filterStringId),
+          sample.filter.value().initTime);
+    } catch (processing::WaveformProcessor::BaseException &e) {
+      BOOST_FAIL("failed to configure filter: " + std::string{e.what()});
     }
-
-    proc.setFilter(procFilter, sample.filter.value().initTime);
   }
 
   // feed data

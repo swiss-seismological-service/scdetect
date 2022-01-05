@@ -36,38 +36,38 @@ DetectorBuilder::DetectorBuilder(const std::string &originId)
 
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
-  _product = std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{origin});
+  setProduct(std::unique_ptr<DetectorWaveformProcessor>(
+      new DetectorWaveformProcessor{origin}));
 }
 
 DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
-  _product->setId(id);
-  _product->_detector.setId(id);
+  product()->setId(id);
+  product()->_detector.setId(id);
   return *this;
 }
 
 DetectorBuilder &DetectorBuilder::setConfig(
     const config::PublishConfig &publishConfig,
     const config::DetectorConfig &detectorConfig, bool playback) {
-  _product->_publishConfig = publishConfig;
+  product()->_publishConfig = publishConfig;
 
-  _product->_config = detectorConfig;
+  product()->_config = detectorConfig;
 
-  _product->_enabled = detectorConfig.enabled;
+  product()->_enabled = detectorConfig.enabled;
 
-  _product->setGapThreshold(Core::TimeSpan{detectorConfig.gapThreshold});
-  _product->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
-  _product->setGapInterpolation(detectorConfig.gapInterpolation);
+  product()->setGapThreshold(Core::TimeSpan{detectorConfig.gapThreshold});
+  product()->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
+  product()->setGapInterpolation(detectorConfig.gapInterpolation);
 
-  _product->_detector.setMergingStrategy(
+  product()->_detector.setMergingStrategy(
       _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
 
   // configure playback related facilities
   if (playback) {
-    _product->_detector.setMaxLatency(boost::none);
+    product()->_detector.setMaxLatency(boost::none);
   } else {
     if (detectorConfig.maximumLatency > 0) {
-      _product->_detector.setMaxLatency(
+      product()->_detector.setMaxLatency(
           Core::TimeSpan{detectorConfig.maximumLatency});
     }
   }
@@ -76,9 +76,9 @@ DetectorBuilder &DetectorBuilder::setConfig(
 }
 
 DetectorBuilder &DetectorBuilder::setEventParameters() {
-  _product->_event =
-      EventStore::Instance().getEvent(_product->_origin->publicID());
-  if (!_product->_event) {
+  product()->_event =
+      EventStore::Instance().getEvent(product()->_origin->publicID());
+  if (!product()->_event) {
     auto msg{std::string{"No event associated with origin: "} + _originId};
 
     SCDETECT_LOG_WARNING("%s", msg.c_str());
@@ -99,8 +99,8 @@ DetectorBuilder &DetectorBuilder::setStream(
   DataModel::PickPtr pick;
   DataModel::WaveformStreamID pickWaveformId;
   DataModel::ArrivalPtr arrival;
-  for (size_t i = 0; i < _product->_origin->arrivalCount(); ++i) {
-    arrival = _product->_origin->arrival(i);
+  for (size_t i = 0; i < product()->_origin->arrivalCount(); ++i) {
+    arrival = product()->_origin->arrival(i);
 
     if (arrival->phase().code() != streamConfig.templateConfig.phase) {
       continue;
@@ -176,7 +176,7 @@ DetectorBuilder &DetectorBuilder::setStream(
               streamConfig.templateId);
   SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
-  _product->_streamStates[streamId] = DetectorWaveformProcessor::StreamState{};
+  product()->_streamStates[streamId] = DetectorWaveformProcessor::StreamState{};
 
   // template related filter configuration (used for template waveform
   // processing)
@@ -184,21 +184,6 @@ DetectorBuilder &DetectorBuilder::setStream(
   auto templateWfFilterId{
       streamConfig.templateConfig.filter.value_or(pickFilterId)};
   util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
-
-  std::unique_ptr<WaveformProcessor::Filter> rtTemplateFilter{nullptr};
-  std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
-  util::replaceEscapedXMLFilterIdChars(rtFilterId);
-  // create template related filter (used during real-time stream
-  // processing)
-  if (!rtFilterId.empty()) {
-    std::string err;
-    rtTemplateFilter.reset(WaveformProcessor::Filter::Create(rtFilterId, &err));
-
-    if (!rtTemplateFilter) {
-      msg.setText("compiling filter (" + rtFilterId + ") failed: " + err);
-      throw builder::BaseException{logging::to_string(msg)};
-    }
-  }
 
   // prepare a demeaned waveform chunk (used for template waveform processor
   // configuration)
@@ -229,14 +214,27 @@ DetectorBuilder &DetectorBuilder::setStream(
 
   // template processor
   auto templateProc{util::make_unique<detector::TemplateWaveformProcessor>(
-      templateWfChunk, templateWfFilterId, wfStart, wfEnd, _product.get())};
+      templateWfChunk, templateWfFilterId, wfStart, wfEnd, product())};
 
-  templateProc->setId(_product->id().empty()
+  templateProc->setId(product()->id().empty()
                           ? streamConfig.templateId
-                          : _product->id() + settings::kProcessorIdSep +
+                          : product()->id() + settings::kProcessorIdSep +
                                 streamConfig.templateId);
 
-  templateProc->setFilter(rtTemplateFilter.release(), streamConfig.initTime);
+  std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
+  // configure template related filter (used during real-time stream
+  // processing)
+  if (!rtFilterId.empty()) {
+    util::replaceEscapedXMLFilterIdChars(rtFilterId);
+    try {
+      templateProc->setFilter(processing::createFilter(rtFilterId),
+                              streamConfig.initTime);
+    } catch (processing::WaveformProcessor::BaseException &e) {
+      msg.setText(e.what());
+      throw builder::BaseException{logging::to_string(msg)};
+    }
+  }
+
   if (streamConfig.targetSamplingFrequency) {
     templateProc->setTargetSamplingFrequency(
         *streamConfig.targetSamplingFrequency);
@@ -262,33 +260,33 @@ DetectorBuilder &DetectorBuilder::setStream(
 void DetectorBuilder::finalize() {
   auto hasNoChildren{_processorConfigs.empty()};
   if (hasNoChildren) {
-    _product->disable();
+    product()->disable();
   }
 
-  _product->_initTime = Core::TimeSpan{0.0};
+  product()->_initTime = Core::TimeSpan{0.0};
 
-  const auto &cfg{_product->_config};
-  _product->_detector.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
+  const auto &cfg{product()->_config};
+  product()->_detector.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
   if (cfg.triggerDuration >= 0) {
-    _product->_detector.enableTrigger(Core::TimeSpan{cfg.triggerDuration});
+    product()->_detector.enableTrigger(Core::TimeSpan{cfg.triggerDuration});
   }
-  auto product{_product.get()};
-  _product->_detector.setResultCallback(
-      [product](const detector::Detector::Result &res) {
-        product->storeDetection(res);
+  auto productCopy{product()};
+  product()->_detector.setResultCallback(
+      [productCopy](const detector::Detector::Result &res) {
+        productCopy->storeDetection(res);
       });
 
   if (cfg.arrivalOffsetThreshold < 0) {
-    _product->_detector.setArrivalOffsetThreshold(boost::none);
+    product()->_detector.setArrivalOffsetThreshold(boost::none);
   } else {
-    _product->_detector.setArrivalOffsetThreshold(
+    product()->_detector.setArrivalOffsetThreshold(
         Core::TimeSpan{cfg.arrivalOffsetThreshold});
   }
 
   if (cfg.minArrivals < 0) {
-    _product->_detector.setMinArrivals(boost::none);
+    product()->_detector.setMinArrivals(boost::none);
   } else {
-    _product->_detector.setMinArrivals(cfg.minArrivals);
+    product()->_detector.setMinArrivals(cfg.minArrivals);
   }
 
   std::unordered_set<std::string> usedPicks;
@@ -303,11 +301,11 @@ void DetectorBuilder::finalize() {
     } catch (Core::ValueException &e) {
     }
     // initialize detection processing
-    _product->_detector.add(
+    product()->_detector.add(
         std::move(procConfig.processor), streamId,
         detector::Arrival{
             {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
-             meta.pick->time().value() - _product->_origin->time().value()},
+             meta.pick->time().value() - product()->_origin->time().value()},
             meta.arrival->phase(),
             meta.arrival->weight(),
         },
@@ -320,9 +318,9 @@ void DetectorBuilder::finalize() {
   }
 
   // attach reference theoretical template arrivals to the product
-  if (_product->_publishConfig.createTemplateArrivals) {
-    for (size_t i = 0; i < _product->_origin->arrivalCount(); ++i) {
-      const auto &arrival{_product->_origin->arrival(i)};
+  if (product()->_publishConfig.createTemplateArrivals) {
+    for (size_t i = 0; i < product()->_origin->arrivalCount(); ++i) {
+      const auto &arrival{product()->_origin->arrival(i)};
       const auto &pick{
           EventStore::Instance().get<DataModel::Pick>(arrival->pickID())};
 
@@ -349,10 +347,11 @@ void DetectorBuilder::finalize() {
       } catch (Core::ValueException &e) {
       }
 
-      _product->_publishConfig.theoreticalTemplateArrivals.push_back(
+      product()->_publishConfig.theoreticalTemplateArrivals.push_back(
           {{pick->time().value(),
             util::to_string(util::WaveformStreamID{pick->waveformID()}),
-            phaseHint, pick->time().value() - _product->_origin->time().value(),
+            phaseHint,
+            pick->time().value() - product()->_origin->time().value(),
             lowerUncertainty, upperUncertainty},
            arrival->phase(),
            arrival->weight()});
