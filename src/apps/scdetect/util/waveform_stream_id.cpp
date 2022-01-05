@@ -84,8 +84,9 @@ const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
 std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
-  os << id._netCode << id.delimiter << id._staCode << id.delimiter
-     << id._locCode << id.delimiter << id._chaCode;
+  os << id._netCode << WaveformStreamID::delimiter << id._staCode
+     << WaveformStreamID::delimiter << id._locCode
+     << WaveformStreamID::delimiter << id._chaCode;
   return os;
 }
 
