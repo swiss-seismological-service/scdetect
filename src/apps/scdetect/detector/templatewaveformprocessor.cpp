@@ -157,7 +157,7 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
   const auto f{streamState.samplingFrequency};
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: samplingFrequency=%f",
                                f);
-  if (_targetSamplingFrequency && _targetSamplingFrequency != f) {
+  if (_targetSamplingFrequency && *_targetSamplingFrequency != f) {
     SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                  "Reinitialize stream: samplingFrequency=%f",
                                  _targetSamplingFrequency);
