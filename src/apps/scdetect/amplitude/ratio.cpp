@@ -23,6 +23,8 @@ RatioAmplitude::RatioAmplitude(TemplateWaveform templateWaveform)
 }
 
 void RatioAmplitude::computeTimeWindow() {
+  assert((environment().picks.size() == 1));
+
   const auto pickTime{environment().picks.front()->time().value()};
   assert((static_cast<bool>(pickTime)));
   assert((_templateWaveform.referenceTime()));

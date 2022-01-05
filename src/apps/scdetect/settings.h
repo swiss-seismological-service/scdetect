@@ -31,7 +31,8 @@ const std::string kTemplateWaveformTimeInfoPickCommentId{
 const std::string kTemplateWaveformTimeInfoPickCommentIdSep{"|"};
 
 const std::string kDetectorIdCommentId{"scdetectDetectorId"};
-const std::string kRMSAmplitudeStreamsCommentId{"scdetectRMSAmplitudeStreams"};
+const std::string kAmplitudeStreamsCommentId{"scdetectAmplitudeStreams"};
+const std::string kAmplitudePicksCommentId{"scdetectAmplitudePicks"};
 
 const std::vector<std::string> kValidPrioritizedStationMagnitudeTypes{"MLhc",
                                                                       "MLh"};

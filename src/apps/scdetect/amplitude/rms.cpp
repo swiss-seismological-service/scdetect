@@ -225,7 +225,7 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
   // pick public identifiers
   {
     auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId("scdetectRMSAmplitudePicks");
+    comment->setId(settings::kAmplitudePicksCommentId);
     comment->setText(boost::algorithm::join(publicIds, settings::kPublicIdSep));
     amplitude->add(comment.get());
   }
@@ -233,7 +233,7 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
   // waveform stream identifiers
   {
     auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId("scdetectRMSAmplitudeStreams");
+    comment->setId(settings::kAmplitudeStreamsCommentId);
     comment->setText(boost::algorithm::join(util::map_keys(_streams),
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());

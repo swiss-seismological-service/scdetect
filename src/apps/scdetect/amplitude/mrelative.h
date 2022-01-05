@@ -18,6 +18,10 @@ class MRelative : public CombiningAmplitudeProcessor {
       CombiningStrategy strategy = median);
 
   void finalize(DataModel::Amplitude *amplitude) const override;
+
+ private:
+  static bool validateUniqueSensorLocation(
+      const std::vector<std::string> &waveformStreamIDs);
 };
 
 }  // namespace amplitude

@@ -25,38 +25,38 @@ CombiningAmplitudeProcessor::CombiningAmplitudeProcessor(
     std::vector<AmplitudeProcessor> &&combined, CombiningStrategy strategy)
     : _combiningStrategy{std::move(strategy)} {
   for (auto &proc : combined) {
-    std::shared_ptr<detect::AmplitudeProcessor> amplitudeProcessor{
-        std::move(proc.processor)};
-
-    amplitudeProcessor->setResultCallback(
+    proc.processor->setResultCallback(
         [this](const detect::AmplitudeProcessor *processor,
                const Record *record, AmplitudeCPtr amplitude) {
           storeCallback(processor, record, std::move(amplitude));
         });
 
     for (const auto &waveformStreamId : proc.waveformStreamIds) {
-      _underlying.emplace(waveformStreamId, amplitudeProcessor);
+      _underlyingIdx.emplace(waveformStreamId, proc.processor->id());
     }
 
-    _underlyingResults[amplitudeProcessor->id()];
+    _underlying.emplace(proc.processor->id(),
+                        UnderlyingProcessor{std::move(proc.processor)});
   }
 }
 
 void CombiningAmplitudeProcessor::reset() {
   detect::AmplitudeProcessor::reset();
+  traverse([](decltype(_underlying)::mapped_type &p) { p.reset(); });
+}
 
-  traverse([](decltype(_underlying)::mapped_type &p) { p->reset(); });
-  for (auto &u : _underlyingResults) {
-    u.second.reset();
-  }
+void CombiningAmplitudeProcessor::close() const {
+  traverse([](const decltype(_underlying)::mapped_type &p) {
+    p.amplitudeProcessor->close();
+  });
 }
 
 void CombiningAmplitudeProcessor::computeTimeWindow() {
   Core::Time start;
   Core::Time end;
   for (auto &u : _underlying) {
-    u.second->computeTimeWindow();
-    const auto tw{u.second->safetyTimeWindow()};
+    u.second.amplitudeProcessor->computeTimeWindow();
+    const auto tw{u.second.amplitudeProcessor->safetyTimeWindow()};
 
     if (!start || tw.startTime() < start) {
       start = tw.startTime();
@@ -76,10 +76,11 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
     return false;
   }
 
-  auto range{_underlying.equal_range(record->streamID())};
+  auto range{_underlyingIdx.equal_range(record->streamID())};
   // dispatch record to underlying amplitude processors
   for (auto i{range.first}; i != range.second; ++i) {
-    auto &processor{i->second};
+    const auto &processorId{i->second};
+    auto &processor{_underlying.at(processorId).amplitudeProcessor};
     if (processor->finished() || !processor->enabled()) {
       continue;
     }
@@ -107,9 +108,9 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
   }
 
   std::vector<detect::AmplitudeProcessor::AmplitudeCPtr> amplitudes;
-  for (auto &resultPair : _underlyingResults) {
-    if (resultPair.second) {
-      amplitudes.emplace_back(std::move(resultPair.second));
+  for (auto &u : _underlying) {
+    if (u.second.result) {
+      amplitudes.emplace_back(std::move(u.second.result));
     }
   }
   if (amplitudes.empty()) {
@@ -131,8 +132,9 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
   return true;
 }
 
-void CombiningAmplitudeProcessor::close() const {
-  traverse([](const decltype(_underlying)::mapped_type &p) { p->close(); });
+const detect::AmplitudeProcessor *CombiningAmplitudeProcessor::underlying(
+    const std::string &processorId) const {
+  return _underlying.at(processorId).amplitudeProcessor.get();
 }
 
 std::vector<std::string> CombiningAmplitudeProcessor::waveformStreamIds()
@@ -162,7 +164,7 @@ void CombiningAmplitudeProcessor::computeAmplitude(
 bool CombiningAmplitudeProcessor::allUnderlyingFinished() const {
   return std::all_of(std::begin(_underlying), std::end(_underlying),
                      [](const decltype(_underlying)::value_type &u) {
-                       return u.second->finished();
+                       return u.second.amplitudeProcessor->finished();
                      });
 }
 
@@ -171,9 +173,14 @@ void CombiningAmplitudeProcessor::storeCallback(
     const Record *record,  // NOLINT(misc-unused-parameters)
     detect::AmplitudeProcessor::AmplitudeCPtr amplitude) {
   try {
-    _underlyingResults.at(processor->id()) = std::move(amplitude);
+    _underlying.at(processor->id()).result = std::move(amplitude);
   } catch (std::out_of_range &) {
   }
+}
+
+void CombiningAmplitudeProcessor::UnderlyingProcessor::reset() {
+  amplitudeProcessor->reset();
+  result.reset();
 }
 
 }  // namespace detect

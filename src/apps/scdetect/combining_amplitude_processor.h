@@ -3,6 +3,7 @@
 
 #include <boost/optional/optional.hpp>
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -43,6 +44,38 @@ class CombiningAmplitudeProcessor : public detect::AmplitudeProcessor {
 
   bool store(const Record *record) override;
 
+  struct UnderlyingProcessor {
+    std::unique_ptr<detect::AmplitudeProcessor> amplitudeProcessor;
+    detect::AmplitudeProcessor::AmplitudeCPtr result;
+
+    void reset();
+  };
+
+  using ProcessorId = std::string;
+  using Underlying = std::unordered_map<ProcessorId, UnderlyingProcessor>;
+  using UnderlyingConstIterator = Underlying::const_iterator;
+
+  class ConstIterator : public UnderlyingConstIterator {
+   public:
+    ConstIterator() = default;
+    explicit ConstIterator(UnderlyingConstIterator it)
+        : UnderlyingConstIterator{it} {}
+
+    const detect::AmplitudeProcessor *operator->() {
+      return UnderlyingConstIterator::operator->()
+          ->second.amplitudeProcessor.get();
+    }
+    const detect::AmplitudeProcessor &operator*() {
+      return *UnderlyingConstIterator::operator*().second.amplitudeProcessor;
+    }
+  };
+
+  ConstIterator begin() const { return ConstIterator{_underlying.cbegin()}; }
+  ConstIterator end() const { return ConstIterator{_underlying.cend()}; }
+
+  const detect::AmplitudeProcessor *underlying(
+      const std::string &processorId) const;
+
  private:
   void computeAmplitude(
       const std::vector<detect::AmplitudeProcessor::AmplitudeCPtr> &amplitudes,
@@ -67,17 +100,11 @@ class CombiningAmplitudeProcessor : public detect::AmplitudeProcessor {
       func(u.second);
     }
   }
+  Underlying _underlying;
 
   using WaveformStreamId = std::string;
-  std::unordered_multimap<WaveformStreamId,
-                          std::shared_ptr<detect::AmplitudeProcessor>>
-      _underlying;
-
-  using ProcessorId = std::string;
-  using UnderlyingResults =
-      std::unordered_map<ProcessorId,
-                         detect::AmplitudeProcessor::AmplitudeCPtr>;
-  UnderlyingResults _underlyingResults;
+  using UnderlyingIdx = std::unordered_multimap<WaveformStreamId, ProcessorId>;
+  UnderlyingIdx _underlyingIdx;
 
   CombiningStrategy _combiningStrategy;
 };

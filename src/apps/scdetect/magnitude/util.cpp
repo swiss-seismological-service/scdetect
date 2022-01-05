@@ -27,7 +27,7 @@ boost::optional<std::string> extractSensorLocationId(
   std::string waveformStreamIds;
   for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
     auto comment{amplitude->comment(i)};
-    if (comment->id() == settings::kRMSAmplitudeStreamsCommentId &&
+    if (comment->id() == settings::kAmplitudeStreamsCommentId &&
         !comment->text().empty()) {
       waveformStreamIds = comment->text();
       break;
