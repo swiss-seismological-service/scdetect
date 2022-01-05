@@ -109,7 +109,6 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
     return;
   }
 
-  const auto templateLength{templateWaveform().length()};
   const Core::TimeWindow tw{start, record->endTime()};
   auto result{util::make_smart<MatchResult>()};
   for (const auto &m : maxima.values) {
