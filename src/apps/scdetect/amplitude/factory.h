@@ -1,6 +1,7 @@
 #ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_FACTORY_H_
 #define SCDETECT_APPS_SCDETECT_AMPLITUDE_FACTORY_H_
 
+#include <seiscomp/core/datetime.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
 
@@ -19,6 +20,14 @@ class AmplitudeProcessor;
 
 namespace amplitude {
 namespace factory {
+namespace detail {
+
+const binding::SensorLocationConfig& loadSensorLocationConfig(
+    const binding::Bindings& bindings, const std::string& netCode,
+    const std::string& staCode, const std::string& locCode,
+    const std::string& chaCode);
+
+}
 
 struct Detection {
   using WaveformStreamId = std::string;
@@ -35,6 +44,18 @@ struct Detection {
 
   DataModel::OriginCPtr origin;
 };
+
+struct DetectorConfig {
+  std::string id;
+
+  Core::TimeSpan gapThreshold;
+  Core::TimeSpan gapTolerance;
+  bool gapInterpolation{false};
+};
+
+std::unique_ptr<AmplitudeProcessor> createMLx(
+    const binding::Bindings& bindings, const factory::Detection& detection,
+    const DetectorConfig& detectorConfig);
 
 }  // namespace factory
 
@@ -59,11 +80,6 @@ class Factory
       const detector::DetectorWaveformProcessor& detector);
 
  private:
-  static const binding::SensorLocationConfig& loadSensorLocationConfig(
-      const binding::Bindings& bindings, const std::string& netCode,
-      const std::string& staCode, const std::string& locCode,
-      const std::string& chaCode);
-
   static std::unique_ptr<AmplitudeProcessor> createRatioAmplitude(
       const binding::Bindings& bindings, const factory::Detection& detection,
       const detector::DetectorWaveformProcessor& detector);

@@ -3,6 +3,8 @@
 
 #include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/datamodel/stationmagnitude.h>
 
 #include <boost/optional/optional.hpp>
@@ -50,7 +52,7 @@ class TemplateFamily {
   // combination
   class Builder : public detect::Builder<TemplateFamily> {
    public:
-    explicit Builder(const config::TemplateFamilyConfig& templateFamilyConfig);
+    explicit Builder(config::TemplateFamilyConfig templateFamilyConfig);
     // Sets the template family's identifier
     //
     // - allows to explicitly ovveride the `id` (by default the identifier from
@@ -80,6 +82,12 @@ class TemplateFamily {
    private:
     using SensorLocationId = std::string;
     using OriginId = std::string;
+
+    static void getPickAndSensorLocation(
+        const DataModel::Origin* origin, const std::string& netCode,
+        const std::string& staCode, const std::string& locCode,
+        const std::string& phase, DataModel::SensorLocationCPtr& sensorLocation,
+        DataModel::PickCPtr& pick);
 
     void storeAmplitude(const AmplitudeProcessor* processor,
                         const Record* record,

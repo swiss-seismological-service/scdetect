@@ -21,42 +21,30 @@
 namespace Seiscomp {
 namespace detect {
 namespace amplitude {
+namespace factory {
+namespace detail {
 
-Factory::BaseException::BaseException()
-    : BaseException{"base factory exception"} {}
-
-std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
-    const binding::Bindings &bindings, const factory::Detection &detection,
-    const detector::DetectorWaveformProcessor &detector) {
-  assert(detection.origin);
-  assert(!detection.pickMap.empty());
-
-  std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
-  // dispatch and create ratio amplitude processors
-  for (const auto &pickMapPair : detection.pickMap) {
-    auto detectionCopy{detection};
-    detectionCopy.pickMap.clear();
-    detectionCopy.pickMap.emplace(pickMapPair);
-
-    const auto &waveformStreamId{
-        pickMapPair.second.authorativeWaveformStreamId};
-    underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
-        {waveformStreamId},
-        Factory::createRatioAmplitude(bindings, detectionCopy, detector)});
+const binding::SensorLocationConfig &loadSensorLocationConfig(
+    const binding::Bindings &bindings, const std::string &netCode,
+    const std::string &staCode, const std::string &locCode,
+    const std::string &chaCode) {
+  try {
+    return bindings.at(netCode, staCode, locCode, chaCode);
+  } catch (std::out_of_range &e) {
+    logging::TaggedMessage msg{
+        util::join(netCode, staCode, locCode, chaCode),
+        "failed to load bindings configuration: " + std::string{e.what()}};
+    throw Factory::BaseException{logging::to_string(msg)};
   }
-
-  auto ret{util::make_unique<MRelative>(std::move(underlying))};
-  ret->computeTimeWindow();
-
-  return ret;
 }
 
-std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
+}  // namespace detail
+
+std::unique_ptr<AmplitudeProcessor> createMLx(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const detector::DetectorWaveformProcessor &detector) {
+    const DetectorConfig &detectorConfig) {
   assert(detection.origin);
   assert(!detection.pickMap.empty());
-
   std::vector<DataModel::PickCPtr> picks;
   std::transform(std::begin(detection.pickMap), std::end(detection.pickMap),
                  std::back_inserter(picks),
@@ -65,20 +53,21 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
                  });
 
   auto ret{util::make_unique<MLx>()};
-  ret->setId(detector.id() + settings::kProcessorIdSep + util::createUUID());
+  ret->setId(detectorConfig.id + settings::kProcessorIdSep +
+             util::createUUID());
 
   // XXX(damb): do not provide a sensor location (currently not required)
   ret->setEnvironment(detection.origin, nullptr, picks);
 
   ret->computeTimeWindow();
-  ret->setGapInterpolation(detector.gapInterpolation());
-  ret->setGapThreshold(detector.gapThreshold());
-  ret->setGapTolerance(detector.gapTolerance());
+  ret->setGapInterpolation(detectorConfig.gapInterpolation);
+  ret->setGapThreshold(detectorConfig.gapThreshold);
+  ret->setGapTolerance(detectorConfig.gapTolerance);
 
   std::vector<std::string> sensorLocationStreamIdTokens;
   util::tokenizeWaveformStreamId(detection.sensorLocationStreamId,
                                  sensorLocationStreamIdTokens);
-  const auto &sensorLocationBindings{Factory::loadSensorLocationConfig(
+  const auto &sensorLocationBindings{detail::loadSensorLocationConfig(
       bindings, sensorLocationStreamIdTokens[0],
       sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
       sensorLocationStreamIdTokens[3])};
@@ -98,7 +87,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
                      amplitudeProcessingConfig.mlx.initTime);
     } catch (processing::WaveformProcessor::BaseException &e) {
       msg.setText(e.what());
-      throw BaseException{logging::to_string(msg)};
+      throw Factory::BaseException{logging::to_string(msg)};
     }
     msg.setText(
         "Configured amplitude processor filter: filter=\"" + filter +
@@ -150,10 +139,53 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
   } catch (Exception &e) {
     msg.setText(std::string{e.what()} +
                 " (pick_time=" + earliestPick->time().value().iso() + ")");
-    throw BaseException{logging::to_string(msg)};
+    throw Factory::BaseException{logging::to_string(msg)};
   }
 
   return ret;
+}
+
+}  // namespace factory
+
+Factory::BaseException::BaseException()
+    : BaseException{"base factory exception"} {}
+
+std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
+    const binding::Bindings &bindings, const factory::Detection &detection,
+    const detector::DetectorWaveformProcessor &detector) {
+  assert(detection.origin);
+  assert(!detection.pickMap.empty());
+
+  std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
+  // dispatch and create ratio amplitude processors
+  for (const auto &pickMapPair : detection.pickMap) {
+    auto detectionCopy{detection};
+    detectionCopy.pickMap.clear();
+    detectionCopy.pickMap.emplace(pickMapPair);
+
+    const auto &waveformStreamId{
+        pickMapPair.second.authorativeWaveformStreamId};
+    underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
+        {waveformStreamId},
+        Factory::createRatioAmplitude(bindings, detectionCopy, detector)});
+  }
+
+  auto ret{util::make_unique<MRelative>(std::move(underlying))};
+  ret->computeTimeWindow();
+
+  return ret;
+}
+
+std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
+    const binding::Bindings &bindings, const factory::Detection &detection,
+    const detector::DetectorWaveformProcessor &detector) {
+  factory::DetectorConfig detectorConfig;
+  detectorConfig.id = detector.id();
+  detectorConfig.gapThreshold = detector.gapThreshold();
+  detectorConfig.gapTolerance = detector.gapTolerance();
+  detectorConfig.gapInterpolation = detector.gapInterpolation();
+
+  return factory::createMLx(bindings, detection, detectorConfig);
 }
 
 std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
@@ -165,7 +197,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
   std::vector<std::string> sensorLocationStreamIdTokens;
   util::tokenizeWaveformStreamId(detection.sensorLocationStreamId,
                                  sensorLocationStreamIdTokens);
-  const auto &sensorLocationBindings{Factory::loadSensorLocationConfig(
+  const auto &sensorLocationBindings{factory::detail::loadSensorLocationConfig(
       bindings, sensorLocationStreamIdTokens[0],
       sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
       sensorLocationStreamIdTokens[3])};
@@ -231,20 +263,6 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
       amplitudeProcessingConfig.mrelative.saturationThreshold);
 
   return ret;
-}
-
-const binding::SensorLocationConfig &Factory::loadSensorLocationConfig(
-    const binding::Bindings &bindings, const std::string &netCode,
-    const std::string &staCode, const std::string &locCode,
-    const std::string &chaCode) {
-  try {
-    return bindings.at(netCode, staCode, locCode, chaCode);
-  } catch (std::out_of_range &e) {
-    logging::TaggedMessage msg{
-        util::join(netCode, staCode, locCode, chaCode),
-        "failed to load bindings configuration: " + std::string{e.what()}};
-    throw BaseException{logging::to_string(msg)};
-  }
 }
 
 }  // namespace amplitude

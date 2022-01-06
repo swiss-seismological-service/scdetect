@@ -5,8 +5,6 @@
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/origin.h>
-#include <seiscomp/datamodel/pick.h>
-#include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <memory>
@@ -15,12 +13,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "amplitude/rms.h"
+#include "amplitude/factory.h"
 #include "binding.h"
 #include "builder.h"
 #include "eventstore.h"
 #include "log.h"
-#include "processing/waveform_processor.h"
 #include "settings.h"
 #include "util/horizontal_components.h"
 #include "util/util.h"
@@ -33,8 +30,8 @@ const TemplateFamily::Builder::MagnitudeTypeMap
     TemplateFamily::Builder::_magnitudeTypeMap{{"MLx", {"MLhc", "MLh"}}};
 
 TemplateFamily::Builder::Builder(
-    const config::TemplateFamilyConfig& templateFamilyConfig)
-    : _templateFamilyConfig{templateFamilyConfig} {
+    config::TemplateFamilyConfig templateFamilyConfig)
+    : _templateFamilyConfig{std::move(templateFamilyConfig)} {
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
   setProduct(std::unique_ptr<TemplateFamily>{new TemplateFamily{}});
@@ -98,7 +95,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
          referenceConfig.sensorLocationConfigs) {
       const auto& sensorLocationId{sensorLocationConfig.waveformId};
       for (size_t i = 0; i < origin->stationMagnitudeCount(); ++i) {
-        const auto stationMagnitude{origin->stationMagnitude(i)};
+        const auto* stationMagnitude{origin->stationMagnitude(i)};
         const auto amplitudeId{stationMagnitude->amplitudeID()};
 
         const auto amplitude{
@@ -107,10 +104,11 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
           continue;
         }
 
-        if (std::find(std::begin(matchingMagnitudeTypes),
-                      std::end(matchingMagnitudeTypes),
-                      stationMagnitude->type()) ==
-            matchingMagnitudeTypes.end()) {
+        bool matchingMagnitudeType{std::find(std::begin(matchingMagnitudeTypes),
+                                             std::end(matchingMagnitudeTypes),
+                                             stationMagnitude->type()) ==
+                                   matchingMagnitudeTypes.end()};
+        if (!matchingMagnitudeType) {
           continue;
         }
 
@@ -182,54 +180,20 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       DataModel::PickCPtr pick;
       DataModel::SensorLocationCPtr sensorLocation;
-      // determine the pick
-      for (size_t i = 0; i < origin->arrivalCount(); ++i) {
-        const auto arrival{origin->arrival(i)};
-        if (arrival->phase() != arrivalPhase) {
-          continue;
-        }
-        auto p{EventStore::Instance().get<DataModel::Pick>(arrival->pickID())};
-        if (!p) {
-          continue;
-        }
-        // validate both arrival and pick
-        try {
-          if (p->evaluationMode() != DataModel::MANUAL &&
-              (arrival->weight() == 0 || !arrival->timeUsed())) {
-            continue;
-          }
-        } catch (Core::ValueException& e) {
-          continue;
-        }
 
-        std::vector<std::string> tokens;
-        util::tokenizeWaveformStreamId(sensorLocationConfig.waveformId, tokens);
-        if (tokens.size() != 3) {
-          continue;
-        }
+      std::vector<std::string> tokens;
+      util::tokenizeWaveformStreamId(sensorLocationConfig.waveformId, tokens);
+      if (tokens.size() != 3) {
+        continue;
+      }
 
-        // validate the pick's sensor location
-        auto templateWaveformSensorLocation{
-            Client::Inventory::Instance()->getSensorLocation(
-                tokens[0], tokens[1], tokens[2], p->time().value())};
-        if (!templateWaveformSensorLocation) {
-          msg.setText("failed to find sensor location in inventory for time: " +
-                      p->time().value().iso());
-          throw builder::NoSensorLocation{logging::to_string(msg)};
-        }
-        auto pickWaveformId{p->waveformID()};
-        auto pickWaveformSensorLocation{
-            Client::Inventory::Instance()->getSensorLocation(
-                pickWaveformId.networkCode(), pickWaveformId.stationCode(),
-                pickWaveformId.locationCode(), p->time().value())};
-        if (!pickWaveformSensorLocation ||
-            *templateWaveformSensorLocation != *pickWaveformSensorLocation) {
-          continue;
-        }
-
-        pick = p;
-        sensorLocation = templateWaveformSensorLocation;
-        break;
+      try {
+        getPickAndSensorLocation(origin.get(), tokens[0], tokens[1], tokens[2],
+                                 arrivalPhase, sensorLocation, pick);
+      } catch (const builder::NoSensorLocation& e) {
+        // wrap exception into message
+        msg.setText(e.what());
+        throw builder::NoSensorLocation{logging::to_string(msg)};
       }
 
       if (!pick) {
@@ -239,82 +203,38 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       const auto arrivalTime{pick->time().value()};
 
-      std::vector<std::string> tokens;
-      util::tokenizeWaveformStreamId(sensorLocationConfig.waveformId, tokens);
+      amplitude::factory::Detection referenceDetection;
+      referenceDetection.sensorLocationStreamId =
+          util::getSensorLocationStreamId(sensorLocationConfig.waveformId,
+                                          true);
+      referenceDetection.origin = origin;
+      referenceDetection.pickMap.emplace(
+          "", amplitude::factory::Detection::Pick{"", pick});
 
-      amplitude::RMSAmplitude rmsAmplitudeProcessor;
-      rmsAmplitudeProcessor.setId(_templateFamilyConfig.id() +
-                                  settings::kProcessorIdSep +
-                                  util::createUUID());
+      amplitude::factory::DetectorConfig detectorConfig;
+      detectorConfig.gapInterpolation = false;
+      auto proc{amplitude::factory::createMLx(bindings, referenceDetection,
+                                              detectorConfig)};
 
       Core::TimeWindow tw{
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformStart},
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformEnd}};
-      rmsAmplitudeProcessor.setTimeWindow(tw);
-
-      rmsAmplitudeProcessor.setEnvironment(origin, sensorLocation, {pick});
-
-      rmsAmplitudeProcessor.setResultCallback(
+      proc->setTimeWindow(tw);
+      proc->setResultCallback(
           [this](const AmplitudeProcessor* proc, const Record* rec,
                  AmplitudeProcessor::AmplitudeCPtr amplitude) {
             storeAmplitude(proc, rec, amplitude);
           });
 
+      proc->setId(_templateFamilyConfig.id() + settings::kProcessorIdSep +
+                  util::createUUID());
+
+      proc->setEnvironment(origin, sensorLocation, {pick});
+
       try {
         util::HorizontalComponents horizontalComponents{
             Client::Inventory::Instance(),  tokens[0],  tokens[1], tokens[2],
             sensorLocationConfig.channelId, arrivalTime};
-
-        auto& sensorLocationBindings{bindings.at(
-            horizontalComponents.netCode(), horizontalComponents.staCode(),
-            horizontalComponents.locCode(), sensorLocationConfig.channelId)};
-        auto& amplitudeProcessingConfig{
-            sensorLocationBindings.amplitudeProcessingConfig};
-
-        if (!amplitudeProcessingConfig.mlx.filter.value_or("").empty()) {
-          try {
-            rmsAmplitudeProcessor.setFilter(
-                processing::createFilter(*amplitudeProcessingConfig.mlx.filter),
-                amplitudeProcessingConfig.mlx.initTime);
-            SCDETECT_LOG_DEBUG_TAGGED(
-                rmsAmplitudeProcessor.id(),
-                "Configured amplitude processor filter: filter=\"%s\", "
-                "init_time=%f",
-                amplitudeProcessingConfig.mlx.filter.value().c_str(),
-                static_cast<double>(amplitudeProcessingConfig.mlx.initTime));
-          } catch (processing::WaveformProcessor::BaseException& e) {
-            msg.setText(e.what());
-            throw builder::BaseException{logging::to_string(msg)};
-          }
-        } else {
-          SCDETECT_LOG_DEBUG_TAGGED(
-              rmsAmplitudeProcessor.id(),
-              "Configured amplitude processor with no filter: filter=\"\"");
-        }
-
-        rmsAmplitudeProcessor.setSaturationThreshold(
-            amplitudeProcessingConfig.mlx.saturationThreshold);
-
-        // register components
-        for (auto s : horizontalComponents) {
-          Processing::Stream stream;
-          stream.init(s);
-
-          try {
-            rmsAmplitudeProcessor.add(
-                horizontalComponents.netCode(), horizontalComponents.staCode(),
-                horizontalComponents.locCode(), stream,
-                AmplitudeProcessor::DeconvolutionConfig{
-                    sensorLocationBindings.at(s->code()).deconvolutionConfig});
-          } catch (std::out_of_range&) {
-            // binding lookup failed
-            rmsAmplitudeProcessor.add(
-                horizontalComponents.netCode(), horizontalComponents.staCode(),
-                horizontalComponents.locCode(), stream,
-                AmplitudeProcessor::DeconvolutionConfig{
-                    binding::StreamConfig::DeconvolutionConfig{}});
-          }
-        }
 
         WaveformHandlerIface::ProcessingConfig processingConfig;
         // let the amplitude processor decide how to process the waveform
@@ -325,12 +245,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           auto record{waveformHandler->get(
               horizontalComponents.netCode(), horizontalComponents.staCode(),
               horizontalComponents.locCode(), s->code(),
-              rmsAmplitudeProcessor.safetyTimeWindow(), processingConfig)};
-          rmsAmplitudeProcessor.feed(record.get());
+              proc->safetyTimeWindow(), processingConfig)};
+          proc->feed(record.get());
         }
-      } catch (std::out_of_range&) {
-        msg.setText("failed to load bindings configuration");
-        throw builder::NoBindings{logging::to_string(msg)};
       } catch (processing::WaveformProcessor::BaseException& e) {
         msg.setText("failed to load data");
         throw builder::BaseException{logging::to_string(msg)};
@@ -340,11 +257,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         throw builder::NoStream{logging::to_string(msg)};
       }
 
-      if (rmsAmplitudeProcessor.status() !=
-          processing::WaveformProcessor::Status::kFinished) {
-        msg.setText(
-            "failed to compute rms amplitude: status=" +
-            std::to_string(util::asInteger(rmsAmplitudeProcessor.status())));
+      if (proc->status() != processing::WaveformProcessor::Status::kFinished) {
+        msg.setText("failed to compute rms amplitude: status=" +
+                    std::to_string(util::asInteger(proc->status())));
         throw builder::BaseException{logging::to_string(msg)};
       }
     }
@@ -377,6 +292,57 @@ void TemplateFamily::Builder::finalize() {
         product()->_members.push_back(member);
       }
     }
+  }
+}
+
+void TemplateFamily::Builder::getPickAndSensorLocation(
+    const DataModel::Origin* origin, const std::string& netCode,
+    const std::string& staCode, const std::string& locCode,
+    const std::string& phase, DataModel::SensorLocationCPtr& sensorLocation,
+    DataModel::PickCPtr& pick) {
+  assert(static_cast<bool>(origin));
+  for (size_t i = 0; i < origin->arrivalCount(); ++i) {
+    const auto* arrival{origin->arrival(i)};
+    if (arrival->phase() != phase) {
+      continue;
+    }
+    auto p{EventStore::Instance().get<DataModel::Pick>(arrival->pickID())};
+    if (!p) {
+      continue;
+    }
+    // validate both arrival and pick
+    try {
+      if (p->evaluationMode() != DataModel::MANUAL &&
+          (arrival->weight() == 0 || !arrival->timeUsed())) {
+        continue;
+      }
+    } catch (Core::ValueException& e) {
+      continue;
+    }
+
+    // validate the pick's sensor location
+    auto* templateWaveformSensorLocation{
+        Client::Inventory::Instance()->getSensorLocation(
+            netCode, staCode, locCode, p->time().value())};
+    if (!static_cast<bool>(templateWaveformSensorLocation)) {
+      throw builder::NoSensorLocation{
+          "failed to find sensor location in inventory for time: " +
+          p->time().value().iso()};
+    }
+
+    auto pickWaveformId{p->waveformID()};
+    auto* pickWaveformSensorLocation{
+        Client::Inventory::Instance()->getSensorLocation(
+            pickWaveformId.networkCode(), pickWaveformId.stationCode(),
+            pickWaveformId.locationCode(), p->time().value())};
+    if (!static_cast<bool>(pickWaveformSensorLocation) ||
+        *templateWaveformSensorLocation != *pickWaveformSensorLocation) {
+      continue;
+    }
+
+    pick = p;
+    sensorLocation = templateWaveformSensorLocation;
+    break;
   }
 }
 
