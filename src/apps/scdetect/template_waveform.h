@@ -5,6 +5,7 @@
 #include <seiscomp/core/genericrecord.h>
 
 #include <boost/optional/optional.hpp>
+#include <boost/variant2/variant.hpp>
 #include <functional>
 #include <string>
 
@@ -18,12 +19,21 @@ class TemplateWaveform {
  public:
   // Template waveform processing configuration
   struct ProcessingConfig {
+    ProcessingConfig() = default;
+    ProcessingConfig(const ProcessingConfig &other);
+    ProcessingConfig &operator=(ProcessingConfig other) noexcept;
+    ProcessingConfig(ProcessingConfig &&) = default;
+    ProcessingConfig &operator=(ProcessingConfig &&) = default;
+    ~ProcessingConfig() = default;
+
     // The template waveform starttime
     boost::optional<Core::Time> templateStartTime;
     // The template waveform endtime
     boost::optional<Core::Time> templateEndTime;
 
-    boost::optional<std::string> filter;
+    boost::variant2::variant<std::unique_ptr<waveform::DoubleFilter>,
+                             boost::optional<std::string>>
+        filter{boost::none};
     // The filter initialization time
     boost::optional<Core::TimeSpan> initTime;
 

@@ -7,6 +7,7 @@
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
+#include <seiscomp/math/filter.h>
 
 #include <functional>
 #include <string>
@@ -20,10 +21,16 @@ namespace detect {
 
 namespace waveform {
 
+template <typename T>
+using Filter = Math::Filtering::InPlaceFilter<T>;
+using DoubleFilter = Filter<double>;
+
 bool trim(GenericRecord &trace, const Core::TimeWindow &tw);
 bool filter(GenericRecord &trace, const std::string &filterId);
 bool filter(DoubleArray &data, const std::string &filterId,
             double samplingFrequency);
+bool filter(DoubleArray &data, DoubleFilter *filter, double samplingFrequency);
+bool filter(GenericRecord &trace, DoubleFilter *filter);
 bool resample(GenericRecord &trace, double targetFrequency);
 void demean(GenericRecord &trace);
 void demean(DoubleArray &data);

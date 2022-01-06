@@ -67,7 +67,10 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
 
   // Sets `filter` with the corresponding filter `initTime`
   void setFilter(std::unique_ptr<Filter> &&filter,
-                 const Core::TimeSpan &initTime = 0.0);
+                 const Core::TimeSpan &initTime = Core::TimeSpan{0.0});
+  // Returns the configured filter or `nullptr` if no filter has been configured
+  const Filter *filter() const;
+
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishMatchResultCallback &callback);
 

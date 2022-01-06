@@ -1,5 +1,6 @@
 #include "ratio.h"
 
+#include <boost/variant2/variant.hpp>
 #include <cassert>
 #include <cstddef>
 
@@ -103,11 +104,19 @@ void RatioAmplitude::process(StreamState &streamState, const Record *record,
   // the stream's sampling frequency
 
   // filter
-  if (processingConfig.filter && !processingConfig.filter.value().empty()) {
-    if (!waveform::filter(_buffer, *processingConfig.filter,
-                          streamState.samplingFrequency)) {
-      throw Exception{"failed to filter data: filter=" +
-                      *processingConfig.filter};
+  try {
+    if (!waveform::filter(
+            _buffer, boost::variant2::get<0>(processingConfig.filter).get(),
+            streamState.samplingFrequency)) {
+      throw Exception{"failed to filter template waveform"};
+    }
+  } catch (const boost::variant2::bad_variant_access &) {
+    auto filter{boost::variant2::get<1>(processingConfig.filter)};
+    if (filter && !filter.value().empty()) {
+      if (!waveform::filter(_buffer, *filter, streamState.samplingFrequency)) {
+        throw Exception{"failed to filter template waveform: filter=" +
+                        *filter};
+      }
     }
   }
 

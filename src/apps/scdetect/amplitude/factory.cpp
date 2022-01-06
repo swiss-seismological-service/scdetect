@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "../log.h"
@@ -89,8 +90,8 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
 
   logging::TaggedMessage msg{detection.sensorLocationStreamId};
   // configure filter
-  if (!amplitudeProcessingConfig.mlx.filter.empty()) {
-    auto filter{amplitudeProcessingConfig.mlx.filter};
+  if (!amplitudeProcessingConfig.mlx.filter.value_or("").empty()) {
+    auto filter{amplitudeProcessingConfig.mlx.filter.value()};
     util::replaceEscapedXMLFilterIdChars(filter);
     try {
       ret->setFilter(processing::createFilter(filter),
@@ -184,18 +185,35 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
   auto templateWaveform{templateWaveformProcessor->templateWaveform()};
 
   auto filter{amplitudeProcessingConfig.mrelative.filter};
-  util::replaceEscapedXMLFilterIdChars(filter);
-  if (!filter.empty()) {
-    auto processingConfig{templateWaveform.processingConfig()};
-    processingConfig.filter = filter;
-    processingConfig.initTime = amplitudeProcessingConfig.mrelative.initTime;
-    templateWaveform.setProcessingConfig(processingConfig);
-    msg.setText("Configured amplitude processor filter: filter=\"" + filter +
-                "init_time=" +
-                std::to_string(amplitudeProcessingConfig.mrelative.initTime));
-    SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
+  if (filter) {
+    util::replaceEscapedXMLFilterIdChars(*filter);
+    if (!filter.value().empty()) {
+      auto processingConfig{templateWaveform.processingConfig()};
+      processingConfig.filter = filter;
+      processingConfig.initTime = amplitudeProcessingConfig.mrelative.initTime;
+      templateWaveform.setProcessingConfig(processingConfig);
+      msg.setText("Configured amplitude processor filter: filter=\"" + *filter +
+                  "init_time=" +
+                  std::to_string(amplitudeProcessingConfig.mrelative.initTime));
+      SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
+                                logging::to_string(msg).c_str());
+    } else {
+      msg.setText("Configured amplitude processor without filter: filter=\"\"");
+      SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
+                                logging::to_string(msg).c_str());
+    }
   } else {
-    msg.setText("Configured amplitude processor without filter: filter=\"\"");
+    // use the filter from detector waveform processing as a fallback
+    auto processingConfig{templateWaveform.processingConfig()};
+
+    std::unique_ptr<waveform::DoubleFilter> cloned{
+        templateWaveformProcessor->filter()->clone()};
+    processingConfig.filter = std::move(cloned);
+    processingConfig.initTime = templateWaveformProcessor->initTime();
+    msg.setText(
+        "Configured amplitude processor with detection processing filter: "
+        "processor_id=" +
+        templateWaveformProcessor->id());
     SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
   }
 

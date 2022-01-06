@@ -46,9 +46,9 @@ struct SensorLocationConfig {
   struct AmplitudeProcessingConfig {
     struct MLx {
       // The filter string identifier used for amplitude calculation
-      std::string filter{"BW_BP(4,10,30)"};
+      boost::optional<std::string> filter{"BW_BP(4,10,30)"};
       // The filter's initialization time in seconds
-      double initTime{60};
+      Core::TimeSpan initTime{60};
       // Defines the saturation threshold for the saturation check. If unset, no
       // saturation check is performed.
       boost::optional<double> saturationThreshold;
@@ -56,7 +56,7 @@ struct SensorLocationConfig {
 
     struct MRelative {
       // The filter string identifier used for amplitude calculation
-      std::string filter;
+      boost::optional<std::string> filter;
       // The filter's initialization time in seconds
       Core::TimeSpan initTime{60};
       // Defines the saturation threshold for the saturation check. If unset, no
@@ -69,7 +69,7 @@ struct SensorLocationConfig {
 
     // Defines the amplitude types to be computed with regard to the sensor
     // location
-    std::vector<std::string> amplitudeTypes{"MLx", "MRelative"};
+    std::vector<std::string> amplitudeTypes{"MRelative", "MLx"};
     // Indicates whether the amplitude calculation is enabled (`true`) or
     // disabled (`false`)
     bool enabled{true};
@@ -79,7 +79,7 @@ struct SensorLocationConfig {
   struct MagnitudeProcessingConfig {
     // Defines the magnitude types to be computed with regard to the sensor
     // location
-    std::vector<std::string> magnitudeTypes{"MLx"};
+    std::vector<std::string> magnitudeTypes{"MRelative", "MLx"};
     // Indicates whether the sensor location is enabled (`true`) or disabled
     // (`false`)
     bool enabled{true};
@@ -190,14 +190,21 @@ boost::optional<double> parseSaturationThreshold(
     const Processing::Settings &settings, const std::string &parameter);
 
 namespace detail {
-// Savely sets the filter at `storageLocation`
+// Savely sets the `filter` at `storageLocation`
 //
 // - throws a `ValueException` if the value is invalid
 void setFilter(const std::string &filter, std::string &storageLocation);
+// Savely sets the `filter` at `storageLocation`
+//
+// - throws a `ValueException` if the value is invalid
+void setFilter(const boost::optional<std::string> &filter,
+               boost::optional<std::string> &storageLocation);
+
 // Savely sets the initialization time at `storageLocation`
 //
 // - throws a `ValueException` if the value is invalid
-void setInitTime(double initTime, double &storageLocation);
+void setInitTime(const Core::TimeSpan &initTime,
+                 Core::TimeSpan &storageLocation);
 // Savely sets the filter (at `storageLocationFilter`) and initialization time
 // (at `storageLocationInitTime` )from `settings` identified by
 // `parameterFilter` and `parameterInitTime`
@@ -208,9 +215,10 @@ void setInitTime(double initTime, double &storageLocation);
 void setFilter(const Processing::Settings &settings,
                const std::string &parameterFilter,
                const std::string &parameterInitTime,
-               const std::string &defaultFilter, double defaultInitTime,
-               std::string &storageLocationFilter,
-               double &storageLocationInitTime);
+               const boost::optional<std::string> &defaultFilter,
+               const Core::TimeSpan &defaultInitTime,
+               boost::optional<std::string> &storageLocationFilter,
+               Core::TimeSpan &storageLocationInitTime);
 // Savely sets the saturation threshold (at `storageLocation`) from `settings`
 // identified by `parameter`
 //

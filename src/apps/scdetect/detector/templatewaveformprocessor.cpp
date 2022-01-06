@@ -46,6 +46,11 @@ void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> &&filter,
                                      templateWaveform().configuredStartTime());
 }
 
+const TemplateWaveformProcessor::Filter *TemplateWaveformProcessor::filter()
+    const {
+  return _streamState.filter.get();
+}
+
 void TemplateWaveformProcessor::setResultCallback(
     const PublishMatchResultCallback &callback) {
   _resultCallback = callback;

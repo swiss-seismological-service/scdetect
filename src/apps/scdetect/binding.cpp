@@ -16,6 +16,7 @@
 #include "config/validators.h"
 #include "exception.h"
 #include "log.h"
+#include "seiscomp/core/datetime.h"
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
@@ -321,21 +322,27 @@ boost::optional<double> parseSaturationThreshold(
 
 namespace detail {
 
-void setFilter(const std::string &filter, std::string &storageLocation) {
+void setFilter(const boost::optional<std::string> &filter,
+               boost::optional<std::string> &storageLocation) {
+  // no filter
+  if (!filter) {
+    return;
+  }
+
   // filtering explictily disabled
-  if (filter.empty()) {
+  if (filter.value().empty()) {
     storageLocation = filter;
     return;
   }
 
   std::string err;
-  if (!config::validateFilter(filter, err)) {
+  if (!config::validateFilter(*filter, err)) {
     throw ValueException{"invalid filter string identifier: " + err};
   }
   storageLocation = filter;
 }
 
-void setInitTime(double t, double &storageLocation) {
+void setInitTime(const Core::TimeSpan &t, Core::TimeSpan &storageLocation) {
   if (!util::isGeZero(t)) {
     throw ValueException{"invalid init time: " + std::to_string(t) +
                          " (Must be >= 0.)"};
@@ -346,23 +353,27 @@ void setInitTime(double t, double &storageLocation) {
 void setFilter(const Processing::Settings &settings,
                const std::string &parameterFilter,
                const std::string &parameterInitTime,
-               const std::string &defaultFilter, double defaultInitTime,
-               std::string &storageLocationFilter,
-               double &storageLocationInitTime) {
-  std::string filterStr;
-  if (!settings.getValue(filterStr, parameterFilter)) {
-    filterStr = defaultFilter;
-  }
-
+               const boost::optional<std::string> &defaultFilter,
+               const Core::TimeSpan &defaultInitTime,
+               boost::optional<std::string> &storageLocationFilter,
+               Core::TimeSpan &storageLocationInitTime) {
   double t;
   if (!settings.getValue(t, parameterInitTime)) {
     t = defaultInitTime;
   }
 
-  std::string previousFilter{storageLocationFilter};
-  setFilter(filterStr, storageLocationFilter);
+  std::string parsed;
+  boost::optional<std::string> filter;
+  if (settings.getValue(parsed, parameterFilter)) {
+    filter = parsed;
+  } else {
+    filter = defaultFilter;
+  }
+
+  boost::optional<std::string> previousFilter{storageLocationFilter};
+  setFilter(filter, storageLocationFilter);
   try {
-    setInitTime(t, storageLocationInitTime);
+    setInitTime(Core::TimeSpan{t}, storageLocationInitTime);
   } catch (ValueException &) {
     storageLocationFilter = previousFilter;
     throw;
@@ -456,12 +467,23 @@ void load(const Processing::Settings &settings,
     storageLocation.enabled = defaults.enabled;
   }
 
-  setFilter(settings, parameterPrefix + ".filter",
-            parameterPrefix + ".initTime", defaults.mlx.filter,
+  // MRelative
+  setFilter(settings, parameterPrefix + ".MRelative.filter",
+            parameterPrefix + ".MRelative.initTime", defaults.mrelative.filter,
+            defaults.mrelative.initTime, storageLocation.mrelative.filter,
+            storageLocation.mrelative.initTime);
+
+  setSaturationThreshold(settings,
+                         parameterPrefix + ".MRelative.saturationThreshold",
+                         storageLocation.mrelative.saturationThreshold);
+
+  // MLx
+  setFilter(settings, parameterPrefix + ".MLx.filter",
+            parameterPrefix + ".MLx.initTime", defaults.mlx.filter,
             defaults.mlx.initTime, storageLocation.mlx.filter,
             storageLocation.mlx.initTime);
 
-  setSaturationThreshold(settings, parameterPrefix + ".saturationThreshold",
+  setSaturationThreshold(settings, parameterPrefix + ".MLx.saturationThreshold",
                          storageLocation.mlx.saturationThreshold);
 }
 

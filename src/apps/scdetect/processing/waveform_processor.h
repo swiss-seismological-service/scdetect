@@ -120,8 +120,8 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // - `op` sits between `feed` and `store`
   // - the pointer ownership goes to the processor
   void setOperator(WaveformOperator *op);
-  // Returns the processor's initialization time; by default this corresponds
-  // to the processor's filter initialization time
+  // Returns the processor's initialization time; most frequently this
+  // corresponds to the processor's filter initialization time
   virtual Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than

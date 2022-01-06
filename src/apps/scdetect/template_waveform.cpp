@@ -2,9 +2,11 @@
 
 #include <seiscomp/core/timewindow.h>
 
+#include <boost/variant2/variant.hpp>
 #include <cassert>
 #include <exception>
 #include <string>
+#include <type_traits>
 
 #include "exception.h"
 #include "util/memory.h"
@@ -12,6 +14,41 @@
 
 namespace Seiscomp {
 namespace detect {
+
+TemplateWaveform::ProcessingConfig::ProcessingConfig(
+    const ProcessingConfig &other)
+    : templateStartTime{other.templateStartTime},
+      templateEndTime{other.templateEndTime},
+      initTime{other.initTime},
+      safetyMargin{other.safetyMargin},
+      samplingFrequency{other.samplingFrequency},
+      detrend{other.detrend},
+      demean{other.demean} {
+  try {
+    filter = boost::variant2::get<1>(other.filter);
+  } catch (const boost::variant2::bad_variant_access &) {
+    const auto *ptr{boost::variant2::get<0>(other.filter).get()};
+    if (static_cast<bool>(ptr)) {
+      std::unique_ptr<waveform::DoubleFilter> cloned(ptr->clone());
+      filter = std::move(cloned);
+    } else {
+      filter = nullptr;
+    }
+  }
+}
+
+TemplateWaveform::ProcessingConfig &
+TemplateWaveform::ProcessingConfig::operator=(ProcessingConfig other) noexcept {
+  std::swap(templateStartTime, other.templateStartTime);
+  std::swap(templateEndTime, other.templateEndTime);
+  std::swap(filter, other.filter);
+  std::swap(initTime, other.initTime);
+  std::swap(safetyMargin, other.safetyMargin);
+  std::swap(samplingFrequency, other.samplingFrequency);
+  std::swap(detrend, other.detrend);
+  std::swap(demean, other.demean);
+  return *this;
+}
 
 const TemplateWaveform::ProcessingStrategy TemplateWaveform::noProcessing =
     [](const GenericRecordCPtr &raw,
@@ -48,12 +85,20 @@ const TemplateWaveform::ProcessingStrategy TemplateWaveform::defaultProcessing =
     }
   }
   // filter
-  if (config.filter && !config.filter.value().empty()) {
-    if (!waveform::filter(*ret, *config.filter)) {
-      throw Exception{"failed to filter template waveform: filter=" +
-                      *config.filter};
+  try {
+    if (!waveform::filter(*ret, boost::variant2::get<0>(config.filter).get())) {
+      throw Exception{"failed to filter template waveform"};
+    }
+  } catch (const boost::variant2::bad_variant_access &) {
+    auto filter{boost::variant2::get<1>(config.filter)};
+    if (filter && !filter.value().empty()) {
+      if (!waveform::filter(*ret, *filter)) {
+        throw Exception{"failed to filter template waveform: filter=" +
+                        *filter};
+      }
     }
   }
+
   // trim
   Core::TimeWindow tw{config.templateStartTime.value_or(raw->startTime()),
                       config.templateEndTime.value_or(raw->endTime())};
@@ -90,10 +135,21 @@ TemplateWaveform TemplateWaveform::load(
 
   auto leadingMargin{
       processingConfig.safetyMargin.value_or(Core::TimeSpan{0.0})};
-  if (processingConfig.filter && !processingConfig.filter.value().empty()) {
+
+  bool hasFilter{false};
+  try {
+    auto filter{boost::variant2::get<1>(processingConfig.filter)};
+    hasFilter = filter && !filter.value().empty();
+  } catch (const boost::variant2::bad_variant_access &) {
+    auto *filter{boost::variant2::get<0>(processingConfig.filter).get()};
+    hasFilter = static_cast<bool>(filter);
+  }
+
+  if (hasFilter) {
     leadingMargin = std::max(
         leadingMargin, processingConfig.initTime.value_or(Core::TimeSpan{0.0}));
   }
+
   const Core::TimeWindow tw{
       processingConfig.templateStartTime.value() - leadingMargin,
       processingConfig.templateEndTime.value() +
