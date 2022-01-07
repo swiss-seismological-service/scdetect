@@ -1228,7 +1228,7 @@ bool Application::loadEvents(const std::string &eventDb,
       try {
         EventStore::Instance().load(path);
         loaded = true;
-      } catch (std::exception &e) {
+      } catch (const std::exception &e) {
         auto msg{Core::stringify("Failed to load events: %s", e.what())};
         if (isDatabaseEnabled()) {
           SCDETECT_LOG_WARNING("%s", msg.c_str());
