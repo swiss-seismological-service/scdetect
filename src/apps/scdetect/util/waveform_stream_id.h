@@ -35,6 +35,8 @@ std::string getSensorLocationStreamId(const std::string &waveformStreamId,
 
 std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId);
 
+std::string getBandAndSourceCode(const std::string &chaCode);
+
 class WaveformStreamID {
  public:
   explicit WaveformStreamID(const std::string &netStaLocCha);

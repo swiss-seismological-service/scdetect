@@ -20,6 +20,7 @@
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
+#include "util/waveform_stream_id.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -48,7 +49,8 @@ StationConfig::const_iterator StationConfig::end() const {
 
 const SensorLocationConfig &StationConfig::at(
     const std::string &locCode, const std::string &chaCode) const {
-  return _sensorLocationConfigs.at({locCode, getBandAndSourceCode(chaCode)});
+  return _sensorLocationConfigs.at(
+      {locCode, util::getBandAndSourceCode(chaCode)});
 }
 
 Bindings::const_iterator Bindings::begin() const {
@@ -67,7 +69,7 @@ const SensorLocationConfig &Bindings::at(const std::string &netCode,
                                          const std::string &locCode,
                                          const std::string &chaCode) const {
   return _stationConfigs.at({netCode, staCode})
-      .at(locCode, getBandAndSourceCode(chaCode));
+      .at(locCode, util::getBandAndSourceCode(chaCode));
 }
 
 void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
@@ -149,7 +151,7 @@ const StationConfig &Bindings::load(
 
       // only take the band and source code identifiers into account
       auto &sensorLocationConfig{stationConfig._sensorLocationConfigs[{
-          locCode, getBandAndSourceCode(chaCode)}]};
+          locCode, util::getBandAndSourceCode(chaCode)}]};
       // load amplitude processing config
       try {
         auto amplitudePrefix{prefix + ".amplitudes"};
@@ -181,7 +183,7 @@ const StationConfig &Bindings::load(
 
             auto &streamConfig{
                 sensorLocationConfig
-                    .streamConfigs[getBandAndSourceCode(chaCode) +
+                    .streamConfigs[util::getBandAndSourceCode(chaCode) +
                                    subSourceCode]};
             try {
               detail::load(settings, respProfilePrefix, streamConfig,
@@ -222,10 +224,6 @@ const StationConfig &Bindings::load(
   }
   stationConfig._parameters = keys;
   return stationConfig;
-}
-
-std::string getBandAndSourceCode(const std::string &chaCode) {
-  return chaCode.size() <= 2 ? chaCode : chaCode.substr(0, 2);
 }
 
 boost::optional<double> parseSaturationThreshold(

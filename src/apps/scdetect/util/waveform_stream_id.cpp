@@ -29,7 +29,11 @@ std::string join(const std::string &netCode, const std::string &staCode,
 }
 
 std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId) {
-  return waveformStreamId.chaCode().substr(0, 2);
+  return getBandAndSourceCode(waveformStreamId.chaCode());
+}
+
+std::string getBandAndSourceCode(const std::string &chaCode) {
+  return chaCode.substr(0, 2);
 }
 
 std::string getSensorLocationStreamId(const WaveformStreamID &waveformStreamId,

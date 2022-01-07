@@ -180,9 +180,6 @@ class Bindings {
   ConfigMap _stationConfigs;
 };
 
-// Returns the band and source code identifier from `chaCode`
-std::string getBandAndSourceCode(const std::string &chaCode);
-
 // Parse the saturation threshold from `settings` identified by `parameter`
 //
 // - returns `boost::none` if no parameter could be found
