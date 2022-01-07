@@ -51,6 +51,7 @@ set(
     resamplerstore.cpp
     template_waveform.cpp
     template_family.cpp
+    util/filter.cpp
     util/horizontal_components.cpp
     util/util.cpp
     util/waveform_stream_id.cpp

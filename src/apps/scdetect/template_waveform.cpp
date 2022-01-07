@@ -9,6 +9,7 @@
 #include <type_traits>
 
 #include "exception.h"
+#include "util/filter.h"
 #include "util/memory.h"
 #include "waveform.h"
 
@@ -86,7 +87,8 @@ const TemplateWaveform::ProcessingStrategy TemplateWaveform::defaultProcessing =
   }
   // filter
   try {
-    if (!waveform::filter(*ret, boost::variant2::get<0>(config.filter).get())) {
+    auto *filter{boost::variant2::get<0>(config.filter).get()};
+    if (!waveform::filter(*ret, filter)) {
       throw Exception{"failed to filter template waveform"};
     }
   } catch (const boost::variant2::bad_variant_access &) {
@@ -251,7 +253,14 @@ const boost::optional<Core::Time> &TemplateWaveform::referenceTime() const {
   return _referenceTime;
 }
 
-void TemplateWaveform::reset() { _templateWaveform.reset(); }
+void TemplateWaveform::reset() {
+  _templateWaveform.reset();
+  // reset the filter state
+  try {
+    util::reset(boost::variant2::get<0>(_processingConfig.filter));
+  } catch (const boost::variant2::bad_variant_access &) {
+  }
+}
 
 const GenericRecord &TemplateWaveform::templateWaveform() const {
   if (!_templateWaveform) {
