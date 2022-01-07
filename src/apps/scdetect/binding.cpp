@@ -451,11 +451,15 @@ void load(const Processing::Settings &settings,
       amplitudeTypes.empty()) {
     storageLocation.amplitudeTypes = defaults.amplitudeTypes;
   } else {
+    storageLocation.amplitudeTypes.clear();
+
     std::vector<std::string> tokens;
     Core::split(tokens, amplitudeTypes, settings::kConfigListSep.c_str());
     for (const auto &t : tokens) {
       if (config::validateAmplitudeType(t)) {
         storageLocation.amplitudeTypes.push_back(t);
+      } else {
+        throw ValueException{"invalid amplitude type: " + t};
       }
     }
   }
@@ -494,11 +498,15 @@ void load(const Processing::Settings &settings,
       magnitudeTypes.empty()) {
     storageLocation.magnitudeTypes = defaults.magnitudeTypes;
   } else {
+    storageLocation.magnitudeTypes.clear();
+
     std::vector<std::string> tokens;
     Core::split(tokens, magnitudeTypes, settings::kConfigListSep.c_str());
     for (const auto &t : tokens) {
       if (config::validateMagnitudeType(t)) {
         storageLocation.magnitudeTypes.push_back(t);
+      } else {
+        throw ValueException{"invalid magnitude type: " + t};
       }
     }
   }
