@@ -5,7 +5,6 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/origin.h>
 
 #include <boost/optional/optional.hpp>
@@ -106,8 +105,6 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
 
   // Reference to the *template* origin
   DataModel::OriginCPtr _origin;
-  // Reference to the *template* event
-  DataModel::EventPtr _event;
 
   config::PublishConfig _publishConfig;
 };

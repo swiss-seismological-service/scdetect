@@ -76,19 +76,6 @@ DetectorBuilder &DetectorBuilder::setConfig(
   return *this;
 }
 
-DetectorBuilder &DetectorBuilder::setEventParameters() {
-  product()->_event =
-      EventStore::Instance().getEvent(product()->_origin->publicID());
-  if (!product()->_event) {
-    auto msg{std::string{"No event associated with origin: "} + _originId};
-
-    SCDETECT_LOG_WARNING("%s", msg.c_str());
-    throw builder::BaseException{msg};
-  }
-
-  return *this;
-}
-
 DetectorBuilder &DetectorBuilder::setStream(
     const std::string &streamId, const config::StreamConfig &streamConfig,
     WaveformHandlerIface *waveformHandler) {

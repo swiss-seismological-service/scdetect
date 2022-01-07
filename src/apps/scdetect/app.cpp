@@ -1330,8 +1330,7 @@ bool Application::initDetectors(std::ifstream &ifs,
             std::move(detector::DetectorWaveformProcessor::Create(tc.originId())
                           .setId(tc.detectorId())
                           .setConfig(tc.publishConfig(), tc.detectorConfig(),
-                                     _config.playbackConfig.enabled)
-                          .setEventParameters())};
+                                     _config.playbackConfig.enabled))};
 
         std::vector<std::string> streamIds;
         for (const auto &streamConfigPair : tc) {
