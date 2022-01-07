@@ -60,6 +60,26 @@
 
 namespace Seiscomp {
 namespace detect {
+namespace {
+
+bool requiresMagnitude(const binding::Bindings &bindings,
+                       const std::string &magnitudeType) {
+  for (const auto &staConfigPair : bindings) {
+    for (const auto &sensorLocationConfigPair : staConfigPair.second) {
+      const auto &magnitudeProcessingConfig{
+          sensorLocationConfigPair.second.magnitudeProcessingConfig};
+      const auto &magnitudeTypes{magnitudeProcessingConfig.magnitudeTypes};
+      if (magnitudeProcessingConfig.enabled &&
+          std::find(std::begin(magnitudeTypes), std::end(magnitudeTypes),
+                    magnitudeType) != std::end(magnitudeTypes)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+}  // namespace
 
 Application::Application(int argc, char **argv)
     : StreamApplication(argc, argv) {
@@ -359,8 +379,9 @@ bool Application::init() {
   }
 
   // load bindings
-  _bindings.setDefault(_config.sensorLocationBindings);
   if (configModule()) {
+    _bindings.setDefault(_config.sensorLocationBindings);
+
     SCDETECT_LOG_DEBUG("Loading binding configuration");
     _bindings.load(&configuration(), configModule(), name());
   }
@@ -369,111 +390,15 @@ bool Application::init() {
 
   bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
                                 !*_config.magnitudesForceMode};
-  // TODO (damb):
-  // - disable magnitude processor setup in case of either magntiude
-  // calculation is disabled or magnitude calculation is disabled for all
-  // detectors or rather sensor location bindings
-  //
   // optionally configure magnitude processors
   if (!magnitudesForcedDisabled) {
-    if (_config.pathTemplateFamilyJson.empty()) {
-      SCDETECT_LOG_ERROR("Missing template family configuration file.");
-      return false;
-    }
-
-    SCDETECT_LOG_INFO("Loading template family configuration from %s",
-                      _config.pathTemplateJson.c_str());
-    try {
-      std::ifstream ifs{_config.pathTemplateFamilyJson};
-      // TODO(damb):
-      // - which waveform handler to be used
-      if (!initTemplateFamilies(ifs, waveformHandler.get(), templateConfigs)) {
-        return false;
-      }
-    } catch (std::ifstream::failure &e) {
-      SCDETECT_LOG_ERROR(
-          "Failed to parse JSON template configuration file (%s): %s",
-          _config.pathTemplateJson.c_str(), e.what());
-      return false;
-    }
-
-    initMagnitudeProcessorFactory();
+    // TODO(damb): which `waveformHandler` to be used?
+    initMagnitudeProcessorFactory(waveformHandler.get(), templateConfigs,
+                                  _bindings, _config);
   }
 
   // free memory after initialization
   EventStore::Instance().reset();
-
-  return true;
-}
-
-bool Application::initStationMagnitudes(
-    const TemplateConfigs &templateConfigs) {
-  const auto &matchingMagnitudeTypes{
-      settings::kValidPrioritizedStationMagnitudeTypes};
-
-  for (const auto &templateConfig : templateConfigs) {
-    using SensorLocationMagnitudeMap =
-        std::unordered_map<std::string, DataModel::StationMagnitudeCPtr>;
-    SensorLocationMagnitudeMap sensorLocationMagnitudeMap;
-    // collect unique sensor locations
-    for (const auto &streamConfigPair : templateConfig) {
-      sensorLocationMagnitudeMap[util::getSensorLocationStreamId(
-          util::WaveformStreamID{streamConfigPair.first})];
-    }
-
-    const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
-        templateConfig.originId())};
-    // collect station magnitudes
-    for (std::size_t i{0}; i < origin->stationMagnitudeCount(); ++i) {
-      const auto stationMagnitude{origin->stationMagnitude(i)};
-      const auto magType{std::find(std::begin(matchingMagnitudeTypes),
-                                   std::end(matchingMagnitudeTypes),
-                                   stationMagnitude->type())};
-
-      const auto unknownMagnitudeType{magType == matchingMagnitudeTypes.end()};
-      if (unknownMagnitudeType) {
-        continue;
-      }
-
-      try {
-        auto &mag{sensorLocationMagnitudeMap.at(util::getSensorLocationStreamId(
-            util::WaveformStreamID{stationMagnitude->waveformID()}))};
-
-        if (mag) {
-          // check if *better* magnitude type
-          const auto currentMagType{
-              std::find(std::begin(matchingMagnitudeTypes),
-                        std::end(matchingMagnitudeTypes), mag->type())};
-          if (std::distance(std::begin(matchingMagnitudeTypes), magType) >
-              std::distance(std::begin(matchingMagnitudeTypes),
-                            currentMagType)) {
-            continue;
-          }
-        }
-
-        mag = stationMagnitude;
-      } catch (Core::ValueException &) {
-        // missing waveform stream identifier
-        continue;
-      } catch (std::out_of_range &) {
-        // unknown sensor location
-        continue;
-      }
-    }
-
-    // register station magnitudes
-    for (const auto &sensorLocationMagnitudeMapPair :
-         sensorLocationMagnitudeMap) {
-      const auto &sensorLocationId{sensorLocationMagnitudeMapPair.first};
-      const auto &mag{sensorLocationMagnitudeMapPair.second};
-      if (!mag) {
-        continue;
-      }
-
-      MagnitudeProcessor::Factory::add(templateConfig.detectorId(),
-                                       sensorLocationId, mag);
-    }
-  }
 
   return true;
 }
@@ -1091,12 +1016,205 @@ bool Application::initAmplitudeProcessorFactory() {
   return true;
 }
 
-bool Application::initMagnitudeProcessorFactory() {
+bool Application::initMagnitudeProcessorFactory(
+    WaveformHandlerIface *waveformHandler,
+    const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
+    const Config &appConfig) {
   MagnitudeProcessor::Factory::registerFactory(
       "MLx", MagnitudeProcessor::Factory::createMLx);
   MagnitudeProcessor::Factory::registerFactory(
       "MRelative", MagnitudeProcessor::Factory::createMRelative);
 
+  if (requiresMagnitude(bindings, "MRelative") &&
+      !initStationMagnitudes(templateConfigs)) {
+    return false;
+  }
+
+  if (requiresMagnitude(bindings, "MLx")) {
+    if (appConfig.pathTemplateFamilyJson.empty()) {
+      SCDETECT_LOG_ERROR("Missing template family configuration file.");
+      return false;
+    }
+
+    SCDETECT_LOG_INFO("Loading template family configuration from %s",
+                      appConfig.pathTemplateJson.c_str());
+    try {
+      std::ifstream ifs{appConfig.pathTemplateFamilyJson};
+      if (!initTemplateFamilies(ifs, waveformHandler, templateConfigs, bindings,
+                                appConfig)) {
+        return false;
+      }
+    } catch (std::ifstream::failure &e) {
+      SCDETECT_LOG_ERROR(
+          "Failed to parse JSON template configuration file (%s): %s",
+          appConfig.pathTemplateJson.c_str(), e.what());
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Application::initStationMagnitudes(
+    const TemplateConfigs &templateConfigs) {
+  const auto &matchingMagnitudeTypes{
+      settings::kValidPrioritizedStationMagnitudeTypes};
+
+  for (const auto &templateConfig : templateConfigs) {
+    using SensorLocationMagnitudeMap =
+        std::unordered_map<std::string, DataModel::StationMagnitudeCPtr>;
+    SensorLocationMagnitudeMap sensorLocationMagnitudeMap;
+    // collect unique sensor locations
+    for (const auto &streamConfigPair : templateConfig) {
+      sensorLocationMagnitudeMap[util::getSensorLocationStreamId(
+          util::WaveformStreamID{streamConfigPair.first})];
+    }
+
+    const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
+        templateConfig.originId())};
+    // collect station magnitudes
+    for (std::size_t i{0}; i < origin->stationMagnitudeCount(); ++i) {
+      const auto stationMagnitude{origin->stationMagnitude(i)};
+      const auto magType{std::find(std::begin(matchingMagnitudeTypes),
+                                   std::end(matchingMagnitudeTypes),
+                                   stationMagnitude->type())};
+
+      const auto unknownMagnitudeType{magType == matchingMagnitudeTypes.end()};
+      if (unknownMagnitudeType) {
+        continue;
+      }
+
+      try {
+        auto &mag{sensorLocationMagnitudeMap.at(util::getSensorLocationStreamId(
+            util::WaveformStreamID{stationMagnitude->waveformID()}))};
+
+        if (mag) {
+          // check if magnitude type with higher priority
+          const auto currentMagType{
+              std::find(std::begin(matchingMagnitudeTypes),
+                        std::end(matchingMagnitudeTypes), mag->type())};
+          if (std::distance(std::begin(matchingMagnitudeTypes), magType) >
+              std::distance(std::begin(matchingMagnitudeTypes),
+                            currentMagType)) {
+            continue;
+          }
+        }
+
+        mag = stationMagnitude;
+      } catch (Core::ValueException &) {
+        // missing waveform stream identifier
+        continue;
+      } catch (std::out_of_range &) {
+        // unknown sensor location
+        continue;
+      }
+    }
+
+    // register station magnitudes
+    for (const auto &sensorLocationMagnitudeMapPair :
+         sensorLocationMagnitudeMap) {
+      const auto &sensorLocationId{sensorLocationMagnitudeMapPair.first};
+      const auto &mag{sensorLocationMagnitudeMapPair.second};
+      if (!mag) {
+        continue;
+      }
+
+      MagnitudeProcessor::Factory::add(templateConfig.detectorId(),
+                                       sensorLocationId, mag);
+    }
+  }
+
+  return true;
+}
+
+bool Application::initTemplateFamilies(std::ifstream &ifs,
+                                       WaveformHandlerIface *waveformHandler,
+                                       const TemplateConfigs &templateConfigs,
+                                       const binding::Bindings &bindings,
+                                       const Config &appConfig) {
+  try {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ifs, pt);
+
+    for (const auto &templateFamilyConfigPair : pt) {
+      config::TemplateFamilyConfig tfc(
+          templateFamilyConfigPair.second, templateConfigs,
+          appConfig.templateFamilySensorLocationConfig);
+      logging::TaggedMessage msg{
+          tfc.id(), "Creating template family (id=" + tfc.id() + ") ..."};
+      SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
+      try {
+        // build and register template family
+        auto templateFamily{TemplateFamily::Create(tfc)
+                                .setId()
+                                .setLimits()
+                                .setStationMagnitudes()
+                                .setAmplitudes(waveformHandler, bindings)
+                                .build()};
+        if (!templateFamily->empty()) {
+          MagnitudeProcessor::Factory::add(std::move(templateFamily));
+          msg.setText("Registered template family");
+          SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
+        } else {
+          msg.setText(
+              "Missing template family members. Skipping template family "
+              "registration.");
+          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
+        }
+
+      } catch (builder::NoSensorLocation &e) {
+        if (appConfig.skipReferenceConfigIfNoSensorLocationData) {
+          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
+                               e.what());
+          continue;
+        }
+        throw;
+      } catch (builder::NoStream &e) {
+        if (appConfig.skipReferenceConfigIfNoStreamData) {
+          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
+                               e.what());
+          continue;
+        }
+        throw;
+      } catch (builder::NoPick &e) {
+        if (appConfig.skipReferenceConfigIfNoPick) {
+          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
+                               e.what());
+          continue;
+        }
+        throw;
+      } catch (builder::NoBindings &e) {
+        if (appConfig.skipReferenceConfigIfNoBindings) {
+          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
+                               e.what());
+          continue;
+        }
+        throw;
+      } catch (builder::NoWaveformData &e) {
+        if (appConfig.skipReferenceConfigIfNoWaveformData) {
+          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
+                               e.what());
+          continue;
+        }
+        throw;
+      }
+    }
+
+  } catch (config::ValidationError &e) {
+    SCDETECT_LOG_ERROR(
+        "JSON template family configuration file does not validate (%s): %s",
+        appConfig.pathTemplateFamilyJson.c_str(), e.what());
+    return false;
+  } catch (config::ParserException &e) {
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template family configuration file (%s): %s",
+        appConfig.pathTemplateFamilyJson.c_str(), e.what());
+    return false;
+  } catch (boost::property_tree::json_parser::json_parser_error &e) {
+    SCDETECT_LOG_ERROR(
+        "Failed to parse JSON template family configuration file (%s): %s",
+        appConfig.pathTemplateFamilyJson.c_str(), e.what());
+    return false;
+  }
   return true;
 }
 
@@ -1464,96 +1582,6 @@ void Application::publishAndRemoveDetection(
   }
 
   removeDetection(detection);
-}
-
-bool Application::initTemplateFamilies(std::ifstream &ifs,
-                                       WaveformHandlerIface *waveformHandler,
-                                       const TemplateConfigs &templateConfigs) {
-  try {
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ifs, pt);
-
-    for (const auto &templateFamilyConfigPair : pt) {
-      config::TemplateFamilyConfig tfc(
-          templateFamilyConfigPair.second, templateConfigs,
-          _config.templateFamilySensorLocationConfig);
-      logging::TaggedMessage msg{
-          tfc.id(), "Creating template family (id=" + tfc.id() + ") ..."};
-      SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
-      try {
-        // build and register template family
-        auto templateFamily{TemplateFamily::Create(tfc)
-                                .setId()
-                                .setLimits()
-                                .setStationMagnitudes()
-                                .setAmplitudes(waveformHandler, _bindings)
-                                .build()};
-        if (!templateFamily->empty()) {
-          MagnitudeProcessor::Factory::add(std::move(templateFamily));
-          msg.setText("Registered template family");
-          SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
-        } else {
-          msg.setText(
-              "Missing template family members. Skipping template family "
-              "registration.");
-          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
-        }
-
-      } catch (builder::NoSensorLocation &e) {
-        if (_config.skipReferenceConfigIfNoSensorLocationData) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
-          continue;
-        }
-        throw;
-      } catch (builder::NoStream &e) {
-        if (_config.skipReferenceConfigIfNoStreamData) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
-          continue;
-        }
-        throw;
-      } catch (builder::NoPick &e) {
-        if (_config.skipReferenceConfigIfNoPick) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
-          continue;
-        }
-        throw;
-      } catch (builder::NoBindings &e) {
-        if (_config.skipReferenceConfigIfNoBindings) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
-          continue;
-        }
-        throw;
-      } catch (builder::NoWaveformData &e) {
-        if (_config.skipReferenceConfigIfNoWaveformData) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
-          continue;
-        }
-        throw;
-      }
-    }
-
-  } catch (config::ValidationError &e) {
-    SCDETECT_LOG_ERROR(
-        "JSON template family configuration file does not validate (%s): %s",
-        _config.pathTemplateFamilyJson.c_str(), e.what());
-    return false;
-  } catch (config::ParserException &e) {
-    SCDETECT_LOG_ERROR(
-        "Failed to parse JSON template family configuration file (%s): %s",
-        _config.pathTemplateFamilyJson.c_str(), e.what());
-    return false;
-  } catch (boost::property_tree::json_parser::json_parser_error &e) {
-    SCDETECT_LOG_ERROR(
-        "Failed to parse JSON template family configuration file (%s): %s",
-        _config.pathTemplateFamilyJson.c_str(), e.what());
-    return false;
-  }
-  return true;
 }
 
 DataModel::StationMagnitudePtr Application::createMagnitude(

@@ -264,10 +264,21 @@ class Application : public Client::StreamApplication {
   static bool initAmplitudeProcessorFactory();
 
   // Initialize magnitude processor factory callbacks
-  static bool initMagnitudeProcessorFactory();
+  static bool initMagnitudeProcessorFactory(
+      WaveformHandlerIface *waveformHandler,
+      const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
+      const Config &appConfig);
 
   // Initialize station magnitudes
   static bool initStationMagnitudes(const TemplateConfigs &templateConfigs);
+  // Initialize template families
+  //
+  // - `ifs` references a template family configuration input file stream
+  static bool initTemplateFamilies(std::ifstream &ifs,
+                                   WaveformHandlerIface *waveformHandler,
+                                   const TemplateConfigs &templateConfigs,
+                                   const binding::Bindings &bindings,
+                                   const Config &appConfig);
 
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
@@ -282,13 +293,6 @@ class Application : public Client::StreamApplication {
   bool initAmplitudeProcessors(
       std::shared_ptr<DetectionItem> &detectionItem,
       const detector::DetectorWaveformProcessor &detectorProcessor);
-
-  // Initialize template families
-  //
-  // - `ifs` references a template family configuration input file stream
-  bool initTemplateFamilies(std::ifstream &ifs,
-                            WaveformHandlerIface *waveformHandler,
-                            const TemplateConfigs &templateConfigs);
 
   // Creates an amplitude
   //
