@@ -73,14 +73,14 @@ const SensorLocationConfig &Bindings::at(const std::string &netCode,
 void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
                     const DataModel::ConfigModule *configModule,
                     const std::string &setupId) {
-  if (!configModule) return;
+  assert(static_cast<bool>(configModule));
 
   for (size_t j = 0; j < configModule->configStationCount(); ++j) {
     DataModel::ConfigStation *stationConfig{configModule->configStation(j)};
     DataModel::Setup *configSetup{
         DataModel::findSetup(stationConfig, setupId, false)};
 
-    if (configSetup) {
+    if (static_cast<bool>(configSetup)) {
       DataModel::ParameterSet *parameterSet{nullptr};
       try {
         parameterSet =
@@ -88,7 +88,7 @@ void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
       } catch (Core::ValueException &) {
       }
 
-      if (!parameterSet) {
+      if (!static_cast<bool>(parameterSet)) {
         SCDETECT_LOG_WARNING("Failed to find parameter set with id: %s",
                              configSetup->parameterSetID().c_str());
         continue;
