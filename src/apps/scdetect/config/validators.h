@@ -11,7 +11,7 @@ namespace config {
 static const std::vector<std::string> kValidLinkerMergingStrategies{
     "all", "greaterEqualTriggerOnThreshold", "greaterEqualMergingThreshold"};
 
-static const std::vector<std::string> kValidMagnitudeTypes{"MLx"};
+static const std::vector<std::string> kValidMagnitudeTypes{"MRelative", "MLx"};
 
 bool validateXCorrThreshold(const double &thres);
 bool validateArrivalOffsetThreshold(double thres);
