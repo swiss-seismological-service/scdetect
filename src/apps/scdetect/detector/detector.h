@@ -73,6 +73,9 @@ class Detector : public detect::processing::Processor {
       Core::Time templateWaveformEndTime;
       // The template waveform reference time
       Core::Time templateWaveformReferenceTime;
+
+      // The unique identifier of the underlying processor
+      std::string processorId;
     };
 
     using TemplateResults =

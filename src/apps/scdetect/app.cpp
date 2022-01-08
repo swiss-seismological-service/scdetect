@@ -764,7 +764,7 @@ void Application::processDetection(
         if (detection->publishConfig.createAmplitudes ||
             detection->publishConfig.createMagnitudes) {
           detectionItem.amplitudePickMap.emplace(
-              resultPair.first,
+              res.processorId,
               DetectionItem::Pick{res.arrival.pick.waveformStreamId, pick});
         }
       } catch (DuplicatePublicObjectId &e) {
