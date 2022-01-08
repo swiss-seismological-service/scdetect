@@ -217,6 +217,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
   auto templateWaveform{templateWaveformProcessor->templateWaveform()};
 
   auto filter{amplitudeProcessingConfig.mrelative.filter};
+  bool templateWaveformHasFilterConfigured{false};
   if (filter) {
     util::replaceEscapedXMLFilterIdChars(*filter);
     if (!filter.value().empty()) {
@@ -229,23 +230,31 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
                   std::to_string(amplitudeProcessingConfig.mrelative.initTime));
       SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
                                 logging::to_string(msg).c_str());
-    } else {
-      msg.setText("Configured amplitude processor without filter: filter=\"\"");
-      SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
-                                logging::to_string(msg).c_str());
+
+      templateWaveformHasFilterConfigured = true;
     }
   } else {
     // use the filter from detector waveform processing as a fallback
     auto processingConfig{templateWaveform.processingConfig()};
+    auto *templateWaveformProcessorFilter{templateWaveformProcessor->filter()};
+    if (static_cast<bool>(templateWaveformProcessorFilter)) {
+      std::unique_ptr<waveform::DoubleFilter> cloned{
+          templateWaveformProcessorFilter->clone()};
+      processingConfig.filter = std::move(cloned);
+      processingConfig.initTime = templateWaveformProcessor->initTime();
+      msg.setText(
+          "Configured amplitude processor with detection processing filter: "
+          "processor_id=" +
+          templateWaveformProcessor->id());
+      SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
+                                logging::to_string(msg).c_str());
 
-    std::unique_ptr<waveform::DoubleFilter> cloned{
-        templateWaveformProcessor->filter()->clone()};
-    processingConfig.filter = std::move(cloned);
-    processingConfig.initTime = templateWaveformProcessor->initTime();
-    msg.setText(
-        "Configured amplitude processor with detection processing filter: "
-        "processor_id=" +
-        templateWaveformProcessor->id());
+      templateWaveformHasFilterConfigured = true;
+    }
+  }
+
+  if (!templateWaveformHasFilterConfigured) {
+    msg.setText("Configured amplitude processor without filter: filter=\"\"");
     SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
   }
 
