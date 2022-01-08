@@ -35,7 +35,8 @@ CombiningAmplitudeProcessor::CombiningAmplitudeProcessor(
       _underlyingIdx.emplace(waveformStreamId, proc.processor->id());
     }
 
-    _underlying.emplace(proc.processor->id(),
+    auto processorId{proc.processor->id()};
+    _underlying.emplace(processorId,
                         UnderlyingProcessor{std::move(proc.processor)});
   }
 }
