@@ -412,69 +412,24 @@ bool Application::run() {
     return true;
   }
 
-  if (!_detectors.empty()) {
-    if (commandline().hasOption("ep")) {
-      _ep = util::make_smart<DataModel::EventParameters>();
-    }
+  if (_detectors.empty()) {
+    return false;
+  }
 
-    SCDETECT_LOG_DEBUG(
-        "Subscribing to streams required for detection processing");
-    auto cmp = [](const util::HorizontalComponents &lhs,
-                  const util::HorizontalComponents &rhs) {
-      return util::getWaveformStreamId(lhs) < util::getWaveformStreamId(rhs);
-    };
-    std::set<util::HorizontalComponents, decltype(cmp)>
-        uniqueHorizontalComponents{cmp};
-    Core::Time amplitudeStreamsSubscriptionTime{
-        _config.playbackConfig.startTimeStr.empty()
-            ? Core::Time::GMT()
-            : _config.playbackConfig.startTime};
-    for (const auto &detectorPair : _detectors) {
-      util::WaveformStreamID waveformStreamId{detectorPair.first};
+  if (commandline().hasOption("ep")) {
+    _ep = util::make_smart<DataModel::EventParameters>();
+  }
 
-      recordStream()->addStream(
-          waveformStreamId.netCode(), waveformStreamId.staCode(),
-          waveformStreamId.locCode(), waveformStreamId.chaCode());
+  SCDETECT_LOG_DEBUG("Subscribing to streams required for processing");
+  subscribeToRecordStream(collectStreams());
 
-      if (detectorPair.second->publishConfig().createAmplitudes ||
-          detectorPair.second->publishConfig().createMagnitudes) {
-        try {
-          uniqueHorizontalComponents.emplace(util::HorizontalComponents{
-              Client::Inventory::Instance(), waveformStreamId.netCode(),
-              waveformStreamId.staCode(), waveformStreamId.locCode(),
-              waveformStreamId.chaCode(), amplitudeStreamsSubscriptionTime});
-        } catch (Exception &e) {
-          SCDETECT_LOG_WARNING(
-              "%s.%s.%s.%s: %s. Skipping amplitude calculation.",
-              waveformStreamId.netCode().c_str(),
-              waveformStreamId.staCode().c_str(),
-              waveformStreamId.locCode().c_str(),
-              waveformStreamId.chaCode().c_str(), e.what());
-          continue;
-        }
-      }
-    }
-
-    if (!uniqueHorizontalComponents.empty()) {
-      SCDETECT_LOG_DEBUG(
-          "Subscribing to streams required for amplitude calculation");
-      for (const auto &horizontalComponents : uniqueHorizontalComponents) {
-        for (auto c : horizontalComponents) {
-          recordStream()->addStream(horizontalComponents.netCode(),
-                                    horizontalComponents.staCode(),
-                                    horizontalComponents.locCode(), c->code());
-        }
-      }
-    }
-
-    if (!_config.playbackConfig.startTimeStr.empty()) {
-      recordStream()->setStartTime(_config.playbackConfig.startTime);
-      _config.playbackConfig.enabled = true;
-    }
-    if (!_config.playbackConfig.endTimeStr.empty()) {
-      recordStream()->setEndTime(_config.playbackConfig.endTime);
-      _config.playbackConfig.enabled = true;
-    }
+  if (!_config.playbackConfig.startTimeStr.empty()) {
+    recordStream()->setStartTime(_config.playbackConfig.startTime);
+    _config.playbackConfig.enabled = true;
+  }
+  if (!_config.playbackConfig.endTimeStr.empty()) {
+    recordStream()->setEndTime(_config.playbackConfig.endTime);
+    _config.playbackConfig.enabled = true;
   }
 
   return StreamApplication::run();
@@ -1272,6 +1227,68 @@ bool Application::loadEvents(const std::string &eventDb,
   }
 
   return loaded;
+}
+
+std::set<util::WaveformStreamID> Application::collectStreams() const {
+  std::set<util::WaveformStreamID> ret;
+
+  Core::Time amplitudeMLxStreamSubscriptionTime{
+      _config.playbackConfig.startTimeStr.empty()
+          ? Core::Time::GMT()
+          : _config.playbackConfig.startTime};
+
+  for (const auto &detectorPair : _detectors) {
+    util::WaveformStreamID waveformStreamId{detectorPair.first};
+    ret.emplace(waveformStreamId);
+
+    if (detectorPair.second->publishConfig().createAmplitudes) {
+      try {
+        auto amplitudeProcessingConfig{
+            _bindings
+                .at(waveformStreamId.netCode(), waveformStreamId.staCode(),
+                    waveformStreamId.locCode(), waveformStreamId.chaCode())
+                .amplitudeProcessingConfig};
+        const auto &amplitudeTypes{amplitudeProcessingConfig.amplitudeTypes};
+        bool disabledMLx{std::find(std::begin(amplitudeTypes),
+                                   std::end(amplitudeTypes),
+                                   "MLx") == std::end(amplitudeTypes)};
+        if (disabledMLx) {
+          continue;
+        }
+
+        util::HorizontalComponents horizontalComponents{
+            Client::Inventory::Instance(), waveformStreamId.netCode(),
+            waveformStreamId.staCode(),    waveformStreamId.locCode(),
+            waveformStreamId.chaCode(),    amplitudeMLxStreamSubscriptionTime};
+
+        for (const auto &horizontalComponent : horizontalComponents) {
+          ret.emplace(util::WaveformStreamID{
+              horizontalComponents.netCode(), horizontalComponents.staCode(),
+              horizontalComponents.locCode(), horizontalComponent->code()});
+        }
+      } catch (const Exception &) {
+        continue;
+      } catch (const std::out_of_range &) {
+        continue;
+      }
+    }
+  }
+
+  return ret;
+}
+
+bool Application::subscribeToRecordStream(
+    std::set<util::WaveformStreamID> waveformStreamIds) {
+  for (const auto &waveformStreamId : waveformStreamIds) {
+    SCDETECT_LOG_DEBUG("Subscribing to stream: %s",
+                       util::to_string(waveformStreamId).c_str());
+    if (!recordStream()->addStream(
+            waveformStreamId.netCode(), waveformStreamId.staCode(),
+            waveformStreamId.locCode(), waveformStreamId.chaCode())) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool Application::initDetectors(std::ifstream &ifs,

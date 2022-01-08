@@ -110,6 +110,32 @@ std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
   return os;
 }
 
+bool operator==(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return std::tie(lhs.netCode(), lhs.staCode(), lhs.locCode(), lhs.chaCode()) ==
+         std::tie(rhs.netCode(), rhs.staCode(), rhs.locCode(), rhs.chaCode());
+}
+
+bool operator!=(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator<(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return std::tie(lhs.netCode(), lhs.staCode(), lhs.locCode(), lhs.chaCode()) <
+         std::tie(rhs.netCode(), rhs.staCode(), rhs.locCode(), rhs.chaCode());
+}
+
+bool operator>(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return rhs < lhs;
+}
+
+bool operator<=(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return !(lhs > rhs);
+}
+
+bool operator>=(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return !(lhs < rhs);
+}
+
 bool WaveformStreamID::isValid() const {
   return !(_netCode.empty() || _staCode.empty() || _chaCode.empty());
 }

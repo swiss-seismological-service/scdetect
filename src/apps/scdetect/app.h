@@ -21,6 +21,7 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -31,6 +32,7 @@
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
 #include "reducing_amplitude_processor.h"
+#include "util/waveform_stream_id.h"
 #include "waveform.h"
 
 namespace Seiscomp {
@@ -282,6 +284,12 @@ class Application : public Client::StreamApplication {
 
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
+
+  // Collect required streams
+  std::set<util::WaveformStreamID> collectStreams() const;
+  // Register `waveformStreamIds` at the record stream
+  bool subscribeToRecordStream(
+      std::set<util::WaveformStreamID> waveformStreamIds);
 
   // Initialize detectors
   //
