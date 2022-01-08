@@ -158,6 +158,7 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
 
   std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
   // dispatch and create ratio amplitude processors
+  auto baseId{detector.id() + settings::kProcessorIdSep + util::createUUID()};
   for (const auto &pickMapPair : detection.pickMap) {
     auto detectionCopy{detection};
     detectionCopy.pickMap.clear();
@@ -165,13 +166,16 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
 
     const auto &waveformStreamId{
         pickMapPair.second.authorativeWaveformStreamId};
+
     underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
         {waveformStreamId},
-        Factory::createRatioAmplitude(bindings, detectionCopy, detector)});
+        Factory::createRatioAmplitude(bindings, detectionCopy, detector,
+                                      baseId)});
   }
 
   auto ret{util::make_unique<MRelative>(std::move(underlying))};
   ret->computeTimeWindow();
+  ret->setId(detector.id() + settings::kProcessorIdSep + util::createUUID());
 
   return ret;
 }
@@ -190,7 +194,8 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
 
 std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const detector::DetectorWaveformProcessor &detector) {
+    const detector::DetectorWaveformProcessor &detector,
+    const std::string &baseProcessorId) {
   assert(detection.origin);
   assert((detection.pickMap.size() == 1));
 
@@ -207,6 +212,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
   logging::TaggedMessage msg{detection.sensorLocationStreamId};
 
   auto ret{util::make_unique<RatioAmplitude>()};
+  ret->setId(baseProcessorId + settings::kProcessorIdSep + util::createUUID());
 
   const auto &pickPair{*std::begin(detection.pickMap)};
   const auto &processorId{pickPair.first};

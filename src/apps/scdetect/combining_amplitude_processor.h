@@ -100,6 +100,7 @@ class CombiningAmplitudeProcessor : public detect::AmplitudeProcessor {
       func(u.second);
     }
   }
+
   Underlying _underlying;
 
   using WaveformStreamId = std::string;

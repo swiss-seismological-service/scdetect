@@ -82,7 +82,8 @@ class Factory
  private:
   static std::unique_ptr<AmplitudeProcessor> createRatioAmplitude(
       const binding::Bindings& bindings, const factory::Detection& detection,
-      const detector::DetectorWaveformProcessor& detector);
+      const detector::DetectorWaveformProcessor& detector,
+      const std::string& baseProcessorId = "");
 };
 
 }  // namespace amplitude
