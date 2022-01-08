@@ -195,13 +195,16 @@ DetectorBuilder &DetectorBuilder::setStream(
   std::unique_ptr<detector::TemplateWaveformProcessor>
       templateWaveformProcessor;
   try {
+    auto templateWaveform{TemplateWaveform::load(
+        waveformHandler, templateWfStreamId.netCode(),
+        templateWfStreamId.staCode(), templateWfStreamId.locCode(),
+        templateWfStreamId.chaCode(), processingConfig)};
+
+    templateWaveform.setReferenceTime(pick->time().value());
+
     templateWaveformProcessor =
         util::make_unique<detector::TemplateWaveformProcessor>(
-            TemplateWaveform::load(
-                waveformHandler, templateWfStreamId.netCode(),
-                templateWfStreamId.staCode(), templateWfStreamId.locCode(),
-                templateWfStreamId.chaCode(), processingConfig));
-
+            templateWaveform);
   } catch (WaveformHandler::NoData &e) {
     msg.setText("failed to load template waveform: " + std::string{e.what()});
     throw builder::NoWaveformData{logging::to_string(msg)};
