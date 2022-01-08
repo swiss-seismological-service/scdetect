@@ -1491,10 +1491,11 @@ bool Application::initAmplitudeProcessors(
         waveformStreamIds.push_back(
             pickPair.second.authorativeWaveformStreamId);
 
+        const auto &procId{pickPair.first};
         detection.pickMap.emplace(
-            pickPair.first, amplitude::factory::Detection::Pick{
-                                pickPair.second.authorativeWaveformStreamId,
-                                pickPair.second.pick});
+            procId, amplitude::factory::Detection::Pick{
+                        pickPair.second.authorativeWaveformStreamId,
+                        pickPair.second.pick});
       }
 
       auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
