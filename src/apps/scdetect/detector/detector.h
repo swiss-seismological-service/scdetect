@@ -78,8 +78,9 @@ class Detector : public detect::processing::Processor {
       std::string processorId;
     };
 
+    using WaveformStreamId = std::string;
     using TemplateResults =
-        std::unordered_multimap<std::string, TemplateResult>;
+        std::unordered_multimap<WaveformStreamId, TemplateResult>;
     TemplateResults templateResults;
 
     size_t numChannelsUsed;
