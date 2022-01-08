@@ -1441,8 +1441,10 @@ bool Application::initAmplitudeProcessors(
     std::shared_ptr<DetectionItem> &detectionItem,
     const detector::DetectorWaveformProcessor &detectorProcessor) {
   using PickMap = std::pair<DetectionItem::ProcessorId, DetectionItem::Pick>;
-  using SensorLocationPickMap = std::multimap<std::string, PickMap>;
-  SensorLocationPickMap sensorLocationPickMap;
+  using SensorLocationId = std::string;
+  using SensorLocationPickMap =
+      std::unordered_map<SensorLocationId, std::vector<PickMap>>;
+  SensorLocationPickMap sensorLocationPicksMap;
   // gather unique sensor locations which have amplitude calculation enabled
   // (requires bindings to be configured)
   for (const auto &pickMapPair : detectionItem->amplitudePickMap) {
@@ -1457,17 +1459,18 @@ bool Application::initAmplitudeProcessors(
                   waveformStreamId.locCode(), waveformStreamId.chaCode())
               .amplitudeProcessingConfig.enabled};
       if (hasAmplitudeCalculationEnabled) {
-        sensorLocationPickMap.emplace(
-            util::getSensorLocationStreamId(waveformStreamId, true),
-            std::make_pair(processorId, pick));
+        auto sensorLocationId{
+            util::getSensorLocationStreamId(waveformStreamId, true)};
+        auto &sensorLocationPicks{sensorLocationPicksMap[sensorLocationId]};
+        sensorLocationPicks.emplace_back(std::make_pair(processorId, pick));
       }
     } catch (std::out_of_range &) {
       continue;
     }
   }
 
-  for (const auto &sensorLocationPickMapPair : sensorLocationPickMap) {
-    const auto &sensorLocationStreamId{sensorLocationPickMapPair.first};
+  for (const auto &sensorLocationPicksMapPair : sensorLocationPicksMap) {
+    const auto &sensorLocationStreamId{sensorLocationPicksMapPair.first};
     std::vector<std::string> sensorLocationStreamIdTokens;
     util::tokenizeWaveformStreamId(sensorLocationStreamId,
                                    sensorLocationStreamIdTokens);
@@ -1478,26 +1481,29 @@ bool Application::initAmplitudeProcessors(
     auto &amplitudeTypes{
         sensorLocationBindings.amplitudeProcessingConfig.amplitudeTypes};
 
+    if (amplitudeTypes.empty()) {
+      continue;
+    }
+
+    // prepare `factory::Detection`
+    std::vector<std::string> waveformStreamIds;
+
+    amplitude::factory::Detection detection;
+    detection.origin = detectionItem->origin;
+    detection.sensorLocationStreamId = sensorLocationStreamId;
+
+    for (const auto &pickPair : sensorLocationPicksMapPair.second) {
+      waveformStreamIds.push_back(pickPair.second.authorativeWaveformStreamId);
+
+      const auto &procId{pickPair.first};
+      detection.pickMap.emplace(procId,
+                                amplitude::factory::Detection::Pick{
+                                    pickPair.second.authorativeWaveformStreamId,
+                                    pickPair.second.pick});
+    }
+
+    // initialize amplitude processors
     for (const auto &amplitudeType : amplitudeTypes) {
-      std::vector<std::string> waveformStreamIds;
-
-      amplitude::factory::Detection detection;
-      detection.origin = detectionItem->origin;
-      detection.sensorLocationStreamId = sensorLocationStreamId;
-
-      auto range{sensorLocationPickMap.equal_range(sensorLocationStreamId)};
-      for (auto i{range.first}; i != range.second; ++i) {
-        const auto &pickPair{i->second};
-        waveformStreamIds.push_back(
-            pickPair.second.authorativeWaveformStreamId);
-
-        const auto &procId{pickPair.first};
-        detection.pickMap.emplace(
-            procId, amplitude::factory::Detection::Pick{
-                        pickPair.second.authorativeWaveformStreamId,
-                        pickPair.second.pick});
-      }
-
       auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
           amplitudeType, _bindings, detection, detectorProcessor)};
 
