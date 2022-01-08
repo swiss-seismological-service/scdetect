@@ -39,9 +39,9 @@ void RatioAmplitude::computeTimeWindow() {
 }
 
 void RatioAmplitude::setTemplateWaveform(TemplateWaveform templateWaveform) {
-  assert(_templateWaveform.referenceTime());
-  assert(_templateWaveform.configuredStartTime());
-  assert(_templateWaveform.configuredEndTime());
+  assert(templateWaveform.referenceTime());
+  assert(templateWaveform.configuredStartTime());
+  assert(templateWaveform.configuredEndTime());
 
   _templateWaveform = std::move(templateWaveform);
   initTemplateWaveform();
