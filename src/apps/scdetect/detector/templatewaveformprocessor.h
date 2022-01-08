@@ -47,7 +47,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
  public:
   // Creates a `TemplateWaveformProcessor`. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
-  explicit TemplateWaveformProcessor(const TemplateWaveform &templateWaveform);
+  explicit TemplateWaveformProcessor(TemplateWaveform templateWaveform);
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Core::BaseObject {

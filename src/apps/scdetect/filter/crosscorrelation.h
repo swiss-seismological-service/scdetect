@@ -29,7 +29,7 @@ class CrossCorrelation {
   // - It is a bug if `waveform` is not a valid pointer.
   explicit CrossCorrelation(const GenericRecordCPtr &waveform);
   // Creates an `CrossCorrelation` filter from `templateWaveform`
-  explicit CrossCorrelation(const TemplateWaveform &templateWaveform);
+  explicit CrossCorrelation(TemplateWaveform templateWaveform);
 
   virtual ~CrossCorrelation() = default;
 

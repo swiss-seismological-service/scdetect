@@ -23,9 +23,8 @@ CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &waveform)
 }
 
 template <typename TData>
-CrossCorrelation<TData>::CrossCorrelation(
-    const TemplateWaveform &templateWaveform)
-    : _templateWaveform{templateWaveform} {
+CrossCorrelation<TData>::CrossCorrelation(TemplateWaveform templateWaveform)
+    : _templateWaveform{std::move(templateWaveform)} {
   if (_templateWaveform.processingConfig().samplingFrequency) {
     setupFilter(*_templateWaveform.processingConfig().samplingFrequency);
   }
