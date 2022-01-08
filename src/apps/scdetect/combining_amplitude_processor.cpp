@@ -141,7 +141,7 @@ const detect::AmplitudeProcessor *CombiningAmplitudeProcessor::underlying(
 std::vector<std::string> CombiningAmplitudeProcessor::waveformStreamIds()
     const {
   std::unordered_set<WaveformStreamId> unique;
-  for (const auto &u : _underlying) {
+  for (const auto &u : _underlyingIdx) {
     unique.emplace(u.first);
   }
 

@@ -37,7 +37,7 @@ MRelative::MRelative(
     std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> &&underlying,
     CombiningStrategy strategy)
     : CombiningAmplitudeProcessor{std::move(underlying), std::move(strategy)} {
-  assert(validateUniqueSensorLocation(waveformStreamIds()));
+  assert((validateUniqueSensorLocation(waveformStreamIds())));
   setType("MRelative");
   setUnit("");
 }
@@ -103,8 +103,12 @@ bool MRelative::validateUniqueSensorLocation(
     const std::vector<std::string> &waveformStreamIds) {
   std::unordered_set<std::string> sensorLocationStreamIds;
   for (const auto &waveformStreamId : waveformStreamIds) {
-    sensorLocationStreamIds.emplace(util::getSensorLocationStreamId(
-        util::WaveformStreamID(waveformStreamId)));
+    try {
+      sensorLocationStreamIds.emplace(util::getSensorLocationStreamId(
+          util::WaveformStreamID(waveformStreamId)));
+    } catch (const ValueException &) {
+      return false;
+    }
   }
   return sensorLocationStreamIds.size() == 1;
 }
