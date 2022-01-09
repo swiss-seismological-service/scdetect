@@ -9,6 +9,7 @@
 #include <functional>
 #include <string>
 
+#include "def.h"
 #include "waveform.h"
 
 namespace Seiscomp {
@@ -31,7 +32,7 @@ class TemplateWaveform {
     // The template waveform endtime
     boost::optional<Core::Time> templateEndTime;
 
-    boost::variant2::variant<std::unique_ptr<waveform::DoubleFilter>,
+    boost::variant2::variant<std::unique_ptr<DoubleFilter>,
                              boost::optional<std::string>>
         filter{boost::none};
     // The filter initialization time

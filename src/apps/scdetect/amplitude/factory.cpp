@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "../def.h"
 #include "../log.h"
 #include "../settings.h"
 #include "../util/horizontal_components.h"
@@ -244,7 +245,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
     auto processingConfig{templateWaveform.processingConfig()};
     auto *templateWaveformProcessorFilter{templateWaveformProcessor->filter()};
     if (static_cast<bool>(templateWaveformProcessorFilter)) {
-      std::unique_ptr<waveform::DoubleFilter> cloned{
+      std::unique_ptr<DoubleFilter> cloned{
           templateWaveformProcessorFilter->clone()};
       processingConfig.filter = std::move(cloned);
       processingConfig.initTime = templateWaveformProcessor->initTime();

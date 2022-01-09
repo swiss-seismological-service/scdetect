@@ -3,14 +3,14 @@
 
 #include <memory>
 
-#include "../waveform.h"
+#include "../def.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace util {
 
 // Resets `filter`
-void reset(std::unique_ptr<waveform::DoubleFilter> &filter);
+void reset(std::unique_ptr<DoubleFilter> &filter);
 
 }  // namespace util
 }  // namespace detect

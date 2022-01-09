@@ -5,11 +5,11 @@
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
-#include <seiscomp/math/filter.h>
 
 #include <boost/optional/optional.hpp>
 #include <memory>
 
+#include "../def.h"
 #include "detail/gap_interpolate.h"
 #include "processor.h"
 #include "stream.h"
@@ -33,7 +33,7 @@ class WaveformOperator;
 //
 class WaveformProcessor : public Processor, public detail::InterpolateGaps {
  public:
-  using Filter = Math::Filtering::InPlaceFilter<double>;
+  using Filter = DoubleFilter;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {

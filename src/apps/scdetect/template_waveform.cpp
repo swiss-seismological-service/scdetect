@@ -30,7 +30,7 @@ TemplateWaveform::ProcessingConfig::ProcessingConfig(
   } catch (const boost::variant2::bad_variant_access &) {
     const auto *ptr{boost::variant2::get<0>(other.filter).get()};
     if (static_cast<bool>(ptr)) {
-      std::unique_ptr<waveform::DoubleFilter> cloned(ptr->clone());
+      std::unique_ptr<DoubleFilter> cloned(ptr->clone());
       filter = std::move(cloned);
     } else {
       filter = nullptr;
