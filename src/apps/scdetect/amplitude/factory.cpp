@@ -179,7 +179,7 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
 
   auto ret{util::make_unique<MRelative>(std::move(underlying))};
   ret->computeTimeWindow();
-  ret->setId(detector.id() + settings::kProcessorIdSep + util::createUUID());
+  ret->setId(baseId);
   ret->setEnvironment(detection.origin, nullptr, picks);
 
   return ret;
