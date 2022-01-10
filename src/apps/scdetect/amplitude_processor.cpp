@@ -5,6 +5,8 @@
 #include <seiscomp/system/environment.h>
 #include <seiscomp/utils/files.h>
 
+#include <cmath>
+
 #include "waveform.h"
 
 namespace Seiscomp {
@@ -79,6 +81,15 @@ const AmplitudeProcessor::Environment &AmplitudeProcessor::environment() const {
 }
 
 void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
+
+void AmplitudeProcessor::setupStream(StreamState &streamState,
+                                     const Record *record) {
+  processing::TimeWindowProcessor::setupStream(streamState, record);
+
+  assert((std::isfinite(safetyTimeWindow().length())));
+  streamState.neededSamples =
+      std::lround(safetyTimeWindow().length() * streamState.samplingFrequency);
+}
 
 void AmplitudeProcessor::setType(std::string type) { _type = std::move(type); }
 

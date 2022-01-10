@@ -153,6 +153,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
 
   using Buffer = DoubleArray;
 
+  void setupStream(StreamState &streamState, const Record *record) override;
   // Sets the type of amplitudes the amplitude processor is producing
   void setType(std::string type);
   // Sets the unit of amplitudes the amplitude processor is producing
