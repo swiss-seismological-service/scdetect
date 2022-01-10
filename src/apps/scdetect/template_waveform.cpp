@@ -192,6 +192,23 @@ std::string TemplateWaveform::waveformStreamId() const {
 
 void TemplateWaveform::setProcessingConfig(const ProcessingConfig &config) {
   reset();
+  assert(_raw);
+
+  const auto initTime{config.initTime.value_or(Core::TimeSpan{0.0})};
+  const auto safetyMargin{config.safetyMargin.value_or(Core::TimeSpan{0.0})};
+
+  bool rawTimeWindowExceeded{
+      (_raw->startTime() >
+       (config.templateStartTime.value_or(_raw->startTime()) -
+        std::max(initTime, safetyMargin))) ||
+      (_raw->endTime() <
+       config.templateEndTime.value_or(_raw->endTime()) + safetyMargin)};
+
+  if (rawTimeWindowExceeded) {
+    throw ValueException{
+        "processing config exceeds raw template waveform timewindow"};
+  }
+
   _processingConfig = config;
 }
 
