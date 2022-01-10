@@ -1678,12 +1678,7 @@ void Application::registerAmplitudeProcessor(
           ++rit;
         }
 
-        RecordSequence::iterator it;
-        if (rit == sequence->rend()) {
-          it = sequence->begin();
-        } else {
-          it = --rit.base();
-        }
+        RecordSequence::iterator it{rit.base()};
         while (it != sequence->end() && (*it)->startTime() <= tw.endTime()) {
           processor->feed((*it).get());
           ++it;
