@@ -1,6 +1,7 @@
 #include "waveform_processor.h"
 
 #include <cassert>
+#include <cmath>
 #include <exception>
 
 #include "waveform_operator.h"
@@ -224,7 +225,7 @@ void WaveformProcessor::setupStream(StreamState &streamState,
     setMinimumGapThreshold(streamState, record, id());
   }
 
-  streamState.neededSamples = static_cast<size_t>(_initTime * f + 0.5);
+  streamState.neededSamples = std::lround(_initTime * f);
   if (streamState.filter) {
     streamState.filter->setSamplingFrequency(f);
   }
