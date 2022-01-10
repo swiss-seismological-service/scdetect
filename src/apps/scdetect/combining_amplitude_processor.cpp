@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -92,14 +93,17 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
       }
     } catch (BaseException &e) {
       setStatus(processor->status(), processor->statusValue());
-      SCDETECT_LOG_ERROR_TAGGED(
-          processor->id(),
-          "%s: failed to feed data (tw.start=%s, "
-          "tw.end=%s) to processor. Reason: status=%d, "
-          "statusValue=%f (%s)",
-          record->streamID().c_str(), record->startTime().iso().c_str(),
-          record->endTime().iso().c_str(), util::asInteger(processor->status()),
-          processor->statusValue(), e.what());
+
+      logging::TaggedMessage msg{
+          record->streamID(),
+          "Failed to feed data (tw.start=" + record->startTime().iso() +
+              ", tw.end=" + record->endTime().iso() + "). Reason: status=" +
+              std::to_string(util::asInteger(processor->status())) +
+              ", status_value=" + std::to_string(processor->statusValue()) +
+              " (" + e.what() + ")"};
+
+      SCDETECT_LOG_ERROR_TAGGED(processor->id(), "%s",
+                                logging::to_string(msg).c_str());
       return false;
     }
   }
