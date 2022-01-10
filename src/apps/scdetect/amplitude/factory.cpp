@@ -160,7 +160,10 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
   std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
   // dispatch and create ratio amplitude processors
   auto baseId{detector.id() + settings::kProcessorIdSep + util::createUUID()};
+  std::vector<DataModel::PickCPtr> picks;
   for (const auto &pickMapPair : detection.pickMap) {
+    picks.push_back(pickMapPair.second.pick);
+
     auto detectionCopy{detection};
     detectionCopy.pickMap.clear();
     detectionCopy.pickMap.emplace(pickMapPair);
@@ -177,6 +180,7 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
   auto ret{util::make_unique<MRelative>(std::move(underlying))};
   ret->computeTimeWindow();
   ret->setId(detector.id() + settings::kProcessorIdSep + util::createUUID());
+  ret->setEnvironment(detection.origin, nullptr, picks);
 
   return ret;
 }
