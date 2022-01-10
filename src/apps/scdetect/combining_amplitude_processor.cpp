@@ -88,7 +88,7 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
     }
 
     try {
-      if (!processor->feed(record)) {
+      if (!processor->feed(record) && processor->finished()) {
         throw BaseException{"failed to feed data"};
       }
     } catch (BaseException &e) {

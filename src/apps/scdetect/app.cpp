@@ -1657,11 +1657,11 @@ void Application::registerAmplitudeProcessor(
           _waveformBuffer.sequence(Processing::StreamBuffer::WaveformID{
               converted.netCode(), converted.staCode(), converted.locCode(),
               converted.chaCode()})};
-      if (!sequence) continue;
+      if (!sequence || sequence->empty()) continue;
 
       const auto tw{processor->safetyTimeWindow()};
       if (tw.startTime() < sequence->timeWindow().startTime()) {
-        // TODO:
+        // TODO(damb):
         // - fetch historical data
 
         // actually feed as much data as possible
