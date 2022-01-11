@@ -259,7 +259,7 @@ struct TempDirFixture {
 template <typename TApp>
 class ApplicationWrapper {
  public:
-  ApplicationWrapper(const std::vector<std::string> &argv);
+  explicit ApplicationWrapper(const std::vector<std::string> &argv);
   ~ApplicationWrapper();
 
   int operator()();
