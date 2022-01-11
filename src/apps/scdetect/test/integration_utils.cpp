@@ -593,7 +593,6 @@ void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
   BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->snr(); }));
   BOOST_TEST_CHECK(lhs->unit() == rhs->unit());
-  BOOST_TEST_CHECK(lhs->pickID() == rhs->pickID());
   BOOST_TEST_CHECK(static_cast<std::string>(lhs->waveformID()) ==
                    static_cast<std::string>(rhs->waveformID()));
   BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
@@ -625,6 +624,10 @@ void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
   for (size_t j = 0; j < lhsComments.size(); ++j) {
     DataModel::CommentCPtr commentResult{lhsComments.at(j)};
     DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    if (commentResult->id() == settings::kAmplitudePicksCommentId) {
+      continue;
+    }
 
     commentCmp(commentResult, commentExpected);
   }
