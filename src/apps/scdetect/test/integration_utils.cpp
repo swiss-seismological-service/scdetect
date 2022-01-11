@@ -535,6 +535,11 @@ void stationMagnitudeCmp(const DataModel::StationMagnitudeCPtr &lhs,
       lhs, rhs,
       [](const DataModel::StationMagnitudeCPtr &m) { return m->passedQC(); }));
 
+  BOOST_TEST_CHECK(
+      equalOptional(lhs, rhs, [](const DataModel::StationMagnitudeCPtr &m) {
+        return m->creationInfo().agencyID();
+      }));
+
   // compare comments
   BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
   const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
