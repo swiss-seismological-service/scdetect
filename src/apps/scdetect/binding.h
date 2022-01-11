@@ -69,7 +69,7 @@ struct SensorLocationConfig {
 
     // Defines the amplitude types to be computed with regard to the sensor
     // location
-    std::vector<std::string> amplitudeTypes{"MRelative", "MLx"};
+    std::vector<std::string> amplitudeTypes{"MRelative"};
     // Indicates whether the amplitude calculation is enabled (`true`) or
     // disabled (`false`)
     bool enabled{true};
@@ -79,7 +79,7 @@ struct SensorLocationConfig {
   struct MagnitudeProcessingConfig {
     // Defines the magnitude types to be computed with regard to the sensor
     // location
-    std::vector<std::string> magnitudeTypes{"MRelative", "MLx"};
+    std::vector<std::string> magnitudeTypes{"MRelative"};
     // Indicates whether the sensor location is enabled (`true`) or disabled
     // (`false`)
     bool enabled{true};
