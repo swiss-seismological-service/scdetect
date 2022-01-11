@@ -291,6 +291,11 @@ bool Application::handleCommandLineOptions() {
   bool amplitudesForcedDisabled{_config.amplitudesForceMode &&
                                 !*_config.amplitudesForceMode &&
                                 !magnitudesForcedEnabled};
+
+  // disable config module if required
+  if (amplitudesForcedDisabled) {
+    setLoadConfigModuleEnabled(false);
+  }
   // disable the database if required
   if (!isInventoryDatabaseEnabled() && !isEventDatabaseEnabled() &&
       (amplitudesForcedDisabled || !isConfigDatabaseEnabled())) {
