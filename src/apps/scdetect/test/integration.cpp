@@ -7,6 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/optional/optional.hpp>
 #include <boost/test/data/dataset.hpp>
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -95,7 +96,7 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
 
 // samples for parameterized testing
 using Samples = std::vector<ds::Sample>;
-Samples dataset{
+const Samples dataset{
     // base: single detector - single stream
     {"templates.json",
      "inventory.scml",
@@ -385,6 +386,42 @@ Samples dataset{
      /*customFlags=*/
      {std::make_shared<cli::FlagAmplitudesForce>(false),
       std::make_shared<cli::FlagMagnitudesForce>(false)}},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*pathConfigDB=*/std::string{"config.scml"},
+     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
+     /*pathSample=*/
+     "integration/magnitude/MRelative/"
+     "single-detector-single-stream-0000"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*pathConfigDB=*/std::string{"config.scml"},
+     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
+     /*pathSample=*/
+     "integration/magnitude/MRelative/"
+     "single-detector-single-stream-0001"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*pathConfigDB=*/std::string{"config.scml"},
+     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
+     /*pathSample=*/
+     "integration/magnitude/MRelative/"
+     "single-detector-single-stream-0002"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*pathConfigDB=*/std::string{"config.scml"},
+     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
+     /*pathSample=*/
+     "integration/magnitude/MRelative/"
+     "single-detector-multi-stream-0000"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*pathConfigDB=*/std::string{"config.scml"},
+     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
+     /*pathSample=*/
+     "integration/magnitude/MRelative/"
+     "single-detector-multi-stream-0001"},
+    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
+     /*pathConfigDB=*/std::string{"config.scml"},
+     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
+     /*pathSample=*/
+     "integration/magnitude/MRelative/"
+     "single-detector-multi-stream-0002"},
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <EventParameters>
+    <pick publicID="Pick/20220110185714.599511.238">
+      <time>
+        <value>2019-11-05T05:23:50.083442Z</value>
+      </time>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
+      <phaseHint>Sg</phaseHint>
+      <evaluationMode>automatic</evaluationMode>
+      <comment>
+        <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
+    </pick>
+    <amplitude publicID="Amplitude/20220110185714.601729.239">
+      <type>MRelative</type>
+      <amplitude>
+        <value>1</value>
+      </amplitude>
+      <timeWindow>
+        <reference>2019-11-05T05:23:49.580001Z</reference>
+        <begin>0</begin>
+        <end>2.505</end>
+      </timeWindow>
+      <waveformID networkCode="8D" stationCode="RAW2"/>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2022-01-10T18:57:14.601714Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>Pick/20220110185714.599511.238</text>
+        <id>scdetectAmplitudePicks</id>
+      </comment>
+      <comment>
+        <text>8D.RAW2..HHE</text>
+        <id>scdetectAmplitudeStreams</id>
+      </comment>
+    </amplitude>
+    <origin publicID="Origin/20220110185714.5992.237">
+      <time>
+        <value>2019-11-05T05:23:47.640489Z</value>
+      </time>
+      <latitude>
+        <value>46.32480762</value>
+      </latitude>
+      <longitude>
+        <value>7.36023502</value>
+      </longitude>
+      <depth>
+        <value>4.813476562</value>
+      </depth>
+      <epicenterFixed>true</epicenterFixed>
+      <methodID>DETECT</methodID>
+      <quality>
+        <associatedPhaseCount>1</associatedPhaseCount>
+        <usedPhaseCount>1</usedPhaseCount>
+        <associatedStationCount>1</associatedStationCount>
+        <usedStationCount>1</usedStationCount>
+        <standardError>1.221245327e-15</standardError>
+        <maximumDistance>0.03223286148</maximumDistance>
+        <minimumDistance>0.03223286148</minimumDistance>
+        <medianDistance>0.03223286148</medianDistance>
+      </quality>
+      <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2022-01-10T18:57:14.599163Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
+      </comment>
+      <arrival>
+        <pickID>Pick/20220110185714.599511.238</pickID>
+        <phase>Sg</phase>
+        <weight>1.007777254</weight>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect@seiscomp-fedora34</author>
+          <creationTime>2022-01-10T18:57:14.599163Z</creationTime>
+        </creationInfo>
+      </arrival>
+      <stationMagnitude publicID="StationMagnitude/20220110185714.601978.240">
+        <magnitude>
+          <value>2.757863364</value>
+        </magnitude>
+        <type>MRelative</type>
+        <amplitudeID>Amplitude/20220110185714.601729.239</amplitudeID>
+      </stationMagnitude>
+    </origin>
+  </EventParameters>
+</seiscomp>

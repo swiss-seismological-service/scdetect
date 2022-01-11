@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <EventParameters>
+    <amplitude publicID="Amplitude/20220111084130.676863.1896">
+      <type>MRelative</type>
+      <amplitude>
+        <value>1</value>
+      </amplitude>
+      <timeWindow>
+        <reference>2020-10-25T20:35:53.818394Z</reference>
+        <begin>0</begin>
+        <end>4.01</end>
+      </timeWindow>
+      <waveformID networkCode="CH" stationCode="GRIMS"/>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2022-01-11T08:41:30.676848Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>Pick/20220111084130.67451.1895</text>
+        <id>scdetectAmplitudePicks</id>
+      </comment>
+      <comment>
+        <text>CH.GRIMS..HHZ</text>
+        <id>scdetectAmplitudeStreams</id>
+      </comment>
+    </amplitude>
+    <amplitude publicID="Amplitude/20220111084130.680957.1898">
+      <type>MRelative</type>
+      <amplitude>
+        <value>1</value>
+      </amplitude>
+      <timeWindow>
+        <reference>2020-10-25T20:35:55.455Z</reference>
+        <begin>0</begin>
+        <end>5.008333</end>
+      </timeWindow>
+      <waveformID networkCode="CH" stationCode="HASLI"/>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2022-01-11T08:41:30.680949Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>Pick/20220111084130.674426.1894</text>
+        <id>scdetectAmplitudePicks</id>
+      </comment>
+      <comment>
+        <text>CH.HASLI..HHZ</text>
+        <id>scdetectAmplitudeStreams</id>
+      </comment>
+    </amplitude>
+    <origin publicID="Origin/20220111084130.674184.1893">
+      <time>
+        <value>2020-10-25T20:35:43.383894Z</value>
+      </time>
+      <latitude>
+        <value>46.90474746</value>
+      </latitude>
+      <longitude>
+        <value>9.124707839</value>
+      </longitude>
+      <depth>
+        <value>1.436523438</value>
+      </depth>
+      <epicenterFixed>true</epicenterFixed>
+      <methodID>DETECT</methodID>
+      <quality>
+        <associatedPhaseCount>2</associatedPhaseCount>
+        <usedPhaseCount>2</usedPhaseCount>
+        <associatedStationCount>2</associatedStationCount>
+        <usedStationCount>2</usedStationCount>
+        <standardError>-4.440892099e-16</standardError>
+        <maximumDistance>0.6823556731</maximumDistance>
+        <minimumDistance>0.6415833155</minimumDistance>
+        <medianDistance>0.6823556731</medianDistance>
+      </quality>
+      <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora34</author>
+        <creationTime>2022-01-11T08:41:30.674077Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>detector-01</text>
+        <id>scdetectDetectorId</id>
+      </comment>
+      <comment>
+        <text>1.000000</text>
+        <id>scdetectResultCCC</id>
+      </comment>
+      <stationMagnitude publicID="StationMagnitude/20220111084130.677056.1897">
+        <magnitude>
+          <value>4.333577804</value>
+        </magnitude>
+        <type>MRelative</type>
+        <amplitudeID>Amplitude/20220111084130.676863.1896</amplitudeID>
+      </stationMagnitude>
+      <stationMagnitude publicID="StationMagnitude/20220111084130.681136.1899">
+        <magnitude>
+          <value>4.404358299</value>
+        </magnitude>
+        <type>MRelative</type>
+        <amplitudeID>Amplitude/20220111084130.680957.1898</amplitudeID>
+      </stationMagnitude>
+    </origin>
+  </EventParameters>
+</seiscomp>

@@ -6,7 +6,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <ostream>
 #include <sstream>
@@ -220,7 +221,9 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
   // compare amplitudes
   const auto amplitudePredicate = [](const DataModel::AmplitudeCPtr &lhs,
                                      const DataModel::AmplitudeCPtr &rhs) {
-    // XXX(damb): Used to generate a pseudo total order
+    // XXX(damb):
+    // - used to generate a pseudo total order
+    // - requires the optionals to be available
     const auto amplitudeTypePredicate = [](const DataModel::AmplitudeCPtr &a) {
       return a->type();
     };
@@ -237,9 +240,16 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
           return a->timeWindow().reference() +
                  Core::TimeSpan{a->timeWindow().end()};
         };
+    const auto amplitudeTimeWindowReferencePredicate =
+        [](const DataModel::AmplitudeCPtr &a) {
+          return a->timeWindow().reference() +
+                 Core::TimeSpan{a->timeWindow().begin()};
+        };
 
     return amplitudeTypePredicate(lhs) < amplitudeTypePredicate(rhs) &&
            amplitudeValuePredicate(lhs) < amplitudeValuePredicate(rhs) &&
+           amplitudeTimeWindowReferencePredicate(lhs) <
+               amplitudeTimeWindowReferencePredicate(rhs) &&
            amplitudeTimeWindowBeginPredicate(lhs) <
                amplitudeTimeWindowBeginPredicate(rhs) &&
            amplitudeTimeWindowEndPredicate(lhs) <
@@ -518,7 +528,8 @@ void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
 void stationMagnitudeCmp(const DataModel::StationMagnitudeCPtr &lhs,
                          const DataModel::StationMagnitudeCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
-  BOOST_TEST_CHECK(lhs->magnitude().value() == rhs->magnitude().value());
+  BOOST_TEST_CHECK(lhs->magnitude().value() == rhs->magnitude().value(),
+                   utf_tt::tolerance(1.0e-3));
   BOOST_TEST_CHECK(lhs->type() == rhs->type());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
 
@@ -583,8 +594,11 @@ void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
 void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
                   const DataModel::AmplitudeCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->type() == rhs->type());
-  BOOST_TEST_CHECK(equalOptional(
-      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->amplitude(); }));
+
+  // XXX(damb): an amplitude value must be available.
+  BOOST_TEST_CHECK(lhs->amplitude().value() == rhs->amplitude().value(),
+                   utf_tt::tolerance(1.0e-3));
+
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
     return amp->timeWindow();
   }));
