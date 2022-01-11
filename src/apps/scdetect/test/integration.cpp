@@ -39,6 +39,8 @@ struct Sample {
   std::string pathCatalog;
   std::string pathRecords;
 
+  boost::optional<std::string> pathConfigDB;
+
   std::string startTime;
 
   std::string pathExpected;
@@ -60,9 +62,14 @@ struct Sample {
         cli::to_string(cli::FlagEventDB{path_data / pathSample / pathCatalog}),
     };
 
+    if (pathConfigDB) {
+      flags.emplace_back(cli::to_string(
+          cli::FlagConfigDB{path_data / pathSample / *pathConfigDB}));
+    }
+
     // serialize custom flags
     for (const auto &flag : customFlags) {
-      flags.push_back(cli::to_string(*flag));
+      flags.emplace_back(cli::to_string(*flag));
     }
 
     return flags;
@@ -94,6 +101,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0000",
@@ -104,6 +112,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0001",
@@ -114,6 +123,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0002",
@@ -124,6 +134,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0003",
@@ -134,6 +145,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0004",
@@ -144,6 +156,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0005",
@@ -154,6 +167,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0006",
@@ -164,6 +178,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-single-stream-0007",
@@ -176,6 +191,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-multi-stream-0000",
@@ -186,6 +202,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2019-11-05T05:10:00",
      "expected.scml",
      /*pathSample=*/"integration/base/single-detector-multi-stream-0001",
@@ -198,6 +215,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/base/multi-detector-single-stream-0000",
@@ -210,6 +228,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:30:00",
      "expected.scml",
      /*pathSample=*/"integration/detector/single-detector-multi-stream-0000",
@@ -220,6 +239,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:30:00",
      "expected.scml",
      /*pathSample=*/
@@ -231,6 +251,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:30:00",
      "expected.scml",
      /*pathSample=*/"integration/detector/single-detector-multi-stream-0002",
@@ -241,6 +262,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/
@@ -252,6 +274,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/"integration/detector/single-detector-multi-stream-0004",
@@ -262,6 +285,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2019-11-05T05:10:00",
      "expected.scml",
      /*pathSample=*/"integration/detector/single-detector-multi-stream-0005",
@@ -274,6 +298,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T19:30:00",
      "expected.scml",
      /*pathSample=*/
@@ -285,6 +310,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:20:00",
      "expected.scml",
      /*pathSample=*/
@@ -298,6 +324,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:20:00",
      "expected.scml",
      /*pathSample=*/
@@ -310,6 +337,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:20:00",
      "expected.scml",
      /*pathSample=*/
@@ -322,6 +350,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:20:00",
      "expected.scml",
      /*pathSample=*/
@@ -334,6 +363,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:20:00",
      "expected.scml",
      /*pathSample=*/
@@ -346,6 +376,7 @@ Samples dataset{
      "inventory.scml",
      "catalog.scml",
      "data.mseed",
+     /*pathConfigDB=*/boost::none,
      /*starttime=*/"2020-10-25T20:20:00",
      "expected.scml",
      /*pathSample=*/
