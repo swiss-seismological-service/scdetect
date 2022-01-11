@@ -47,6 +47,13 @@ bool TimeWindowProcessor::store(const Record *record) {
   return WaveformProcessor::store(record);
 }
 
+bool TimeWindowProcessor::enoughDataReceived(
+    const StreamState &streamState) const {
+  return streamState.dataTimeWindow.startTime() <=
+             _safetyTimeWindow.startTime() &&
+         streamState.dataTimeWindow.endTime() >= _safetyTimeWindow.endTime();
+}
+
 }  // namespace processing
 }  // namespace detect
 }  // namespace Seiscomp

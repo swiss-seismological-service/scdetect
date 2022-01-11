@@ -28,6 +28,8 @@ class TimeWindowProcessor : public WaveformProcessor {
  protected:
   bool store(const Record *record) override;
 
+  bool enoughDataReceived(const StreamState &streamState) const override;
+
  private:
   // Time window for the data to be fed
   Core::TimeWindow _timeWindow;
