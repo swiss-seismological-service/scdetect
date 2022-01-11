@@ -39,6 +39,11 @@ bool equalOptional(const T &lhs, const T &rhs, TFunc f) {
   return getOptional(lhs, f) == getOptional(rhs, f);
 }
 
+template <typename T, typename TFunc, typename TCmp>
+bool equalOptional(const T &lhs, const T &rhs, TFunc f, TCmp cmp) {
+  return cmp(getOptional(lhs, f), getOptional(rhs, f));
+}
+
 template <typename TPtr, typename TFunc, typename TPred>
 std::vector<TPtr> sortByPredicate(const TFunc &f, size_t n, const TPred &pred) {
   std::vector<TPtr> ret;
@@ -359,42 +364,69 @@ void originCmp(const DataModel::OriginCPtr &lhs,
   }
 
   // compare magnitudes
-  BOOST_TEST_CHECK(lhs->magnitudeCount() == rhs->magnitudeCount());
-  const auto magnitudePredicate = [](const DataModel::MagnitudeCPtr &lhs,
-                                     const DataModel::MagnitudeCPtr &rhs) {
-    return lhs->magnitude().value() < rhs->magnitude().value() &&
-           lhs->type() < rhs->type();
-  };
-  const auto lhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
-      [&lhs](size_t i) { return lhs->magnitude(i); }, lhs->magnitudeCount(),
-      magnitudePredicate)};
-  const auto rhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
-      [&rhs](size_t i) { return rhs->magnitude(i); }, rhs->magnitudeCount(),
-      magnitudePredicate)};
-  for (size_t j = 0; j < lhsMags.size(); ++j) {
-    DataModel::MagnitudeCPtr magResult{lhsMags.at(j)};
-    DataModel::MagnitudeCPtr magExpected{rhsMags.at(j)};
+  {
+    BOOST_TEST_CHECK(lhs->magnitudeCount() == rhs->magnitudeCount());
+    const auto predicate = [](const DataModel::MagnitudeCPtr &lhs,
+                              const DataModel::MagnitudeCPtr &rhs) {
+      return lhs->magnitude().value() < rhs->magnitude().value() &&
+             lhs->type() < rhs->type();
+    };
+    const auto lhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
+        [&lhs](size_t i) { return lhs->magnitude(i); }, lhs->magnitudeCount(),
+        predicate)};
+    const auto rhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
+        [&rhs](size_t i) { return rhs->magnitude(i); }, rhs->magnitudeCount(),
+        predicate)};
+    for (size_t j = 0; j < lhsMags.size(); ++j) {
+      DataModel::MagnitudeCPtr magResult{lhsMags.at(j)};
+      DataModel::MagnitudeCPtr magExpected{rhsMags.at(j)};
 
-    magnitudeCmp(magResult, magExpected);
+      magnitudeCmp(magResult, magExpected);
+    }
+  }
+
+  // compare station magnitudes
+  {
+    BOOST_TEST_CHECK(lhs->stationMagnitudeCount() ==
+                     rhs->stationMagnitudeCount());
+    const auto predicate = [](const DataModel::StationMagnitudeCPtr &lhs,
+                              const DataModel::StationMagnitudeCPtr &rhs) {
+      return lhs->magnitude().value() < rhs->magnitude().value() &&
+             lhs->type() < rhs->type();
+    };
+    const auto lhsMags{sortByPredicate<DataModel::StationMagnitudeCPtr>(
+        [&lhs](size_t i) { return lhs->stationMagnitude(i); },
+        lhs->magnitudeCount(), predicate)};
+    const auto rhsMags{sortByPredicate<DataModel::StationMagnitudeCPtr>(
+        [&rhs](size_t i) { return rhs->stationMagnitude(i); },
+        rhs->magnitudeCount(), predicate)};
+    for (size_t j = 0; j < lhsMags.size(); ++j) {
+      DataModel::StationMagnitudeCPtr magResult{lhsMags.at(j)};
+      DataModel::StationMagnitudeCPtr magExpected{rhsMags.at(j)};
+
+      stationMagnitudeCmp(magResult, magExpected);
+    }
   }
 
   // compare comments
-  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
-  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
-                                   const DataModel::CommentCPtr &rhs) {
-    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
-  };
-  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
-      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
-      commentPredicate)};
-  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
-      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
-      commentPredicate)};
-  for (size_t j = 0; j < lhsComments.size(); ++j) {
-    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
-    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+  {
+    BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+    const auto predicate = [](const DataModel::CommentCPtr &lhs,
+                              const DataModel::CommentCPtr &rhs) {
+      return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+    };
+    const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+        [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+        predicate)};
+    const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+        [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+        predicate)};
+    for (size_t j = 0; j < lhsComments.size(); ++j) {
+      DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+      DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
 
-    commentCmp(commentResult, commentExpected);
+      commentCmp(commentResult, commentExpected);
+    }
   }
 }
 
@@ -483,9 +515,49 @@ void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
   }));
 }
 
+void stationMagnitudeCmp(const DataModel::StationMagnitudeCPtr &lhs,
+                         const DataModel::StationMagnitudeCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
+  BOOST_TEST_CHECK(lhs->magnitude().value() == rhs->magnitude().value());
+  BOOST_TEST_CHECK(lhs->type() == rhs->type());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs,
+      [](const DataModel::StationMagnitudeCPtr m) { return m->waveformID(); },
+      [](const boost::optional<DataModel::WaveformStreamID> &lhs,
+         const boost::optional<DataModel::WaveformStreamID> &rhs) {
+        return (lhs == boost::none && rhs == boost::none) ||
+               (lhs && rhs && *lhs == *rhs);
+      }));
+
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs,
+      [](const DataModel::StationMagnitudeCPtr &m) { return m->passedQC(); }));
+
+  // compare comments
+  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
+                                   const DataModel::CommentCPtr &rhs) {
+    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+  };
+  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+      commentPredicate)};
+  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+      commentPredicate)};
+  for (size_t j = 0; j < lhsComments.size(); ++j) {
+    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    commentCmp(commentResult, commentExpected);
+  }
+}
+
 void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs) {
-  BOOST_TEST_CHECK(lhs->magnitude() == rhs->magnitude());
+  BOOST_TEST_CHECK(lhs->magnitude().value() == rhs->magnitude().value());
   BOOST_TEST_CHECK(lhs->type() == rhs->type());
   BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());

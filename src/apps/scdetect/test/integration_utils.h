@@ -9,6 +9,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/originquality.h>
 #include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/stationmagnitude.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <boost/filesystem.hpp>
@@ -213,6 +214,10 @@ void originQualityCmp(const DataModel::OriginQualityCPtr &lhs,
 // Compare `DataModel::Arrival` element-wise
 void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
                 const DataModel::ArrivalCPtr &rhs);
+
+// Compare `DataModel::StationMagnitude` element-wise
+void stationMagnitudeCmp(const DataModel::StationMagnitudeCPtr &lhs,
+                         const DataModel::StationMagnitudeCPtr &rhs);
 
 // Compare `DataModel::Magnitude` element-wise
 void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
