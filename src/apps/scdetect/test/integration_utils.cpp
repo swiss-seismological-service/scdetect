@@ -84,35 +84,27 @@ BooleanFlag::BooleanFlag(bool enabled) : ArgFlag{enabled ? "1" : "0"} {}
 void BooleanFlag::enable() { setArg("1"); }
 void BooleanFlag::disable() { setArg("0"); }
 
-const std::string FlagDebug::flag() const { return "--debug"; }
+std::string FlagDebug::flag() const { return "--debug"; }
 
-const std::string FlagConsole::flag() const { return "--console"; }
+std::string FlagConsole::flag() const { return "--console"; }
 
 FlagAmplitudesForce::FlagAmplitudesForce(bool enabled) : BooleanFlag{enabled} {}
-const std::string FlagAmplitudesForce::flag() const {
-  return "--amplitudes-force";
-}
+std::string FlagAmplitudesForce::flag() const { return "--amplitudes-force"; }
 
 FlagMagnitudesForce::FlagMagnitudesForce(bool enabled) : BooleanFlag{enabled} {}
-const std::string FlagMagnitudesForce::flag() const {
-  return "--magnitudes-force";
-}
+std::string FlagMagnitudesForce::flag() const { return "--magnitudes-force"; }
 
-const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
+std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
-const std::string FlagPlayback::flag() const {
-  return std::string{"--playback"};
-}
+std::string FlagPlayback::flag() const { return std::string{"--playback"}; }
 
-const std::string FlagTemplatesReload::flag() const {
-  return "--templates-reload";
-}
+std::string FlagTemplatesReload::flag() const { return "--templates-reload"; }
 
 FlagAgencyId::FlagAgencyId(const std::string &id) : ArgFlag{id} {}
-const std::string FlagAgencyId::flag() const { return "--agencyID"; }
+std::string FlagAgencyId::flag() const { return "--agencyID"; }
 
 FlagAuthor::FlagAuthor(const std::string &name) : ArgFlag{name} {}
-const std::string FlagAuthor::flag() const { return "--author"; }
+std::string FlagAuthor::flag() const { return "--author"; }
 
 FlagPlugins::FlagPlugins(const std::string &plugin) : ArgFlag{plugin} {
   // TODO(damb): Must not contain comma
@@ -120,59 +112,57 @@ FlagPlugins::FlagPlugins(const std::string &plugin) : ArgFlag{plugin} {
 FlagPlugins::FlagPlugins(const std::vector<std::string> &plugins)
     : ArgFlag{boost::algorithm::join(plugins, settings::kConfigListSep)} {}
 
-const std::string FlagPlugins::flag() const { return "--plugins"; }
+std::string FlagPlugins::flag() const { return "--plugins"; }
 
 FlagEp::FlagEp(const std::string &fpath) : ArgFlag{fpath} {}
 FlagEp ::FlagEp(const fs::path &fpath) : FlagEp{fpath.string()} {}
-const std::string FlagEp::flag() const { return "--ep"; }
+std::string FlagEp::flag() const { return "--ep"; }
 
 FlagConfigFile::FlagConfigFile(const std::string &fpath) : ArgFlag{fpath} {}
 FlagConfigFile::FlagConfigFile(const fs::path &fpath)
     : ArgFlag{fpath.string()} {}
-const std::string FlagConfigFile::flag() const { return "--config-file"; }
+std::string FlagConfigFile::flag() const { return "--config-file"; }
 
 FlagDB::FlagDB(const std::string &uri) : ArgFlag{uri} {}
 FlagDB ::FlagDB(const fs::path &fpath)
     : FlagDB{std::string{"sqlite3://" + fpath.string()}} {}
-const std::string FlagDB::flag() const { return "--database"; }
+std::string FlagDB::flag() const { return "--database"; }
 
 FlagInventoryDB::FlagInventoryDB(const std::string &uri) : ArgFlag{uri} {}
 FlagInventoryDB::FlagInventoryDB(const fs::path &fpath)
     : FlagInventoryDB{std::string{"file://" + fpath.string()}} {}
-const std::string FlagInventoryDB::flag() const { return "--inventory-db"; }
+std::string FlagInventoryDB::flag() const { return "--inventory-db"; }
 
 FlagConfigModule::FlagConfigModule(const std::string &configModule)
     : ArgFlag{configModule} {}
-const std::string FlagConfigModule::flag() const { return "--config-module"; }
+std::string FlagConfigModule::flag() const { return "--config-module"; }
 
 FlagConfigDB::FlagConfigDB(const std::string &uri) : ArgFlag{uri} {}
 FlagConfigDB::FlagConfigDB(const fs::path &fpath)
     : FlagConfigDB{std::string{"file://" + fpath.string()}} {}
-const std::string FlagConfigDB::flag() const { return "--config-db"; }
+std::string FlagConfigDB::flag() const { return "--config-db"; }
 
 FlagEventDB::FlagEventDB(const std::string &uri) : ArgFlag{std::string{uri}} {}
 FlagEventDB::FlagEventDB(const fs::path &fpath)
     : FlagEventDB{std::string{"file://" + fpath.string()}} {}
-const std::string FlagEventDB::flag() const { return "--event-db"; }
+std::string FlagEventDB::flag() const { return "--event-db"; }
 
 FlagRecordURL ::FlagRecordURL(const std::string &url) : ArgFlag{url} {}
-const std::string FlagRecordURL::flag() const { return "--record-url"; }
+std::string FlagRecordURL::flag() const { return "--record-url"; }
 
 FlagRecordStartTime::FlagRecordStartTime(const std::string &timeStr)
     : ArgFlag{timeStr} {}
-const std::string FlagRecordStartTime::flag() const {
-  return "--record-starttime";
-}
+std::string FlagRecordStartTime::flag() const { return "--record-starttime"; }
 
 FlagRecordEndTime::FlagRecordEndTime(const std::string &timeStr)
     : ArgFlag{timeStr} {}
-const std::string FlagRecordEndTime::flag() const { return "--record-endtime"; }
+std::string FlagRecordEndTime::flag() const { return "--record-endtime"; }
 
 FlagTemplatesJSON::FlagTemplatesJSON(const std::string &fpath)
     : ArgFlag{fpath} {}
 FlagTemplatesJSON::FlagTemplatesJSON(const fs::path &fpath)
     : FlagTemplatesJSON{fpath.string()} {}
-const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
+std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 
 }  // namespace cli
 
