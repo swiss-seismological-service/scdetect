@@ -106,7 +106,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
 
         bool matchingMagnitudeType{std::find(std::begin(matchingMagnitudeTypes),
                                              std::end(matchingMagnitudeTypes),
-                                             stationMagnitude->type()) ==
+                                             stationMagnitude->type()) !=
                                    matchingMagnitudeTypes.end()};
         if (!matchingMagnitudeType) {
           continue;
