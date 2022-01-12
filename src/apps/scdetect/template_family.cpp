@@ -206,9 +206,11 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       const auto arrivalTime{pick->time().value()};
 
       amplitude::factory::Detection referenceDetection;
-      referenceDetection.sensorLocationStreamId =
-          util::getSensorLocationStreamId(sensorLocationConfig.waveformId,
-                                          true);
+
+      referenceDetection.sensorLocationStreamId = util::join(
+          tokens[0], tokens[1], tokens[2],
+          util::getBandAndSourceCode(sensorLocationConfig.channelId));
+
       referenceDetection.origin = origin;
       referenceDetection.pickMap.emplace(
           "", amplitude::factory::Detection::Pick{"", pick});
