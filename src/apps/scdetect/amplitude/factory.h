@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_SCDETECT_AMPLITUDE_FACTORY_H_
 
 #include <seiscomp/core/datetime.h>
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
 
@@ -53,9 +54,14 @@ struct DetectorConfig {
   bool gapInterpolation{false};
 };
 
+// Creates an instance of an `MLx` amplitude processor preconfigured based on
+// the parameters passed
+//
+// - if `timeWindow` is a valid value the time window is configured explicitly
 std::unique_ptr<AmplitudeProcessor> createMLx(
     const binding::Bindings& bindings, const factory::Detection& detection,
-    const DetectorConfig& detectorConfig);
+    const DetectorConfig& detectorConfig,
+    const boost::optional<Core::TimeWindow>& timeWindow = boost::none);
 
 }  // namespace factory
 

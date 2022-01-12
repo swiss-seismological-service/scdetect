@@ -43,7 +43,8 @@ const binding::SensorLocationConfig &loadSensorLocationConfig(
 
 std::unique_ptr<AmplitudeProcessor> createMLx(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const DetectorConfig &detectorConfig) {
+    const DetectorConfig &detectorConfig,
+    const boost::optional<Core::TimeWindow> &timeWindow) {
   assert(detection.origin);
   assert(!detection.pickMap.empty());
   std::vector<DataModel::PickCPtr> picks;
@@ -60,7 +61,11 @@ std::unique_ptr<AmplitudeProcessor> createMLx(
   // XXX(damb): do not provide a sensor location (currently not required)
   ret->setEnvironment(detection.origin, nullptr, picks);
 
-  ret->computeTimeWindow();
+  if (timeWindow) {
+    ret->setTimeWindow(*timeWindow);
+  } else {
+    ret->computeTimeWindow();
+  }
   ret->setGapInterpolation(detectorConfig.gapInterpolation);
   ret->setGapThreshold(detectorConfig.gapThreshold);
   ret->setGapTolerance(detectorConfig.gapTolerance);
