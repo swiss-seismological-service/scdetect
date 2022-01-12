@@ -217,6 +217,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       amplitude::factory::DetectorConfig detectorConfig;
       detectorConfig.gapInterpolation = false;
+      detectorConfig.id = _templateFamilyConfig.id();
       Core::TimeWindow tw{
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformStart},
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformEnd}};
