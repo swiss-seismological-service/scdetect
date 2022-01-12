@@ -217,13 +217,12 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       amplitude::factory::DetectorConfig detectorConfig;
       detectorConfig.gapInterpolation = false;
-      auto proc{amplitude::factory::createMLx(bindings, referenceDetection,
-                                              detectorConfig)};
-
       Core::TimeWindow tw{
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformStart},
           arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformEnd}};
-      proc->setTimeWindow(tw);
+      auto proc{amplitude::factory::createMLx(bindings, referenceDetection,
+                                              detectorConfig, tw)};
+
       proc->setResultCallback(
           [this](const AmplitudeProcessor* proc, const Record* rec,
                  AmplitudeProcessor::AmplitudeCPtr amplitude) {
