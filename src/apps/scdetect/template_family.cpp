@@ -162,6 +162,8 @@ TemplateFamily::Builder& TemplateFamily::Builder::setStationMagnitudes(
 
 TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
     WaveformHandlerIface* waveformHandler, const binding::Bindings& bindings) {
+  assert(waveformHandler);
+
   for (const auto& referenceConfig : _templateFamilyConfig) {
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
         referenceConfig.originId)};
