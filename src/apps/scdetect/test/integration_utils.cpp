@@ -314,7 +314,9 @@ void waveformStreamIdCmp(const DataModel::WaveformStreamID &lhs,
 void originCmp(const DataModel::OriginCPtr &lhs,
                const DataModel::OriginCPtr &rhs) {
   BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
-                   static_cast<double>(rhs->time().value()));
+                       static_cast<double>(rhs->time().value()),
+                   utf_tt::tolerance(3.0e-6));
+
   BOOST_TEST_CHECK(lhs->latitude() == rhs->latitude());
   BOOST_TEST_CHECK(lhs->longitude() == rhs->longitude());
 
