@@ -41,6 +41,8 @@ struct Detection {
   using PickMap = std::unordered_map<ProcessorId, Pick>;
   PickMap pickMap;
 
+  // Sensor location identifier which must include both band and source code
+  // identifiers
   std::string sensorLocationStreamId;
 
   DataModel::OriginCPtr origin;
