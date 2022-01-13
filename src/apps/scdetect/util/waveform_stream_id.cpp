@@ -51,8 +51,8 @@ std::string getSensorLocationStreamId(const std::string &waveformStreamId,
   std::vector<std::string> tokens;
   tokenizeWaveformStreamId(waveformStreamId, tokens);
   // XXX(damb): do not validate the token content
-  assert((includeBandAndSourceCode && tokens.size() == 4) ||
-         tokens.size() == 3);
+  assert(((includeBandAndSourceCode && tokens.size() == 4) ||
+          (!includeBandAndSourceCode && tokens.size() == 3)));
   return tokens[0] + WaveformStreamID::delimiter + tokens[1] +
          WaveformStreamID::delimiter + tokens[2] +
          (includeBandAndSourceCode
