@@ -1105,6 +1105,8 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
                                        const TemplateConfigs &templateConfigs,
                                        const binding::Bindings &bindings,
                                        const Config &appConfig) {
+  assert(waveformHandler);
+
   try {
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);

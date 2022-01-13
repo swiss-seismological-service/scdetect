@@ -75,7 +75,8 @@ const SensorLocationConfig &Bindings::at(const std::string &netCode,
 void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
                     const DataModel::ConfigModule *configModule,
                     const std::string &setupId) {
-  assert(static_cast<bool>(configModule));
+  assert(moduleConfig);
+  assert(configModule);
 
   for (size_t j = 0; j < configModule->configStationCount(); ++j) {
     DataModel::ConfigStation *stationConfig{configModule->configStation(j)};
