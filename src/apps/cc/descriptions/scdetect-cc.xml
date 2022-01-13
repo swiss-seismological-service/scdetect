@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp>
-  <module name="scdetect" category="Processing"
+  <module name="scdetect-cc" category="Processing"
           inherit-global-bindings="false">
     <description>Template matching based earthquake detection</description>
     <configuration>
       <parameter name="templatesJSON" type="path"
-                 default="@ROOTDIR@/etc/scdetect/templates.json">
+                 default="@ROOTDIR@/etc/scdetect-cc/templates.json">
         <description>
           Defines the default path for the template configuration
           file.
@@ -350,7 +350,7 @@
     The basic binding description. This could also go into a separate file, but it's integrated
     into the core description to have everything in one place.
   -->
-  <binding module="scdetect">
+  <binding module="scdetect-cc">
     <description>
       Configures a station for both amplitude and magnitude calculation. A
       station without a binding assigned will be used for neither amplitude
@@ -363,7 +363,8 @@
         </description>
       </parameter>
       <group name="sensorLocation">
-        <struct type="sensorLocationProfile" link="scdetect.sensorLocationProfiles">
+        <struct type="sensorLocationProfile"
+                link="scdetect-cc.sensorLocationProfiles">
           <description>
             Each sensor location profile is a configuration set with regard to
             a sensor location. A sensor location profile is used only if a
@@ -377,7 +378,8 @@
           <parameter name="channelCode" type="string" default="">
             <description>
               Defines profile's channel code. Note that only the band and
-              source code is taken into account (i.e. the two leading characters).
+              source code is taken into account (i.e. the two leading
+              characters).
             </description>
           </parameter>
 
@@ -385,7 +387,8 @@
             <description>
               Defines amplitude related configuration options.
             </description>
-            <parameter name="amplitudes" type="list:string" default="&quot;MRelative&quot;">
+            <parameter name="amplitudes" type="list:string"
+                       default="&quot;MRelative&quot;">
               <description>
                 Defines a list of amplitudes to be calculated.
               </description>
@@ -402,9 +405,11 @@
                 Defines configuration parameters for amplitudes required for
                 the relative magnitude estimation.
               </description>
-              <parameter name="saturationThreshold" type="double" unit="counts; %">
+              <parameter name="saturationThreshold" type="double"
+                         unit="counts; %">
                 <description>
-                  Enables a saturation check before calculating amplitudes. If data
+                  Enables a saturation check before calculating amplitudes. If
+                  data
                   exceeds the configured threshold no amplitude is going to be
                   calculated.
 
@@ -433,7 +438,8 @@
               <parameter name="initTime" type="double" default="60" unit="s">
                 <description>
                   Defines the profile's time span in seconds in order to
-                  initialize the amplitude processor's filter. The initialization
+                  initialize the amplitude processor's filter. The
+                  initialization
                   time is used only in case filtering is enabled.
                 </description>
               </parameter>
@@ -446,9 +452,11 @@
                 estimation. Note that this amplitude type requires sensor
                 responses to be configured.
               </description>
-              <parameter name="saturationThreshold" type="double" unit="counts; %">
+              <parameter name="saturationThreshold" type="double"
+                         unit="counts; %">
                 <description>
-                  Enables a saturation check before calculating amplitudes. If data
+                  Enables a saturation check before calculating amplitudes. If
+                  data
                   exceeds the configured threshold no amplitude is going to be
                   calculated.
 
@@ -463,7 +471,8 @@
                   the check.
                 </description>
               </parameter>
-              <parameter name="filter" type="string" default="&quot;BW_BP(4,10,30)&quot;">
+              <parameter name="filter" type="string"
+                         default="&quot;BW_BP(4,10,30)&quot;">
                 <description>
                   Defines the filter to be used for amplitude waveform
                   processing (i.e. applied before calculating the amplitude).
@@ -475,7 +484,8 @@
               <parameter name="initTime" type="double" default="60" unit="s">
                 <description>
                   Defines the profile's time span in seconds in order to
-                  initialize the amplitude processor's filter. The initialization
+                  initialize the amplitude processor's filter. The
+                  initialization
                   time is used only in case filtering is enabled.
                 </description>
               </parameter>
@@ -483,7 +493,8 @@
 
             <group name="responses">
               <description>
-                Each response profile is a response related configuration set. It
+                Each response profile is a response related configuration set.
+                It
                 allows the configuration of parameters on stream granularity.
               </description>
               <parameter name="responseProfiles" type="list:string" default="">
@@ -491,31 +502,40 @@
                   Defines a list of response profiles.
                 </description>
               </parameter>
-              <struct type="responseProfile" link="scdetect.amplitudeProfiles.responseProfiles">
+              <struct type="responseProfile"
+                      link="scdetect-cc.amplitudeProfiles.responseProfiles">
                 <parameter name="channelCode" type="string" default="">
                   <description>
                     Defines profile's channel code used for response correction.
-                    Note that the value is interpreted as the subsource code i.e. a
+                    Note that the value is interpreted as the subsource code
+                    i.e. a
                     single character is allowed, only.
                   </description>
                 </parameter>
-                <parameter name="taperLength" type="double" default="5" unit="s">
+                <parameter name="taperLength" type="double" default="5"
+                           unit="s">
                   <description>
                     Defines the taper length when deconvolving the data.
                   </description>
                 </parameter>
-                <parameter name="minimumTaperFrequency" type="double" default="0.00833333" unit="Hz">
+                <parameter name="minimumTaperFrequency" type="double"
+                           default="0.00833333" unit="Hz">
                   <description>
                     Defines the end of the left-hand side cosine-taper in Hz
-                    applied to the frequency spectrum. I.e. the spectrum is tapered
-                    between 0Hz and `minimumTaperFrequency`. A value less than or
+                    applied to the frequency spectrum. I.e. the spectrum is
+                    tapered
+                    between 0Hz and `minimumTaperFrequency`. A value less than
+                    or
                     equal to zero disables left-hand side tapering.
                   </description>
                 </parameter>
-                <parameter name="maximumTaperFrequency" type="double" default="0" unit="Hz">
+                <parameter name="maximumTaperFrequency" type="double"
+                           default="0" unit="Hz">
                   <description>
-                    Defines the beginning of the right-hand side cosine-taper in Hz
-                    applied to the frequency spectrum. I.e. the spectrum is tapered
+                    Defines the beginning of the right-hand side cosine-taper in
+                    Hz
+                    applied to the frequency spectrum. I.e. the spectrum is
+                    tapered
                     between `maximumResponseTaperFrequency` and the Nyquist
                     frequency. A value less than or equal to zero disables
                     left-hand side tapering.
@@ -529,7 +549,8 @@
             <description>
               Defines magnitude related configuration options.
             </description>
-            <parameter name="magnitudes" type="list:string" default="&quot;MRelative&quot;">
+            <parameter name="magnitudes" type="list:string"
+                       default="&quot;MRelative&quot;">
               <description>
                 Defines a list of magnitudes to be calculated.
               </description>
