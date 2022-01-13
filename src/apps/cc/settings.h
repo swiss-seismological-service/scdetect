@@ -9,9 +9,9 @@ namespace detect {
 namespace settings {
 
 // Relative path from the SeisComP installation directory
-const std::string kPathFilesystemCache{"var/cache/scdetect"};
+const std::string kPathFilesystemCache{"var/cache/scdetect/cc"};
 // Relative path from the SeisComP installation directory
-const std::string kPathTemp{"var/tmp/scdetect"};
+const std::string kPathTemp{"var/tmp/scdetect/cc"};
 
 // Processor identifier separator
 const std::string kProcessorIdSep{"::"};

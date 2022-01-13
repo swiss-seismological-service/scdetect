@@ -886,13 +886,13 @@ the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/
 Unless the RecordStream points to a local disk storage, downloading waveforms
 might require a lot of time. For this reason `scdetect-cc` stores raw template
 waveform data on disk after downloading them. The cache is located under
-`${SEISCOMP_ROOT}/var/cache/scdetect`. If omitting cached waveform data is
+`${SEISCOMP_ROOT}/var/cache/scdetect/cc`. If omitting cached waveform data is
 desired, make use of `scdetect-cc`'s `--templates-reload` CLI flag.
 
 In order to remove cached waveform data, simply invoke
 
 ```bash
-$ rm -rvf ${SEISCOMP_ROOT}/var/cache/scdetect
+$ rm -rvf ${SEISCOMP_ROOT}/var/cache/scdetect/cc
 ```
 
 #### Prepare template waveform data
