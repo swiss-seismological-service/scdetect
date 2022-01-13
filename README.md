@@ -590,8 +590,8 @@ the following magnitude types are available:
   corresponding [template family configuration](#template-family-configuration)
   must be provided by `scdetect`'
   s `--templates-family-json path/to/templates-family.json` CLI flag.
-  (**References**: https://doi.org/10.1029/2019JB017468 (section 3.3.3 *
-  Magnitude Estimation*))
+  (**References**: https://doi.org/10.1029/2019JB017468 (section 3.3.3
+  *Magnitude Estimation*))
 
 All magnitude estimation methods listed above are based on the following types
 of *template station magnitudes*:
