@@ -34,9 +34,9 @@ The module allows both single-stream and multi-stream earthquake detection.
 In case the detection parameters exceed the configured thresholds, `scdetect`
 declares a new origin.
 
-Besides, magnitudes may be estimated based on a template family
-*amplitude-magnitude regression*. The implementation follows the approach
-outlined in https://doi.org/10.1029/2019JB017468.
+Besides, magnitudes may be estimated based on
+multiple [magnitude estimation](#magnitude-estimation) methods (regression,
+amplitude ratios).
 
 ## Overview
 
@@ -60,9 +60,10 @@ From an architectural point of view `scdetect` is positioned somewhere between
 [scautoloc](https://docs.gempa.de/seiscomp/current/apps/scautoloc.html). That
 is, `scdetect` fetches waveform data by means of
 the [RecordStream](https://docs.gempa.de/seiscomp/current/base/concepts/recordstream.html)
-interface, but it also uses data products for template generation. If connected
-to the messaging system, results (i.e. declared origins, picks and amplitudes)
-are sent to the messaging system.
+interface, but it also uses data products (i.e. event parameters) for template
+generation. If connected to the messaging system, results (i.e. declared
+origins (including station magnitudes), picks and amplitudes) are sent to the
+messaging system.
 
 For further information with regard to the SeisComP architecture please refer to
 the [SeisComP documentation](https://docs.gempa.de/seiscomp/current/base/overview.html)
@@ -90,7 +91,7 @@ and configure `scdetect`. This includes:
 
 1. How to [configure templates](#template-configuration)
 2. How to enable [amplitude calculation](#amplitude-calculation) (required for a
-   magnitude estimation based on amplitude-magnitude regression)
+   magnitude estimation later on)
 3. How to enable [magnitude estimation](#magnitude-estimation)
 4. How to access
    [metadata and configuration](#inventory-events-and-configuration) from the
@@ -219,10 +220,9 @@ configuration parameters:
 
 **Amplitude calculation**:
 
-`scdetect` implements the calculation of amplitudes required for a magnitude
-estimation based on an amplitude-magnitude regression. Within a detector
-configuration the following amplitude related configuration parameters may be
-provided:
+In order to perform a magnitude estimation later on, the corresponding
+amplitudes must be computed beforehand. On detector configuration level the
+following amplitude related configuration parameters may be provided:
 
 - `"createAmplitudes"`: Boolean value which
   enables/disables [amplitude calculation](#amplitude-calculation) for this
@@ -464,23 +464,40 @@ the stream set.
 
 ### Amplitude calculation
 
-`scdetect` implements the calculation of amplitudes which are a prerequisite in
-order to perform a so called amplitude-magnitude regression. The implementation
-follows the approach outlined in https://doi.org/10.1029/2019JB017468 (section
-3.3.3 *Magnitude Estimation*). Amplitudes are calculated once an origin has been
-declared.
+Computing amplitudes is a prerequisite in order to perform a magnitude
+estimation later on. Since multiple magnitude estimation methods are provided,
+each magnitude estimation method requires to compute a corresponding amplitude
+type. In accordance with the magnitudes methods described in
+the [magnitude estimation](#magnitude-estimation) section `scdetect` implements
+the following amplitude types to be computed:
+
+- `MRelative`: Amplitude computed as the ratio between the template waveform and
+  the detection. The approach is outlined by
+  e.g. https://doi.org/10.1038/ngeo697
+  and https://doi.org/10.1126/sciadv.1601946 and uses the same instrument
+  components as specified by the detector configuration.
+
+- `MLx`: Amplitudes required for the *amplitude-magnitude regression* approach.
+  The implementation follows the approach outlined
+  in https://doi.org/10.1029/2019JB017468 (section 3.3.3 *Magnitude Estimation*)
+  . Amplitudes used for the amplitude-magnitude regression are so called *sensor
+  location [RMS (root-mean-square)](https://en.wikipedia.org/wiki/Root_mean_square)
+  amplitudes* (i.e. the maximum sample-wise RMS regarding the horizontal
+  components for a certain sensor location w.r.t. velocity seismograms).
+
+Amplitudes are calculated once an origin has been declared.
+
+In general, the computation of amplitudes is sensor location dependent. In order
+to provide dedicated configuration for different sensor locations `scdetect`
+makes use of
+SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
+concept. Note that amplitudes are calculated only for those sensor locations
+with bindings configuration available.
+
+#### Bindings configuration
 
 This section contains a detailed description how to set up the configuration
 required for amplitude calculation.
-
-Amplitudes used for the amplitude-magnitude regression are so called *sensor
-location RMS (root-mean-square) amplitudes* (i.e. the maximum sample-wise RMS
-regarding the horizontal components for a certain sensor location w.r.t.
-velocity seismograms). In order to provide dedicated configuration for different
-sensor locations `scdetect` makes use of
-SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
-concept. Amplitudes are calculated only for those sensor locations with bindings
-configuration available.
 
 For those users already familiar with
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
@@ -546,16 +563,35 @@ documentation.
 
 ### Magnitude estimation
 
-For sensor locations amplitudes were computed `scdetect` is able to estimate
-magnitudes based on the *amplitude-magnitude regression* approach (for further
-details, please refer to https://doi.org/10.1029/2019JB017468, section 3.3.3 -
-*Magnitude Estimation*). The approach is based on so-called *template families*
-which in fact are groups of *related* templates. The corresponding template
-family configuration must be provided by `scdetect`'
-s `--templates-family-json path/to/templates-family.json` CLI flag.
+`scdetect` estimates magnitudes as so called SeisComP *station magnitudes* (for
+further details, please refer to
+the [scmag documentation](https://docs.gempa.de/seiscomp/current/apps/scmag.html))
+. Magnitudes may be computed for only those sensor locations, the corresponding
+magnitude types were computed, previously. In accordance with the amplitude
+types described in the [amplitude calculation section](#amplitude-calculation),
+the following magnitude types are available:
 
-Again, for the amplitude-magnitude regression itself, the following types of
-*template station magnitudes* are taken into account:
+- `MRelative`: Template-detection ratio based magnitude estimation. Besides, of
+  the corresponding amplitudes to be computed, this particular type requires
+  station magnitudes to be available
+  through [event parameters](#inventory-events-and-configuration).
+  (**References**: https://doi.org/10.1038/ngeo697
+  , https://doi.org/10.1126/sciadv.1601946)
+
+- `MLx`: Amplitude-magnitude regression based magnitude type. Besides, of the
+  corresponding amplitudes to be computed, this particular type requires both
+  amplitudes and station magnitudes to be available by means
+  of [event parameters](#inventory-events-and-configuration). Moreover, the
+  approach is based on so-called *template families* which in fact are groups of
+  *related* templates. The
+  corresponding [template family configuration](#template-family-configuration)
+  must be provided by `scdetect`'
+  s `--templates-family-json path/to/templates-family.json` CLI flag.
+  (**References**: https://doi.org/10.1029/2019JB017468 (section 3.3.3 *
+  Magnitude Estimation*))
+
+All magnitude estimation methods listed above are based on the following types
+of *template station magnitudes*:
 
 - [`MLh`](https://www.seiscomp.de/doc/apps/global_mlh.html)
 
@@ -565,16 +601,10 @@ Again, for the amplitude-magnitude regression itself, the following types of
 
 > **NOTE**: Magnitudes of type `MLhc` are preferred over magnitudes of type `MLh`.
 
-The template station magnitudes must be available through eventparameters (for
-further details, please refer to the
+Recall, that template station magnitudes must be available through event
+parameters (for further details, please refer to the
 related [section](#inventory-events-and-configuration) on providing these data
 products).
-
-Magnitudes computed based on the amplitude-magnitude regression approach are of
-type `MLx`. These magnitudes are going to be issued as SeisComP *Station
-Magnitudes* (see also
-the [scmag documentation](https://docs.gempa.de/seiscomp/current/apps/scmag.html))
-.
 
 #### Template family configuration
 
@@ -738,7 +768,7 @@ defined:
 
 SeisComP stores and reads certain data (e.g.
 [inventory](https://www.seiscomp.de/doc/base/concepts/inventory.html#concepts-inventory)
-, eventparameters, etc.) in and from a database. In order to connect to the
+, event parameters, etc.) in and from a database. In order to connect to the
 database a *database connection URL* is required. This URL is either configured
 in
 [global.cfg](https://www.seiscomp.de/doc/base/concepts/configuration.html#global-modules-config)
@@ -758,10 +788,10 @@ the standard SeisComP CLI options:
 - `--inventory-db URI`
 - `--config-db URI`
 
-The non-standard `--event-db URI` option allows reading eventparameter related
+The non-standard `--event-db URI` option allows reading event parameter related
 data from either a file or a database specified by `URI` (Note that
 the `--event-db URI` CLI option overrides the `-d|--database URL` CLI option.).
-With that, inventory metadata, configuration data and eventparameters might be
+With that, inventory metadata, configuration data and event parameters might be
 read from plain files, making the database connection fully optional. E.g.
 
 ```bash
