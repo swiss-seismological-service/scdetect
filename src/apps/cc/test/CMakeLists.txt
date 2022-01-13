@@ -103,7 +103,7 @@ add_link_options(-fsanitize=address)
 
 foreach(TEST_SRC ${TESTS})
 	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
-	set(TEST_TARGET test_scdetect_${TEST_FNAME})
+	set(TEST_TARGET test_scdetect_cc_${TEST_FNAME})
   add_executable(${TEST_TARGET} ${TEST_SRC} ${SOURCES_${TEST_FNAME}})
 	sc_link_libraries_internal(${TEST_TARGET} unittest core client)
 	sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})

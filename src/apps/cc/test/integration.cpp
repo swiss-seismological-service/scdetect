@@ -1,4 +1,4 @@
-#define SEISCOMP_TEST_MODULE test_integration_general
+#define SEISCOMP_TEST_MODULE test_cc_integration_general
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/unittest/unittests.h>
@@ -427,10 +427,10 @@ const Samples dataset{
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
 BOOST_TEST_DECORATOR(*utf::tolerance(testUnitTolerance))
-BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
+BOOST_DATA_TEST_CASE(cc_integration, utf_data::make(dataset)) {
   TempDirFixture fx{CLIParserFixture::keepTempdir};
   // prepare empty config file
-  fs::path pathConfig{fx.pathTempdir / "scdetect.cfg"};
+  fs::path pathConfig{fx.pathTempdir / "scdetect-cc.cfg"};
   try {
     fs::ofstream{pathConfig};
   } catch (fs::filesystem_error &e) {
@@ -441,7 +441,7 @@ BOOST_DATA_TEST_CASE(integration, utf_data::make(dataset)) {
 
   // prepare CLI flags
   std::vector<std::string> flagsStr{
-      "scdetect",
+      "scdetect-cc",
       cli::to_string(cli::FlagConfigFile{pathConfig}),
       cli::to_string(cli::FlagDebug{}),
       cli::to_string(cli::FlagOffline{}),
