@@ -202,6 +202,8 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
   return factory::createMLx(bindings, detection, detectorConfig);
 }
 
+void Factory::reset() { resetCallbacks(); }
+
 std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
     const binding::Bindings &bindings, const factory::Detection &detection,
     const detector::DetectorWaveformProcessor &detector,

@@ -105,6 +105,13 @@ void Factory::removeStationMagnitude(const std::string& detectorId,
   }
 }
 
+void Factory::reset() {
+  resetCallbacks();
+
+  templateFamilies().clear();
+  stationMagnitudes().clear();
+}
+
 bool Factory::configureTemplateFamily(
     magnitude::TemplateFamilyBased* processor, const DetectorId& detectorId,
     const SensorLocationId& sensorLocationId, const std::string& magnitudeType,

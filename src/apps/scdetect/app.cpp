@@ -474,6 +474,8 @@ void Application::done() {
 
   EventStore::Instance().reset();
   RecordResamplerStore::Instance().reset();
+  AmplitudeProcessor::Factory::reset();
+  MagnitudeProcessor::Factory::reset();
 
   StreamApplication::done();
 }

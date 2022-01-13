@@ -50,6 +50,8 @@ class Factory
   // and `sensorLocationId`
   static void removeStationMagnitude(const std::string& detectorId,
                                      const std::string& sensorLocationId);
+  // Resets the factory
+  static void reset();
 
  private:
   using DetectorId = std::string;

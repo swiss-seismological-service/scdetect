@@ -37,6 +37,10 @@ class Factory {
     return nullptr;
   }
 
+ protected:
+  // Resets the factory callbacks
+  static void resetCallbacks() { callbackMap().clear(); }
+
  private:
   using CallbackMap = std::map<TIdentifierType, CallbackType>;
   // prevent the static order initialization problem
