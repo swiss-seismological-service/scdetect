@@ -609,8 +609,13 @@ void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
   BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->snr(); }));
   BOOST_TEST_CHECK(lhs->unit() == rhs->unit());
-  BOOST_TEST_CHECK(static_cast<std::string>(lhs->waveformID()) ==
-                   static_cast<std::string>(rhs->waveformID()));
+
+  {
+    auto predicate = [](const DataModel::AmplitudeCPtr &amp) {
+      return static_cast<std::string>(amp->waveformID());
+    };
+    BOOST_TEST_CHECK(equalOptional(lhs, rhs, predicate));
+  }
   BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
