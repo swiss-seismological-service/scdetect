@@ -325,11 +325,11 @@ configuration parameters:
 
 **General**:
 
-- `"templateId"`: A string defining the stream related template identifier. If
+- `"templateId"`: A string defining the stream related template identifier. The
+  identifier must be unique in the context of a detector configuration. If
   undefined a unique identifier will be generated, automatically.
-  Since `scdetect`
-  implements hierarchical logging specifying the template identifier may be of
-  particular use while debugging.
+  Since `scdetect` implements hierarchical logging specifying the template
+  identifier may be of particular use while debugging.
 
 - `"waveformId"`: Required. A string defining the waveform stream identifier of
   the stream to be processed. Usually, this refers to
