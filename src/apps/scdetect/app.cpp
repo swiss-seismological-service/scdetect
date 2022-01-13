@@ -39,6 +39,7 @@
 
 #include "amplitude/factory.h"
 #include "amplitude_processor.h"
+#include "config/detector.h"
 #include "config/exception.h"
 #include "config/validators.h"
 #include "detector/arrival.h"
@@ -374,7 +375,8 @@ bool Application::init() {
                     _config.pathTemplateJson.c_str());
   try {
     std::ifstream ifs{_config.pathTemplateJson};
-    if (!initDetectors(ifs, waveformHandler.get(), templateConfigs)) {
+    if (!initDetectors(ifs, waveformHandler.get(), templateConfigs) ||
+        templateConfigs.empty()) {
       return false;
     }
   } catch (std::ifstream::failure &e) {
@@ -1309,42 +1311,6 @@ bool Application::subscribeToRecordStream(
 bool Application::initDetectors(std::ifstream &ifs,
                                 WaveformHandlerIface *waveformHandler,
                                 TemplateConfigs &templateConfigs) {
-  // initialize detectors
-  struct TemplateProcessorIds {
-    bool complete{false};
-    std::unordered_set<std::string> ids;
-  };
-  std::unordered_map<std::string, TemplateProcessorIds> processorIds;
-  auto isUniqueProcessorId = [&processorIds](const std::string &detectorId,
-                                             const std::string &templateId) {
-    auto it{processorIds.find(detectorId)};
-    bool detectorExists{it != processorIds.end()};
-    if (detectorExists) {
-      if (it->second.complete) {
-        SCDETECT_LOG_WARNING(
-            "Processor id is be used by multiple "
-            "processors: detectorId=%s",
-            detectorId.c_str());
-        return false;
-      } else {
-        bool idExists{it->second.ids.find(templateId) != it->second.ids.end()};
-        if (idExists) {
-          SCDETECT_LOG_WARNING(
-              "Processor id is be used by multiple processors: "
-              "detectorId=%s, templateId=%s",
-              detectorId.c_str(), templateId.c_str());
-        }
-        it->second.ids.emplace(templateId);
-        return !idExists;
-      }
-    } else {
-      TemplateProcessorIds templateIds;
-      templateIds.ids.emplace(templateId);
-      processorIds.emplace(detectorId, templateIds);
-      return !detectorExists;
-    }
-  };
-
   try {
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
@@ -1354,6 +1320,10 @@ bool Application::initDetectors(std::ifstream &ifs,
         config::TemplateConfig tc{templateSettingPt.second,
                                   _config.detectorConfig, _config.streamConfig,
                                   _config.publishConfig};
+        if (!config::hasUniqueTemplateIds(tc)) {
+          throw ConfigError{"failed to initialize detector (id=" +
+                            tc.detectorId() + "): template ids must be unique"};
+        }
 
         SCDETECT_LOG_DEBUG("Creating detector processor (id=%s) ... ",
                            tc.detectorId().c_str());
@@ -1364,10 +1334,8 @@ bool Application::initDetectors(std::ifstream &ifs,
                           .setConfig(tc.publishConfig(), tc.detectorConfig(),
                                      _config.playbackConfig.enabled))};
 
-        std::vector<std::string> streamIds;
+        std::vector<WaveformStreamId> waveformStreamIds;
         for (const auto &streamConfigPair : tc) {
-          isUniqueProcessorId(tc.detectorId(),
-                              streamConfigPair.second.templateId);
           try {
             detectorBuilder.setStream(streamConfigPair.first,
                                       streamConfigPair.second, waveformHandler);
@@ -1404,9 +1372,8 @@ bool Application::initDetectors(std::ifstream &ifs,
             }
             throw;
           }
-          streamIds.push_back(streamConfigPair.first);
+          waveformStreamIds.push_back(streamConfigPair.first);
         }
-        processorIds.at(tc.detectorId()).complete = true;
 
         std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
             detectorBuilder.build()};
@@ -1418,8 +1385,9 @@ bool Application::initDetectors(std::ifstream &ifs,
               processDetection(processor, record, detection);
             });
 
-        for (const auto &streamId : streamIds)
-          _detectors.emplace(streamId, detectorPtr);
+        for (const auto &waveformStreamId : waveformStreamIds) {
+          _detectors.emplace(waveformStreamId, detectorPtr);
+        }
 
         templateConfigs.push_back(tc);
 

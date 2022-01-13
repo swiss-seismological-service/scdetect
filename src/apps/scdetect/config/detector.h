@@ -171,6 +171,8 @@ class TemplateConfig {
   std::string _originId;
 };
 
+bool hasUniqueTemplateIds(const TemplateConfig &tc);
+
 }  // namespace config
 }  // namespace detect
 }  // namespace Seiscomp
