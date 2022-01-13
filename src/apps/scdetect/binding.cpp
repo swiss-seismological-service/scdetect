@@ -1,5 +1,6 @@
 #include "binding.h"
 
+#include <seiscomp/core/strings.h>
 #include <seiscomp/datamodel/configstation.h>
 #include <seiscomp/datamodel/parameter.h>
 #include <seiscomp/datamodel/parameterset.h>
@@ -15,24 +16,15 @@
 #include "config/validators.h"
 #include "exception.h"
 #include "log.h"
-#include "seiscomp/core/strings.h"
+#include "seiscomp/core/datetime.h"
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
+#include "util/waveform_stream_id.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace binding {
-
-StreamConfig::DeconvolutionConfig::operator AmplitudeProcessor::
-    DeconvolutionConfig() const {
-  AmplitudeProcessor::DeconvolutionConfig retval;
-  retval.enabled = enabled;
-  retval.responseTaperLength = responseTaperLength;
-  retval.minimumResponseTaperFrequency = minimumResponseTaperFrequency;
-  retval.maximumResponseTaperFrequency = maximumResponseTaperFrequency;
-  return retval;
-}
 
 std::string StreamConfig::DeconvolutionConfig::debugString() const {
   return "enabled: " + std::to_string(enabled) +
@@ -57,7 +49,8 @@ StationConfig::const_iterator StationConfig::end() const {
 
 const SensorLocationConfig &StationConfig::at(
     const std::string &locCode, const std::string &chaCode) const {
-  return _sensorLocationConfigs.at({locCode, getBandAndSourceCode(chaCode)});
+  return _sensorLocationConfigs.at(
+      {locCode, util::getBandAndSourceCode(chaCode)});
 }
 
 Bindings::const_iterator Bindings::begin() const {
@@ -76,20 +69,21 @@ const SensorLocationConfig &Bindings::at(const std::string &netCode,
                                          const std::string &locCode,
                                          const std::string &chaCode) const {
   return _stationConfigs.at({netCode, staCode})
-      .at(locCode, getBandAndSourceCode(chaCode));
+      .at(locCode, util::getBandAndSourceCode(chaCode));
 }
 
 void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
                     const DataModel::ConfigModule *configModule,
                     const std::string &setupId) {
-  if (!configModule) return;
+  assert(moduleConfig);
+  assert(configModule);
 
   for (size_t j = 0; j < configModule->configStationCount(); ++j) {
     DataModel::ConfigStation *stationConfig{configModule->configStation(j)};
     DataModel::Setup *configSetup{
         DataModel::findSetup(stationConfig, setupId, false)};
 
-    if (configSetup) {
+    if (static_cast<bool>(configSetup)) {
       DataModel::ParameterSet *parameterSet{nullptr};
       try {
         parameterSet =
@@ -97,7 +91,7 @@ void Bindings::load(const Seiscomp::Config::Config *moduleConfig,
       } catch (Core::ValueException &) {
       }
 
-      if (!parameterSet) {
+      if (!static_cast<bool>(parameterSet)) {
         SCDETECT_LOG_WARNING("Failed to find parameter set with id: %s",
                              configSetup->parameterSetID().c_str());
         continue;
@@ -158,7 +152,7 @@ const StationConfig &Bindings::load(
 
       // only take the band and source code identifiers into account
       auto &sensorLocationConfig{stationConfig._sensorLocationConfigs[{
-          locCode, getBandAndSourceCode(chaCode)}]};
+          locCode, util::getBandAndSourceCode(chaCode)}]};
       // load amplitude processing config
       try {
         auto amplitudePrefix{prefix + ".amplitudes"};
@@ -190,7 +184,7 @@ const StationConfig &Bindings::load(
 
             auto &streamConfig{
                 sensorLocationConfig
-                    .streamConfigs[getBandAndSourceCode(chaCode) +
+                    .streamConfigs[util::getBandAndSourceCode(chaCode) +
                                    subSourceCode]};
             try {
               detail::load(settings, respProfilePrefix, streamConfig,
@@ -231,10 +225,6 @@ const StationConfig &Bindings::load(
   }
   stationConfig._parameters = keys;
   return stationConfig;
-}
-
-std::string getBandAndSourceCode(const std::string &chaCode) {
-  return chaCode.size() <= 2 ? chaCode : chaCode.substr(0, 2);
 }
 
 boost::optional<double> parseSaturationThreshold(
@@ -331,21 +321,27 @@ boost::optional<double> parseSaturationThreshold(
 
 namespace detail {
 
-void setFilter(const std::string &filter, std::string &storageLocation) {
+void setFilter(const boost::optional<std::string> &filter,
+               boost::optional<std::string> &storageLocation) {
+  // no filter
+  if (!filter) {
+    return;
+  }
+
   // filtering explictily disabled
-  if (filter.empty()) {
+  if (filter.value().empty()) {
     storageLocation = filter;
     return;
   }
 
   std::string err;
-  if (!config::validateFilter(filter, err)) {
+  if (!config::validateFilter(*filter, err)) {
     throw ValueException{"invalid filter string identifier: " + err};
   }
   storageLocation = filter;
 }
 
-void setInitTime(double t, double &storageLocation) {
+void setInitTime(const Core::TimeSpan &t, Core::TimeSpan &storageLocation) {
   if (!util::isGeZero(t)) {
     throw ValueException{"invalid init time: " + std::to_string(t) +
                          " (Must be >= 0.)"};
@@ -356,23 +352,27 @@ void setInitTime(double t, double &storageLocation) {
 void setFilter(const Processing::Settings &settings,
                const std::string &parameterFilter,
                const std::string &parameterInitTime,
-               const std::string &defaultFilter, double defaultInitTime,
-               std::string &storageLocationFilter,
-               double &storageLocationInitTime) {
-  std::string filterStr;
-  if (!settings.getValue(filterStr, parameterFilter)) {
-    filterStr = defaultFilter;
-  }
-
+               const boost::optional<std::string> &defaultFilter,
+               const Core::TimeSpan &defaultInitTime,
+               boost::optional<std::string> &storageLocationFilter,
+               Core::TimeSpan &storageLocationInitTime) {
   double t;
   if (!settings.getValue(t, parameterInitTime)) {
     t = defaultInitTime;
   }
 
-  std::string previousFilter{storageLocationFilter};
-  setFilter(filterStr, storageLocationFilter);
+  std::string parsed;
+  boost::optional<std::string> filter;
+  if (settings.getValue(parsed, parameterFilter)) {
+    filter = parsed;
+  } else {
+    filter = defaultFilter;
+  }
+
+  boost::optional<std::string> previousFilter{storageLocationFilter};
+  setFilter(filter, storageLocationFilter);
   try {
-    setInitTime(t, storageLocationInitTime);
+    setInitTime(Core::TimeSpan{t}, storageLocationInitTime);
   } catch (ValueException &) {
     storageLocationFilter = previousFilter;
     throw;
@@ -452,11 +452,15 @@ void load(const Processing::Settings &settings,
       amplitudeTypes.empty()) {
     storageLocation.amplitudeTypes = defaults.amplitudeTypes;
   } else {
+    storageLocation.amplitudeTypes.clear();
+
     std::vector<std::string> tokens;
     Core::split(tokens, amplitudeTypes, settings::kConfigListSep.c_str());
     for (const auto &t : tokens) {
       if (config::validateAmplitudeType(t)) {
         storageLocation.amplitudeTypes.push_back(t);
+      } else {
+        throw ValueException{"invalid amplitude type: " + t};
       }
     }
   }
@@ -466,12 +470,23 @@ void load(const Processing::Settings &settings,
     storageLocation.enabled = defaults.enabled;
   }
 
-  setFilter(settings, parameterPrefix + ".filter",
-            parameterPrefix + ".initTime", defaults.mlx.filter,
+  // MRelative
+  setFilter(settings, parameterPrefix + ".MRelative.filter",
+            parameterPrefix + ".MRelative.initTime", defaults.mrelative.filter,
+            defaults.mrelative.initTime, storageLocation.mrelative.filter,
+            storageLocation.mrelative.initTime);
+
+  setSaturationThreshold(settings,
+                         parameterPrefix + ".MRelative.saturationThreshold",
+                         storageLocation.mrelative.saturationThreshold);
+
+  // MLx
+  setFilter(settings, parameterPrefix + ".MLx.filter",
+            parameterPrefix + ".MLx.initTime", defaults.mlx.filter,
             defaults.mlx.initTime, storageLocation.mlx.filter,
             storageLocation.mlx.initTime);
 
-  setSaturationThreshold(settings, parameterPrefix + ".saturationThreshold",
+  setSaturationThreshold(settings, parameterPrefix + ".MLx.saturationThreshold",
                          storageLocation.mlx.saturationThreshold);
 }
 
@@ -484,11 +499,15 @@ void load(const Processing::Settings &settings,
       magnitudeTypes.empty()) {
     storageLocation.magnitudeTypes = defaults.magnitudeTypes;
   } else {
+    storageLocation.magnitudeTypes.clear();
+
     std::vector<std::string> tokens;
     Core::split(tokens, magnitudeTypes, settings::kConfigListSep.c_str());
     for (const auto &t : tokens) {
       if (config::validateMagnitudeType(t)) {
         storageLocation.magnitudeTypes.push_back(t);
+      } else {
+        throw ValueException{"invalid magnitude type: " + t};
       }
     }
   }

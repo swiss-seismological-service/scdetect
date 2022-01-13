@@ -1,4 +1,7 @@
 #define SEISCOMP_TEST_MODULE test_reducingamplitudeprocessor
+
+#include "../reducing_amplitude_processor.h"
+
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/recordsequence.h>
@@ -25,7 +28,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../amplitudeprocessor.h"
 #include "../processing/waveform_processor.h"
 #include "../util/memory.h"
 #include "../util/util.h"
@@ -233,10 +235,10 @@ struct Sample {
 // - does not implement any preprocessing
 class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
  public:
-  TestReducingAmplitudeProcessor(const Core::TimeWindow &tw) {
+  explicit TestReducingAmplitudeProcessor(const Core::TimeWindow &tw) {
     setTimeWindow(tw);
-    _type = "Mtest";
-    _unit = "M/S";
+    setType("Mtest");
+    setUnit("M/S");
   }
 
   void computeTimeWindow() override {

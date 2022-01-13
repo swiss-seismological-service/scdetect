@@ -5,11 +5,11 @@
 #include <seiscomp/core/record.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/core/typedarray.h>
-#include <seiscomp/math/filter.h>
 
 #include <boost/optional/optional.hpp>
 #include <memory>
 
+#include "../def.h"
 #include "detail/gap_interpolate.h"
 #include "processor.h"
 #include "stream.h"
@@ -33,7 +33,7 @@ class WaveformOperator;
 //
 class WaveformProcessor : public Processor, public detail::InterpolateGaps {
  public:
-  using Filter = Math::Filtering::InPlaceFilter<double>;
+  using Filter = DoubleFilter;
 
   // XXX(damb): From libs/seiscomp/processing/waveformprocessor.h
   enum class Status {
@@ -120,8 +120,8 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // - `op` sits between `feed` and `store`
   // - the pointer ownership goes to the processor
   void setOperator(WaveformOperator *op);
-  // Returns the processor's initialization time; by default this corresponds
-  // to the processor's filter initialization time
+  // Returns the processor's initialization time; most frequently this
+  // corresponds to the processor's filter initialization time
   virtual Core::TimeSpan initTime() const;
 
   // Default implementation returns if the status if greater than
@@ -156,12 +156,12 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
     bool initialized{false};
   };
 
-  virtual StreamState &streamState(const Record *record) = 0;
+  virtual StreamState *streamState(const Record *record) = 0;
 
   // Virtual method that must be used in derived classes to analyse a
   // data stream. Both the raw record and the filtered data array is passed.
   virtual void process(StreamState &streamState, const Record *record,
-                       const DoubleArray &filteredData) = 0;
+                       const DoubleArray &filteredData);
   // Store the record
   virtual bool store(const Record *record);
 
@@ -176,7 +176,7 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // implementation does not perform any check
   //
   // - returns `true` in case `data` is saturated, else `false`
-  virtual bool checkIfSaturated(DoubleArrayPtr &data);
+  virtual bool checkIfSaturated(const DoubleArray &data);
 
   // Wrapper method for both `enoughDataReceived()` and `process()`. Returns
   // `true` if `process` was called, else `false`

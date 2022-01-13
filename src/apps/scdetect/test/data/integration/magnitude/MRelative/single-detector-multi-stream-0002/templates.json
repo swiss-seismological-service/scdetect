@@ -1,0 +1,31 @@
+[
+    {
+        "detectorId": "detector-01",
+        "gapInterpolation": true,
+        "gapThreshold": 0.1,
+        "gapTolerance": 1.5,
+        "triggerDuration": -1,
+        "triggerOnThreshold": 0.98,
+        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+        "createAmplitudes": true,
+        "createMagnitudes": true,
+        "filter": "",
+        "templatePhase": "Pg",
+        "streams": [
+              {
+                  "templateId": "template-01",
+                  "waveformId": "CH.GRIMS..HHZ",
+                  "initTime": 15,
+                  "templateWaveformStart": -2,
+                  "templateWaveformEnd": 2
+              },
+              {
+                  "templateId": "template-02",
+                  "waveformId": "CH.HASLI..HHZ",
+                  "initTime": 10,
+                  "templateWaveformStart": -1,
+                  "templateWaveformEnd": 4
+              }
+        ]
+    }
+]

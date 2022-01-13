@@ -16,10 +16,9 @@
 
 #include <boost/optional/optional.hpp>
 #include <memory>
-#include <ostream>
-#include <unordered_map>
 #include <vector>
 
+#include "amplitude/factory.h"
 #include "processing/timewindow_processor.h"
 
 namespace Seiscomp {
@@ -32,6 +31,14 @@ namespace detect {
 // amplitudes are computed based on the `TimeWindowProcessor`'s time window.
 class AmplitudeProcessor : public processing::TimeWindowProcessor {
  public:
+  using Factory = amplitude::Factory;
+
+  class BaseException : public Processor::BaseException {
+   public:
+    using Processor::BaseException::BaseException;
+    BaseException();
+  };
+
   struct Config {
     // Defines the beginning of the time window used for amplitude analysis
     // with regard to the beginning of the overall time window
@@ -42,7 +49,10 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   };
 
   struct DeconvolutionConfig {
-    // Indicates whether deconvolution is enabled `true` or not `false`
+    DeconvolutionConfig() = default;
+    explicit DeconvolutionConfig(
+        const binding::StreamConfig::DeconvolutionConfig &config);
+    // Indicates whether deconvolution is enabled `true` or whether not `false`
     bool enabled{false};
     // Taper length in seconds when deconvolving the data
     double responseTaperLength{5};
@@ -117,6 +127,10 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // Returns the amplitude unit
   const std::string &unit() const;
 
+  // Returns the waveform stream identifiers the amplitude processor is
+  // associated with
+  virtual std::vector<std::string> associatedWaveformStreamIds() const;
+
   // Sets the *environment* of the amplitude processor
   virtual void setEnvironment(const DataModel::OriginCPtr &hypocenter,
                               const DataModel::SensorLocationCPtr &receiver,
@@ -141,10 +155,12 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     size_t end;
   };
 
-  // Compute the amplitude from `data` in `idxRange`
-  virtual void computeAmplitude(const DoubleArray &data,
-                                const IndexRange &idxRange,
-                                Amplitude &amplitude) = 0;
+  using Buffer = DoubleArray;
+
+  // Sets the type of amplitudes the amplitude processor is producing
+  void setType(std::string type);
+  // Sets the unit of amplitudes the amplitude processor is producing
+  void setUnit(std::string unit);
 
   // Compute the noise from `data` in the window defined by `idxRange`. While
   // `noiseOffset` refers to an offset applied when computing the noise the
@@ -184,114 +200,18 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
 
   // Amplitude processor configuration
   Config _config;
+
+ private:
   // Amplitude processor *environment*
   Environment _environment;
-
-  PublishAmplitudeCallback _resultCallback;
 
   // The amplitude type
   std::string _type;
   // The amplitude unit
   std::string _unit;
-};
 
-/* ------------------------------------------------------------------------- */
-// Base class for reducing amplitude processors
-//
-// - handles multiple streams which are reduced to a single amplitude
-// - TODO(damb): implement SNR facilities
-class ReducingAmplitudeProcessor : public AmplitudeProcessor {
- public:
-  // Sets the common filter `filter` for all registered streams
-  //
-  // - configuring the `filter` can be done only before the first record was
-  // fed or after resetting the processor
-  void setFilter(std::unique_ptr<Filter> &&filter,
-                 const Core::TimeSpan &initTime);
-
-  bool feed(const Record *record) override;
-
-  void reset() override;
-
-  // Registers a new stream with `streamConfig` and `deconvolutionConfig`
-  //
-  // - adding additional streams can be done only before the first record was
-  // fed
-  virtual void add(
-      const std::string &netCode, const std::string &staCode,
-      const std::string &locCode, const Processing::Stream &streamConfig,
-      const AmplitudeProcessor::DeconvolutionConfig &deconvolutionConfig);
-
-  // Returns a the registered waveform stream identifiers
-  std::vector<std::string> waveformStreamIds() const;
-
-  // Dump the buffered data to `out`
-  void dumpBufferedData(std::ostream &out);
-
- protected:
-  // Reduce `data` regarding an amplitude calculation where `noiseInfos`
-  // corresponds the individual noise offset.
-  //
-  // - returns the reduced result
-  virtual DoubleArrayCPtr reduceAmplitudeData(
-      const std::vector<DoubleArray const *> &data,
-      const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) = 0;
-
-  // Compute an overall signal-to-noise ratio
-  virtual boost::optional<double> reduceNoiseData(
-      const std::vector<DoubleArray const *> &data,
-      const std::vector<IndexRange> &idxRanges,
-      const std::vector<NoiseInfo> &noiseInfos);
-
-  StreamState &streamState(const Record *record) override;
-
-  void process(StreamState &streamState, const Record *record,
-               const DoubleArray &filteredData) override;
-
-  bool store(const Record *record) override;
-
-  bool fill(processing::StreamState &streamState, const Record *record,
-            DoubleArrayPtr &data) override;
-
-  bool processIfEnoughDataReceived(StreamState &streamState,
-                                   const Record *record,
-                                   const DoubleArray &filteredData) override;
-
-  bool enoughDataReceived(const StreamState &streamState) const override;
-
-  using Buffer = DoubleArray;
-
-  struct StreamItem {
-    // Stream configuration including sensor response etc.
-    Processing::Stream streamConfig;
-    // Current stream state
-    WaveformProcessor::StreamState streamState;
-    // Time window buffer
-    Buffer buffer;
-
-    DeconvolutionConfig deconvolutionConfig;
-
-    // Defines the needed samples (including both `_initTime` (i.e. used for
-    // filter initialization) and the number of samples needed to enable
-    // noise/amplitude analysis.
-    size_t neededSamples{0};
-
-    // stream specific noise offset
-    boost::optional<double> noiseOffset;
-  };
-
-  using WaveformStreamId = std::string;
-  using StreamMap = std::unordered_map<WaveformStreamId, StreamItem>;
-  StreamMap _streams;
-
- private:
-  // Returns if streams may be added to the processor
-  bool locked() const;
-  // The common sampling frequency
-  boost::optional<double> _commonSamplingFrequency;
-
-  // Pointer to the configured filter
-  std::unique_ptr<Filter> _filter;
+  // The callback invoked when there is an amplitude to publish
+  PublishAmplitudeCallback _resultCallback;
 };
 
 }  // namespace detect

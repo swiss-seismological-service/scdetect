@@ -6,7 +6,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <ostream>
 #include <sstream>
@@ -37,6 +38,11 @@ auto getOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
 template <typename T, typename TFunc>
 bool equalOptional(const T &lhs, const T &rhs, TFunc f) {
   return getOptional(lhs, f) == getOptional(rhs, f);
+}
+
+template <typename T, typename TFunc, typename TCmp>
+bool equalOptional(const T &lhs, const T &rhs, TFunc f, TCmp cmp) {
+  return cmp(getOptional(lhs, f), getOptional(rhs, f));
 }
 
 template <typename TPtr, typename TFunc, typename TPred>
@@ -84,35 +90,27 @@ BooleanFlag::BooleanFlag(bool enabled) : ArgFlag{enabled ? "1" : "0"} {}
 void BooleanFlag::enable() { setArg("1"); }
 void BooleanFlag::disable() { setArg("0"); }
 
-const std::string FlagDebug::flag() const { return "--debug"; }
+std::string FlagDebug::flag() const { return "--debug"; }
 
-const std::string FlagConsole::flag() const { return "--console"; }
+std::string FlagConsole::flag() const { return "--console"; }
 
 FlagAmplitudesForce::FlagAmplitudesForce(bool enabled) : BooleanFlag{enabled} {}
-const std::string FlagAmplitudesForce::flag() const {
-  return "--amplitudes-force";
-}
+std::string FlagAmplitudesForce::flag() const { return "--amplitudes-force"; }
 
 FlagMagnitudesForce::FlagMagnitudesForce(bool enabled) : BooleanFlag{enabled} {}
-const std::string FlagMagnitudesForce::flag() const {
-  return "--magnitudes-force";
-}
+std::string FlagMagnitudesForce::flag() const { return "--magnitudes-force"; }
 
-const std::string FlagOffline::flag() const { return std::string{"--offline"}; }
+std::string FlagOffline::flag() const { return std::string{"--offline"}; }
 
-const std::string FlagPlayback::flag() const {
-  return std::string{"--playback"};
-}
+std::string FlagPlayback::flag() const { return std::string{"--playback"}; }
 
-const std::string FlagTemplatesReload::flag() const {
-  return "--templates-reload";
-}
+std::string FlagTemplatesReload::flag() const { return "--templates-reload"; }
 
 FlagAgencyId::FlagAgencyId(const std::string &id) : ArgFlag{id} {}
-const std::string FlagAgencyId::flag() const { return "--agencyID"; }
+std::string FlagAgencyId::flag() const { return "--agencyID"; }
 
 FlagAuthor::FlagAuthor(const std::string &name) : ArgFlag{name} {}
-const std::string FlagAuthor::flag() const { return "--author"; }
+std::string FlagAuthor::flag() const { return "--author"; }
 
 FlagPlugins::FlagPlugins(const std::string &plugin) : ArgFlag{plugin} {
   // TODO(damb): Must not contain comma
@@ -120,59 +118,57 @@ FlagPlugins::FlagPlugins(const std::string &plugin) : ArgFlag{plugin} {
 FlagPlugins::FlagPlugins(const std::vector<std::string> &plugins)
     : ArgFlag{boost::algorithm::join(plugins, settings::kConfigListSep)} {}
 
-const std::string FlagPlugins::flag() const { return "--plugins"; }
+std::string FlagPlugins::flag() const { return "--plugins"; }
 
 FlagEp::FlagEp(const std::string &fpath) : ArgFlag{fpath} {}
 FlagEp ::FlagEp(const fs::path &fpath) : FlagEp{fpath.string()} {}
-const std::string FlagEp::flag() const { return "--ep"; }
+std::string FlagEp::flag() const { return "--ep"; }
 
 FlagConfigFile::FlagConfigFile(const std::string &fpath) : ArgFlag{fpath} {}
 FlagConfigFile::FlagConfigFile(const fs::path &fpath)
     : ArgFlag{fpath.string()} {}
-const std::string FlagConfigFile::flag() const { return "--config-file"; }
+std::string FlagConfigFile::flag() const { return "--config-file"; }
 
 FlagDB::FlagDB(const std::string &uri) : ArgFlag{uri} {}
 FlagDB ::FlagDB(const fs::path &fpath)
     : FlagDB{std::string{"sqlite3://" + fpath.string()}} {}
-const std::string FlagDB::flag() const { return "--database"; }
+std::string FlagDB::flag() const { return "--database"; }
 
 FlagInventoryDB::FlagInventoryDB(const std::string &uri) : ArgFlag{uri} {}
 FlagInventoryDB::FlagInventoryDB(const fs::path &fpath)
     : FlagInventoryDB{std::string{"file://" + fpath.string()}} {}
-const std::string FlagInventoryDB::flag() const { return "--inventory-db"; }
+std::string FlagInventoryDB::flag() const { return "--inventory-db"; }
 
 FlagConfigModule::FlagConfigModule(const std::string &configModule)
     : ArgFlag{configModule} {}
-const std::string FlagConfigModule::flag() const { return "--config-module"; }
+std::string FlagConfigModule::flag() const { return "--config-module"; }
 
 FlagConfigDB::FlagConfigDB(const std::string &uri) : ArgFlag{uri} {}
 FlagConfigDB::FlagConfigDB(const fs::path &fpath)
     : FlagConfigDB{std::string{"file://" + fpath.string()}} {}
-const std::string FlagConfigDB::flag() const { return "--config-db"; }
+std::string FlagConfigDB::flag() const { return "--config-db"; }
 
 FlagEventDB::FlagEventDB(const std::string &uri) : ArgFlag{std::string{uri}} {}
 FlagEventDB::FlagEventDB(const fs::path &fpath)
     : FlagEventDB{std::string{"file://" + fpath.string()}} {}
-const std::string FlagEventDB::flag() const { return "--event-db"; }
+std::string FlagEventDB::flag() const { return "--event-db"; }
 
 FlagRecordURL ::FlagRecordURL(const std::string &url) : ArgFlag{url} {}
-const std::string FlagRecordURL::flag() const { return "--record-url"; }
+std::string FlagRecordURL::flag() const { return "--record-url"; }
 
 FlagRecordStartTime::FlagRecordStartTime(const std::string &timeStr)
     : ArgFlag{timeStr} {}
-const std::string FlagRecordStartTime::flag() const {
-  return "--record-starttime";
-}
+std::string FlagRecordStartTime::flag() const { return "--record-starttime"; }
 
 FlagRecordEndTime::FlagRecordEndTime(const std::string &timeStr)
     : ArgFlag{timeStr} {}
-const std::string FlagRecordEndTime::flag() const { return "--record-endtime"; }
+std::string FlagRecordEndTime::flag() const { return "--record-endtime"; }
 
 FlagTemplatesJSON::FlagTemplatesJSON(const std::string &fpath)
     : ArgFlag{fpath} {}
 FlagTemplatesJSON::FlagTemplatesJSON(const fs::path &fpath)
     : FlagTemplatesJSON{fpath.string()} {}
-const std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
+std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 
 }  // namespace cli
 
@@ -225,7 +221,9 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
   // compare amplitudes
   const auto amplitudePredicate = [](const DataModel::AmplitudeCPtr &lhs,
                                      const DataModel::AmplitudeCPtr &rhs) {
-    // XXX(damb): Used to generate a pseudo total order
+    // XXX(damb):
+    // - used to generate a pseudo total order
+    // - requires the optionals to be available
     const auto amplitudeTypePredicate = [](const DataModel::AmplitudeCPtr &a) {
       return a->type();
     };
@@ -242,9 +240,16 @@ void eventParametersCmp(const DataModel::EventParametersCPtr &lhs,
           return a->timeWindow().reference() +
                  Core::TimeSpan{a->timeWindow().end()};
         };
+    const auto amplitudeTimeWindowReferencePredicate =
+        [](const DataModel::AmplitudeCPtr &a) {
+          return a->timeWindow().reference() +
+                 Core::TimeSpan{a->timeWindow().begin()};
+        };
 
     return amplitudeTypePredicate(lhs) < amplitudeTypePredicate(rhs) &&
            amplitudeValuePredicate(lhs) < amplitudeValuePredicate(rhs) &&
+           amplitudeTimeWindowReferencePredicate(lhs) <
+               amplitudeTimeWindowReferencePredicate(rhs) &&
            amplitudeTimeWindowBeginPredicate(lhs) <
                amplitudeTimeWindowBeginPredicate(rhs) &&
            amplitudeTimeWindowEndPredicate(lhs) <
@@ -309,7 +314,9 @@ void waveformStreamIdCmp(const DataModel::WaveformStreamID &lhs,
 void originCmp(const DataModel::OriginCPtr &lhs,
                const DataModel::OriginCPtr &rhs) {
   BOOST_TEST_CHECK(static_cast<double>(lhs->time().value()) ==
-                   static_cast<double>(rhs->time().value()));
+                       static_cast<double>(rhs->time().value()),
+                   utf_tt::tolerance(3.0e-6));
+
   BOOST_TEST_CHECK(lhs->latitude() == rhs->latitude());
   BOOST_TEST_CHECK(lhs->longitude() == rhs->longitude());
 
@@ -369,42 +376,69 @@ void originCmp(const DataModel::OriginCPtr &lhs,
   }
 
   // compare magnitudes
-  BOOST_TEST_CHECK(lhs->magnitudeCount() == rhs->magnitudeCount());
-  const auto magnitudePredicate = [](const DataModel::MagnitudeCPtr &lhs,
-                                     const DataModel::MagnitudeCPtr &rhs) {
-    return lhs->magnitude().value() < rhs->magnitude().value() &&
-           lhs->type() < rhs->type();
-  };
-  const auto lhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
-      [&lhs](size_t i) { return lhs->magnitude(i); }, lhs->magnitudeCount(),
-      magnitudePredicate)};
-  const auto rhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
-      [&rhs](size_t i) { return rhs->magnitude(i); }, rhs->magnitudeCount(),
-      magnitudePredicate)};
-  for (size_t j = 0; j < lhsMags.size(); ++j) {
-    DataModel::MagnitudeCPtr magResult{lhsMags.at(j)};
-    DataModel::MagnitudeCPtr magExpected{rhsMags.at(j)};
+  {
+    BOOST_TEST_CHECK(lhs->magnitudeCount() == rhs->magnitudeCount());
+    const auto predicate = [](const DataModel::MagnitudeCPtr &lhs,
+                              const DataModel::MagnitudeCPtr &rhs) {
+      return lhs->magnitude().value() < rhs->magnitude().value() &&
+             lhs->type() < rhs->type();
+    };
+    const auto lhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
+        [&lhs](size_t i) { return lhs->magnitude(i); }, lhs->magnitudeCount(),
+        predicate)};
+    const auto rhsMags{sortByPredicate<DataModel::MagnitudeCPtr>(
+        [&rhs](size_t i) { return rhs->magnitude(i); }, rhs->magnitudeCount(),
+        predicate)};
+    for (size_t j = 0; j < lhsMags.size(); ++j) {
+      DataModel::MagnitudeCPtr magResult{lhsMags.at(j)};
+      DataModel::MagnitudeCPtr magExpected{rhsMags.at(j)};
 
-    magnitudeCmp(magResult, magExpected);
+      magnitudeCmp(magResult, magExpected);
+    }
+  }
+
+  // compare station magnitudes
+  {
+    BOOST_TEST_CHECK(lhs->stationMagnitudeCount() ==
+                     rhs->stationMagnitudeCount());
+    const auto predicate = [](const DataModel::StationMagnitudeCPtr &lhs,
+                              const DataModel::StationMagnitudeCPtr &rhs) {
+      return lhs->magnitude().value() < rhs->magnitude().value() &&
+             lhs->type() < rhs->type();
+    };
+    const auto lhsMags{sortByPredicate<DataModel::StationMagnitudeCPtr>(
+        [&lhs](size_t i) { return lhs->stationMagnitude(i); },
+        lhs->magnitudeCount(), predicate)};
+    const auto rhsMags{sortByPredicate<DataModel::StationMagnitudeCPtr>(
+        [&rhs](size_t i) { return rhs->stationMagnitude(i); },
+        rhs->magnitudeCount(), predicate)};
+    for (size_t j = 0; j < lhsMags.size(); ++j) {
+      DataModel::StationMagnitudeCPtr magResult{lhsMags.at(j)};
+      DataModel::StationMagnitudeCPtr magExpected{rhsMags.at(j)};
+
+      stationMagnitudeCmp(magResult, magExpected);
+    }
   }
 
   // compare comments
-  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
-  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
-                                   const DataModel::CommentCPtr &rhs) {
-    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
-  };
-  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
-      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
-      commentPredicate)};
-  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
-      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
-      commentPredicate)};
-  for (size_t j = 0; j < lhsComments.size(); ++j) {
-    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
-    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+  {
+    BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+    const auto predicate = [](const DataModel::CommentCPtr &lhs,
+                              const DataModel::CommentCPtr &rhs) {
+      return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+    };
+    const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+        [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+        predicate)};
+    const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+        [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+        predicate)};
+    for (size_t j = 0; j < lhsComments.size(); ++j) {
+      DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+      DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
 
-    commentCmp(commentResult, commentExpected);
+      commentCmp(commentResult, commentExpected);
+    }
   }
 }
 
@@ -493,9 +527,55 @@ void arrivalCmp(const DataModel::ArrivalCPtr &lhs,
   }));
 }
 
+void stationMagnitudeCmp(const DataModel::StationMagnitudeCPtr &lhs,
+                         const DataModel::StationMagnitudeCPtr &rhs) {
+  BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
+  BOOST_TEST_CHECK(lhs->magnitude().value() == rhs->magnitude().value(),
+                   utf_tt::tolerance(1.0e-3));
+  BOOST_TEST_CHECK(lhs->type() == rhs->type());
+  BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
+
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs,
+      [](const DataModel::StationMagnitudeCPtr m) { return m->waveformID(); },
+      [](const boost::optional<DataModel::WaveformStreamID> &lhs,
+         const boost::optional<DataModel::WaveformStreamID> &rhs) {
+        return (lhs == boost::none && rhs == boost::none) ||
+               (lhs && rhs && *lhs == *rhs);
+      }));
+
+  BOOST_TEST_CHECK(equalOptional(
+      lhs, rhs,
+      [](const DataModel::StationMagnitudeCPtr &m) { return m->passedQC(); }));
+
+  BOOST_TEST_CHECK(
+      equalOptional(lhs, rhs, [](const DataModel::StationMagnitudeCPtr &m) {
+        return m->creationInfo().agencyID();
+      }));
+
+  // compare comments
+  BOOST_TEST_CHECK(lhs->commentCount() == rhs->commentCount());
+  const auto commentPredicate = [](const DataModel::CommentCPtr &lhs,
+                                   const DataModel::CommentCPtr &rhs) {
+    return lhs->id() < rhs->id() && lhs->text() < rhs->text();
+  };
+  const auto lhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&lhs](size_t i) { return lhs->comment(i); }, lhs->commentCount(),
+      commentPredicate)};
+  const auto rhsComments{sortByPredicate<DataModel::CommentCPtr>(
+      [&rhs](size_t i) { return rhs->comment(i); }, rhs->commentCount(),
+      commentPredicate)};
+  for (size_t j = 0; j < lhsComments.size(); ++j) {
+    DataModel::CommentCPtr commentResult{lhsComments.at(j)};
+    DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    commentCmp(commentResult, commentExpected);
+  }
+}
+
 void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
                   const DataModel::MagnitudeCPtr &rhs) {
-  BOOST_TEST_CHECK(lhs->magnitude() == rhs->magnitude());
+  BOOST_TEST_CHECK(lhs->magnitude().value() == rhs->magnitude().value());
   BOOST_TEST_CHECK(lhs->type() == rhs->type());
   BOOST_TEST_CHECK(lhs->originID() == rhs->originID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
@@ -516,8 +596,11 @@ void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
 void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
                   const DataModel::AmplitudeCPtr &rhs) {
   BOOST_TEST_CHECK(lhs->type() == rhs->type());
-  BOOST_TEST_CHECK(equalOptional(
-      lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->amplitude(); }));
+
+  // XXX(damb): an amplitude value must be available.
+  BOOST_TEST_CHECK(lhs->amplitude().value() == rhs->amplitude().value(),
+                   utf_tt::tolerance(1.0e-3));
+
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
     return amp->timeWindow();
   }));
@@ -526,9 +609,13 @@ void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
   BOOST_TEST_CHECK(equalOptional(
       lhs, rhs, [](DataModel::AmplitudeCPtr amp) { return amp->snr(); }));
   BOOST_TEST_CHECK(lhs->unit() == rhs->unit());
-  BOOST_TEST_CHECK(lhs->pickID() == rhs->pickID());
-  BOOST_TEST_CHECK(static_cast<std::string>(lhs->waveformID()) ==
-                   static_cast<std::string>(rhs->waveformID()));
+
+  {
+    auto predicate = [](const DataModel::AmplitudeCPtr &amp) {
+      return static_cast<std::string>(amp->waveformID());
+    };
+    BOOST_TEST_CHECK(equalOptional(lhs, rhs, predicate));
+  }
   BOOST_TEST_CHECK(lhs->filterID() == rhs->filterID());
   BOOST_TEST_CHECK(lhs->methodID() == rhs->methodID());
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::AmplitudeCPtr amp) {
@@ -558,6 +645,10 @@ void amplitudeCmp(const DataModel::AmplitudeCPtr &lhs,
   for (size_t j = 0; j < lhsComments.size(); ++j) {
     DataModel::CommentCPtr commentResult{lhsComments.at(j)};
     DataModel::CommentCPtr commentExpected{rhsComments.at(j)};
+
+    if (commentResult->id() == settings::kAmplitudePicksCommentId) {
+      continue;
+    }
 
     commentCmp(commentResult, commentExpected);
   }

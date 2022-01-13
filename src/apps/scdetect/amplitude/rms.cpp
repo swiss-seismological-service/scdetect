@@ -1,24 +1,32 @@
 #include "rms.h"
 
+#include <seiscomp/client/inventory.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/strings.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/comment.h>
+#include <seiscomp/processing/stream.h>
 
 #include <algorithm>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/optional/optional.hpp>
+#include <cassert>
 #include <cmath>
+#include <exception>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "../log.h"
 #include "../settings.h"
+#include "../util/horizontal_components.h"
 #include "../util/math.h"
 #include "../util/memory.h"
 #include "../util/util.h"
+#include "../util/waveform_stream_id.h"
+#include "factory.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -64,24 +72,22 @@ struct TimeInfo {
 }  // namespace
 
 RMSAmplitude::RMSAmplitude() {
-  _type = "Mrms";
-  _unit = "M/S";
+  setType("Mrms");
+  setUnit("M/S");
 }
 
 void RMSAmplitude::computeTimeWindow() {
-  if (_environment.picks.empty()) {
-    throw Processor::BaseException(
-        "failed to compute time window: missing picks");
-  }
+  const auto &env{environment()};
+  assert(!env.picks.empty());
 
   std::vector<Core::Time> pickTimes;
   Core::TimeSpan maxTemplateWaveformStartTimeOffset;
   Core::TimeSpan maxTemplateWaveformEndTimeOffset;
-  for (const auto &pick : _environment.picks) {
+  for (const auto &pick : env.picks) {
     pickTimes.push_back(pick->time().value());
     for (size_t i = 0; i < pick->commentCount(); ++i) {
-      const auto comment{pick->comment(i)};
-      if (comment &&
+      const auto *comment{pick->comment(i)};
+      if (static_cast<bool>(comment) &&
           comment->id() == settings::kTemplateWaveformTimeInfoPickCommentId) {
         TimeInfo timeInfo;
         std::stringstream ss{comment->text()};
@@ -89,13 +95,13 @@ void RMSAmplitude::computeTimeWindow() {
           continue;
         }
 
-        if (!maxTemplateWaveformStartTimeOffset ||
+        if (!static_cast<bool>(maxTemplateWaveformStartTimeOffset) ||
             timeInfo.referenceTime - timeInfo.startTime >
                 maxTemplateWaveformStartTimeOffset) {
           maxTemplateWaveformStartTimeOffset =
               timeInfo.referenceTime - timeInfo.startTime;
         }
-        if (!maxTemplateWaveformEndTimeOffset ||
+        if (!static_cast<bool>(maxTemplateWaveformEndTimeOffset) ||
             timeInfo.endTime - timeInfo.referenceTime >
                 maxTemplateWaveformEndTimeOffset) {
           maxTemplateWaveformEndTimeOffset =
@@ -105,7 +111,8 @@ void RMSAmplitude::computeTimeWindow() {
     }
   }
 
-  if (!maxTemplateWaveformEndTimeOffset || !maxTemplateWaveformEndTimeOffset) {
+  if (!(static_cast<bool>(maxTemplateWaveformEndTimeOffset) &&
+        static_cast<bool>(maxTemplateWaveformEndTimeOffset))) {
     throw Processor::BaseException{"failed to determine required time window"};
   }
 
@@ -207,15 +214,18 @@ void RMSAmplitude::computeAmplitude(const DoubleArray &data,
 }
 
 void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
+  const auto &env{environment()};
+  assert(!env.picks.empty());
+
   std::vector<std::string> publicIds;
-  for (const auto &pick : _environment.picks) {
+  for (const auto &pick : env.picks) {
     publicIds.push_back(pick->publicID());
   }
 
   // pick public identifiers
   {
     auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId("scdetectRMSAmplitudePicks");
+    comment->setId(settings::kAmplitudePicksCommentId);
     comment->setText(boost::algorithm::join(publicIds, settings::kPublicIdSep));
     amplitude->add(comment.get());
   }
@@ -223,7 +233,7 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
   // waveform stream identifiers
   {
     auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId("scdetectRMSAmplitudeStreams");
+    comment->setId(settings::kAmplitudeStreamsCommentId);
     comment->setText(boost::algorithm::join(util::map_keys(_streams),
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());
@@ -231,7 +241,8 @@ void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
 
   // forward reference of the detector which declared the origin
   {
-    const auto &origin{_environment.hypocenter};
+    const auto &origin{env.hypocenter};
+    assert(origin);
     for (std::size_t i = 0; i < origin->commentCount(); ++i) {
       if (origin->comment(i)->id() == settings::kDetectorIdCommentId) {
         auto comment{util::make_smart<DataModel::Comment>()};

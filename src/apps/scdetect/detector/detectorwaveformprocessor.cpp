@@ -52,9 +52,14 @@ const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
   return _publishConfig;
 }
 
-processing::WaveformProcessor::StreamState &
+const TemplateWaveformProcessor *DetectorWaveformProcessor::processor(
+    const std::string &processorId) const {
+  return _detector.processor(processorId);
+}
+
+processing::WaveformProcessor::StreamState *
 DetectorWaveformProcessor::streamState(const Record *record) {
-  return _streamStates.at(record->streamID());
+  return &_streamStates.at(record->streamID());
 }
 
 void DetectorWaveformProcessor::process(StreamState &streamState,

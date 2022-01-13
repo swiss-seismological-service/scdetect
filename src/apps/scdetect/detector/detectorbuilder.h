@@ -32,7 +32,6 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
                              const config::DetectorConfig &detectorConfig,
                              bool playback);
 
-  DetectorBuilder &setEventParameters();
   // Set stream related template configuration where `streamId` refers to the
   // waveform stream identifier of the stream to be processed.
   DetectorBuilder &setStream(const std::string &streamId,

@@ -13,9 +13,9 @@
 #include <vector>
 
 #include "../log.h"
-#include "../magnitudeprocessor.h"
+#include "../magnitude_processor.h"
 #include "../util/math.h"
-#include "templatefamily.h"
+#include "template_family.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -42,9 +42,8 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
     _bMean = boost::none;
   }
 
-  void finalizeMagnitude(
-      DataModel::StationMagnitude* stationMagnitude) const override {
-    stationMagnitude->setType(type());
+  void finalize(DataModel::StationMagnitude* magnitude) const override {
+    magnitude->setType(type());
   }
 
  protected:
@@ -108,18 +107,6 @@ class FixedSlopeRegressionMagnitude : public MagnitudeProcessor,
 
  private:
   static const std::ratio<Num, Denom> _slope;
-};
-
-class MwxFixedSlopeRegressionMagnitude
-    : public FixedSlopeRegressionMagnitude<2, 3> {
- public:
-  MwxFixedSlopeRegressionMagnitude();
-};
-
-class MLxFixedSlopeRegressionMagnitude
-    : public FixedSlopeRegressionMagnitude<1> {
- public:
-  MLxFixedSlopeRegressionMagnitude();
 };
 
 }  // namespace magnitude

@@ -234,6 +234,17 @@ TemplateConfig::const_reference TemplateConfig::at(
   return _streamConfigs.at(stream_id);
 }
 
+bool hasUniqueTemplateIds(const TemplateConfig &tc) {
+  std::set<std::string> seen;
+  for (const auto &streamConfig : tc) {
+    if (seen.find(streamConfig.second.templateId) != std::end(seen)) {
+      return false;
+    }
+    seen.emplace(streamConfig.second.templateId);
+  }
+  return true;
+}
+
 }  // namespace config
 }  // namespace detect
 }  // namespace Seiscomp

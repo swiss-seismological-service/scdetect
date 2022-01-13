@@ -1,5 +1,7 @@
 #include "waveform_processor.h"
 
+#include <cassert>
+#include <cmath>
 #include <exception>
 
 #include "waveform_operator.h"
@@ -83,6 +85,9 @@ void WaveformProcessor::terminate() {
 
 void WaveformProcessor::close() const {}
 
+void WaveformProcessor::process(StreamState &streamState, const Record *record,
+                                const DoubleArray &filteredData) {}
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool WaveformProcessor::store(const Record *record) {
   if (WaveformProcessor::Status::kInProgress < status() ||
@@ -91,50 +96,51 @@ bool WaveformProcessor::store(const Record *record) {
   }
 
   try {
-    StreamState &currentStreamState{streamState(record)};
+    auto *currentStreamState{streamState(record)};
+    assert(currentStreamState);
 
     DoubleArrayPtr data{
         dynamic_cast<DoubleArray *>(record->data()->copy(Array::DOUBLE))};
 
-    if (currentStreamState.lastRecord) {
-      if (record == currentStreamState.lastRecord) {
+    if (currentStreamState->lastRecord) {
+      if (record == currentStreamState->lastRecord) {
         return false;
       } else if (record->samplingFrequency() !=
-                 currentStreamState.samplingFrequency) {
+                 currentStreamState->samplingFrequency) {
         SCDETECT_LOG_WARNING_PROCESSOR(
             this,
             "%s: sampling frequency changed, resetting stream (sfreq_record != "
             "sfreq_stream): %f != %f",
             record->streamID().c_str(), record->samplingFrequency(),
-            currentStreamState.samplingFrequency);
+            currentStreamState->samplingFrequency);
 
-        reset(currentStreamState);
-      } else if (!handleGap(currentStreamState, record, data)) {
+        reset(*currentStreamState);
+      } else if (!handleGap(*currentStreamState, record, data)) {
         return false;
       }
 
-      currentStreamState.dataTimeWindow.setEndTime(record->endTime());
+      currentStreamState->dataTimeWindow.setEndTime(record->endTime());
     }
 
-    if (!currentStreamState.lastRecord) {
+    if (!currentStreamState->lastRecord) {
       try {
-        setupStream(currentStreamState, record);
+        setupStream(*currentStreamState, record);
       } catch (std::exception &e) {
         SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: Failed to setup stream: %s",
                                        record->streamID().c_str(), e.what());
         return false;
       }
     }
-    currentStreamState.lastSample = (*data)[data->size() - 1];
+    currentStreamState->lastSample = (*data)[data->size() - 1];
 
-    fill(currentStreamState, record, data);
+    fill(*currentStreamState, record, data);
     if (Status::kInProgress < status()) {
       return false;
     }
 
-    processIfEnoughDataReceived(currentStreamState, record, *data);
+    processIfEnoughDataReceived(*currentStreamState, record, *data);
 
-    currentStreamState.lastRecord = record;
+    currentStreamState->lastRecord = record;
 
   } catch (...) {
     return false;
@@ -158,7 +164,7 @@ bool WaveformProcessor::fill(processing::StreamState &streamState,
   const auto n{static_cast<size_t>(data->size())};
   s.receivedSamples += n;
 
-  if (_saturationThreshold && checkIfSaturated(data)) {
+  if (_saturationThreshold && checkIfSaturated(*data)) {
     return false;
   }
 
@@ -170,9 +176,10 @@ bool WaveformProcessor::fill(processing::StreamState &streamState,
   return true;
 }
 
-bool WaveformProcessor::checkIfSaturated(DoubleArrayPtr &data) {
-  const auto *samples{data->typedData()};
-  for (int i = 0; i < data->size(); ++i) {
+bool WaveformProcessor::checkIfSaturated(const DoubleArray &data) {
+  assert(_saturationThreshold);
+  const auto *samples{data.typedData()};
+  for (int i = 0; i < data.size(); ++i) {
     if (fabs(samples[i]) >= *_saturationThreshold) {
       setStatus(Status::kDataClipped, samples[i]);
       return true;
@@ -218,7 +225,7 @@ void WaveformProcessor::setupStream(StreamState &streamState,
     setMinimumGapThreshold(streamState, record, id());
   }
 
-  streamState.neededSamples = static_cast<size_t>(_initTime * f + 0.5);
+  streamState.neededSamples = std::lround(_initTime * f);
   if (streamState.filter) {
     streamState.filter->setSamplingFrequency(f);
   }

@@ -5,12 +5,13 @@
 #include <seiscomp/io/recordinput.h>
 #include <seiscomp/io/records/mseedrecord.h>
 #include <seiscomp/io/recordstream.h>
-#include <seiscomp/math/filter.h>
+#include <seiscomp/math/mean.h>
 #include <seiscomp/utils/files.h>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/functional/hash.hpp>
+#include <cassert>
 #include <fstream>
 #include <memory>
 
@@ -31,7 +32,9 @@ T nextPowerOfTwo(T a, T min = 1, T max = 1 << 31) {
   int b = min;
   while (b < a) {
     b <<= 1;
-    if (b > max) return -1;
+    if (b > max) {
+      return -1;
+    }
   }
   return b;
 }
@@ -78,9 +81,11 @@ bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
 }
 
 bool filter(GenericRecord &trace, const std::string &filterId) {
-  if (filterId.empty()) return false;
+  if (filterId.empty()) {
+    return false;
+  }
 
-  auto data{DoubleArray::Cast(trace.data())};
+  auto *data{DoubleArray::Cast(trace.data())};
   if (!filter(*data, filterId, trace.samplingFrequency())) {
     return false;
   }
@@ -91,26 +96,41 @@ bool filter(GenericRecord &trace, const std::string &filterId) {
 
 bool filter(DoubleArray &data, const std::string &filterId,
             double samplingFrequency) {
-  if (filterId.empty() || samplingFrequency <= 0) return false;
+  if (filterId.empty() || samplingFrequency <= 0) {
+    return false;
+  }
 
   std::string filterError;
-  auto filter =
-      Math::Filtering::InPlaceFilter<double>::Create(filterId, &filterError);
+  std::unique_ptr<DoubleFilter> filter{
+      DoubleFilter::Create(filterId, &filterError)};
   if (!filter) {
     SCDETECT_LOG_WARNING("Filter creation failed for '%s': %s",
                          filterId.c_str(), filterError.c_str());
     return false;
   }
+  return waveform::filter(data, filter.get(), samplingFrequency);
+}
+
+bool filter(DoubleArray &data, DoubleFilter *filter, double samplingFrequency) {
+  assert(filter);
   filter->setSamplingFrequency(samplingFrequency);
   filter->apply(data.size(), data.typedData());
-  delete filter;
+  return true;
+}
 
+bool filter(GenericRecord &trace, DoubleFilter *filter) {
+  auto *data{DoubleArray::Cast(trace.data())};
+  if (!waveform::filter(*data, filter, trace.samplingFrequency())) {
+    return false;
+  }
+  trace.dataUpdated();
   return true;
 }
 
 bool resample(GenericRecord &trace, double targetFrequency) {
-  if (targetFrequency <= 0 || trace.samplingFrequency() == targetFrequency)
+  if (targetFrequency <= 0 || trace.samplingFrequency() == targetFrequency) {
     return true;
+  }
 
   auto resampler{RecordResamplerStore::Instance().get(&trace, targetFrequency)};
   std::unique_ptr<Record> resampled;
@@ -131,7 +151,7 @@ bool resample(GenericRecord &trace, double targetFrequency) {
 }
 
 void demean(GenericRecord &trace) {
-  auto data{DoubleArray::Cast(trace.data())};
+  auto *data{DoubleArray::Cast(trace.data())};
   demean(*data);
   trace.dataUpdated();
 }
@@ -139,6 +159,19 @@ void demean(GenericRecord &trace) {
 void demean(DoubleArray &data) {
   const auto mean{util::cma(data.typedData(), data.size())};
   data -= mean;
+}
+
+void detrend(GenericRecord &trace) {
+  auto *data{DoubleArray::Cast(trace.data())};
+  detrend(*data);
+  trace.dataUpdated();
+}
+
+void detrend(DoubleArray &data) {
+  double m, n;  // NOLINT
+  // remove linear trend
+  Math::Statistics::computeLinearTrend(data.size(), data.typedData(), m, n);
+  Math::Statistics::detrend(data.size(), data.typedData(), m, n);
 }
 
 bool write(const GenericRecord &trace, std::ostream &out) {

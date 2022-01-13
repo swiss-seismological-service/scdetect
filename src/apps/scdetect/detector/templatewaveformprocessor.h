@@ -14,6 +14,7 @@
 
 #include "../filter/crosscorrelation.h"
 #include "../processing/waveform_processor.h"
+#include "../template_waveform.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -39,17 +40,14 @@ struct LocalMaxima {
 }  // namespace detail
 
 // Template waveform processor implementation
+//
 // - implements resampling and filtering
 // - applies the cross-correlation algorithm
 class TemplateWaveformProcessor : public processing::WaveformProcessor {
  public:
   // Creates a `TemplateWaveformProcessor`. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
-  TemplateWaveformProcessor(const GenericRecordCPtr &waveform,
-                            const std::string filterId,
-                            const Core::Time &templateStartTime,
-                            const Core::Time &templateEndTime,
-                            const Processor *p = nullptr);
+  explicit TemplateWaveformProcessor(TemplateWaveform templateWaveform);
 
   DEFINE_SMARTPOINTER(MatchResult);
   struct MatchResult : public Core::BaseObject {
@@ -69,7 +67,10 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
 
   // Sets `filter` with the corresponding filter `initTime`
   void setFilter(std::unique_ptr<Filter> &&filter,
-                 const Core::TimeSpan &initTime = 0.0);
+                 const Core::TimeSpan &initTime = Core::TimeSpan{0.0});
+  // Returns the configured filter or `nullptr` if no filter has been configured
+  const Filter *filter() const;
+
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishMatchResultCallback &callback);
 
@@ -81,15 +82,11 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   void setTargetSamplingFrequency(double f);
   boost::optional<double> targetSamplingFrequency() const;
 
-  // Returns the template waveform starttime
-  boost::optional<const Core::Time> templateStartTime() const;
-  // Returns the template waveform endtime
-  boost::optional<const Core::Time> templateEndTime() const;
-  // Returns the template waveform duration
-  Core::TimeSpan templateDuration() const;
+  // Returns the underlying template waveform
+  const TemplateWaveform &templateWaveform() const;
 
  protected:
-  WaveformProcessor::StreamState &streamState(const Record *record) override;
+  WaveformProcessor::StreamState *streamState(const Record *record) override;
 
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
@@ -109,7 +106,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   // The optional target sampling frequency (used for on-the-fly resampling)
   boost::optional<double> _targetSamplingFrequency;
   // The in-place cross-correlation filter
-  filter::AdaptiveCrossCorrelation<double> _crossCorrelation;
+  filter::CrossCorrelation<double> _crossCorrelation;
 };
 
 }  // namespace detector

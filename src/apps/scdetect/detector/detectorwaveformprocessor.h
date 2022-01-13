@@ -5,7 +5,6 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/event.h>
 #include <seiscomp/datamodel/origin.h>
 
 #include <boost/optional/optional.hpp>
@@ -16,6 +15,7 @@
 #include "../processing/waveform_processor.h"
 #include "detector.h"
 #include "detectorbuilder.h"
+#include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -43,9 +43,7 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
     config::PublishConfig publishConfig;
 
     using TemplateResult = Detector::Result::TemplateResult;
-    using WaveformStreamId = std::string;
-    using TemplateResults =
-        std::unordered_multimap<WaveformStreamId, TemplateResult>;
+    using TemplateResults = Detector::Result::TemplateResults;
     // Template specific results
     TemplateResults templateResults;
   };
@@ -63,8 +61,15 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
 
   const config::PublishConfig &publishConfig() const;
 
+  // Returns the underlying template waveform processor identified by
+  // `processorId`
+  //
+  // - returns a `nullptr` if no processor is identified by `processorId`
+  const TemplateWaveformProcessor *processor(
+      const std::string &processorId) const;
+
  protected:
-  WaveformProcessor::StreamState &streamState(const Record *record) override;
+  WaveformProcessor::StreamState *streamState(const Record *record) override;
 
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
@@ -98,8 +103,6 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
 
   // Reference to the *template* origin
   DataModel::OriginCPtr _origin;
-  // Reference to the *template* event
-  DataModel::EventPtr _event;
 
   config::PublishConfig _publishConfig;
 };

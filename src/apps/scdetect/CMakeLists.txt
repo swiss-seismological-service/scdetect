@@ -2,8 +2,14 @@ set(DETECT_TARGET scdetect)
 
 set(
   DETECT_SOURCES
+    amplitude/factory.cpp
+    amplitude/ratio.cpp
+    amplitude/mlx.cpp
+    amplitude/mrelative.cpp
     amplitude/rms.cpp
-    amplitudeprocessor.cpp
+    amplitude_processor.cpp
+    combining_amplitude_processor.cpp
+    reducing_amplitude_processor.cpp
     app.cpp
     binding.cpp
     config/detector.cpp
@@ -25,12 +31,14 @@ set(
     exception.cpp
     filter.cpp
     log.cpp
-    magnitudeprocessor.cpp
+    magnitude_processor.cpp
     magnitude/decorator/range.cpp
     magnitude/decorator.cpp
-    magnitude/regression.cpp
+    magnitude/factory.cpp
+    magnitude/mlx.cpp
+    magnitude/mrelative.cpp
     magnitude/util.cpp
-    magnitude/templatefamily.cpp
+    magnitude/template_family.cpp
     main.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
@@ -41,7 +49,9 @@ set(
     processing/waveform_operator.cpp
     processing/waveform_processor.cpp
     resamplerstore.cpp
-    templatefamily.cpp
+    template_waveform.cpp
+    template_family.cpp
+    util/filter.cpp
     util/horizontal_components.cpp
     util/util.cpp
     util/waveform_stream_id.cpp

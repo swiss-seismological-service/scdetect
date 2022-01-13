@@ -1,5 +1,5 @@
-#ifndef FACTORY_H_
-#define FACTORY_H_
+#ifndef SCDETECT_APPS_SCDETECT_FACTORY_H_
+#define SCDETECT_APPS_SCDETECT_FACTORY_H_
 
 #include <functional>
 #include <map>
@@ -37,6 +37,10 @@ class Factory {
     return nullptr;
   }
 
+ protected:
+  // Resets the factory callbacks
+  static void resetCallbacks() { callbackMap().clear(); }
+
  private:
   using CallbackMap = std::map<TIdentifierType, CallbackType>;
   // prevent the static order initialization problem
@@ -49,4 +53,4 @@ class Factory {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // FACTORY_H_
+#endif  // SCDETECT_APPS_SCDETECT_FACTORY_H_

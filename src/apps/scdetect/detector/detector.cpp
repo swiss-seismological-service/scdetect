@@ -6,6 +6,7 @@
 #include <iterator>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -92,6 +93,15 @@ boost::optional<Core::TimeSpan> Detector::maxLatency() const {
 }
 
 size_t Detector::processorCount() const { return _processors.size(); }
+
+const TemplateWaveformProcessor *Detector::processor(
+    const std::string &processorId) const {
+  try {
+    return _processors.at(processorId).processor.get();
+  } catch (std::out_of_range &) {
+  }
+  return nullptr;
+}
 
 void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
                    const std::string &waveformStreamId, const Arrival &arrival,
@@ -421,12 +431,13 @@ void Detector::prepareResult(const linker::Association &linkerResult,
           static_cast<double>(templateResult.arrival.pick.time - startTime) -
           alignmentCorrection - referenceLag);
 
-      templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
-                              Detector::Result::TemplateResult{
-                                  templateResult.arrival, proc.sensorLocation,
-                                  *proc.processor->templateStartTime(),
-                                  *proc.processor->templateEndTime(),
-                                  proc.templateWaveformReferenceTime});
+      templateResults.emplace(
+          templateResult.arrival.pick.waveformStreamId,
+          Detector::Result::TemplateResult{
+              templateResult.arrival, proc.sensorLocation,
+              proc.processor->templateWaveform().startTime(),
+              proc.processor->templateWaveform().endTime(),
+              proc.templateWaveformReferenceTime, procId});
       usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
       usedStas.emplace(proc.sensorLocation.stationId);
     }

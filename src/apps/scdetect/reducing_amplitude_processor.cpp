@@ -1,19 +1,11 @@
-#include "amplitudeprocessor.h"
+#include "reducing_amplitude_processor.h"
 
-#include <seiscomp/core/genericrecord.h>
-#include <seiscomp/math/filter/iirdifferentiate.h>
-#include <seiscomp/math/mean.h>
 #include <seiscomp/system/environment.h>
-#include <seiscomp/utils/files.h>
 
 #include <algorithm>
 #include <boost/filesystem.hpp>
-#include <cstddef>
-#include <memory>
-#include <ostream>
 #include <stdexcept>
 
-#include "seiscomp/core/datetime.h"
 #include "settings.h"
 #include "util/memory.h"
 #include "util/util.h"
@@ -23,155 +15,6 @@
 namespace Seiscomp {
 namespace detect {
 
-void AmplitudeProcessor::setResultCallback(
-    const PublishAmplitudeCallback &callback) {
-  _resultCallback = callback;
-}
-
-void AmplitudeProcessor::setSignalBegin(
-    const boost::optional<Core::TimeSpan> &signalBegin) {
-  if (!signalBegin) {
-    _config.signalBegin = signalBegin;
-    return;
-  }
-
-  if (*signalBegin > Core::TimeSpan{0.0} &&
-      safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0) >
-          safetyTimeWindow().startTime() + *signalBegin) {
-    _config.signalBegin = signalBegin;
-  }
-}
-
-Core::Time AmplitudeProcessor::signalBegin() const {
-  return safetyTimeWindow().startTime() + _config.signalBegin.value_or(0.0);
-}
-
-void AmplitudeProcessor::setSignalEnd(
-    const boost::optional<Core::TimeSpan> &signalEnd) {
-  if (!signalEnd) {
-    _config.signalEnd = signalEnd;
-    return;
-  }
-
-  if (*signalEnd > Core::TimeSpan{0.0} &&
-      safetyTimeWindow().endTime() - *signalEnd >
-          safetyTimeWindow().startTime() + _config.signalBegin.value_or(0.0)) {
-    _config.signalEnd = signalEnd;
-  }
-}
-
-Core::Time AmplitudeProcessor::signalEnd() const {
-  return safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0);
-}
-
-const std::string &AmplitudeProcessor::type() const { return _type; }
-
-const std::string &AmplitudeProcessor::unit() const { return _unit; }
-
-void AmplitudeProcessor::setEnvironment(
-    const DataModel::OriginCPtr &hypocenter,
-    const DataModel::SensorLocationCPtr &receiver,
-    const std::vector<DataModel::PickCPtr> &picks) {
-  _environment.hypocenter = hypocenter;
-  _environment.receiver = receiver;
-  _environment.picks = picks;
-}
-
-const AmplitudeProcessor::Environment &AmplitudeProcessor::environment() const {
-  return _environment;
-}
-
-void AmplitudeProcessor::finalize(DataModel::Amplitude *amplitude) const {}
-
-void AmplitudeProcessor::preprocessData(
-    StreamState &streamState, const Processing::Stream &streamConfig,
-    const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
-
-bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
-                                      const IndexRange &idxRange,
-                                      NoiseInfo &noiseInfo) {
-  // compute offset and rms within the time window
-  size_t beginIdx{idxRange.begin}, endIdx{idxRange.end};
-  if (beginIdx < 0) beginIdx = 0;
-  if (endIdx < 0) return false;
-  if (endIdx > static_cast<size_t>(data.size()))
-    endIdx = static_cast<size_t>(data.size());
-
-  // If noise window is zero return an amplitude and offset of zero as well.
-  if (endIdx - beginIdx == 0) {
-    noiseInfo.offset = 0;
-    noiseInfo.amplitude = 0;
-    return true;
-  }
-
-  DoubleArrayPtr sliced{
-      static_cast<DoubleArray *>(data.slice(beginIdx, endIdx))};
-  if (!sliced) {
-    return false;
-  }
-
-  // compute noise offset as the median
-  double offset{sliced->median()};
-  // compute rms while removing offset
-  double amplitude{2 * sliced->rms(offset)};
-
-  if (offset) noiseInfo.offset = offset;
-  if (amplitude) noiseInfo.amplitude = amplitude;
-
-  return true;
-}
-
-bool AmplitudeProcessor::deconvolveData(StreamState &streamState,
-                                        Processing::Response *resp,
-                                        const DeconvolutionConfig &config,
-                                        int numberOfIntegrations,
-                                        DoubleArray &data) {
-  double m, n;
-  // remove linear trend
-  Math::Statistics::computeLinearTrend(data.size(), data.typedData(), m, n);
-  Math::Statistics::detrend(data.size(), data.typedData(), m, n);
-
-  // XXX(damb): integration is implemented by means of deconvolution i.e. by
-  // means of adding an additional zero to the nominator of the rational
-  // transfer function
-  if (!resp->deconvolveFFT(
-          data, streamState.samplingFrequency, config.responseTaperLength,
-          config.minimumResponseTaperFrequency,
-          config.maximumResponseTaperFrequency,
-          numberOfIntegrations < 0 ? 0 : numberOfIntegrations)) {
-    return false;
-  }
-
-  if (numberOfIntegrations < 0) {
-    if (!deriveData(streamState, abs(numberOfIntegrations), data)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool AmplitudeProcessor::deriveData(StreamState &streamState,
-                                    int numberOfDerivations,
-                                    DoubleArray &data) {
-  while (numberOfDerivations > 0) {
-    Math::Filtering::IIRDifferentiate<double> diff;
-    diff.setSamplingFrequency(streamState.samplingFrequency);
-    diff.apply(data.size(), data.typedData());
-    --numberOfDerivations;
-  }
-
-  return true;
-}
-
-void AmplitudeProcessor::emitAmplitude(const Record *record,
-                                       const AmplitudeCPtr &amplitude) {
-  if (enabled() && _resultCallback) {
-    _resultCallback(this, record, amplitude);
-  }
-}
-
-/* ------------------------------------------------------------------------- */
 void ReducingAmplitudeProcessor::setFilter(std::unique_ptr<Filter> &&filter,
                                            const Core::TimeSpan &initTime) {
   if (locked()) {
@@ -209,6 +52,11 @@ void ReducingAmplitudeProcessor::reset() {
   WaveformProcessor::reset();
 }
 
+std::vector<std::string>
+ReducingAmplitudeProcessor::associatedWaveformStreamIds() const {
+  return util::map_keys(_streams);
+}
+
 void ReducingAmplitudeProcessor::add(
     const std::string &netCode, const std::string &staCode,
     const std::string &locCode, const Processing::Stream &streamConfig,
@@ -227,14 +75,10 @@ void ReducingAmplitudeProcessor::add(
   _streams.emplace(util::to_string(waveformStreamId), std::move(stream));
 }
 
-std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
-  return util::map_keys(_streams);
-}
-
 void ReducingAmplitudeProcessor::dumpBufferedData(std::ostream &out) {
   for (const auto &streamPair : _streams) {
     const auto &buffer{streamPair.second.buffer};
-    if (!buffer.size()) {
+    if (!static_cast<bool>(buffer.size())) {
       continue;
     }
 
@@ -258,9 +102,9 @@ boost::optional<double> ReducingAmplitudeProcessor::reduceNoiseData(
   return boost::none;
 }
 
-processing::WaveformProcessor::StreamState &
+processing::WaveformProcessor::StreamState *
 ReducingAmplitudeProcessor::streamState(const Record *record) {
-  return _streams.at(record->streamID()).streamState;
+  return &_streams.at(record->streamID()).streamState;
 }
 
 void ReducingAmplitudeProcessor::process(StreamState &streamState,
@@ -410,9 +254,12 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
 
 bool ReducingAmplitudeProcessor::store(const Record *record) {
   bool isFirstStreamRecord{false};
+  auto *currentStreamState{streamState(record)};
+  assert(currentStreamState);
+
   // check if stream is known
   try {
-    isFirstStreamRecord = !static_cast<bool>(streamState(record).lastRecord);
+    isFirstStreamRecord = !static_cast<bool>(currentStreamState->lastRecord);
   } catch (std::out_of_range &) {
     return false;
   }
@@ -428,8 +275,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   if (isFirstStreamRecord) {
     // initialize filter
     if (_filter) {
-      auto &s{streamState(record)};
-      s.filter.reset(_filter->clone());
+      currentStreamState->filter.reset(_filter->clone());
     }
 
     auto differenceGreaterEqualSampleTolerance{
@@ -449,11 +295,12 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
       waveform::trim(
           *firstRecord,
           Core::TimeWindow{safetyTimeWindow().startTime(), record->endTime()});
-      return WaveformProcessor::store(firstRecord.get());
+
+      return processing::TimeWindowProcessor::store(firstRecord.get());
     }
   }
 
-  return WaveformProcessor::store(record);
+  return processing::TimeWindowProcessor::store(record);
 }
 
 bool ReducingAmplitudeProcessor::fill(processing::StreamState &streamState,

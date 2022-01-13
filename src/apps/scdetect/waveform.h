@@ -12,6 +12,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "def.h"
 #include "exception.h"
 #include "version.h"
 
@@ -24,9 +25,13 @@ bool trim(GenericRecord &trace, const Core::TimeWindow &tw);
 bool filter(GenericRecord &trace, const std::string &filterId);
 bool filter(DoubleArray &data, const std::string &filterId,
             double samplingFrequency);
+bool filter(DoubleArray &data, DoubleFilter *filter, double samplingFrequency);
+bool filter(GenericRecord &trace, DoubleFilter *filter);
 bool resample(GenericRecord &trace, double targetFrequency);
 void demean(GenericRecord &trace);
 void demean(DoubleArray &data);
+void detrend(GenericRecord &trace);
+void detrend(DoubleArray &data);
 bool write(const GenericRecord &trace, std::ostream &out);
 bool read(GenericRecord &trace, std::istream &in);
 

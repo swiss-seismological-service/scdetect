@@ -9,6 +9,8 @@ SET(SOURCES_filter_crosscorrelation
   ../exception.cpp
   ../filter.cpp
   ../resamplerstore.cpp
+  ../template_waveform.cpp
+  ../util/filter.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
   ../waveform.cpp
@@ -19,8 +21,14 @@ set(SOURCES_util_math_cma
 )
 
 set(SOURCES_integration
+  ../amplitude/factory.cpp
+  ../amplitude/ratio.cpp
+  ../amplitude/mlx.cpp
+  ../amplitude/mrelative.cpp
   ../amplitude/rms.cpp
-  ../amplitudeprocessor.cpp
+  ../amplitude_processor.cpp
+  ../combining_amplitude_processor.cpp
+  ../reducing_amplitude_processor.cpp
   ../app.cpp
   ../binding.cpp
   ../builder.cpp
@@ -43,12 +51,14 @@ set(SOURCES_integration
   ../exception.cpp
   ../filter.cpp
   ../log.cpp
-  ../magnitudeprocessor.cpp
+  ../magnitude_processor.cpp
   ../magnitude/decorator/range.cpp
   ../magnitude/decorator.cpp
-  ../magnitude/regression.cpp
+  ../magnitude/factory.cpp
+  ../magnitude/mlx.cpp
+  ../magnitude/mrelative.cpp
   ../magnitude/util.cpp
-  ../magnitude/templatefamily.cpp
+  ../magnitude/template_family.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processing/detail/gap_interpolate.cpp
@@ -58,7 +68,9 @@ set(SOURCES_integration
   ../processing/waveform_operator.cpp
   ../processing/waveform_processor.cpp
   ../resamplerstore.cpp
-  ../templatefamily.cpp
+  ../template_family.cpp
+  ../template_waveform.cpp
+  ../util/filter.cpp
   ../util/horizontal_components.cpp
   ../util/util.cpp
   ../util/waveform_stream_id.cpp
@@ -68,7 +80,8 @@ set(SOURCES_integration
 )
 
 set(SOURCES_reducing_amplitude_processor
-  ../amplitudeprocessor.cpp
+  ../amplitude_processor.cpp
+  ../reducing_amplitude_processor.cpp
   ../exception.cpp
   ../processing/detail/gap_interpolate.cpp
   ../processing/processor.cpp

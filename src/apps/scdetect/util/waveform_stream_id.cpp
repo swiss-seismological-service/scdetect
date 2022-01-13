@@ -2,6 +2,8 @@
 
 #include <seiscomp/core/strings.h>
 
+#include <cassert>
+
 #include "../exception.h"
 
 namespace Seiscomp {
@@ -19,8 +21,19 @@ void tokenizeWaveformStreamId(const std::string &str,
   Core::split(tokens, str, WaveformStreamID::delimiter.c_str(), false);
 }
 
+std::string join(const std::string &netCode, const std::string &staCode,
+                 const std::string &locCode, const std::string &chaCode) {
+  return netCode + WaveformStreamID::delimiter + staCode +
+         WaveformStreamID::delimiter + locCode +
+         (chaCode.empty() ? "" : WaveformStreamID::delimiter + chaCode);
+}
+
 std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId) {
-  return waveformStreamId.chaCode().substr(0, 2);
+  return getBandAndSourceCode(waveformStreamId.chaCode());
+}
+
+std::string getBandAndSourceCode(const std::string &chaCode) {
+  return chaCode.substr(0, 2);
 }
 
 std::string getSensorLocationStreamId(const WaveformStreamID &waveformStreamId,
@@ -31,6 +44,20 @@ std::string getSensorLocationStreamId(const WaveformStreamID &waveformStreamId,
          (includeBandAndSourceCode ? WaveformStreamID::delimiter +
                                          getBandAndSourceCode(waveformStreamId)
                                    : "");
+}
+
+std::string getSensorLocationStreamId(const std::string &waveformStreamId,
+                                      bool includeBandAndSourceCode) {
+  std::vector<std::string> tokens;
+  tokenizeWaveformStreamId(waveformStreamId, tokens);
+  // XXX(damb): do not validate the token content
+  assert(((includeBandAndSourceCode && tokens.size() == 4) ||
+          (!includeBandAndSourceCode && tokens.size() == 3)));
+  return tokens[0] + WaveformStreamID::delimiter + tokens[1] +
+         WaveformStreamID::delimiter + tokens[2] +
+         (includeBandAndSourceCode
+              ? (WaveformStreamID::delimiter + tokens[3].substr(0, 2))
+              : "");
 }
 
 const std::string WaveformStreamID::delimiter{"."};
@@ -77,9 +104,36 @@ const std::string &WaveformStreamID::locCode() const { return _locCode; }
 const std::string &WaveformStreamID::chaCode() const { return _chaCode; }
 
 std::ostream &operator<<(std::ostream &os, const WaveformStreamID &id) {
-  os << id._netCode << id.delimiter << id._staCode << id.delimiter
-     << id._locCode << id.delimiter << id._chaCode;
+  os << id._netCode << WaveformStreamID::delimiter << id._staCode
+     << WaveformStreamID::delimiter << id._locCode
+     << WaveformStreamID::delimiter << id._chaCode;
   return os;
+}
+
+bool operator==(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return std::tie(lhs.netCode(), lhs.staCode(), lhs.locCode(), lhs.chaCode()) ==
+         std::tie(rhs.netCode(), rhs.staCode(), rhs.locCode(), rhs.chaCode());
+}
+
+bool operator!=(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator<(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return std::tie(lhs.netCode(), lhs.staCode(), lhs.locCode(), lhs.chaCode()) <
+         std::tie(rhs.netCode(), rhs.staCode(), rhs.locCode(), rhs.chaCode());
+}
+
+bool operator>(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return rhs < lhs;
+}
+
+bool operator<=(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return !(lhs > rhs);
+}
+
+bool operator>=(const WaveformStreamID &lhs, const WaveformStreamID &rhs) {
+  return !(lhs < rhs);
 }
 
 bool WaveformStreamID::isValid() const {

@@ -36,17 +36,19 @@ void LocalMaxima::feed(double coefficient, std::size_t lagIdx) {
 }  // namespace detail
 
 TemplateWaveformProcessor::TemplateWaveformProcessor(
-    const GenericRecordCPtr &waveform, const std::string filterId,
-    const Core::Time &templateStartTime, const Core::Time &templateEndTime,
-    const Processor *p)
-    : _crossCorrelation{waveform, filterId, templateStartTime,
-                        templateEndTime} {}
+    TemplateWaveform templateWaveform)
+    : _crossCorrelation{std::move(templateWaveform)} {}
 
 void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> &&filter,
                                           const Core::TimeSpan &initTime) {
   _streamState.filter = std::move(filter);
-  _initTime =
-      std::max(initTime, Core::TimeSpan{_crossCorrelation.templateLength()});
+  _initTime = std::max(initTime, templateWaveform().configuredEndTime() -
+                                     templateWaveform().configuredStartTime());
+}
+
+const TemplateWaveformProcessor::Filter *TemplateWaveformProcessor::filter()
+    const {
+  return _streamState.filter.get();
 }
 
 void TemplateWaveformProcessor::setResultCallback(
@@ -68,6 +70,7 @@ void TemplateWaveformProcessor::setTargetSamplingFrequency(double f) {
   if (f > 0) {
     _targetSamplingFrequency = f;
   }
+  // TODO: Reset stream
 }
 
 boost::optional<double> TemplateWaveformProcessor::targetSamplingFrequency()
@@ -75,23 +78,13 @@ boost::optional<double> TemplateWaveformProcessor::targetSamplingFrequency()
   return _targetSamplingFrequency;
 }
 
-boost::optional<const Core::Time> TemplateWaveformProcessor::templateStartTime()
-    const {
-  return _crossCorrelation.templateStartTime();
+const TemplateWaveform &TemplateWaveformProcessor::templateWaveform() const {
+  return _crossCorrelation.templateWaveform();
 }
 
-boost::optional<const Core::Time> TemplateWaveformProcessor::templateEndTime()
-    const {
-  return _crossCorrelation.templateEndTime();
-}
-
-Core::TimeSpan TemplateWaveformProcessor::templateDuration() const {
-  return Core::TimeSpan{_crossCorrelation.templateLength()};
-}
-
-processing::WaveformProcessor::StreamState &
+processing::WaveformProcessor::StreamState *
 TemplateWaveformProcessor::streamState(const Record *record) {
-  return _streamState;
+  return &_streamState;
 }
 
 void TemplateWaveformProcessor::process(StreamState &streamState,
@@ -121,14 +114,13 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
     return;
   }
 
-  const Core::TimeSpan templateLength{_crossCorrelation.templateLength()};
   const Core::TimeWindow tw{start, record->endTime()};
   auto result{util::make_smart<MatchResult>()};
   for (const auto &m : maxima.values) {
     // take cross-correlation filter delay into account i.e. the template
     // processor's result is referring to a time window shifted to the past
     const auto matchIdx{
-        static_cast<int>(m.lagIdx - _crossCorrelation.templateSize() + 1)};
+        static_cast<int>(m.lagIdx - templateWaveform().size() + 1)};
     const auto t{static_cast<double>(matchIdx) / n};
 
     result->localMaxima.push_back(

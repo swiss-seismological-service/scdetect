@@ -72,7 +72,8 @@ const int EventStore::_bufferSize{25000};
 
 EventStore::BaseException::BaseException()
     : Exception{"base EventStore exception"} {}
-EventStore::SCMLException::SCMLException() : BaseException{"SCML exception"} {}
+EventStore::SCMLException::SCMLException()
+    : BaseException{"base SCML exception"} {}
 EventStore::DatabaseException::DatabaseException()
     : BaseException{"database exception"} {}
 
@@ -137,7 +138,7 @@ DataModel::EventParametersPtr EventStore::loadXMLArchive(
   if (!path.empty()) {
     IO::XMLArchive ar;
     if (!ar.open(path.c_str())) {
-      throw SCMLException{std::string("Failed to open file: ") + path};
+      throw SCMLException{"failed to open file: " + path};
     }
     ar >> ep;
     ar.close();
@@ -151,7 +152,7 @@ IO::DatabaseInterfacePtr EventStore::createInMemoryDb(
       IO::DatabaseInterface::Open("sqlite3_://:memory:")};
   if (!dbEngineWrite) {
     throw EventStore::DatabaseException{
-        "Failed to initialize SQLite in-memory DB"};
+        "failed to initialize SQLite in-memory DB"};
   }
   DataModel::createAll(dbEngineWrite.get());
   DataModel::DatabaseArchive dbArchive{dbEngineWrite.get()};

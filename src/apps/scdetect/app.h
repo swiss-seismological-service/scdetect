@@ -21,16 +21,19 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "amplitudeprocessor.h"
 #include "binding.h"
 #include "config/detector.h"
 #include "config/template_family.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
+#include "processing/timewindow_processor.h"
+#include "reducing_amplitude_processor.h"
+#include "util/waveform_stream_id.h"
 #include "waveform.h"
 
 namespace Seiscomp {
@@ -217,9 +220,17 @@ class Application : public Client::StreamApplication {
     // Picks and arrivals which are associated to the detection (i.e. both
     // detected picks and *template picks*)
     ArrivalPicks arrivalPicks;
-    using AmplitudePicks = std::vector<DataModel::PickCPtr>;
+
+    using ProcessorId = std::string;
+    using WaveformStreamId = std::string;
+    struct Pick {
+      // The authorative full waveform stream identifier
+      WaveformStreamId authorativeWaveformStreamId;
+      DataModel::PickCPtr pick;
+    };
+    using AmplitudePickMap = std::unordered_map<ProcessorId, Pick>;
     // Picks used for amplitude calculation
-    AmplitudePicks amplitudePicks;
+    AmplitudePickMap amplitudePickMap;
 
     DataModel::OriginPtr origin;
 
@@ -252,8 +263,34 @@ class Application : public Client::StreamApplication {
     }
   };
 
+  // Initialize amplitude processor factory
+  static bool initAmplitudeProcessorFactory();
+
+  // Initialize magnitude processor factory callbacks
+  static bool initMagnitudeProcessorFactory(
+      WaveformHandlerIface *waveformHandler,
+      const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
+      const Config &appConfig);
+
+  // Initialize station magnitudes
+  static bool initStationMagnitudes(const TemplateConfigs &templateConfigs);
+  // Initialize template families
+  //
+  // - `ifs` references a template family configuration input file stream
+  static bool initTemplateFamilies(std::ifstream &ifs,
+                                   WaveformHandlerIface *waveformHandler,
+                                   const TemplateConfigs &templateConfigs,
+                                   const binding::Bindings &bindings,
+                                   const Config &appConfig);
+
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
+
+  // Collect required streams
+  std::set<util::WaveformStreamID> collectStreams() const;
+  // Register `waveformStreamIds` at the record stream
+  bool subscribeToRecordStream(
+      std::set<util::WaveformStreamID> waveformStreamIds);
 
   // Initialize detectors
   //
@@ -262,20 +299,9 @@ class Application : public Client::StreamApplication {
                      TemplateConfigs &templateConfigs);
 
   // Initialize amplitude processors
-  //
-  // - XXX(damb): The current implementation supports RMS based amplitude
-  // processors to be initialized, only
-  bool initAmplitudeProcessors(std::shared_ptr<DetectionItem> &detectionItem);
-
-  // Initialize template families
-  //
-  // - `ifs` references a template family configuration input file stream
-  bool initTemplateFamilies(std::ifstream &ifs,
-                            WaveformHandlerIface *waveformHandler,
-                            const TemplateConfigs &templateConfigs);
-
-  // Initialize magnitude processor factory callbacks
-  bool initMagnitudeProcessorFactories();
+  bool initAmplitudeProcessors(
+      std::shared_ptr<DetectionItem> &detectionItem,
+      const detector::DetectorWaveformProcessor &detectorProcessor);
 
   // Creates an amplitude
   //
@@ -288,15 +314,20 @@ class Application : public Client::StreamApplication {
 
   // Computes a magnitude based on `amplitude`
   DataModel::StationMagnitudePtr createMagnitude(
-      const DataModel::Amplitude *amplitude, const std::string &magnitudeType,
-      const std::string &methodId = "", const std::string &processorId = "");
+      const DataModel::Amplitude &amplitude, const std::string &methodId = "",
+      const std::string &processorId = "");
 
-  // Registers an amplitude processor
+  using WaveformStreamId = std::string;
+  // Registers an amplitude `processor` for `waveformStreamIds`
   void registerAmplitudeProcessor(
-      const std::shared_ptr<ReducingAmplitudeProcessor> &processor);
+      const std::shared_ptr<AmplitudeProcessor> &processor);
+  // Registers a time window `processor` for `waveformStreamIds`
+  void registerTimeWindowProcessor(
+      const std::vector<WaveformStreamId> &waveformStreamIds,
+      const std::shared_ptr<processing::TimeWindowProcessor> &);
   // Removes an amplitude processor
-  void removeAmplitudeProcessor(
-      const std::shared_ptr<ReducingAmplitudeProcessor> &processor);
+  void removeTimeWindowProcessor(
+      const std::shared_ptr<processing::TimeWindowProcessor> &processor);
 
   // Registers a detection
   void registerDetection(const std::shared_ptr<DetectionItem> &detection);
@@ -324,7 +355,6 @@ class Application : public Client::StreamApplication {
 
   DataModel::EventParametersPtr _ep;
 
-  using WaveformStreamId = std::string;
   using DetectorMap = std::unordered_multimap<
       WaveformStreamId, std::shared_ptr<detector::DetectorWaveformProcessor>>;
   DetectorMap _detectors;
@@ -344,20 +374,25 @@ class Application : public Client::StreamApplication {
 
   bool _detectionRegistrationBlocked{false};
 
-  using AmplitudeProcessors =
+  using TimeWindowProcessors =
       std::unordered_multimap<WaveformStreamId,
-                              std::shared_ptr<ReducingAmplitudeProcessor>>;
-  AmplitudeProcessors _amplitudeProcessors;
+                              std::shared_ptr<processing::TimeWindowProcessor>>;
+  TimeWindowProcessors _timeWindowProcessors;
+  using ProcessorId = std::string;
+  using TimeWindowProcessorIdx =
+      std::unordered_map<ProcessorId, std::vector<WaveformStreamId>>;
+  TimeWindowProcessorIdx _timeWindowProcessorIdx;
 
-  struct AmplitudeProcessorQueueItem {
-    std::shared_ptr<ReducingAmplitudeProcessor> amplitudeProcessor;
+  struct TimeWindowProcessorQueueItem {
+    std::vector<WaveformStreamId> waveformStreamIds;
+    std::shared_ptr<processing::TimeWindowProcessor> timeWindowProcessor;
   };
-  using AmplitudeProcessorQueue = std::list<AmplitudeProcessorQueueItem>;
-  // The queue used for amplitude processor registration
-  AmplitudeProcessorQueue _amplitudeProcessorQueue;
-  // The queue used for amplitude processor removal
-  AmplitudeProcessorQueue _amplitudeProcessorRemovalQueue;
-  bool _amplitudeProcessorRegistrationBlocked{false};
+  using TimeWindowProcessorQueue = std::list<TimeWindowProcessorQueueItem>;
+  // The queue used for time window processor registration
+  TimeWindowProcessorQueue _timeWindowProcessorRegistrationQueue;
+  // The queue used for time window processor removal
+  TimeWindowProcessorQueue _timeWindowProcessorRemovalQueue;
+  bool _timeWindowProcessorRegistrationBlocked{false};
 };
 
 }  // namespace detect

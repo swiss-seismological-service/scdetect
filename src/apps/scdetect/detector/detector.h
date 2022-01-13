@@ -73,10 +73,14 @@ class Detector : public detect::processing::Processor {
       Core::Time templateWaveformEndTime;
       // The template waveform reference time
       Core::Time templateWaveformReferenceTime;
+
+      // The unique identifier of the underlying processor
+      std::string processorId;
     };
 
+    using WaveformStreamId = std::string;
     using TemplateResults =
-        std::unordered_multimap<std::string, TemplateResult>;
+        std::unordered_multimap<WaveformStreamId, TemplateResult>;
     TemplateResults templateResults;
 
     size_t numChannelsUsed;
@@ -116,6 +120,12 @@ class Detector : public detect::processing::Processor {
   boost::optional<Core::TimeSpan> maxLatency() const;
   // Returns the number of registered template processors
   size_t processorCount() const;
+
+  // Returns the template waveform processor identified by `processorId`
+  //
+  // - returns `nullptr` if there is no processor with `processorId` registered
+  const TemplateWaveformProcessor *processor(
+      const std::string &processorId) const;
 
   // Register the template waveform processor `proc`. Records are identified by
   // the waveform stream identifier `waveformStreamId`. `proc` is registered
