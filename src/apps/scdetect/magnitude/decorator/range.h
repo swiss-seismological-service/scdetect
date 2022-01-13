@@ -37,18 +37,20 @@ class MagnitudeRange : public magnitude::Decorator {
 
  protected:
   double computeMagnitude(const DataModel::Amplitude* amplitude) override;
-  // Called in case the magnitude is out of range
-  //
-  // - the default implementation throws a `MagnitudeOutOfRange` exception
-  virtual double handleMagnitudeOutOfRange(
-      const DataModel::Amplitude* amplitude, double magnitude);
 
- private:
   struct Range {
     boost::optional<double> begin;
     boost::optional<double> end;
   };
 
+  // Called in case the magnitude is out of range
+  //
+  // - the default implementation throws a `MagnitudeOutOfRange` exception
+  virtual double handleMagnitudeOutOfRange(
+      const Range& range, const DataModel::Amplitude* amplitude,
+      double magnitude);
+
+ private:
   using DetectorId = std::string;
   using SensorLocationId = std::string;
   using Ranges =

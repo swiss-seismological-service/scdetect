@@ -1,5 +1,7 @@
 #include "range.h"
 
+#include <string>
+
 #include "../../magnitude_processor.h"
 #include "../util.h"
 
@@ -50,19 +52,27 @@ double MagnitudeRange::computeMagnitude(const DataModel::Amplitude* amplitude) {
   }
 
   auto& range{it->second};
-  if ((range.begin && range.end && magnitude >= *range.begin &&
+  if ((!range.begin && !range.end) ||
+      (range.begin && range.end && magnitude >= *range.begin &&
        magnitude <= *range.end) ||
       (range.begin && magnitude >= *range.begin) ||
       (range.end && magnitude <= *range.end)) {
     return magnitude;
   }
 
-  return handleMagnitudeOutOfRange(amplitude, magnitude);
+  return handleMagnitudeOutOfRange(range, amplitude, magnitude);
 }
 
 double MagnitudeRange::handleMagnitudeOutOfRange(
-    const DataModel::Amplitude* amplitude, double magnitude) {
-  throw MagnitudeOutOfRange{};
+    const Range& range,
+    const DataModel::Amplitude* amplitude,  // NOLINT(misc-unused-parameters)
+
+    double magnitude) {
+  std::string rangeBegin{range.begin ? std::to_string(*range.begin) : "none"};
+  std::string rangeEnd{range.end ? std::to_string(*range.end) : "none"};
+  throw MagnitudeOutOfRange{
+      "magnitude out of range: magnitude=" + std::to_string(magnitude) +
+      ", range=(" + rangeBegin + ", " + rangeEnd + ")"};
 }
 
 }  // namespace decorator
