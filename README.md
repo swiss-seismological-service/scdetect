@@ -22,8 +22,8 @@
 
 ## About
 
-SCDetect is a [SeisComP](https://github.com/SeisComP) package which implements
-by means of the extension module `scdetect-cc` both real-time and classical
+SCDetect is a [SeisComP](https://github.com/SeisComP) package. With the
+extension module `scdetect-cc` it implements both real-time and classical
 offline earthquake detection based on waveform cross-correlation, also called
 matched filtering or template matching. Again, the underlying cross-correlation
 algorithm is based on computing
