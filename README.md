@@ -22,16 +22,17 @@
 
 ## About
 
-`scdetect` is a [SeisComP](https://github.com/SeisComP) extension module that
-implements both real-time and classical offline earthquake detection based on
-waveform cross-correlation, also called matched filtering or template matching.
-Again, the underlying cross-correlation algorithm is based on computing
+SCDetect is a [SeisComP](https://github.com/SeisComP) extension module that
+implements by means of `scdetect-cc` both real-time and classical offline
+earthquake detection based on waveform cross-correlation, also called matched
+filtering or template matching. Again, the underlying cross-correlation
+algorithm is based on computing
 the [Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient)
 .
 
 The module allows both single-stream and multi-stream earthquake detection.
 
-In case the detection parameters exceed the configured thresholds, `scdetect`
+In case the detection parameters exceed the configured thresholds, `scdetect-cc`
 declares a new origin.
 
 Besides, magnitudes may be estimated based on
@@ -51,14 +52,15 @@ with [messaging system](https://docs.gempa.de/seiscomp/current/base/concepts/mes
 [RecordStream](https://docs.gempa.de/seiscomp/current/base/concepts/recordstream.html)
 interface (waveform server) and
 [database](https://docs.gempa.de/seiscomp/current/base/concepts/database.html)
-including `scdetect`'s role in the SeisComP overall architecture. In SeisComP
-language `scdetect` is a representative for
+including `scdetect-cc`'s role in the SeisComP overall architecture. In SeisComP
+language `scdetect-cc` is a representative for
 a [trunk module](https://www.seiscomp.de/doc/base/glossary.html#term-trunk).
 
-From an architectural point of view `scdetect` is positioned somewhere between
+From an architectural point of view `scdetect-cc` is positioned somewhere
+between
 [scautopick](https://docs.gempa.de/seiscomp/current/apps/scautopick.html) and
 [scautoloc](https://docs.gempa.de/seiscomp/current/apps/scautoloc.html). That
-is, `scdetect` fetches waveform data by means of
+is, `scdetect-cc` fetches waveform data by means of
 the [RecordStream](https://docs.gempa.de/seiscomp/current/base/concepts/recordstream.html)
 interface, but it also uses data products (i.e. event parameters) for template
 generation. If connected to the messaging system, results (i.e. declared
@@ -73,11 +75,11 @@ the [SeisComP documentation](https://docs.gempa.de/seiscomp/current/base/overvie
 
 ### General
 
-As `scdetect` is a standard SeisComP extension module a list of available
+As `scdetect-cc` is a *standard* SeisComP extension module a list of available
 commandline options can be obtained with
 
 ```bash
-$ scdetect -h
+$ scdetect-cc -h
 ```
 
 For a general more in-depth introduction on how to use SeisComP modules
@@ -87,7 +89,7 @@ the [SeisComP documentation](https://www.seiscomp.de/doc/index.html).
 ___
 
 The subsequent sections are intended to provide an introduction on how to use
-and configure `scdetect`. This includes:
+and configure `scdetect-cc`. This includes:
 
 1. How to [configure templates](#template-configuration)
 2. How to enable [amplitude calculation](#amplitude-calculation) (required for a
@@ -103,12 +105,12 @@ and configure `scdetect`. This includes:
 
 ### Template configuration
 
-In order to run `scdetect` a *template configuration* must be provided. That is,
-either by means of the `templatesJSON` configuration option in one of
-`scdetect`'
+In order to run `scdetect-cc` a *template configuration* must be provided. That
+is, either by means of the `templatesJSON` configuration option in one of
+`scdetect-cc`'
 s [module configuration files](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
-or by means of using `scdetect`'s `--templates-json path/to/templates.json` CLI
-flag.
+or by means of using `scdetect-cc`'s `--templates-json path/to/templates.json`
+CLI flag.
 
 The template configuration itself is a [JSON](https://www.json.org)
 configuration file and contains an array of *detector configuration* JSON
@@ -162,7 +164,7 @@ specific global default is used instead. Global defaults may be configured
 following SeisComP's
 standard [module configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#module-configuration)
 approach. That is, by means of either global or module specific configuration
-files (`global.cfg`, `scdetect.cfg` located at corresponding configuration
+files (`global.cfg`, `scdetect-cc.cfg` located at corresponding configuration
 directory paths).
 
 In order to validate the template configuration, with
@@ -182,12 +184,12 @@ configuration parameters:
   the detector identifier is used in the context of the template family
   amplitude-magnitude regression based magnitude estimation.
 
-  Note also that since `scdetect` implements hierarchical logging explicitly
+  Note also that since `scdetect-cc` implements hierarchical logging explicitly
   defining the detector identifier may be of particular use while debugging.
 
 - `"maximumLatency"`: The maximum data latency in seconds tolerated with regard
   to `NOW`. If data arrive later than the value specified it is not used,
-  anymore. Note that data latency is not validated if `scdetect` is run in
+  anymore. Note that data latency is not validated if `scdetect-cc` is run in
   [*playback mode*](#playback).
 
 - `"methodId"`: The origin method identifier which will be added to declared
@@ -294,14 +296,14 @@ An *association* is considered as a *detected association*, also called a
 *detection* if it surpasses the value specified by the `"triggerOnThreshold"`
 configuration parameter.
 
-In a multi-stream detector setup, `scdetect` uses the *mean* correlation
+In a multi-stream detector setup, `scdetect-cc` uses the *mean* correlation
 coefficient of all streams within the stream set. In future, further methods may
 be provided in order to compute this *score*.
 
-Besides, `scdetect` implements trigger facilities, i.e. a detection may not be
-published, immediately, but put *on-hold* for the duration defined by the value
-of the `"triggerDuration"` configuration parameter. If a *better* detection
-arrives within this period, the previous one is not used, anymore.
+Besides, `scdetect-cc` implements trigger facilities, i.e. a detection may not
+be published, immediately, but put *on-hold* for the duration defined by the
+value of the `"triggerDuration"` configuration parameter. If a *better*
+detection arrives within this period, the previous one is not used, anymore.
 
 - `"triggerDuration"`: Defines the trigger duration in seconds. A negative value
   disables triggering facilities.
@@ -325,7 +327,7 @@ configuration parameters:
 - `"templateId"`: A string defining the stream related template identifier. The
   identifier must be unique in the context of a detector configuration. If
   undefined a unique identifier will be generated, automatically.
-  Since `scdetect` implements hierarchical logging specifying the template
+  Since `scdetect-cc` implements hierarchical logging specifying the template
   identifier may be of particular use while debugging.
 
 - `"waveformId"`: Required. A string defining the waveform stream identifier of
@@ -354,7 +356,7 @@ configuration parameters:
   account.
 
 > **NOTE**: When specifying a `"templateWaveformId"` different from
-> `"waveformId"`, `scdetect` will not correct potentially differing sensor
+> `"waveformId"`, `scdetect-cc` will not correct potentially differing sensor
 > responses.
 
 - `"templatePhase"`: Required. A string defining the template phase code used
@@ -469,8 +471,8 @@ Computing amplitudes is a prerequisite in order to perform a magnitude
 estimation later on. Since multiple magnitude estimation methods are provided,
 each magnitude estimation method requires to compute a corresponding amplitude
 type. In accordance with the magnitudes methods described in
-the [magnitude estimation](#magnitude-estimation) section `scdetect` implements
-the following amplitude types to be computed:
+the [magnitude estimation](#magnitude-estimation) section `scdetect-cc`
+implements the following amplitude types to be computed:
 
 - `MRelative`: Amplitude computed as the ratio between the template waveform and
   the detection. The approach is outlined by
@@ -489,7 +491,7 @@ the following amplitude types to be computed:
 Amplitudes are calculated once an origin has been declared.
 
 In general, the computation of amplitudes is sensor location dependent. In order
-to provide dedicated configuration for different sensor locations `scdetect`
+to provide dedicated configuration for different sensor locations `scdetect-cc`
 makes use of
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 concept. Note that amplitudes are calculated only for those sensor locations
@@ -507,7 +509,7 @@ an important note:
 > **NOTE**: At the time being, SeisComP's
 > [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 > allows configuration to be provided for stations, only. In order to allow
-> users to supply configuration on sensor location granularity, `scdetect`
+> users to supply configuration on sensor location granularity, `scdetect-cc`
 > makes use of so called *sensor location profiles*.
 
 In general, bindings are configured the easiest with SeisComP's configuration
@@ -541,7 +543,7 @@ frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html
 
 **Dump bindings configurations**:
 
-`scdetect` (and
+`scdetect-cc` (and
 SeisComP [trunk modules](https://www.seiscomp.de/doc/base/glossary.html#term-trunk)
 in general) do not work with key files directly. Therefore, key files need to be
 dumped either to a database or into
@@ -572,10 +574,10 @@ documentation.
 
 ### Magnitude estimation
 
-`scdetect` estimates magnitudes as so called SeisComP *station magnitudes* (for
-further details, please refer to
+`scdetect-cc` estimates magnitudes as so called SeisComP *station magnitudes* (
+for further details, please refer to
 the [scmag documentation](https://docs.gempa.de/seiscomp/current/apps/scmag.html))
-. Magnitudes may be computed for only those sensor locations, the corresponding
+. Magnitudes may be estimated for only those sensor locations, the corresponding
 magnitude types were computed, previously. In accordance with the amplitude
 types described in the [amplitude calculation section](#amplitude-calculation),
 the following magnitude types are available:
@@ -594,7 +596,7 @@ the following magnitude types are available:
   approach is based on so-called *template families* which in fact are groups of
   *related* templates. The
   corresponding [template family configuration](#template-family-configuration)
-  must be provided by `scdetect`'
+  must be provided by `scdetect-cc`'
   s `--templates-family-json path/to/templates-family.json` CLI flag.
   (**References**: https://doi.org/10.1029/2019JB017468 (section 3.3.3
   *Magnitude Estimation*))
@@ -787,11 +789,11 @@ the latter case, it is the `scmaster` module that passes the database connection
 URL to every module connecting to the messaging system (usually at module
 startup).
 
-However, when running `scdetect` in offline mode (using the CLI option
+However, when running `scdetect-cc` in offline mode (using the CLI option
 `--offline`), and the database connection URL is specified in `scmaster.cfg`,
-`scdetect` does not connect to the messaging system and thus, the database
-connection URL never reaches `scdetect`. For this purpose `scdetect` provides
-the standard SeisComP CLI options:
+`scdetect-cc` does not connect to the messaging system and thus, the database
+connection URL never reaches `scdetect-cc`. For this purpose `scdetect-cc`
+provides the standard SeisComP CLI options:
 
 - `-d|--database URL`
 - `--inventory-db URI`
@@ -809,7 +811,7 @@ catalog.scml
 data.mseed
 inventory.scml
 templates.json
-$ scdetect \
+$ scdetect-cc \
   --templates-json templates.json \
   --inventory-db file://$(realpath inventory.scml) \
   --config-db file://$(realpath config.scml) \
@@ -826,7 +828,7 @@ a file (i.e.
 [SCML](https://docs.gempa.de/seiscomp/current/base/glossary.html#term-scml)
 formatted to the `detections.scml` file.
 
-For calculating amplitudes `scdetect` makes use of
+For calculating amplitudes `scdetect-cc` makes use of
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
 concept (see also [calculating amplitudes](#amplitude-calculation)). In order to
 inject [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
@@ -845,11 +847,12 @@ including exemplary RecordStream configurations can be found
 [here](https://www.seiscomp.de/doc/apps/global_recordstream.html#global-recordstream)
 .
 
-Alternatively, the RecordStream can be defined making use of `scdetect`'s `-I [
+Alternatively, the RecordStream can be defined making use of `scdetect-cc`'
+s `-I [
 --record-url ] URI` CLI flag (Note that this is the standard CLI flag used for
 all SeisComP modules implementing SeisComP's `StreamApplication` interface.).
 
-In general, with regard to waveform data `scdetect` implements the following
+In general, with regard to waveform data `scdetect-cc` implements the following
 approach:
 
 1. **Initialization**: Download template waveform data from the *archive*
@@ -862,7 +865,7 @@ approach:
 
 #### Playback
 
-`scdetect` may be used to process archived waveform data in the so-called
+`scdetect-cc` may be used to process archived waveform data in the so-called
 *playback mode*. A good starting point is
 the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/waveformplayback.html)
 .
@@ -870,9 +873,9 @@ the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/
 Here, some additional important notes (which may repeat parts of
 the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/waveformplayback.html)):
 
-- `scdetect`'s playback mode is enabled with the `--playback` CLI flag.
+- `scdetect-cc`'s playback mode is enabled with the `--playback` CLI flag.
 - The maximum record latency (configurable by means of the `"maximumLatency"`
-  detector configuration parameter) is not validated if `scdetect` is run in
+  detector configuration parameter) is not validated if `scdetect-cc` is run in
   playback mode.
 - When reading data from a local archive, make sure the records are **sorted by
   end time**. Sorting miniSEED records is easily done
@@ -881,10 +884,10 @@ the [SeisComP tutorial on playbacks](https://www.seiscomp.de/doc/base/tutorials/
 #### Caching waveform data
 
 Unless the RecordStream points to a local disk storage, downloading waveforms
-might require a lot of time. For this reason `scdetect` stores raw template
+might require a lot of time. For this reason `scdetect-cc` stores raw template
 waveform data on disk after downloading them. The cache is located under
 `${SEISCOMP_ROOT}/var/cache/scdetect`. If omitting cached waveform data is
-desired, make use of `scdetect`'s `--templates-reload` CLI flag.
+desired, make use of `scdetect-cc`'s `--templates-reload` CLI flag.
 
 In order to remove cached waveform data, simply invoke
 
@@ -898,11 +901,11 @@ Although, SeisComP allows configuring
 a [combined RecordStream](https://www.seiscomp.de/doc/apps/global_recordstream.html#combined)
 , sometimes it might be useful to fetch template waveform data from a different
 RecordStream than the RecordStream providing the data being processed. For this
-purpose, `scdetect` provides the `--templates-prepare` CLI flag. With that, an
-exemplary processing workflow might look like:
+purpose, `scdetect-cc` provides the `--templates-prepare` CLI flag. With that,
+an exemplary processing workflow might look like:
 
 ```bash
-$ scdetect \
+$ scdetect-cc \
   --templates-json path/to/templates.json \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
@@ -921,7 +924,7 @@ Next, run the module for processing, but now use the previously cached template
 waveform data when loading template waveforms, e.g.
 
 ```bash
-$ scdetect \
+$ scdetect-cc \
   --templates-json path/to/templates.json \
   --inventory-db file:///absolute/path/to/inventory.scml \
   --event-db file:///absolute/path/to/catalog.scml \
@@ -939,7 +942,7 @@ Get a copy of
 $ git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/extras/
 ```
 
-Next, clone `scdetect`:
+Next, clone SCDetect:
 
 ```bash
 $ git clone https://github.com/damb/scdetect.git
@@ -949,18 +952,18 @@ $ git clone https://github.com/damb/scdetect.git
 
 Besides of
 the [SeisComP core dependencies](https://github.com/SeisComP/seiscomp#prerequisites)
-the following packages must be installed to compile `scdetect`:
+the following packages must be installed to compile SCDetect:
 
 - `libsqlite3-dev` (Debian, Ubuntu), `sqlite-devel` (RedHat, Fedora, CentOS),
   `dev-db/sqlite` (Gentoo)
 
-For compiling SeisComP (including `scdetect`), please refer to
+For compiling SeisComP (including SCDetect), please refer to
 https://github.com/SeisComP/seiscomp#build.
 
 ## Tests
 
-In order to run all SeisComP tests (including those of `scdetect` and possibly
-additionally installed third party modules), either execute
+In order to run all SeisComP tests (including those of `scdetect-cc` and
+possibly additionally installed third party modules), either execute
 
 ```bash
 $ make test
@@ -969,7 +972,7 @@ $ make test
 in the build directory, or use the
 [ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) executable from
 [cmake](https://cmake.org/) (also within the build directory). E.g. in order to
-run only `scdetect` related tests, invoke
+run only SCDetect related tests, invoke
 
 ```bash
 $ ctest -R "^test_scdetect.*"
