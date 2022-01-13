@@ -36,7 +36,7 @@ class CombiningAmplitudeProcessor : public detect::AmplitudeProcessor {
 
   void computeTimeWindow() override;
 
-  std::vector<std::string> waveformStreamIds() const;
+  std::vector<std::string> associatedWaveformStreamIds() const override;
 
  protected:
   processing::WaveformProcessor::StreamState *streamState(

@@ -127,6 +127,10 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // Returns the amplitude unit
   const std::string &unit() const;
 
+  // Returns the waveform stream identifiers the amplitude processor is
+  // associated with
+  virtual std::vector<std::string> associatedWaveformStreamIds() const;
+
   // Sets the *environment* of the amplitude processor
   virtual void setEnvironment(const DataModel::OriginCPtr &hypocenter,
                               const DataModel::SensorLocationCPtr &receiver,

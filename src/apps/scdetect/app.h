@@ -31,6 +31,7 @@
 #include "config/template_family.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
+#include "processing/timewindow_processor.h"
 #include "reducing_amplitude_processor.h"
 #include "util/waveform_stream_id.h"
 #include "waveform.h"
@@ -319,11 +320,14 @@ class Application : public Client::StreamApplication {
   using WaveformStreamId = std::string;
   // Registers an amplitude `processor` for `waveformStreamIds`
   void registerAmplitudeProcessor(
+      const std::shared_ptr<AmplitudeProcessor> &processor);
+  // Registers a time window `processor` for `waveformStreamIds`
+  void registerTimeWindowProcessor(
       const std::vector<WaveformStreamId> &waveformStreamIds,
-      const std::shared_ptr<AmplitudeProcessor> &processor);
+      const std::shared_ptr<processing::TimeWindowProcessor> &);
   // Removes an amplitude processor
-  void removeAmplitudeProcessor(
-      const std::shared_ptr<AmplitudeProcessor> &processor);
+  void removeTimeWindowProcessor(
+      const std::shared_ptr<processing::TimeWindowProcessor> &processor);
 
   // Registers a detection
   void registerDetection(const std::shared_ptr<DetectionItem> &detection);
@@ -370,25 +374,25 @@ class Application : public Client::StreamApplication {
 
   bool _detectionRegistrationBlocked{false};
 
-  using AmplitudeProcessors =
+  using TimeWindowProcessors =
       std::unordered_multimap<WaveformStreamId,
-                              std::shared_ptr<AmplitudeProcessor>>;
-  AmplitudeProcessors _amplitudeProcessors;
+                              std::shared_ptr<processing::TimeWindowProcessor>>;
+  TimeWindowProcessors _timeWindowProcessors;
   using ProcessorId = std::string;
-  using AmplitudeProcessorIdx =
+  using TimeWindowProcessorIdx =
       std::unordered_map<ProcessorId, std::vector<WaveformStreamId>>;
-  AmplitudeProcessorIdx _amplitudeProcessorIdx;
+  TimeWindowProcessorIdx _timeWindowProcessorIdx;
 
-  struct AmplitudeProcessorQueueItem {
+  struct TimeWindowProcessorQueueItem {
     std::vector<WaveformStreamId> waveformStreamIds;
-    std::shared_ptr<AmplitudeProcessor> amplitudeProcessor;
+    std::shared_ptr<processing::TimeWindowProcessor> timeWindowProcessor;
   };
-  using AmplitudeProcessorQueue = std::list<AmplitudeProcessorQueueItem>;
-  // The queue used for amplitude processor registration
-  AmplitudeProcessorQueue _amplitudeProcessorQueue;
-  // The queue used for amplitude processor removal
-  AmplitudeProcessorQueue _amplitudeProcessorRemovalQueue;
-  bool _amplitudeProcessorRegistrationBlocked{false};
+  using TimeWindowProcessorQueue = std::list<TimeWindowProcessorQueueItem>;
+  // The queue used for time window processor registration
+  TimeWindowProcessorQueue _timeWindowProcessorRegistrationQueue;
+  // The queue used for time window processor removal
+  TimeWindowProcessorQueue _timeWindowProcessorRemovalQueue;
+  bool _timeWindowProcessorRegistrationBlocked{false};
 };
 
 }  // namespace detect

@@ -73,6 +73,16 @@ void CombiningAmplitudeProcessor::computeTimeWindow() {
   setTimeWindow(Core::TimeWindow{start, end});
 }
 
+std::vector<std::string>
+CombiningAmplitudeProcessor::associatedWaveformStreamIds() const {
+  std::unordered_set<WaveformStreamId> unique;
+  for (const auto &u : _underlyingIdx) {
+    unique.emplace(u.first);
+  }
+
+  return std::vector<WaveformStreamId>{std::begin(unique), std::end(unique)};
+}
+
 bool CombiningAmplitudeProcessor::store(const Record *record) {
   if (allUnderlyingFinished() || finished()) {
     return false;
@@ -140,16 +150,6 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
 const detect::AmplitudeProcessor *CombiningAmplitudeProcessor::underlying(
     const std::string &processorId) const {
   return _underlying.at(processorId).amplitudeProcessor.get();
-}
-
-std::vector<std::string> CombiningAmplitudeProcessor::waveformStreamIds()
-    const {
-  std::unordered_set<WaveformStreamId> unique;
-  for (const auto &u : _underlyingIdx) {
-    unique.emplace(u.first);
-  }
-
-  return std::vector<WaveformStreamId>{std::begin(unique), std::end(unique)};
 }
 
 processing::WaveformProcessor::StreamState *

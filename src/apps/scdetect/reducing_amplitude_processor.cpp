@@ -52,6 +52,11 @@ void ReducingAmplitudeProcessor::reset() {
   WaveformProcessor::reset();
 }
 
+std::vector<std::string>
+ReducingAmplitudeProcessor::associatedWaveformStreamIds() const {
+  return util::map_keys(_streams);
+}
+
 void ReducingAmplitudeProcessor::add(
     const std::string &netCode, const std::string &staCode,
     const std::string &locCode, const Processing::Stream &streamConfig,
@@ -68,10 +73,6 @@ void ReducingAmplitudeProcessor::add(
                                                 streamConfig.code()};
 
   _streams.emplace(util::to_string(waveformStreamId), std::move(stream));
-}
-
-std::vector<std::string> ReducingAmplitudeProcessor::waveformStreamIds() const {
-  return util::map_keys(_streams);
 }
 
 void ReducingAmplitudeProcessor::dumpBufferedData(std::ostream &out) {

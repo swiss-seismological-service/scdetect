@@ -37,7 +37,7 @@ MRelative::MRelative(
     std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> &&underlying,
     CombiningStrategy strategy)
     : CombiningAmplitudeProcessor{std::move(underlying), std::move(strategy)} {
-  assert((validateUniqueSensorLocation(waveformStreamIds())));
+  assert((validateUniqueSensorLocation(associatedWaveformStreamIds())));
   setType("MRelative");
   setUnit("");
 }
@@ -50,7 +50,7 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
 
   // waveform stream identifier
   std::vector<std::string> tokens;
-  auto waveformStreamIds{this->waveformStreamIds()};
+  auto waveformStreamIds{associatedWaveformStreamIds()};
   assert(!waveformStreamIds.empty());
   util::tokenizeWaveformStreamId(waveformStreamIds.front(), tokens);
   assert((tokens.size() >= 3));
@@ -93,7 +93,7 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
   {
     auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId(settings::kAmplitudeStreamsCommentId);
-    comment->setText(boost::algorithm::join(this->waveformStreamIds(),
+    comment->setText(boost::algorithm::join(associatedWaveformStreamIds(),
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());
   }

@@ -67,6 +67,11 @@ const std::string &AmplitudeProcessor::type() const { return _type; }
 
 const std::string &AmplitudeProcessor::unit() const { return _unit; }
 
+std::vector<std::string> AmplitudeProcessor::associatedWaveformStreamIds()
+    const {
+  return std::vector<std::string>{};
+}
+
 void AmplitudeProcessor::setEnvironment(
     const DataModel::OriginCPtr &hypocenter,
     const DataModel::SensorLocationCPtr &receiver,

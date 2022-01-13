@@ -49,6 +49,7 @@
 #include "magnitude/regression.h"
 #include "magnitude_processor.h"
 #include "processing/processor.h"
+#include "processing/timewindow_processor.h"
 #include "processing/waveform_processor.h"
 #include "resamplerstore.h"
 #include "settings.h"
@@ -508,84 +509,89 @@ void Application::handleRecord(Record *rec) {
     }
   }
 
-  _amplitudeProcessorRegistrationBlocked = true;
+  {
+    _timeWindowProcessorRegistrationBlocked = true;
 
-  auto amplitudeProcessorRange{
-      _amplitudeProcessors.equal_range(rec->streamID())};
-  for (auto it = amplitudeProcessorRange.first;
-       it != amplitudeProcessorRange.second; ++it) {
-    const auto &proc{it->second};
-    // the amplitude processor must not be already on the removal list
-    if (std::find_if(
-            std::begin(_amplitudeProcessorRemovalQueue),
-            std::end(_amplitudeProcessorRemovalQueue),
-            [&proc](const decltype(_amplitudeProcessorRemovalQueue)::value_type
-                        &item) { return item.amplitudeProcessor == proc; }) !=
-        _amplitudeProcessorRemovalQueue.end()) {
-      continue;
-    }
+    auto range{_timeWindowProcessors.equal_range(rec->streamID())};
+    for (auto it = range.first; it != range.second; ++it) {
+      const auto &proc{it->second};
+      // the amplitude processor must not be already on the removal list
+      if (std::find_if(
+              std::begin(_timeWindowProcessorRemovalQueue),
+              std::end(_timeWindowProcessorRemovalQueue),
+              [&proc](
+                  const decltype(_timeWindowProcessorRemovalQueue)::value_type
+                      &item) { return item.timeWindowProcessor == proc; }) !=
+          _timeWindowProcessorRemovalQueue.end()) {
+        continue;
+      }
 
-    // schedule the amplitude processor for deletion when finished
-    if (it->second->finished()) {
-      removeAmplitudeProcessor(it->second);
-    } else {
-      it->second->feed(rec);
+      // schedule the amplitude processor for deletion when finished
       if (it->second->finished()) {
-        removeAmplitudeProcessor(it->second);
+        removeTimeWindowProcessor(it->second);
+      } else {
+        it->second->feed(rec);
+        if (it->second->finished()) {
+          removeTimeWindowProcessor(it->second);
+        }
       }
     }
-  }
 
-  _amplitudeProcessorRegistrationBlocked = false;
+    _timeWindowProcessorRegistrationBlocked = false;
 
-  // remove outdated amplitude processors
-  while (!_amplitudeProcessorRemovalQueue.empty()) {
-    const auto amplitudeProcessor{
-        _amplitudeProcessorRemovalQueue.front().amplitudeProcessor};
-    _amplitudeProcessorRemovalQueue.pop_front();
-    removeAmplitudeProcessor(amplitudeProcessor);
-  }
-
-  // register pending amplitude processors
-  while (!_amplitudeProcessorQueue.empty()) {
-    const auto &amplitudeProcessorItem{_amplitudeProcessorQueue.front()};
-    _amplitudeProcessorQueue.pop_front();
-    registerAmplitudeProcessor(amplitudeProcessorItem.waveformStreamIds,
-                               amplitudeProcessorItem.amplitudeProcessor);
-  }
-
-  _detectionRegistrationBlocked = true;
-
-  auto detectionRange{_detections.equal_range(rec->streamID())};
-  for (auto it = detectionRange.first; it != detectionRange.second; ++it) {
-    auto &detection{it->second};
-    // the detection must not be already in the removal list
-    if (std::find(std::begin(_detectionRemovalQueue),
-                  std::end(_detectionRemovalQueue),
-                  detection) != std::end(_detectionRemovalQueue)) {
-      continue;
+    // remove outdated amplitude processors
+    while (!_timeWindowProcessorRemovalQueue.empty()) {
+      const auto processor{
+          _timeWindowProcessorRemovalQueue.front().timeWindowProcessor};
+      _timeWindowProcessorRemovalQueue.pop_front();
+      removeTimeWindowProcessor(processor);
     }
 
-    // schedule the detection for deletion when finished
-    if (detection->ready()) {
+    // register pending amplitude processors
+    while (!_timeWindowProcessorRegistrationQueue.empty()) {
+      const auto &timeWindowProcessorQueueItem{
+          _timeWindowProcessorRegistrationQueue.front()};
+      _timeWindowProcessorRegistrationQueue.pop_front();
+      registerTimeWindowProcessor(
+          timeWindowProcessorQueueItem.waveformStreamIds,
+          timeWindowProcessorQueueItem.timeWindowProcessor);
+    }
+  }
+
+  {
+    _detectionRegistrationBlocked = true;
+
+    auto range{_detections.equal_range(rec->streamID())};
+    for (auto it = range.first; it != range.second; ++it) {
+      auto &detection{it->second};
+      // the detection must not be already in the removal list
+      if (std::find(std::begin(_detectionRemovalQueue),
+                    std::end(_detectionRemovalQueue),
+                    detection) != std::end(_detectionRemovalQueue)) {
+        continue;
+      }
+
+      // schedule the detection for deletion when finished
+      if (detection->ready()) {
+        publishAndRemoveDetection(detection);
+      }
+    }
+
+    _detectionRegistrationBlocked = false;
+
+    // remove outdated detections
+    while (!_detectionRemovalQueue.empty()) {
+      auto detection{_detectionRemovalQueue.front()};
+      _detectionRemovalQueue.pop_front();
       publishAndRemoveDetection(detection);
     }
-  }
 
-  _detectionRegistrationBlocked = false;
-
-  // remove outdated detections
-  while (!_detectionRemovalQueue.empty()) {
-    auto detection{_detectionRemovalQueue.front()};
-    _detectionRemovalQueue.pop_front();
-    publishAndRemoveDetection(detection);
-  }
-
-  // register pending detections
-  while (!_detectionQueue.empty()) {
-    const auto detection{_detectionQueue.front()};
-    _detectionQueue.pop_front();
-    registerDetection(detection);
+    // register pending detections
+    while (!_detectionQueue.empty()) {
+      const auto detection{_detectionQueue.front()};
+      _detectionQueue.pop_front();
+      registerDetection(detection);
+    }
   }
 }
 
@@ -1490,16 +1496,12 @@ bool Application::initAmplitudeProcessors(
       continue;
     }
 
-    // prepare `factory::Detection`
-    std::vector<std::string> waveformStreamIds;
-
+    // prepare `amplitude::factory::Detection`
     amplitude::factory::Detection detection;
     detection.origin = detectionItem->origin;
     detection.sensorLocationStreamId = sensorLocationStreamId;
 
     for (const auto &pickPair : sensorLocationPicksMapPair.second) {
-      waveformStreamIds.push_back(pickPair.second.authorativeWaveformStreamId);
-
       const auto &procId{pickPair.first};
       detection.pickMap.emplace(procId,
                                 amplitude::factory::Detection::Pick{
@@ -1588,8 +1590,7 @@ bool Application::initAmplitudeProcessors(
           });
 
       try {
-        registerAmplitudeProcessor(waveformStreamIds,
-                                   std::move(amplitudeProcessor));
+        registerAmplitudeProcessor(std::move(amplitudeProcessor));
       } catch (Exception &e) {
         SCDETECT_LOG_WARNING("Failed to register amplitude processor: %s",
                              e.what());
@@ -1638,22 +1639,30 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
 }
 
 void Application::registerAmplitudeProcessor(
-    const std::vector<WaveformStreamId> &waveformStreamIds,
     const std::shared_ptr<AmplitudeProcessor> &processor) {
-  if (_amplitudeProcessorRegistrationBlocked) {
-    _amplitudeProcessorQueue.emplace_back(
-        AmplitudeProcessorQueueItem{waveformStreamIds, processor});
+  registerTimeWindowProcessor(processor->associatedWaveformStreamIds(),
+                              processor);
+}
+
+void Application::registerTimeWindowProcessor(
+    const std::vector<WaveformStreamId> &waveformStreamIds,
+    const std::shared_ptr<processing::TimeWindowProcessor> &processor) {
+  assert((!waveformStreamIds.empty()));
+
+  if (_timeWindowProcessorRegistrationBlocked) {
+    _timeWindowProcessorRegistrationQueue.emplace_back(
+        TimeWindowProcessorQueueItem{waveformStreamIds, processor});
     return;
   }
 
   for (const auto &waveformStreamId : waveformStreamIds) {
-    _amplitudeProcessors.emplace(waveformStreamId, processor);
-    SCDETECT_LOG_DEBUG("[%s] Added amplitude processor with id: %s",
+    _timeWindowProcessors.emplace(waveformStreamId, processor);
+    SCDETECT_LOG_DEBUG("[%s] Added time window processor with id: %s",
                        waveformStreamId.c_str(), processor->id().c_str());
-    SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
-                       _amplitudeProcessors.size());
+    SCDETECT_LOG_DEBUG("Current time window processor count: %lu",
+                       _timeWindowProcessors.size());
   }
-  _amplitudeProcessorIdx.emplace(processor->id(), waveformStreamIds);
+  _timeWindowProcessorIdx.emplace(processor->id(), waveformStreamIds);
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     if (!processor->finished()) {
@@ -1693,42 +1702,42 @@ void Application::registerAmplitudeProcessor(
   }
 
   if (processor->finished()) {
-    removeAmplitudeProcessor(processor);
+    removeTimeWindowProcessor(processor);
   }
 }
 
-void Application::removeAmplitudeProcessor(
-    const std::shared_ptr<AmplitudeProcessor> &processor) {
-  if (_amplitudeProcessorRegistrationBlocked) {
-    _amplitudeProcessorRemovalQueue.emplace_back(
-        AmplitudeProcessorQueueItem{{}, processor});
+void Application::removeTimeWindowProcessor(
+    const std::shared_ptr<processing::TimeWindowProcessor> &processor) {
+  if (_timeWindowProcessorRegistrationBlocked) {
+    _timeWindowProcessorRemovalQueue.emplace_back(
+        TimeWindowProcessorQueueItem{{}, processor});
     return;
   }
 
-  const auto waveformStreamIds{_amplitudeProcessorIdx.at(processor->id())};
+  const auto waveformStreamIds{_timeWindowProcessorIdx.at(processor->id())};
   for (const auto &waveformStreamId : waveformStreamIds) {
-    auto range{_amplitudeProcessors.equal_range(waveformStreamId)};
+    auto range{_timeWindowProcessors.equal_range(waveformStreamId)};
     auto it{range.first};
     while (it != range.second) {
       if (it->second == processor) {
-        SCDETECT_LOG_DEBUG("[%s] Removed amplitude processor with id: %s",
+        SCDETECT_LOG_DEBUG("[%s] Removed time window processor with id: %s",
                            waveformStreamId.c_str(), processor->id().c_str());
-        it = _amplitudeProcessors.erase(it);
-        SCDETECT_LOG_DEBUG("Current amplitude processor count: %lu",
-                           _amplitudeProcessors.size());
+        it = _timeWindowProcessors.erase(it);
+        SCDETECT_LOG_DEBUG("Current time window processor count: %lu",
+                           _timeWindowProcessors.size());
       } else {
         ++it;
       }
     }
   }
 
-  _amplitudeProcessorIdx.erase(processor->id());
+  _timeWindowProcessorIdx.erase(processor->id());
 
   // check pending registration queue
-  auto it{std::begin(_amplitudeProcessorQueue)};
-  while (it != _amplitudeProcessorQueue.end()) {
-    if (it->amplitudeProcessor == processor) {
-      it = _amplitudeProcessorQueue.erase(it);
+  auto it{std::begin(_timeWindowProcessorRegistrationQueue)};
+  while (it != _timeWindowProcessorRegistrationQueue.end()) {
+    if (it->timeWindowProcessor == processor) {
+      it = _timeWindowProcessorRegistrationQueue.erase(it);
       continue;
     }
     ++it;
