@@ -485,27 +485,31 @@ void Application::handleRecord(Record *rec) {
   for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
     auto &detector{it->second};
     if (detector->enabled()) {
-      if (!detector->feed(rec)) {
-        SCDETECT_LOG_WARNING(
-            "%s: Failed to feed record into detector (id=%s). Resetting.",
-            it->first.c_str(), detector->id().c_str());
+      if (!detector->feed(rec) && detector->finished()) {
+        logging::TaggedMessage msg{it->first,
+                                   "Failed to feed record into detector (" +
+                                       detector->id() + "). Resetting."};
+        SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
         detector->reset();
         continue;
       }
 
       if (detector->finished()) {
-        SCDETECT_LOG_WARNING(
-            "%s: Detector (id=%s) finished (status=%d, "
-            "statusValue=%f). Resetting.",
-            it->first.c_str(), detector->id().c_str(),
-            util::asInteger(detector->status()), detector->statusValue());
+        logging::TaggedMessage msg{
+            it->first,
+            "Detector finished (id=" + detector->id() + ", status=" +
+                std::to_string(util::asInteger(detector->status())) +
+                ", status_value=" + std::to_string(detector->statusValue()) +
+                "). Resetting."};
+        SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
         detector->reset();
         continue;
       }
     } else {
-      SCDETECT_LOG_DEBUG(
-          "%s: Skip feeding record into detector (id=%s). Reason: Disabled.",
-          it->first.c_str(), detector->id().c_str());
+      logging::TaggedMessage msg{
+          it->first, "Skip feeding record to detector (id=" + detector->id() +
+                         "). Reason: Disabled."};
+      SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
     }
   }
 
