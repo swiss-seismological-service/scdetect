@@ -1,4 +1,4 @@
-set(DETECT_TARGET scdetect)
+set(DETECT_TARGET scdetect-cc)
 
 set(
   DETECT_SOURCES

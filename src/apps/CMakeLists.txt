@@ -1,1 +1,1 @@
-subdirs(scdetect)
+subdirs(cc)
