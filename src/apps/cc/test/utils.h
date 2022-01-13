@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEST_UTILS_H_
-#define SCDETECT_APPS_SCDETECT_TEST_UTILS_H_
+#ifndef SCDETECT_APPS_CC_TEST_UTILS_H_
+#define SCDETECT_APPS_CC_TEST_UTILS_H_
 
 #include <seiscomp/core/array.h>
 #include <seiscomp/core/genericrecord.h>
@@ -48,4 +48,4 @@ GenericRecordPtr makeRecord(
 
 #include "utils.ipp"
 
-#endif  // SCDETECT_APPS_SCDETECT_TEST_UTILS_H_
+#endif  // SCDETECT_APPS_CC_TEST_UTILS_H_

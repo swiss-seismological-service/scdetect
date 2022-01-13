@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
+#ifndef SCDETECT_APPS_CC_PROCESSING_WAVEFORMPROCESSOR_H_
+#define SCDETECT_APPS_CC_PROCESSING_WAVEFORMPROCESSOR_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
@@ -214,4 +214,4 @@ std::unique_ptr<WaveformProcessor::Filter> createFilter(
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_WAVEFORMPROCESSOR_H_
+#endif  // SCDETECT_APPS_CC_PROCESSING_WAVEFORMPROCESSOR_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEMPLATEWAVEFORM_H_
-#define SCDETECT_APPS_SCDETECT_TEMPLATEWAVEFORM_H_
+#ifndef SCDETECT_APPS_CC_TEMPLATEWAVEFORM_H_
+#define SCDETECT_APPS_CC_TEMPLATEWAVEFORM_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
@@ -146,4 +146,4 @@ class TemplateWaveform {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_TEMPLATEWAVEFORM_H_
+#endif  // SCDETECT_APPS_CC_TEMPLATEWAVEFORM_H_

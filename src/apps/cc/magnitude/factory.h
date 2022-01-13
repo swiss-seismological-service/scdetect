@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_FACTORY_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_FACTORY_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_FACTORY_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_FACTORY_H_
 
 #include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/stationmagnitude.h>
@@ -81,4 +81,4 @@ class Factory
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_FACTORY_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_FACTORY_H_

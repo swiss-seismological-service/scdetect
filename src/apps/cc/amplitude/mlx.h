@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_MLX_H_
-#define SCDETECT_APPS_SCDETECT_AMPLITUDE_MLX_H_
+#ifndef SCDETECT_APPS_CC_AMPLITUDE_MLX_H_
+#define SCDETECT_APPS_CC_AMPLITUDE_MLX_H_
 
 #include "rms.h"
 
@@ -23,4 +23,4 @@ class MLx : public RMSAmplitude {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_AMPLITUDE_MLX_H_
+#endif  // SCDETECT_APPS_CC_AMPLITUDE_MLX_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_BUILDER_IPP_
-#define SCDETECT_APPS_SCDETECT_BUILDER_IPP_
+#ifndef SCDETECT_APPS_CC_BUILDER_IPP_
+#define SCDETECT_APPS_CC_BUILDER_IPP_
 
 template <typename TProduct>
 std::unique_ptr<TProduct> Builder<TProduct>::build() {
@@ -20,4 +20,4 @@ TProduct *Builder<TProduct>::product() {
   return _product.get();
 }
 
-#endif  // SCDETECT_APPS_SCDETECT_BUILDER_IPP_
+#endif  // SCDETECT_APPS_CC_BUILDER_IPP_

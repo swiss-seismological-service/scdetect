@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_CONFIG_VALIDATORS_H_
-#define SCDETECT_APPS_SCDETECT_CONFIG_VALIDATORS_H_
+#ifndef SCDETECT_APPS_CC_CONFIG_VALIDATORS_H_
+#define SCDETECT_APPS_CC_CONFIG_VALIDATORS_H_
 
 #include <string>
 #include <vector>
@@ -26,4 +26,4 @@ bool validateAmplitudeType(const std::string &amplitudeType);
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_CONFIG_VALIDATORS_H_
+#endif  // SCDETECT_APPS_CC_CONFIG_VALIDATORS_H_

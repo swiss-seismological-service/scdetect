@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
-#define SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
+#ifndef SCDETECT_APPS_CC_DETECTOR_ARRIVAL_H_
+#define SCDETECT_APPS_CC_DETECTOR_ARRIVAL_H_
 
 #include <seiscomp/core/datetime.h>
 
@@ -70,4 +70,4 @@ struct hash<Seiscomp::detect::detector::Arrival> {
 
 #include "arrival.ipp"
 
-#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_ARRIVAL_H_
+#endif  // SCDETECT_APPS_CC_DETECTOR_ARRIVAL_H_

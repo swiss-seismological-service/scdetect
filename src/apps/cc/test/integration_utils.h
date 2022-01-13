@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
-#define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
+#ifndef SCDETECT_APPS_CC_TEST_INTEGRATION_UTILS_H_
+#define SCDETECT_APPS_CC_TEST_INTEGRATION_UTILS_H_
 
 #include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/arrival.h>
@@ -274,4 +274,4 @@ class ApplicationWrapper {
 
 #include "integration_utils.ipp"
 
-#endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_UTILS_H_
+#endif  // SCDETECT_APPS_CC_TEST_INTEGRATION_UTILS_H_

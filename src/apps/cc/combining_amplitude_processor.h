@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_COMBININGAMPLITUDEPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_COMBININGAMPLITUDEPROCESSOR_H_
+#ifndef SCDETECT_APPS_CC_COMBININGAMPLITUDEPROCESSOR_H_
+#define SCDETECT_APPS_CC_COMBININGAMPLITUDEPROCESSOR_H_
 
 #include <boost/optional/optional.hpp>
 #include <functional>
@@ -113,4 +113,4 @@ class CombiningAmplitudeProcessor : public detect::AmplitudeProcessor {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_COMBININGAMPLITUDEPROCESSOR_H_
+#endif  // SCDETECT_APPS_CC_COMBININGAMPLITUDEPROCESSOR_H_

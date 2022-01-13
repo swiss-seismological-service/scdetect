@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
-#define SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
+#ifndef SCDETECT_APPS_CC_RESAMPLERSTORE_H_
+#define SCDETECT_APPS_CC_RESAMPLERSTORE_H_
 
 #include <seiscomp/io/recordfilter/resample.h>
 
@@ -77,4 +77,4 @@ class RecordResamplerStore {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_RESAMPLERSTORE_H_
+#endif  // SCDETECT_APPS_CC_RESAMPLERSTORE_H_

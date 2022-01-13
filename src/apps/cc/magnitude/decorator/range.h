@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_RANGE_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_RANGE_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_DECORATOR_RANGE_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_DECORATOR_RANGE_H_
 
 #include <seiscomp/datamodel/amplitude.h>
 
@@ -64,4 +64,4 @@ class MagnitudeRange : public magnitude::Decorator {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_RANGE_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_DECORATOR_RANGE_H_

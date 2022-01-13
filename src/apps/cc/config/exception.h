@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_CONFIG_EXCEPTION_H_
-#define SCDETECT_APPS_SCDETECT_CONFIG_EXCEPTION_H_
+#ifndef SCDETECT_APPS_CC_CONFIG_EXCEPTION_H_
+#define SCDETECT_APPS_CC_CONFIG_EXCEPTION_H_
 
 #include "../exception.h"
 
@@ -29,4 +29,4 @@ class ValidationError : public BaseException {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_CONFIG_EXCEPTION_H_
+#endif  // SCDETECT_APPS_CC_CONFIG_EXCEPTION_H_

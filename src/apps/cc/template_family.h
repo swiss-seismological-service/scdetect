@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEMPLATEFAMILY_H_
-#define SCDETECT_APPS_SCDETECT_TEMPLATEFAMILY_H_
+#ifndef SCDETECT_APPS_CC_TEMPLATEFAMILY_H_
+#define SCDETECT_APPS_CC_TEMPLATEFAMILY_H_
 
 #include <seiscomp/core/record.h>
 #include <seiscomp/datamodel/amplitude.h>
@@ -137,4 +137,4 @@ class TemplateFamily {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_TEMPLATEFAMILY_H_
+#endif  // SCDETECT_APPS_CC_TEMPLATEFAMILY_H_

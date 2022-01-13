@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_UTIL_MATH_H_
-#define SCDETECT_APPS_SCDETECT_UTIL_MATH_H_
+#ifndef SCDETECT_APPS_CC_UTIL_MATH_H_
+#define SCDETECT_APPS_CC_UTIL_MATH_H_
 
 #include <cstddef>
 #include <type_traits>
@@ -34,4 +34,4 @@ inline T square(T n) {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_UTIL_MATH_H_
+#endif  // SCDETECT_APPS_CC_UTIL_MATH_H_

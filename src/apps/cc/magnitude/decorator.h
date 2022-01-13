@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_DECORATOR_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_DECORATOR_H_
 
 #include <memory>
 
@@ -28,4 +28,4 @@ class Decorator : public MagnitudeProcessor {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_DECORATOR_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_DECORATOR_H_

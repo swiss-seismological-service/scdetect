@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
-#define SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
+#ifndef SCDETECT_APPS_CC_OPERATOR_RINGBUFFER_H_
+#define SCDETECT_APPS_CC_OPERATOR_RINGBUFFER_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/recordsequence.h>
@@ -80,4 +80,4 @@ class RingBufferOperator : public processing::WaveformOperator,
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_OPERATOR_RINGBUFFER_H_
+#endif  // SCDETECT_APPS_CC_OPERATOR_RINGBUFFER_H_

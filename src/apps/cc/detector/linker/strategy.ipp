@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_STRATEGY_IPP_
-#define SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_STRATEGY_IPP_
+#ifndef SCDETECT_APPS_CC_DETECTOR_LINKER_STRATEGY_IPP_
+#define SCDETECT_APPS_CC_DETECTOR_LINKER_STRATEGY_IPP_
 
 #include <type_traits>
 #include <utility>
@@ -33,4 +33,4 @@ std::unique_ptr<MergingStrategy> MergingStrategy::Create(
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_STRATEGY_IPP_
+#endif  // SCDETECT_APPS_CC_DETECTOR_LINKER_STRATEGY_IPP_

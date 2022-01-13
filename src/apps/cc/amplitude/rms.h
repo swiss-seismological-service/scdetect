@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_RMS_H_
-#define SCDETECT_APPS_SCDETECT_AMPLITUDE_RMS_H_
+#ifndef SCDETECT_APPS_CC_AMPLITUDE_RMS_H_
+#define SCDETECT_APPS_CC_AMPLITUDE_RMS_H_
 
 #include <memory>
 
@@ -58,4 +58,4 @@ RMSAmplitude::SignalUnit signalUnitFromString(const std::string &signalUnit);
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_AMPLITUDE_RMS_H_
+#endif  // SCDETECT_APPS_CC_AMPLITUDE_RMS_H_

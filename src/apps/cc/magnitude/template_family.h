@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_TEMPLATEFAMILY_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_TEMPLATEFAMILY_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_TEMPLATEFAMILY_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_TEMPLATEFAMILY_H_
 
 #include <seiscomp/datamodel/amplitude.h>
 #include <seiscomp/datamodel/stationmagnitude.h>
@@ -50,4 +50,4 @@ class TemplateFamilyBased {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_TEMPLATEFAMILY_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_TEMPLATEFAMILY_H_

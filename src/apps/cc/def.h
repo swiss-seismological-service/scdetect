@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DEF_H_
-#define SCDETECT_APPS_SCDETECT_DEF_H_
+#ifndef SCDETECT_APPS_CC_DEF_H_
+#define SCDETECT_APPS_CC_DEF_H_
 
 #include <seiscomp/math/filter.h>
 
@@ -13,4 +13,4 @@ using DoubleFilter = Filter<double>;
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_DEF_H_
+#endif  // SCDETECT_APPS_CC_DEF_H_

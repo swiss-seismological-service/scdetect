@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_FILTER_H_
-#define SCDETECT_APPS_SCDETECT_FILTER_H_
+#ifndef SCDETECT_APPS_CC_FILTER_H_
+#define SCDETECT_APPS_CC_FILTER_H_
 
 #include "exception.h"
 
@@ -17,4 +17,4 @@ class BaseException : public Exception {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_FILTER_H_
+#endif  // SCDETECT_APPS_CC_FILTER_H_

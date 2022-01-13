@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_FACTORY_H_
-#define SCDETECT_APPS_SCDETECT_FACTORY_H_
+#ifndef SCDETECT_APPS_CC_FACTORY_H_
+#define SCDETECT_APPS_CC_FACTORY_H_
 
 #include <functional>
 #include <map>
@@ -53,4 +53,4 @@ class Factory {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_FACTORY_H_
+#endif  // SCDETECT_APPS_CC_FACTORY_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_BUILDER_H_
-#define SCDETECT_APPS_SCDETECT_BUILDER_H_
+#ifndef SCDETECT_APPS_CC_BUILDER_H_
+#define SCDETECT_APPS_CC_BUILDER_H_
 
 #include <memory>
 
@@ -72,4 +72,4 @@ class Builder {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_BUILDER_H_
+#endif  // SCDETECT_APPS_CC_BUILDER_H_

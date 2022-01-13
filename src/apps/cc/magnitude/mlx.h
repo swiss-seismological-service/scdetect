@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_MLX_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_MLX_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_MLX_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_MLX_H_
 
 #include "regression.h"
 #include "seiscomp/datamodel/stationmagnitude.h"
@@ -17,4 +17,4 @@ class MLx : public FixedSlopeRegressionMagnitude<1> {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_MLX_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_MLX_H_

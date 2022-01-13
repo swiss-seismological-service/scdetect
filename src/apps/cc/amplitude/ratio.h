@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_RATIO_H_
-#define SCDETECT_APPS_SCDETECT_AMPLITUDE_RATIO_H_
+#ifndef SCDETECT_APPS_CC_AMPLITUDE_RATIO_H_
+#define SCDETECT_APPS_CC_AMPLITUDE_RATIO_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
@@ -75,4 +75,4 @@ class RatioAmplitude : public AmplitudeProcessor {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_AMPLITUDE_RATIO_H_
+#endif  // SCDETECT_APPS_CC_AMPLITUDE_RATIO_H_

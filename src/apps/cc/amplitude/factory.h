@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_AMPLITUDE_FACTORY_H_
-#define SCDETECT_APPS_SCDETECT_AMPLITUDE_FACTORY_H_
+#ifndef SCDETECT_APPS_CC_AMPLITUDE_FACTORY_H_
+#define SCDETECT_APPS_CC_AMPLITUDE_FACTORY_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
@@ -101,4 +101,4 @@ class Factory
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_AMPLITUDE_FACTORY_H_
+#endif  // SCDETECT_APPS_CC_AMPLITUDE_FACTORY_H_

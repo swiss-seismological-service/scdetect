@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDEPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDEPROCESSOR_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDEPROCESSOR_H_
+#define SCDETECT_APPS_CC_MAGNITUDEPROCESSOR_H_
 
 #include <seiscomp/datamodel/amplitude.h>
 
@@ -100,4 +100,4 @@ class MagnitudeProcessor : public processing::Processor {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDEPROCESSOR_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDEPROCESSOR_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEST_UTILS_IPP_
-#define SCDETECT_APPS_SCDETECT_TEST_UTILS_IPP_
+#ifndef SCDETECT_APPS_CC_TEST_UTILS_IPP_
+#define SCDETECT_APPS_CC_TEST_UTILS_IPP_
 
 #include <vector>
 
@@ -43,4 +43,4 @@ GenericRecordPtr makeRecord(
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_TEST_UTILS_IPP_
+#endif  // SCDETECT_APPS_CC_TEST_UTILS_IPP_

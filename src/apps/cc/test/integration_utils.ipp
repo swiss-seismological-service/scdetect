@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
-#define SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
+#ifndef SCDETECT_APPS_CC_TEST_INTEGRATION_IPP_
+#define SCDETECT_APPS_CC_TEST_INTEGRATION_IPP_
 
 namespace Seiscomp {
 namespace detect {
@@ -37,4 +37,4 @@ int ApplicationWrapper<TApp>::operator()() {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_TEST_INTEGRATION_IPP_
+#endif  // SCDETECT_APPS_CC_TEST_INTEGRATION_IPP_

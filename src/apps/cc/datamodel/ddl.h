@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DATAMODEL_DDL_H_
-#define SCDETECT_APPS_SCDETECT_DATAMODEL_DDL_H_
+#ifndef SCDETECT_APPS_CC_DATAMODEL_DDL_H_
+#define SCDETECT_APPS_CC_DATAMODEL_DDL_H_
 
 #include <seiscomp/io/database.h>
 
@@ -12,4 +12,4 @@ void createAll(IO::DatabaseInterface *dbDriver);
 }  // namespace DataModel
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_DATAMODEL_DDL_H_
+#endif  // SCDETECT_APPS_CC_DATAMODEL_DDL_H_

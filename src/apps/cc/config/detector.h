@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_CONFIG_DETECTOR_H_
-#define SCDETECT_APPS_SCDETECT_CONFIG_DETECTOR_H_
+#ifndef SCDETECT_APPS_CC_CONFIG_DETECTOR_H_
+#define SCDETECT_APPS_CC_CONFIG_DETECTOR_H_
 
 #include <boost/optional/optional.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -177,4 +177,4 @@ bool hasUniqueTemplateIds(const TemplateConfig &tc);
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_CONFIG_DETECTOR_H_
+#endif  // SCDETECT_APPS_CC_CONFIG_DETECTOR_H_

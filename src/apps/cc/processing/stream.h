@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_PROCESSING_STREAM_H_
-#define SCDETECT_APPS_SCDETECT_PROCESSING_STREAM_H_
+#ifndef SCDETECT_APPS_CC_PROCESSING_STREAM_H_
+#define SCDETECT_APPS_CC_PROCESSING_STREAM_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
@@ -27,4 +27,4 @@ struct StreamState {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_PROCESSING_STREAM_H_
+#endif  // SCDETECT_APPS_CC_PROCESSING_STREAM_H_

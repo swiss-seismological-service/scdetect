@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_UTIL_WAVEFORMSTREAMID_H_
-#define SCDETECT_APPS_SCDETECT_UTIL_WAVEFORMSTREAMID_H_
+#ifndef SCDETECT_APPS_CC_UTIL_WAVEFORMSTREAMID_H_
+#define SCDETECT_APPS_CC_UTIL_WAVEFORMSTREAMID_H_
 
 #include <seiscomp/datamodel/waveformstreamid.h>
 
@@ -109,4 +109,4 @@ struct hash<Seiscomp::detect::util::WaveformStreamID> {
 
 }  // namespace std
 
-#endif  // SCDETECT_APPS_SCDETECT_UTIL_WAVEFORMSTREAMID_H_
+#endif  // SCDETECT_APPS_CC_UTIL_WAVEFORMSTREAMID_H_

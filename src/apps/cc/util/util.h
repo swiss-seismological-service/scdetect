@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_UTIL_UTIL_H_
-#define SCDETECT_APPS_SCDETECT_UTIL_UTIL_H_
+#ifndef SCDETECT_APPS_CC_UTIL_UTIL_H_
+#define SCDETECT_APPS_CC_UTIL_UTIL_H_
 
 #include <boost/filesystem/path.hpp>
 #include <string>
@@ -57,4 +57,4 @@ std::vector<typename TMap::key_type> filterKeys(const TMap &m, Predicate &p) {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_UTIL_UTIL_H_
+#endif  // SCDETECT_APPS_CC_UTIL_UTIL_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
-#define SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
+#ifndef SCDETECT_APPS_CC_DETECTOR_LINKER_H_
+#define SCDETECT_APPS_CC_DETECTOR_LINKER_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
@@ -157,4 +157,4 @@ class Linker {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_H_
+#endif  // SCDETECT_APPS_CC_DETECTOR_LINKER_H_

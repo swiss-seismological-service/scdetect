@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_WAVEFORM_H_
-#define SCDETECT_APPS_SCDETECT_WAVEFORM_H_
+#ifndef SCDETECT_APPS_CC_WAVEFORM_H_
+#define SCDETECT_APPS_CC_WAVEFORM_H_
 
 #include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
@@ -219,4 +219,4 @@ struct hash<Seiscomp::detect::WaveformHandlerIface::ProcessingConfig> {
 
 }  // namespace std
 
-#endif  // SCDETECT_APPS_SCDETECT_WAVEFORM_H_
+#endif  // SCDETECT_APPS_CC_WAVEFORM_H_

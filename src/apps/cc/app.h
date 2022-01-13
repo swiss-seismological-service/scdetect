@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_APP_H_
-#define SCDETECT_APPS_SCDETECT_APP_H_
+#ifndef SCDETECT_APPS_CC_APP_H_
+#define SCDETECT_APPS_CC_APP_H_
 
 #include <seiscomp/client/application.h>
 #include <seiscomp/client/streamapplication.h>
@@ -398,4 +398,4 @@ class Application : public Client::StreamApplication {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_APP_H_
+#endif  // SCDETECT_APPS_CC_APP_H_

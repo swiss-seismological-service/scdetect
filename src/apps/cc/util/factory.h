@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_UTIL_FACTORY_H_
-#define SCDETECT_APPS_SCDETECT_UTIL_FACTORY_H_
+#ifndef SCDETECT_APPS_CC_UTIL_FACTORY_H_
+#define SCDETECT_APPS_CC_UTIL_FACTORY_H_
 
 #include <memory>
 #include <type_traits>
@@ -31,4 +31,4 @@ create(Args &&...) {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_UTIL_FACTORY_H_
+#endif  // SCDETECT_APPS_CC_UTIL_FACTORY_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_UTIL_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_UTIL_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_UTIL_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_UTIL_H_
 
 #include <seiscomp/datamodel/amplitude.h>
 
@@ -22,4 +22,4 @@ boost::optional<std::string> extractSensorLocationId(
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_UTIL_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_UTIL_H_

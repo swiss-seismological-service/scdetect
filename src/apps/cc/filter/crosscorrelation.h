@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
-#define SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
+#ifndef SCDETECT_APPS_CC_FILTER_CROSSCORRELATION_H_
+#define SCDETECT_APPS_CC_FILTER_CROSSCORRELATION_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
@@ -84,4 +84,4 @@ class CrossCorrelation {
 
 #include "crosscorrelation.ipp"
 
-#endif  // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_H_
+#endif  // SCDETECT_APPS_CC_FILTER_CROSSCORRELATION_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_
-#define SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_
+#ifndef SCDETECT_APPS_CC_FILTER_CROSSCORRELATION_IPP_
+#define SCDETECT_APPS_CC_FILTER_CROSSCORRELATION_IPP_
 
 #include <seiscomp/core/strings.h>
 #include <seiscomp/core/timewindow.h>
@@ -205,4 +205,4 @@ void CrossCorrelation<TData>::setupFilter(double samplingFrequency) {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_FILTER_CROSSCORRELATION_IPP_
+#endif  // SCDETECT_APPS_CC_FILTER_CROSSCORRELATION_IPP_

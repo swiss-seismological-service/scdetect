@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_MAGNITUDE_MRELATIVE_H_
-#define SCDETECT_APPS_SCDETECT_MAGNITUDE_MRELATIVE_H_
+#ifndef SCDETECT_APPS_CC_MAGNITUDE_MRELATIVE_H_
+#define SCDETECT_APPS_CC_MAGNITUDE_MRELATIVE_H_
 
 #include <seiscomp/datamodel/stationmagnitude.h>
 
@@ -31,4 +31,4 @@ class MRelative : public MagnitudeProcessor {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_MAGNITUDE_MRELATIVE_H_
+#endif  // SCDETECT_APPS_CC_MAGNITUDE_MRELATIVE_H_

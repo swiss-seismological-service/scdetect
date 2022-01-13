@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_UTIL_HORIZONTALCOMPONENTS_H_
-#define SCDETECT_APPS_SCDETECT_UTIL_HORIZONTALCOMPONENTS_H_
+#ifndef SCDETECT_APPS_CC_UTIL_HORIZONTALCOMPONENTS_H_
+#define SCDETECT_APPS_CC_UTIL_HORIZONTALCOMPONENTS_H_
 
 #include <seiscomp/client/inventory.h>
 #include <seiscomp/datamodel/utils.h>
@@ -101,4 +101,4 @@ std::string getWaveformStreamId(const HorizontalComponents &c);
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_UTIL_THREECOMPONENTS_H_
+#endif  // SCDETECT_APPS_CC_UTIL_THREECOMPONENTS_H_

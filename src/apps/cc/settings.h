@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_SETTINGS_H_
-#define SCDETECT_APPS_SCDETECT_SETTINGS_H_
+#ifndef SCDETECT_APPS_CC_SETTINGS_H_
+#define SCDETECT_APPS_CC_SETTINGS_H_
 
 #include <string>
 #include <vector>
@@ -44,4 +44,4 @@ constexpr double kTemplateWaveformResampleMargin{2};
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_SETTINGS_H_
+#endif  // SCDETECT_APPS_CC_SETTINGS_H_

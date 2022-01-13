@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_ASSOCIATION_H_
-#define SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_ASSOCIATION_H_
+#ifndef SCDETECT_APPS_CC_DETECTOR_LINKER_ASSOCIATION_H_
+#define SCDETECT_APPS_CC_DETECTOR_LINKER_ASSOCIATION_H_
 
 #include <functional>
 #include <string>
@@ -54,4 +54,4 @@ struct hash<Seiscomp::detect::detector::linker::Association::TemplateResult> {
 
 }  // namespace std
 
-#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_LINKER_ASSOCIATION_H_
+#endif  // SCDETECT_APPS_CC_DETECTOR_LINKER_ASSOCIATION_H_

@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_BINDING_H_
-#define SCDETECT_APPS_SCDETECT_BINDING_H_
+#ifndef SCDETECT_APPS_CC_BINDING_H_
+#define SCDETECT_APPS_CC_BINDING_H_
 
 #include <seiscomp/config/config.h>
 #include <seiscomp/core/datetime.h>
@@ -280,4 +280,4 @@ void replaceWildcardChars(std::string &str);
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_BINDING_H_
+#endif  // SCDETECT_APPS_CC_BINDING_H_

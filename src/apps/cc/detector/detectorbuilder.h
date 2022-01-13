@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_DETECTOR_DETECTORBUILDER_H_
-#define SCDETECT_APPS_SCDETECT_DETECTOR_DETECTORBUILDER_H_
+#ifndef SCDETECT_APPS_CC_DETECTOR_DETECTORBUILDER_H_
+#define SCDETECT_APPS_CC_DETECTOR_DETECTORBUILDER_H_
 
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/pick.h>
@@ -75,4 +75,4 @@ class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_DETECTOR_DETECTORBUILDER_H_
+#endif  // SCDETECT_APPS_CC_DETECTOR_DETECTORBUILDER_H_

@@ -20,8 +20,8 @@
  * gempa GmbH.                                                             *
  ***************************************************************************/
 
-#ifndef _SCDETECT_APPS_SCDETECT_DETAIL_SQLITE_H_
-#define _SCDETECT_APPS_SCDETECT_DETAIL_SQLITE_H_
+#ifndef _SCDETECT_APPS_CC_DETAIL_SQLITE_H_
+#define _SCDETECT_APPS_CC_DETAIL_SQLITE_H_
 
 #include <seiscomp/io/database.h>
 #include <sqlite3.h>
@@ -87,4 +87,4 @@ class SQLiteDatabase : public Seiscomp::IO::DatabaseInterface {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // _SCDETECT_APPS_SCDETECT_DETAIL_SQLITE_H_
+#endif  // _SCDETECT_APPS_CC_DETAIL_SQLITE_H_

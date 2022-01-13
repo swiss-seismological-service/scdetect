@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_REDUCINGAMPLITUDEPROCESSOR_H_
-#define SCDETECT_APPS_SCDETECT_REDUCINGAMPLITUDEPROCESSOR_H_
+#ifndef SCDETECT_APPS_CC_REDUCINGAMPLITUDEPROCESSOR_H_
+#define SCDETECT_APPS_CC_REDUCINGAMPLITUDEPROCESSOR_H_
 
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/typedarray.h>
@@ -122,4 +122,4 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_REDUCINGAMPLITUDEPROCESSOR_H_
+#endif  // SCDETECT_APPS_CC_REDUCINGAMPLITUDEPROCESSOR_H_

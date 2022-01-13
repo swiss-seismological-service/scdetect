@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_LOG_H_
-#define SCDETECT_APPS_SCDETECT_LOG_H_
+#ifndef SCDETECT_APPS_CC_LOG_H_
+#define SCDETECT_APPS_CC_LOG_H_
 
 #include <ostream>
 #include <string>
@@ -67,4 +67,4 @@ std::string to_string(const TaggedMessage& m);
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_LOG_H_
+#endif  // SCDETECT_APPS_CC_LOG_H_

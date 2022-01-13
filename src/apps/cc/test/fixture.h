@@ -1,5 +1,5 @@
-#ifndef SCDETECT_APPS_SCDETECT_TEST_FIXTURE_H_
-#define SCDETECT_APPS_SCDETECT_TEST_FIXTURE_H_
+#ifndef SCDETECT_APPS_CC_TEST_FIXTURE_H_
+#define SCDETECT_APPS_CC_TEST_FIXTURE_H_
 
 #include <boost/filesystem.hpp>
 
@@ -25,4 +25,4 @@ struct CLIParserFixture {
 }  // namespace detect
 }  // namespace Seiscomp
 
-#endif  // SCDETECT_APPS_SCDETECT_TEST_FIXTURE_H_
+#endif  // SCDETECT_APPS_CC_TEST_FIXTURE_H_
