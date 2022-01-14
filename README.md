@@ -526,11 +526,19 @@ frontend [scconfig](https://www.seiscomp.de/doc/base/concepts/configuration.html
    **Tip**: Although not strictly required, it is recommended to use sensible
    profile names. E.g. for a sensor location profile with `locationCode` `00`
    and `channelCode` `HH` naming the profile with e.g. `00_HH` is recommended.
-2. Add the profile's name to the list of known `sensorLocationProfiles`. Only
+
+   In both the `locationCode` and the `channelCode` the wildcard
+   characters `?` (which matches any single character) and `*` (which matches
+   zero to many characters) are allowed.
+
+   **Tip**: Make use of wildcard characters in order to create a *default*
+   sensor location profile.
+
+3. Add the profile's name to the list of known `sensorLocationProfiles`. Only
    those profiles are taken into account with a corresponding list entry.
-3. (Optional): in case of creating a *binding profile* assign the bindings
+4. (Optional): in case of creating a *binding profile* assign the bindings
    configuration to the corresponding stations.
-4. Save the configuration. With that, the bindings configuration is written to
+5. Save the configuration. With that, the bindings configuration is written to
    so called *key files*.
 
 **Dump bindings configurations**:

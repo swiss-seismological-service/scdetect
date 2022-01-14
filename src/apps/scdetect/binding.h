@@ -88,6 +88,8 @@ struct SensorLocationConfig {
   // Returns the Stream configuration for `chaCode`
   const StreamConfig &at(const std::string &chaCode) const;
 
+  const StreamConfig &matchWildcards(const std::string &chaCode) const;
+
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
   StreamConfigs streamConfigs;
 
@@ -116,6 +118,9 @@ class StationConfig {
                                  const std::string &chaCode) const;
 
  private:
+  const SensorLocationConfig &matchWildcards(const std::string &locCode,
+                                             const std::string &chaCode) const;
+
   ConfigMap _sensorLocationConfigs;
 
   Util::KeyValuesCPtr _parameters;
@@ -134,6 +139,10 @@ class Bindings {
   using ConfigMap = std::map<Key, StationConfig>;
 
  public:
+  // Generic wildcard character for binding association
+  static const char wildcardZeroToManyChar;
+  static const char wildcardSingleChar;
+
   using const_iterator = ConfigMap::const_iterator;
 
   const_iterator begin() const;
@@ -260,6 +269,10 @@ void load(const Processing::Settings &settings,
           SensorLocationConfig::MagnitudeProcessingConfig &storageLocation,
           const SensorLocationConfig::MagnitudeProcessingConfig &defaults);
 void validate(SensorLocationConfig &config);
+
+std::string removeDuplicateChar(const std::string &str, char c);
+
+void replaceWildcardChars(std::string &str);
 
 }  // namespace detail
 
