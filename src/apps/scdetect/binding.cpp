@@ -10,6 +10,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <cstddef>
+#include <regex>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -36,7 +39,22 @@ std::string StreamConfig::DeconvolutionConfig::debugString() const {
 }
 
 const StreamConfig &SensorLocationConfig::at(const std::string &chaCode) const {
-  return streamConfigs.at(chaCode);
+  try {
+    return streamConfigs.at(chaCode);
+  } catch (const std::out_of_range &) {
+    return matchWildcards(chaCode);
+  }
+}
+
+const StreamConfig &SensorLocationConfig::matchWildcards(
+    const std::string &chaCode) const {
+  for (const auto &streamConfigPair : streamConfigs) {
+    std::regex reChaCode{streamConfigPair.first};
+    if (std::regex_search(chaCode, reChaCode)) {
+      return streamConfigPair.second;
+    }
+  }
+  throw std::out_of_range{"lookup failed (chaCode=" + chaCode + ")"};
 }
 
 StationConfig::const_iterator StationConfig::begin() const {
@@ -49,9 +67,30 @@ StationConfig::const_iterator StationConfig::end() const {
 
 const SensorLocationConfig &StationConfig::at(
     const std::string &locCode, const std::string &chaCode) const {
-  return _sensorLocationConfigs.at(
-      {locCode, util::getBandAndSourceCode(chaCode)});
+  try {
+    return _sensorLocationConfigs.at(
+        {locCode, util::getBandAndSourceCode(chaCode)});
+  } catch (const std::out_of_range &) {
+    return matchWildcards(locCode, chaCode);
+  }
 }
+
+const SensorLocationConfig &StationConfig::matchWildcards(
+    const std::string &locCode, const std::string &chaCode) const {
+  for (const auto &sensorLocationConfigsPair : _sensorLocationConfigs) {
+    std::regex reLocCode{sensorLocationConfigsPair.first.first};
+    std::regex reChaCode{sensorLocationConfigsPair.first.second};
+    if (std::regex_search(locCode, reLocCode) &&
+        std::regex_search(chaCode, reChaCode)) {
+      return sensorLocationConfigsPair.second;
+    }
+  }
+  throw std::out_of_range{"lookup failed (locCode=" + locCode +
+                          ", chaCode=" + chaCode + ")"};
+}
+
+const char Bindings::wildcardZeroToManyChar{'*'};
+const char Bindings::wildcardSingleChar{'?'};
 
 Bindings::const_iterator Bindings::begin() const {
   return _stationConfigs.begin();
@@ -112,7 +151,8 @@ const StationConfig &Bindings::load(
     const Seiscomp::Config::Config *moduleConfig,
     DataModel::ParameterSet *parameterSet, const std::string &configModuleId,
     const std::string &netCode, const std::string &staCode) {
-  std::string locCode, chaCode;
+  std::string locCode;
+  std::string chaCode;
 
   Util::KeyValuesPtr keys;
   if (parameterSet) {
@@ -144,15 +184,27 @@ const StationConfig &Bindings::load(
 
       // the location code may be empty
       settings.getValue(locCode, prefix + ".locationCode");
+      locCode = detail::removeDuplicateChar(locCode,
+                                            Bindings::wildcardZeroToManyChar);
+      detail::replaceWildcardChars(locCode);
       // a non-empty channel code is required to be specified
       if (!settings.getValue(chaCode, prefix + ".channelCode") ||
-          chaCode.empty() || chaCode.size() < 2) {
+          chaCode.empty() ||
+          (chaCode.size() < 2 &&
+           chaCode.find(Bindings::wildcardZeroToManyChar) ==
+               std::string::npos)) {
         continue;
       }
 
+      // XXX(damb): consider only the band and the source code identifiers
+      // (i.e. first two characters)
+      chaCode = detail::removeDuplicateChar(util::getBandAndSourceCode(chaCode),
+                                            Bindings::wildcardZeroToManyChar);
+      detail::replaceWildcardChars(chaCode);
+
       // only take the band and source code identifiers into account
-      auto &sensorLocationConfig{stationConfig._sensorLocationConfigs[{
-          locCode, util::getBandAndSourceCode(chaCode)}]};
+      auto &sensorLocationConfig{
+          stationConfig._sensorLocationConfigs[{locCode, chaCode}]};
       // load amplitude processing config
       try {
         auto amplitudePrefix{prefix + ".amplitudes"};
@@ -182,10 +234,12 @@ const StationConfig &Bindings::load(
               continue;
             }
 
-            auto &streamConfig{
-                sensorLocationConfig
-                    .streamConfigs[util::getBandAndSourceCode(chaCode) +
-                                   subSourceCode]};
+            std::string code{chaCode + subSourceCode};
+            code = detail::removeDuplicateChar(
+                code, Bindings::wildcardZeroToManyChar);
+            detail::replaceWildcardChars(code);
+
+            auto &streamConfig{sensorLocationConfig.streamConfigs[code]};
             try {
               detail::load(settings, respProfilePrefix, streamConfig,
                            _defaultSensorLocationConfig._defaultStreamConfig);
@@ -300,7 +354,8 @@ boost::optional<double> parseSaturationThreshold(
 
     if (!Core::fromString(value, valueStr)) {
       throw ValueException{
-          "invalid saturation threshold: invalid saturation threshold relative "
+          "invalid saturation threshold: invalid saturation threshold "
+          "relative "
           "value: " +
           saturationThresholdStr};
     }
@@ -309,7 +364,8 @@ boost::optional<double> parseSaturationThreshold(
 
     if (value < 0 || value > 1) {
       throw ValueException{
-          "invalid saturation threshold: number of relative value out of range "
+          "invalid saturation threshold: number of relative value out of "
+          "range "
           "[0,1]: " +
           saturationThresholdStr};
     }
@@ -537,6 +593,40 @@ void validate(SensorLocationConfig &config) {
 
       config.magnitudeProcessingConfig.magnitudeTypes = compared;
     }
+  }
+}
+
+std::string removeDuplicateChar(const std::string &str, char c) {
+  if (str.empty()) {
+    return std::string{};
+  }
+
+  auto n{str.length()};
+  std::string ret;
+  for (std::size_t i{0}; i < n - 1; ++i) {
+    if (str[i] == c && str[i] == str[i + 1]) {
+      continue;
+    }
+    ret.push_back(str[i]);
+  }
+  ret.push_back(str[n - 1]);
+  return ret;
+}
+
+void replaceWildcardChars(std::string &str) {
+  if (str.empty()) {
+    return;
+  }
+
+  std::size_t i{0};
+  while (i < str.length()) {
+    if (Bindings::wildcardSingleChar == str[i]) {
+      str[i] = '.';
+    } else if (Bindings::wildcardZeroToManyChar == str[i]) {
+      str[i] = '.';
+      str.insert(++i, 1, '*');
+    }
+    ++i;
   }
 }
 
