@@ -79,6 +79,9 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
 
   void reset() override;
 
+  // Sets the target sampling frequency
+  //
+  // - if the sampling frequency changes, the processor is reset
   void setTargetSamplingFrequency(double f);
   boost::optional<double> targetSamplingFrequency() const;
 

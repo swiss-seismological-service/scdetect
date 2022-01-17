@@ -67,10 +67,16 @@ void TemplateWaveformProcessor::reset() {
 }
 
 void TemplateWaveformProcessor::setTargetSamplingFrequency(double f) {
-  if (f > 0) {
-    _targetSamplingFrequency = f;
+  assert((f > 0));
+
+  bool targetSamplingFrequencyChanges{_targetSamplingFrequency &&
+                                      *_targetSamplingFrequency != f};
+  if (targetSamplingFrequencyChanges) {
+    setOperator(nullptr);
   }
-  // TODO: Reset stream
+  reset();
+
+  _targetSamplingFrequency = f;
 }
 
 boost::optional<double> TemplateWaveformProcessor::targetSamplingFrequency()

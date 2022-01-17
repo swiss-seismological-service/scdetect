@@ -85,6 +85,7 @@ const TemplateWaveform::ProcessingStrategy TemplateWaveform::defaultProcessing =
           std::to_string(*config.samplingFrequency)};
     }
   }
+
   // filter
   try {
     auto *filter{boost::variant2::get<0>(config.filter).get()};
@@ -219,9 +220,8 @@ void TemplateWaveform::setProcessingStrategy(
 }
 
 void TemplateWaveform::setSamplingFrequency(double samplingFrequency) {
-  if (samplingFrequency <= 0) {
-    return;
-  }
+  assert((samplingFrequency > 0));
+
   if (samplingFrequency != this->samplingFrequency()) {
     reset();
   }

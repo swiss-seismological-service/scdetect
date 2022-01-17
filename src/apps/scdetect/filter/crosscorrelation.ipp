@@ -48,6 +48,7 @@ void CrossCorrelation<TData>::apply(TypedArray<TData> &data) {
 template <typename TData>
 void CrossCorrelation<TData>::reset() {
   _buffer.clear();
+
   _sumSquaredData = 0;
   _sumData = 0;
 
@@ -192,11 +193,9 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
 
 template <typename TData>
 void CrossCorrelation<TData>::setupFilter(double samplingFrequency) {
-  _initialized = false;
-  if (samplingFrequency <= 0) {
-    return;
-  }
+  assert((samplingFrequency > 0));
 
+  _initialized = false;
   _templateWaveform.setSamplingFrequency(samplingFrequency);
   reset();
   _initialized = true;

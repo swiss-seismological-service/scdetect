@@ -128,7 +128,8 @@ bool filter(GenericRecord &trace, DoubleFilter *filter) {
 }
 
 bool resample(GenericRecord &trace, double targetFrequency) {
-  if (targetFrequency <= 0 || trace.samplingFrequency() == targetFrequency) {
+  assert((targetFrequency > 0));
+  if (trace.samplingFrequency() == targetFrequency) {
     return true;
   }
 
@@ -138,14 +139,14 @@ bool resample(GenericRecord &trace, double targetFrequency) {
   if (!resampled) {
     SCDETECT_LOG_WARNING(
         "%s: Failed to resample record "
-        "(samplingFrequency=%f): targetFrequency=%f",
+        "(sampling_frequency=%f): target_sampling_frequency=%f",
         std::string{trace.streamID()}.c_str(), trace.samplingFrequency(),
         targetFrequency);
     return false;
   }
 
   trace.setStartTime(resampled->startTime());
-  trace.setSamplingFrequency(static_cast<double>(targetFrequency));
+  trace.setSamplingFrequency(targetFrequency);
   trace.setData(resampled->data()->copy(Array::DataType::DOUBLE));
   return true;
 }
