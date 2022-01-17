@@ -10,11 +10,12 @@ ResamplingOperator::ResamplingOperator(
 
 processing::WaveformProcessor::Status ResamplingOperator::feed(
     const Record *record) {
-  if (record->sampleCount() == 0)
+  if (record->sampleCount() == 0) {
     return processing::WaveformProcessor::Status::kWaitingForData;
+  }
 
-  auto resampled{_recordResampler->feed(record)};
-  if (resampled) {
+  auto *resampled{_recordResampler->feed(record)};
+  if (static_cast<bool>(resampled)) {
     WaveformOperator::store(resampled);
 
     return processing::WaveformProcessor::Status::kInProgress;

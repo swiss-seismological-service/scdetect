@@ -15,7 +15,7 @@ class ResamplingOperator : public processing::WaveformOperator {
  public:
   using RecordResampler = RecordResamplerStore::RecordResampler;
 
-  ResamplingOperator(std::unique_ptr<RecordResampler> recordResampler);
+  explicit ResamplingOperator(std::unique_ptr<RecordResampler> recordResampler);
 
   processing::WaveformProcessor::Status feed(const Record *record) override;
 
