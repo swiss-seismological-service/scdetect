@@ -37,12 +37,8 @@ WaveformProcessor::Status WaveformProcessor::status() const { return _status; }
 
 double WaveformProcessor::statusValue() const { return _statusValue; }
 
-void WaveformProcessor::setOperator(WaveformOperator *op) {
-  if (_waveformOperator) {
-    _waveformOperator.reset();
-  }
-
-  _waveformOperator.reset(op);
+void WaveformProcessor::setOperator(std::unique_ptr<WaveformOperator> op) {
+  _waveformOperator = std::move(op);
   if (_waveformOperator) {
     _waveformOperator->setStoreCallback(
         [this](const Record *record) { return store(record); });

@@ -153,11 +153,9 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
     SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                  "Reinitialize stream: samplingFrequency=%f",
                                  _targetSamplingFrequency);
-    auto resamplingOperator{
-        util::make_unique<waveform_operator::ResamplingOperator>(
-            RecordResamplerStore::Instance().get(record,
-                                                 *_targetSamplingFrequency))};
-    setOperator(resamplingOperator.release());
+    setOperator(util::make_unique<waveform_operator::ResamplingOperator>(
+        RecordResamplerStore::Instance().get(record,
+                                             *_targetSamplingFrequency)));
 
     streamState.samplingFrequency = *_targetSamplingFrequency;
     if (streamState.filter) {
