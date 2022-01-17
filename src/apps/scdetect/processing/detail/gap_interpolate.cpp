@@ -2,6 +2,7 @@
 
 #include <seiscomp/core/genericrecord.h>
 
+#include <cassert>
 #include <cmath>
 
 #include "../../log.h"
@@ -27,9 +28,9 @@ const Core::TimeSpan &InterpolateGaps::gapThreshold() const {
 }
 
 void InterpolateGaps::setGapTolerance(const Core::TimeSpan &duration) {
-  if (duration && duration > Core::TimeSpan{0.0}) {
-    _gapTolerance = duration;
-  }
+  assert((static_cast<bool>(duration) && duration > Core::TimeSpan{0.0}));
+
+  _gapTolerance = duration;
 }
 
 const Core::TimeSpan &InterpolateGaps::gapTolerance() const {
