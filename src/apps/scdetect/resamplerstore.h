@@ -56,7 +56,7 @@ class RecordResamplerStore {
                                        double targetFrequency);
 
  private:
-  RecordResamplerStore() {}
+  RecordResamplerStore() = default;
 
   struct CacheKey {
     double sourceFrequency;
