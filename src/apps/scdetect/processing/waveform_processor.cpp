@@ -52,7 +52,9 @@ bool WaveformProcessor::finished() const {
 }
 
 bool WaveformProcessor::feed(const Record *record) {
-  if (record->sampleCount() == 0) return false;
+  if (record->sampleCount() == 0) {
+    return false;
+  }
 
   if (!_waveformOperator) {
     return store(record);
@@ -153,8 +155,10 @@ void WaveformProcessor::reset(StreamState &streamState) {
   }
 }
 
-bool WaveformProcessor::fill(processing::StreamState &streamState,
-                             const Record *record, DoubleArrayPtr &data) {
+bool WaveformProcessor::fill(
+    processing::StreamState &streamState,
+    const Record *record,  // NOLINT(misc-unused-parameters)
+    DoubleArrayPtr &data) {
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
 
   const auto n{static_cast<size_t>(data->size())};
