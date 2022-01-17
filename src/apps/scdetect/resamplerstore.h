@@ -44,7 +44,7 @@ class RecordResamplerStore {
   static RecordResamplerStore &Instance();
 
   RecordResamplerStore(const RecordResamplerStore &) = delete;
-  void operator=(const RecordResamplerStore &) = delete;
+  RecordResamplerStore &operator=(const RecordResamplerStore &) = delete;
 
   // Reset the store
   void reset();
