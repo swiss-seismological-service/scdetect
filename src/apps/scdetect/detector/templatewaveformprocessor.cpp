@@ -39,7 +39,7 @@ TemplateWaveformProcessor::TemplateWaveformProcessor(
     TemplateWaveform templateWaveform)
     : _crossCorrelation{std::move(templateWaveform)} {}
 
-void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> &&filter,
+void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> filter,
                                           const Core::TimeSpan &initTime) {
   _streamState.filter = std::move(filter);
   _initTime = std::max(initTime, templateWaveform().configuredEndTime() -

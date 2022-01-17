@@ -34,7 +34,7 @@ void RatioAmplitude::computeTimeWindow() {
                                   _templateWaveform.raw().endTime()));
 }
 
-void RatioAmplitude::setFilter(std::unique_ptr<DoubleFilter> &&filter,
+void RatioAmplitude::setFilter(std::unique_ptr<DoubleFilter> filter,
                                Core::TimeSpan initTime) {
   auto processingConfig{_templateWaveform.processingConfig()};
   processingConfig.filter = std::move(filter);

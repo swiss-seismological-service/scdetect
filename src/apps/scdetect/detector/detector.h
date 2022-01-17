@@ -131,7 +131,7 @@ class Detector : public detect::processing::Processor {
   // the waveform stream identifier `waveformStreamId`. `proc` is registered
   // together with the template arrival `arrival` and the sensor location
   // `loc`.
-  void add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
+  void add(std::unique_ptr<TemplateWaveformProcessor> proc,
            const std::string &waveformStreamId, const Arrival &arrival,
            const Detector::SensorLocation &loc,
            const boost::optional<double> &mergingThreshold);
