@@ -130,7 +130,6 @@ streams `CH.GRIMS..HHZ` and `CH.HASLI..HHZ`) may look like:
     "triggerOffThreshold": 0,
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
     "filter": "",
-    "templateFilter": "",
     "streams": [
       {
         "templateId": "template-01",
@@ -435,7 +434,6 @@ fallback values will be used.
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
     "templatePhase": "Pg",
     "filter": "",
-    "templateFilter": "",
     "initTime": 0,
     "streams": [
       {
