@@ -16,7 +16,7 @@ class WaveformOperator {
   using StoreCallback = std::function<bool(const Record *)>;
 
   WaveformOperator();
-  virtual ~WaveformOperator();
+  virtual ~WaveformOperator() = default;
 
   // Sets the callback function
   void setStoreCallback(const StoreCallback &callback);

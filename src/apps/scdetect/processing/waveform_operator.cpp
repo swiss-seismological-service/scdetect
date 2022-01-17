@@ -6,8 +6,6 @@ namespace processing {
 
 WaveformOperator::WaveformOperator() {}
 
-WaveformOperator::~WaveformOperator() {}
-
 void WaveformOperator::setStoreCallback(
     const WaveformOperator::StoreCallback &callback) {
   _storeCallback = callback;
