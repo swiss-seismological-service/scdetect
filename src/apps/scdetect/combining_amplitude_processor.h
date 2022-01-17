@@ -27,7 +27,7 @@ class CombiningAmplitudeProcessor : public detect::AmplitudeProcessor {
     std::unique_ptr<detect::AmplitudeProcessor> processor;
   };
 
-  CombiningAmplitudeProcessor(std::vector<AmplitudeProcessor> &&combined,
+  CombiningAmplitudeProcessor(std::vector<AmplitudeProcessor> combined,
                               CombiningStrategy strategy);
 
   void reset() override;
