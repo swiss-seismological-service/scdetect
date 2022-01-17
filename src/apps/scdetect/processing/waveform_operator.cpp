@@ -4,8 +4,6 @@ namespace Seiscomp {
 namespace detect {
 namespace processing {
 
-WaveformOperator::WaveformOperator() {}
-
 void WaveformOperator::setStoreCallback(
     const WaveformOperator::StoreCallback &callback) {
   _storeCallback = callback;
