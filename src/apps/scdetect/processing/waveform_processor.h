@@ -197,12 +197,12 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // WaveformProcessor initialization time
   Core::TimeSpan _initTime;
 
-  std::unique_ptr<WaveformOperator> _waveformOperator;
-
   // Threshold used for the saturation check
   boost::optional<double> _saturationThreshold;
 
  private:
+  std::unique_ptr<WaveformOperator> _waveformOperator;
+
   Status _status{Status::kWaitingForData};
   double _statusValue{0};
 };
