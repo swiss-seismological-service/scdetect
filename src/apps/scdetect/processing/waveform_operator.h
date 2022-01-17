@@ -18,7 +18,7 @@ class WaveformOperator {
   virtual ~WaveformOperator() = default;
 
   // Sets the callback function
-  void setStoreCallback(const StoreCallback &callback);
+  void setStoreCallback(StoreCallback callback);
 
   // Feeds `record` to the operator
   //

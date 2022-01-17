@@ -5,8 +5,8 @@ namespace detect {
 namespace processing {
 
 void WaveformOperator::setStoreCallback(
-    const WaveformOperator::StoreCallback &callback) {
-  _storeCallback = callback;
+    WaveformOperator::StoreCallback callback) {
+  _storeCallback = std::move(callback);
 }
 
 bool WaveformOperator::store(const Record *record) {
