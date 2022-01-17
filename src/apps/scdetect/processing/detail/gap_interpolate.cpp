@@ -2,6 +2,8 @@
 
 #include <seiscomp/core/genericrecord.h>
 
+#include <cmath>
+
 #include "../../log.h"
 #include "../../util/memory.h"
 
@@ -39,26 +41,25 @@ bool InterpolateGaps::handleGap(StreamState &streamState, const Record *record,
   Core::TimeSpan gap{record->startTime() -
                      streamState.dataTimeWindow.endTime() -
                      /*one usec*/ Core::TimeSpan(0, 1)};
-  double gapSeconds = static_cast<double>(gap);
+  auto gapSeconds{static_cast<double>(gap)};
 
-  size_t gapSamples;
+  std::size_t gapSamples{0};
   if (gap > streamState.gapThreshold) {
-    gapSamples =
-        static_cast<size_t>(ceil(streamState.samplingFrequency * gapSeconds));
+    gapSamples = std::ceil(streamState.samplingFrequency * gapSeconds);
     if (fillGap(streamState, record, gap, (*data)[0], gapSamples)) {
       SCDETECT_LOG_DEBUG("%s: detected gap (%.6f secs, %lu samples) (handled)",
                          record->streamID().c_str(), gapSeconds, gapSamples);
     } else {
       SCDETECT_LOG_DEBUG(
-          "%s: detected gap (%.6f secs, %lu samples) (NOT "
-          "handled)",
+          "%s: detected gap (%.6f secs, %lu samples) (NOT handled)",
           record->streamID().c_str(), gapSeconds, gapSamples);
     }
   } else if (gapSeconds < 0) {
     // handle record from the past
-    gapSamples = static_cast<size_t>(
-        ceil(-1 * streamState.samplingFrequency * gapSeconds));
-    if (gapSamples > 1) return false;
+    gapSamples = std::ceil(-1 * streamState.samplingFrequency * gapSeconds);
+    if (gapSamples > 1) {
+      return false;
+    }
   }
 
   return true;
