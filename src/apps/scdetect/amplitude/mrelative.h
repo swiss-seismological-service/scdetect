@@ -14,8 +14,7 @@ class MRelative : public CombiningAmplitudeProcessor {
   static const CombiningStrategy median;
 
   explicit MRelative(
-      std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> &&underlying,
-      CombiningStrategy strategy = median);
+      std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying);
 
   void finalize(DataModel::Amplitude *amplitude) const override;
 

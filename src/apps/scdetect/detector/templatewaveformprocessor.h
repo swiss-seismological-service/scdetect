@@ -66,7 +66,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
       const TemplateWaveformProcessor *, const Record *, MatchResultCPtr)>;
 
   // Sets `filter` with the corresponding filter `initTime`
-  void setFilter(std::unique_ptr<Filter> &&filter,
+  void setFilter(std::unique_ptr<Filter> filter,
                  const Core::TimeSpan &initTime = Core::TimeSpan{0.0});
   // Returns the configured filter or `nullptr` if no filter has been configured
   const Filter *filter() const;
@@ -79,6 +79,9 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
 
   void reset() override;
 
+  // Sets the target sampling frequency
+  //
+  // - if the sampling frequency changes, the processor is reset
   void setTargetSamplingFrequency(double f);
   boost::optional<double> targetSamplingFrequency() const;
 

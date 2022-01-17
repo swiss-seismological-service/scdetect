@@ -15,7 +15,7 @@
 namespace Seiscomp {
 namespace detect {
 
-void ReducingAmplitudeProcessor::setFilter(std::unique_ptr<Filter> &&filter,
+void ReducingAmplitudeProcessor::setFilter(std::unique_ptr<Filter> filter,
                                            const Core::TimeSpan &initTime) {
   if (locked()) {
     return;

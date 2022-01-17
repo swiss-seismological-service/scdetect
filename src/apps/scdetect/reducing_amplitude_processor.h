@@ -28,7 +28,7 @@ class ReducingAmplitudeProcessor : public AmplitudeProcessor {
   //
   // - configuring the `filter` can be done only before the first record was
   // fed or after resetting the processor
-  void setFilter(std::unique_ptr<Filter> &&filter,
+  void setFilter(std::unique_ptr<Filter> filter,
                  const Core::TimeSpan &initTime);
 
   bool feed(const Record *record) override;

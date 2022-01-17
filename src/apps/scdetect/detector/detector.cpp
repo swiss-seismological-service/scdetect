@@ -103,7 +103,7 @@ const TemplateWaveformProcessor *Detector::processor(
   return nullptr;
 }
 
-void Detector::add(std::unique_ptr<TemplateWaveformProcessor> &&proc,
+void Detector::add(std::unique_ptr<TemplateWaveformProcessor> proc,
                    const std::string &waveformStreamId, const Arrival &arrival,
                    const Detector::SensorLocation &loc,
                    const boost::optional<double> &mergingThreshold) {

@@ -37,12 +37,8 @@ WaveformProcessor::Status WaveformProcessor::status() const { return _status; }
 
 double WaveformProcessor::statusValue() const { return _statusValue; }
 
-void WaveformProcessor::setOperator(WaveformOperator *op) {
-  if (_waveformOperator) {
-    _waveformOperator.reset();
-  }
-
-  _waveformOperator.reset(op);
+void WaveformProcessor::setOperator(std::unique_ptr<WaveformOperator> op) {
+  _waveformOperator = std::move(op);
   if (_waveformOperator) {
     _waveformOperator->setStoreCallback(
         [this](const Record *record) { return store(record); });
@@ -56,7 +52,9 @@ bool WaveformProcessor::finished() const {
 }
 
 bool WaveformProcessor::feed(const Record *record) {
-  if (record->sampleCount() == 0) return false;
+  if (record->sampleCount() == 0) {
+    return false;
+  }
 
   if (!_waveformOperator) {
     return store(record);
@@ -157,8 +155,10 @@ void WaveformProcessor::reset(StreamState &streamState) {
   }
 }
 
-bool WaveformProcessor::fill(processing::StreamState &streamState,
-                             const Record *record, DoubleArrayPtr &data) {
+bool WaveformProcessor::fill(
+    processing::StreamState &streamState,
+    const Record *record,  // NOLINT(misc-unused-parameters)
+    DoubleArrayPtr &data) {
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
 
   const auto n{static_cast<size_t>(data->size())};

@@ -69,7 +69,7 @@ class EventStore {
   static EventStore &Instance();
 
   EventStore(const EventStore &) = delete;
-  void operator=(const EventStore &) = delete;
+  EventStore &operator=(const EventStore &) = delete;
 
   void load(const std::string &path);
   void load(const boost::filesystem::path &path);

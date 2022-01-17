@@ -39,7 +39,7 @@ TemplateWaveformProcessor::TemplateWaveformProcessor(
     TemplateWaveform templateWaveform)
     : _crossCorrelation{std::move(templateWaveform)} {}
 
-void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> &&filter,
+void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> filter,
                                           const Core::TimeSpan &initTime) {
   _streamState.filter = std::move(filter);
   _initTime = std::max(initTime, templateWaveform().configuredEndTime() -
@@ -67,10 +67,16 @@ void TemplateWaveformProcessor::reset() {
 }
 
 void TemplateWaveformProcessor::setTargetSamplingFrequency(double f) {
-  if (f > 0) {
-    _targetSamplingFrequency = f;
+  assert((f > 0));
+
+  bool targetSamplingFrequencyChanges{_targetSamplingFrequency &&
+                                      *_targetSamplingFrequency != f};
+  if (targetSamplingFrequencyChanges) {
+    setOperator(nullptr);
   }
-  // TODO: Reset stream
+  reset();
+
+  _targetSamplingFrequency = f;
 }
 
 boost::optional<double> TemplateWaveformProcessor::targetSamplingFrequency()
@@ -147,17 +153,15 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
                                             const Record *record) {
   WaveformProcessor::setupStream(streamState, record);
   const auto f{streamState.samplingFrequency};
-  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: samplingFrequency=%f",
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Initialize stream: sampling_frequency=%f",
                                f);
   if (_targetSamplingFrequency && *_targetSamplingFrequency != f) {
     SCDETECT_LOG_DEBUG_PROCESSOR(this,
-                                 "Reinitialize stream: samplingFrequency=%f",
-                                 _targetSamplingFrequency);
-    auto resamplingOperator{
-        util::make_unique<waveform_operator::ResamplingOperator>(
-            RecordResamplerStore::Instance().get(record,
-                                                 *_targetSamplingFrequency))};
-    setOperator(resamplingOperator.release());
+                                 "Reinitialize stream: sampling_frequency=%f",
+                                 *_targetSamplingFrequency);
+    setOperator(util::make_unique<waveform_operator::ResamplingOperator>(
+        RecordResamplerStore::Instance().get(record,
+                                             *_targetSamplingFrequency)));
 
     streamState.samplingFrequency = *_targetSamplingFrequency;
     if (streamState.filter) {

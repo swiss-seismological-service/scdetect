@@ -34,9 +34,8 @@ const MRelative::CombiningStrategy MRelative::median =
     };
 
 MRelative::MRelative(
-    std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> &&underlying,
-    CombiningStrategy strategy)
-    : CombiningAmplitudeProcessor{std::move(underlying), std::move(strategy)} {
+    std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying)
+    : CombiningAmplitudeProcessor{std::move(underlying), MRelative::median} {
   assert((validateUniqueSensorLocation(associatedWaveformStreamIds())));
   setType("MRelative");
   setUnit("");

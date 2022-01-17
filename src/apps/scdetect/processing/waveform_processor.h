@@ -118,8 +118,7 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // fed.
   //
   // - `op` sits between `feed` and `store`
-  // - the pointer ownership goes to the processor
-  void setOperator(WaveformOperator *op);
+  void setOperator(std::unique_ptr<WaveformOperator> op);
   // Returns the processor's initialization time; most frequently this
   // corresponds to the processor's filter initialization time
   virtual Core::TimeSpan initTime() const;
@@ -198,12 +197,12 @@ class WaveformProcessor : public Processor, public detail::InterpolateGaps {
   // WaveformProcessor initialization time
   Core::TimeSpan _initTime;
 
-  std::unique_ptr<WaveformOperator> _waveformOperator;
-
   // Threshold used for the saturation check
   boost::optional<double> _saturationThreshold;
 
  private:
+  std::unique_ptr<WaveformOperator> _waveformOperator;
+
   Status _status{Status::kWaitingForData};
   double _statusValue{0};
 };

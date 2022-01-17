@@ -30,7 +30,7 @@ class RatioAmplitude : public AmplitudeProcessor {
   // Sets the filter including the filter initialization time
   //
   // - implicitly resets the waveform processor
-  void setFilter(std::unique_ptr<DoubleFilter> &&filter,
+  void setFilter(std::unique_ptr<DoubleFilter> filter,
                  Core::TimeSpan initTime = Core::TimeSpan{0.0});
 
   void setTemplateWaveform(const TemplateWaveform &templateWaveform);

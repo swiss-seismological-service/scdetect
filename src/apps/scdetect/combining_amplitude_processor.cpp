@@ -23,7 +23,7 @@ namespace Seiscomp {
 namespace detect {
 
 CombiningAmplitudeProcessor::CombiningAmplitudeProcessor(
-    std::vector<AmplitudeProcessor> &&combined, CombiningStrategy strategy)
+    std::vector<AmplitudeProcessor> combined, CombiningStrategy strategy)
     : _combiningStrategy{std::move(strategy)} {
   for (auto &proc : combined) {
     proc.processor->setResultCallback(
