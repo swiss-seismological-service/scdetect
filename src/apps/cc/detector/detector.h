@@ -21,7 +21,7 @@
 #include "../waveform.h"
 #include "detector_impl.h"
 #include "linker/strategy.h"
-#include "templatewaveformprocessor.h"
+#include "template_waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {

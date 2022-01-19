@@ -1,4 +1,4 @@
-#include "templatewaveformprocessor.h"
+#include "template_waveform_processor.h"
 
 #include <algorithm>
 #include <cmath>

@@ -23,7 +23,7 @@
 #include "linker.h"
 #include "linker/association.h"
 #include "linker/strategy.h"
-#include "templatewaveformprocessor.h"
+#include "template_waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {

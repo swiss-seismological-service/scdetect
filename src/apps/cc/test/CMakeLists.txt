@@ -45,7 +45,7 @@ set(SOURCES_integration
   ../detector/linker/pot.cpp
   ../detector/linker/strategy.cpp
   ../detector/linker.cpp
-  ../detector/templatewaveformprocessor.cpp
+  ../detector/template_waveform_processor.cpp
   ../eventstore.cpp
   ../exception.cpp
   ../filter.cpp

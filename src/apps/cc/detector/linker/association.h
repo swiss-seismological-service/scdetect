@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 #include "../arrival.h"
-#include "../templatewaveformprocessor.h"
+#include "../template_waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
