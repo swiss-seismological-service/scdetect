@@ -1,8 +1,9 @@
 #include "linker.h"
 
 #include <algorithm>
-#include <boost/functional/hash.hpp>
+#include <cassert>
 #include <iterator>
+#include <memory>
 #include <unordered_set>
 
 #include "../util/math.h"
@@ -102,10 +103,8 @@ void Linker::terminate() {
 
 void Linker::feed(
     const TemplateWaveformProcessor *proc,
-    const TemplateWaveformProcessor::MatchResultCPtr &matchResult) {
-  if (!proc || !matchResult) {
-    return;
-  }
+    std::unique_ptr<const TemplateWaveformProcessor::MatchResult> matchResult) {
+  assert((proc && matchResult));
 
   if (status() < Status::kTerminated) {
     auto it{_processors.find(proc->id())};
@@ -117,19 +116,21 @@ void Linker::feed(
     // create a new arrival from a *template arrival*
     auto newArrival{linkerProc.arrival};
 
+    std::shared_ptr<const TemplateWaveformProcessor::MatchResult> result{
+        std::move(matchResult)};
     // XXX(damb): recompute the pickOffset; the template proc might have
     // changed the underlying template waveform (due to resampling)
     const auto currentPickOffset{
         linkerProc.arrival.pick.time -
         linkerProc.proc->templateWaveform().startTime()};
-    for (auto valueIt{matchResult->localMaxima.begin()};
-         valueIt != matchResult->localMaxima.end(); ++valueIt) {
-      const auto time{matchResult->timeWindow.startTime() + valueIt->lag +
+    for (auto valueIt{result->localMaxima.begin()};
+         valueIt != result->localMaxima.end(); ++valueIt) {
+      const auto time{result->timeWindow.startTime() + valueIt->lag +
                       currentPickOffset};
       newArrival.pick.time = time;
 
       linker::Association::TemplateResult templateResult{newArrival, valueIt,
-                                                         matchResult};
+                                                         result};
       // filter/drop based on merging strategy
       if (_mergingStrategy && _thresAssociation &&
           !_mergingStrategy->operator()(
@@ -141,8 +142,8 @@ void Linker::feed(
             "[%s] [%s - %s] Dropping result due to merging "
             "strategy applied: time=%s, fit=%9f, lag=%10f",
             newArrival.pick.waveformStreamId.c_str(),
-            matchResult->timeWindow.startTime().iso().c_str(),
-            matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+            result->timeWindow.startTime().iso().c_str(),
+            result->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
             valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
         continue;
@@ -153,8 +154,8 @@ void Linker::feed(
           proc,
           "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
           newArrival.pick.waveformStreamId.c_str(),
-          matchResult->timeWindow.startTime().iso().c_str(),
-          matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+          result->timeWindow.startTime().iso().c_str(),
+          result->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
           valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
       process(proc, templateResult);

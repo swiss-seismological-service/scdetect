@@ -5,7 +5,6 @@
 #include <seiscomp/core/timewindow.h>
 
 #include <boost/optional/optional.hpp>
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -71,7 +70,8 @@ class Linker {
 
   // Feeds the `proc`'s result `res` to the linker
   void feed(const TemplateWaveformProcessor *proc,
-            const TemplateWaveformProcessor::MatchResultCPtr &matchResult);
+            std::unique_ptr<const TemplateWaveformProcessor::MatchResult>
+                matchResult);
 
   using PublishResultCallback =
       std::function<void(const linker::Association &)>;

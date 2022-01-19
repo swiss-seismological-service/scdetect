@@ -3,6 +3,7 @@
 #include <seiscomp/core/strings.h>
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
 #include <memory>
 #include <sstream>
@@ -111,8 +112,9 @@ void DetectorImpl::add(std::unique_ptr<TemplateWaveformProcessor> proc,
                        const boost::optional<double> &mergingThreshold) {
   proc->setResultCallback(
       [this](const TemplateWaveformProcessor *processor, const Record *record,
-             TemplateWaveformProcessor::MatchResultCPtr result) {
-        storeTemplateResult(processor, record, result);
+             std::unique_ptr<const TemplateWaveformProcessor::MatchResult>
+                 result) {
+        storeTemplateResult(processor, record, std::move(result));
       });
 
   // XXX(damb): Replace the arrival with a *pseudo arrival* i.e. an arrival
@@ -500,24 +502,22 @@ void DetectorImpl::resetProcessors() {
 
 void DetectorImpl::storeTemplateResult(
     const TemplateWaveformProcessor *processor, const Record *record,
-    const TemplateWaveformProcessor::MatchResultCPtr &result) {
-  if (!processor || !record || !result) {
-    return;
-  }
+    std::unique_ptr<const TemplateWaveformProcessor::MatchResult> result) {
+  assert((processor && record && result));
 
   auto &p{_processors.at(processor->id())};
   if (p.processor->finished()) {
     const auto &status{p.processor->status()};
     const auto &statusValue{p.processor->statusValue()};
     auto msg{Core::stringify(
-        "Failed to match template (proc_id=%s). Reason: "
-        "status=%d, statusValue=%f",
+        "Failed to match template (proc_id=%s). Reason: status=%d, "
+        "statusValue=%f",
         p.processor->id().c_str(), util::asInteger(status), statusValue)};
 
     throw TemplateMatchingError{msg};
   }
 
-  _linker.feed(processor, result);
+  _linker.feed(processor, std::move(result));
 }
 
 void DetectorImpl::storeLinkerResult(const linker::Association &linkerResult) {

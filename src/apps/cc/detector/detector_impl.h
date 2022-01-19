@@ -181,7 +181,7 @@ class DetectorImpl : public detect::processing::Processor {
   // Callback storing results from `TemplateWaveformProcessor`
   void storeTemplateResult(
       const TemplateWaveformProcessor *processor, const Record *record,
-      const TemplateWaveformProcessor::MatchResultCPtr &result);
+      std::unique_ptr<const TemplateWaveformProcessor::MatchResult> result);
 
   // Callback storing results from the linker
   void storeLinkerResult(const linker::Association &linkerResult);

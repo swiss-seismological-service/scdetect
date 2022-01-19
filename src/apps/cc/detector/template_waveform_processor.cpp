@@ -121,7 +121,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   }
 
   const Core::TimeWindow tw{start, record->endTime()};
-  auto result{util::make_smart<MatchResult>()};
+  auto result{util::make_unique<MatchResult>()};
   for (const auto &m : maxima.values) {
     // take cross-correlation filter delay into account i.e. the template
     // processor's result is referring to a time window shifted to the past
@@ -135,7 +135,7 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
 
   result->timeWindow = tw;
 
-  emitResult(record, result.get());
+  emitResult(record, std::move(result));
 }
 
 bool TemplateWaveformProcessor::fill(processing::StreamState &streamState,
@@ -172,10 +172,10 @@ void TemplateWaveformProcessor::setupStream(StreamState &streamState,
   _crossCorrelation.setSamplingFrequency(_targetSamplingFrequency.value_or(f));
 }
 
-void TemplateWaveformProcessor::emitResult(const Record *record,
-                                           const MatchResultCPtr &result) {
+void TemplateWaveformProcessor::emitResult(
+    const Record *record, std::unique_ptr<const MatchResult> result) {
   if (enabled() && _resultCallback) {
-    _resultCallback(this, record, result);
+    _resultCallback(this, record, std::move(result));
   }
 }
 

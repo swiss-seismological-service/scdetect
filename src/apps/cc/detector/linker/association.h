@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_CC_DETECTOR_LINKER_ASSOCIATION_H_
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -20,7 +21,7 @@ struct Association {
     TemplateWaveformProcessor::MatchResult::LocalMaxima::const_iterator
         resultIt;
     // Reference to the original template result
-    TemplateWaveformProcessor::MatchResultCPtr matchResult;
+    std::shared_ptr<const TemplateWaveformProcessor::MatchResult> matchResult;
   };
 
   // Associates `TemplateResult` with a processor (i.e. by means of the
