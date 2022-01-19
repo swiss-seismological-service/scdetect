@@ -59,7 +59,7 @@ class Detector : public processing::WaveformProcessor {
 
   class Builder : public detect::Builder<Detector> {
    public:
-    Builder(const std::string &originId);
+    explicit Builder(const std::string &originId);
 
     Builder &setId(const std::string &id);
 
