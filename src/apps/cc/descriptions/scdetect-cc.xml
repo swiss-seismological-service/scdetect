@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp>
+  <module name="scdetect-cc" category="Processing"
+          inherit-global-bindings="false">
+    <description>Template matching based earthquake detection</description>
+    <configuration>
+      <parameter name="templatesJSON" type="path"
+                 default="@ROOTDIR@/etc/scdetect-cc/templates.json">
+        <description>
+          Defines the default path for the template configuration
+          file.
+        </description>
+      </parameter>
+      <group name="template">
+        <parameter name="phase" type="string" default="Pg">
+          <description>
+            Defines the default template phase.
+          </description>
+        </parameter>
+        <parameter name="waveformStart" type="double" default="-2"
+                   unit="s">
+          <description>
+            Defines the default template waveform start time in
+            seconds w.r.t. the template pick.
+          </description>
+        </parameter>
+        <parameter name="waveformEnd" type="double" default="2"
+                   unit="s">
+          <description>
+            Defines the default template waveform end time in
+            seconds w.r.t. the template pick.
+          </description>
+        </parameter>
+      </group>
+      <group name="processing">
+        <parameter name="filter" type="string" default="">
+          <description>
+            Defines the default filter for detection related waveform
+            processing. If undefined the filter is set to the value defined by
+            the template pick (default behaviour).
+
+            Filtering may be disabled by means of explicitly
+            defining the value to the empty string i.e. "".
+          </description>
+        </parameter>
+        <parameter name="initTime" type="int" default="60" unit="s">
+          <description>
+            The default filter related initTime defines a time span in seconds
+            a detector is blind after initialization. This time is needed to
+            initialize the template processors and depends on it.
+          </description>
+        </parameter>
+        <parameter name="gapInterpolation" type="boolean"
+                   default="false">
+          <description>
+            Defines if by default gaps should be interpolated
+            linearly. This is valid for gaps shorter than *maxGapLength* and
+            larger than *minGapLength*.
+          </description>
+        </parameter>
+        <parameter name="minGapLength" type="double" default="0.1"
+                   unit="s">
+          <description>
+            The default min gap length in seconds to handle. Gaps
+            smaller than the value specified won't be handled.
+          </description>
+        </parameter>
+        <parameter name="maxGapLength" type="double" default="4.5"
+                   unit="s">
+          <description>
+            The default maximum gap length in seconds to handle.
+            Gaps larger than the value specified will cause the detector to be
+            reset.
+          </description>
+        </parameter>
+      </group>
+      <group name="detector">
+        <parameter name="timeCorrection" type="double" default="0"
+                   unit="s">
+          <description>
+            Default time correction applied for an origin issued.
+          </description>
+        </parameter>
+        <parameter name="triggerOn" type="double" default="0.85">
+          <description>
+            Default threshold which defines when a detector is
+            triggered.
+          </description>
+        </parameter>
+        <parameter name="triggerOff" type="double" default="0.65">
+          <description>
+            Default threshold which defines when the detector is
+            enabled in order to produce new origins, again. Note that this
+            threshold overrides the *triggerDuration* configuration parameter
+            i.e. as soon as the *triggerOff* threshold is met a detector
+            result is issued.
+          </description>
+        </parameter>
+        <parameter name="triggerDuration" type="double" default="2"
+                   unit="s">
+          <description>
+            Maximum default duration in seconds after reaching the
+            *triggerOn* threshold to search for the maximum correlation between
+            configured streams.
+          </description>
+        </parameter>
+        <parameter name="arrivalOffsetThreshold" type="double"
+                   default="2.0e-6" unit="s">
+          <description>
+            Maximum default inter arrival offset threshold to
+            tolerate when associating an arrival to an event. The threshold is
+            only validated in a multi-stream detector setup. Configuring a
+            negative value disables the arrival offset validation.
+          </description>
+        </parameter>
+        <parameter name="minimumArrivals" type="int" default="-1">
+          <description>
+            Defines the default minimum number of arrivals which
+            must be part of an event to be declared as a detection. Configuring
+            a negative value disables the validation i.e. arrivals for all
+            streams configured must be available.
+          </description>
+        </parameter>
+        <parameter name="mergingStrategy" type="string"
+                   default="greaterEqualTriggerOnThreshold">
+          <description>
+            Defines the default cross-correlation result merging
+            strategy while linking. Possible values are:
+
+            - "greaterEqualTriggerOnThreshold": the cross-correlation
+            coefficient must be greater or equal to the configured
+            "triggerOnThreshold" in order to be taken into account for linking.
+
+            - "greaterEqualMergingThreshold": the cross-correlation
+            coefficient must be greater or equal to the configured stream
+            configuration specific `"mergingThreshold"` in order to be taken
+            into
+            account for linking.
+
+            - "all": tries to merge all cross-correlation results.
+            Trying to merge all cross-correlation results is computationally
+            quite expensive.
+
+            Note that the configured merging strategy may have a
+            significant performance impact in a multi-stream detector setup.
+          </description>
+        </parameter>
+      </group>
+      <group name="publish">
+        <parameter name="createArrivals" type="boolean" default="false">
+          <description>
+            Defines the default value for appending *detected
+            arrivals* to declared origins.
+          </description>
+        </parameter>
+        <parameter name="createTemplateArrivals" type="boolean"
+                   default="false">
+          <description>
+            Defines the default value for appending *theoretical
+            template arrivals* to declared origins.
+          </description>
+        </parameter>
+        <parameter name="methodId" type="string" default="DETECT">
+          <description>
+            Defines the default origin *methodID* label that is
+            added to declared origins.
+          </description>
+        </parameter>
+      </group>
+      <group name="amplitudes">
+        <parameter name="messagingGroup" type="string"
+                   default="AMPLITUDE">
+          <description>
+            Defines the messaging group amplitudes are sent to.
+          </description>
+        </parameter>
+        <parameter name="createAmplitudes" type="boolean" default="true">
+          <description>
+            Defines the default value whether amplitude calculation
+            is enabled or disabled (on detector configuration level
+            granularity). Amplitudes are calculated right after an
+            origin has been declared.
+          </description>
+        </parameter>
+        <parameter name="filter" type="string" default="&quot;&quot;">
+          <description>
+            Defines the default filter for amplitude processing if
+            no binding filter configuration has been provided.
+            Filtering may be disabled by means of explicitly
+            defining the empty string i.e. "". By default filtering
+            is disabled.
+          </description>
+        </parameter>
+        <parameter name="initTime" type="double" default="0" unit="s">
+          <description>
+            Defines the default time span in seconds in order to
+            initialize the amplitude processor's filter.
+          </description>
+        </parameter>
+      </group>
+      <group name="magnitudes">
+        <parameter name="createMagnitudes" type="boolean" default="true">
+          <description>
+            Defines the default value whether magnitude calculation
+            is enabled or disabled (on detector configuration level
+            granularity). Note that magnitude calculation implies computing
+            amplitudes.
+          </description>
+        </parameter>
+      </group>
+    </configuration>
+
+    <command-line>
+      <group name="Generic">
+        <optionReference>generic#help</optionReference>
+        <optionReference>generic#version</optionReference>
+        <optionReference>generic#config-file</optionReference>
+        <optionReference>generic#plugins</optionReference>
+        <optionReference>generic#daemon</optionReference>
+        <optionReference>generic#auto-shutdown</optionReference>
+        <optionReference>generic#shutdown-master-module
+        </optionReference>
+        <optionReference>generic#shutdown-master-username
+        </optionReference>
+      </group>
+
+      <group name="Verbosity">
+        <optionReference>verbosity#verbosity</optionReference>
+        <optionReference>verbosity#v</optionReference>
+        <optionReference>verbosity#quiet</optionReference>
+        <optionReference>verbosity#component</optionReference>
+        <optionReference>verbosity#syslog</optionReference>
+        <optionReference>verbosity#lockfile</optionReference>
+        <optionReference>verbosity#console</optionReference>
+        <optionReference>verbosity#debug</optionReference>
+        <optionReference>verbosity#log-file</optionReference>
+      </group>
+
+      <group name="Messaging">
+        <optionReference>messaging#user</optionReference>
+        <optionReference>messaging#host</optionReference>
+        <optionReference>messaging#timeout</optionReference>
+        <optionReference>messaging#primary-group</optionReference>
+        <optionReference>messaging#subscribe-group</optionReference>
+        <optionReference>messaging#content-type</optionReference>
+        <optionReference>messaging#start-stop-msg</optionReference>
+      </group>
+
+      <group name="Database">
+        <optionReference>database#db-driver-list</optionReference>
+        <optionReference>database#database</optionReference>
+        <optionReference>database#config-module</optionReference>
+        <optionReference>database#inventory-db</optionReference>
+        <option flag="" long-flag="event-db" argument="">
+          <description>
+            Load events from the given database or file, format:
+            [service://]location
+          </description>
+        </option>
+      </group>
+
+      <group name="Records">
+        <optionReference>records#record-driver-list</optionReference>
+        <optionReference>records#record-url</optionReference>
+        <optionReference>records#record-file</optionReference>
+        <optionReference>records#record-type</optionReference>
+        <option flag="" long-flag="record-starttime" argument="">
+          <description>
+            Defines a start time (YYYY-MM-DDTHH:MM:SS formatted) for
+            requesting records from the configured archive recordstream.
+            Implicitly enables reprocessing/playback mode.
+          </description>
+        </option>
+        <option flag="" long-flag="record-endtime" argument="">
+          <description>
+            Defines an end time (YYYY-MM-DDTHH:MM:SS formatted) for requesting
+            records from the configured archive recordstream. Implicitly enables
+            reprocessing/playback mode.
+          </description>
+        </option>
+      </group>
+
+      <group name="Mode">
+        <option flag="" long-flag="offline">
+          <description>
+            Do not connect to the messaging system.
+          </description>
+        </option>
+        <option flag="" long-flag="no-publish">
+          <description>
+            Runs the module as usual but does not send any messages.
+            This can be useful to test the module within a running system.
+          </description>
+        </option>
+        <option flag="" long-flag="ep">
+          <description>
+            Same as --no-publish, but outputs all event parameters
+            scml formatted; specifying the output path as '-' (a single dash)
+            will force the output to be redirected to stdout.
+          </description>
+        </option>
+        <option flag="" long-flag="playback" default="false">
+          <description>
+            Use playback mode that does not restrict the maximum
+            allowed data latency.
+          </description>
+        </option>
+        <option flag="" long-flag="templates-prepare">
+          <description>
+            Load template waveform data from the configured recordstream and
+            save it in the module's caching directory, then exit.
+          </description>
+        </option>
+        <option flag="" long-flag="templates-reload">
+          <description>
+            Force reloading template waveform data and omit cached waveform
+            data.
+          </description>
+        </option>
+        <option flag="" long-flag="amplitudes-force">
+          <description>
+            Enables/disables the calculation of amplitudes regardless of the
+            configuration provided on detector configuration level granularity.
+          </description>
+        </option>
+        <option flag="" long-flag="magnitudes-force">
+          <description>
+            Enables/disables the estimation of magnitudes regardless of the
+            configuration provided on detector configuration level granularity.
+            If enabled, amplitudes will be computed, too.
+          </description>
+        </option>
+      </group>
+
+      <group name="Input">
+        <option flag="" long-flag="templates-json">
+          <description>
+            Path to a template configuration file (JSON formatted).
+          </description>
+        </option>
+        <option flag="" long-flag="template-family-json">
+          <description>
+            Path to a template family configuration file (JSON formatted).
+          </description>
+        </option>
+      </group>
+    </command-line>
+  </module>
+  <!--
+    The basic binding description. This could also go into a separate file, but it's integrated
+    into the core description to have everything in one place.
+  -->
+  <binding module="scdetect-cc">
+    <description>
+      Configures a station for both amplitude and magnitude calculation. A
+      station without a binding assigned will be used for neither amplitude
+      calculation nor magnitude calculation.
+    </description>
+    <configuration>
+      <parameter name="sensorLocationProfiles" type="list:string" default="">
+        <description>
+          Defines a list of sensor location profiles.
+        </description>
+      </parameter>
+      <group name="sensorLocation">
+        <struct type="sensorLocationProfile"
+                link="scdetect-cc.sensorLocationProfiles">
+          <description>
+            Each sensor location profile is a configuration set with regard to
+            a sensor location. A sensor location profile is used only if a
+            related stream is part of a detector configuration.
+          </description>
+          <parameter name="locationCode" type="string" default="">
+            <description>
+              Defines profile's location code.
+            </description>
+          </parameter>
+          <parameter name="channelCode" type="string" default="">
+            <description>
+              Defines profile's channel code. Note that only the band and
+              source code is taken into account (i.e. the two leading
+              characters).
+            </description>
+          </parameter>
+
+          <group name="amplitudes">
+            <description>
+              Defines amplitude related configuration options.
+            </description>
+            <parameter name="amplitudes" type="list:string"
+                       default="&quot;MRelative&quot;">
+              <description>
+                Defines a list of amplitudes to be calculated.
+              </description>
+            </parameter>
+            <parameter name="enable" type="boolean" default="true">
+              <description>
+                Enables/disables amplitude calculation. If disabled neither
+                amplitudes nor magnitudes will be computed.
+              </description>
+            </parameter>
+
+            <group name="MRelative">
+              <description>
+                Defines configuration parameters for amplitudes required for
+                the relative magnitude estimation.
+              </description>
+              <parameter name="saturationThreshold" type="double"
+                         unit="counts; %">
+                <description>
+                  Enables a saturation check before calculating amplitudes. If
+                  data
+                  exceeds the configured threshold no amplitude is going to be
+                  calculated.
+
+                  This value can either be an absolute value of counts such
+                  as &quot;100000&quot; counts or a relative value
+                  (optionally in percent) with respect to the number of
+                  effective bits, e.g. &quot;0.8@23&quot; or &quot;80%@23&quot;.
+                  The first version uses 1**23 * 0.8 whereas the latter
+                  uses 1**23 * 80/100.
+
+                  The boolean value &quot;false&quot; explicitly disables
+                  the check.
+                </description>
+              </parameter>
+              <parameter name="filter" type="string">
+                <description>
+                  Defines the filter to be used for amplitude waveform
+                  processing (i.e. applied before calculating the amplitude).
+                  Filtering may be disabled by means of explicitly passing the
+                  empty string i.e. "". If no filter has been specified the
+                  module default is taken as a fallback. If no fallback is
+                  provided, then the filter configured for detection processing
+                  is used, instead.
+                </description>
+              </parameter>
+              <parameter name="initTime" type="double" default="60" unit="s">
+                <description>
+                  Defines the profile's time span in seconds in order to
+                  initialize the amplitude processor's filter. The
+                  initialization
+                  time is used only in case filtering is enabled.
+                </description>
+              </parameter>
+            </group>
+
+            <group name="MLx">
+              <description>
+                Defines configuration parameters for amplitudes required for
+                the template family amplitude-magnitude regression magnitude
+                estimation. Note that this amplitude type requires sensor
+                responses to be configured.
+              </description>
+              <parameter name="saturationThreshold" type="double"
+                         unit="counts; %">
+                <description>
+                  Enables a saturation check before calculating amplitudes. If
+                  data
+                  exceeds the configured threshold no amplitude is going to be
+                  calculated.
+
+                  This value can either be an absolute value of counts such
+                  as &quot;100000&quot; counts or a relative value
+                  (optionally in percent) with respect to the number of
+                  effective bits, e.g. &quot;0.8@23&quot; or &quot;80%@23&quot;.
+                  The first version uses 1**23 * 0.8 whereas the latter
+                  uses 1**23 * 80/100.
+
+                  The boolean value &quot;false&quot; explicitly disables
+                  the check.
+                </description>
+              </parameter>
+              <parameter name="filter" type="string"
+                         default="&quot;BW_BP(4,10,30)&quot;">
+                <description>
+                  Defines the filter to be used for amplitude waveform
+                  processing (i.e. applied before calculating the amplitude).
+                  Filtering may be disabled by means of explicitly passing the
+                  empty string i.e. "". If no filter has been specified the
+                  module default is taken as a fallback.
+                </description>
+              </parameter>
+              <parameter name="initTime" type="double" default="60" unit="s">
+                <description>
+                  Defines the profile's time span in seconds in order to
+                  initialize the amplitude processor's filter. The
+                  initialization
+                  time is used only in case filtering is enabled.
+                </description>
+              </parameter>
+            </group>
+
+            <group name="responses">
+              <description>
+                Each response profile is a response related configuration set.
+                It
+                allows the configuration of parameters on stream granularity.
+              </description>
+              <parameter name="responseProfiles" type="list:string" default="">
+                <description>
+                  Defines a list of response profiles.
+                </description>
+              </parameter>
+              <struct type="responseProfile"
+                      link="scdetect-cc.amplitudeProfiles.responseProfiles">
+                <parameter name="channelCode" type="string" default="">
+                  <description>
+                    Defines profile's channel code used for response correction.
+                    Note that the value is interpreted as the subsource code
+                    i.e. a
+                    single character is allowed, only.
+                  </description>
+                </parameter>
+                <parameter name="taperLength" type="double" default="5"
+                           unit="s">
+                  <description>
+                    Defines the taper length when deconvolving the data.
+                  </description>
+                </parameter>
+                <parameter name="minimumTaperFrequency" type="double"
+                           default="0.00833333" unit="Hz">
+                  <description>
+                    Defines the end of the left-hand side cosine-taper in Hz
+                    applied to the frequency spectrum. I.e. the spectrum is
+                    tapered
+                    between 0Hz and `minimumTaperFrequency`. A value less than
+                    or
+                    equal to zero disables left-hand side tapering.
+                  </description>
+                </parameter>
+                <parameter name="maximumTaperFrequency" type="double"
+                           default="0" unit="Hz">
+                  <description>
+                    Defines the beginning of the right-hand side cosine-taper in
+                    Hz
+                    applied to the frequency spectrum. I.e. the spectrum is
+                    tapered
+                    between `maximumResponseTaperFrequency` and the Nyquist
+                    frequency. A value less than or equal to zero disables
+                    left-hand side tapering.
+                  </description>
+                </parameter>
+              </struct>
+            </group>
+          </group>
+
+          <group name="magnitudes">
+            <description>
+              Defines magnitude related configuration options.
+            </description>
+            <parameter name="magnitudes" type="list:string"
+                       default="&quot;MRelative&quot;">
+              <description>
+                Defines a list of magnitudes to be calculated.
+              </description>
+            </parameter>
+            <parameter name="enable" type="boolean" default="true">
+              <description>
+                Enables/disables magnitude calculation.
+              </description>
+            </parameter>
+          </group>
+        </struct>
+      </group>
+    </configuration>
+  </binding>
+</seiscomp>

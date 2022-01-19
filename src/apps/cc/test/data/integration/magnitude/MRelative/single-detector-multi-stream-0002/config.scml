@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <Config>
+    <parameterSet publicID="ParameterSet/trunk/Station/CH/GRIMS/scdetect-cc" created="2022-01-11T07:53:31.097812Z">
+      <moduleID>Config/trunk</moduleID>
+      <parameter publicID="Parameter/20220111075331.097847.5">
+        <name>sensorLocation._HH.amplitudes.amplitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220111075331.097933.6">
+        <name>sensorLocation._HH.magnitudes.magnitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220111075331.097954.7">
+        <name>sensorLocation._HH.channelCode</name>
+        <value>HH</value>
+      </parameter>
+      <parameter publicID="Parameter/20220111075331.097966.8">
+        <name>sensorLocationProfiles</name>
+        <value>_HH</value>
+      </parameter>
+    </parameterSet>
+    <parameterSet publicID="ParameterSet/trunk/Station/CH/HASLI/scdetect-cc" created="2022-01-11T07:53:31.098064Z">
+      <moduleID>Config/trunk</moduleID>
+      <parameter publicID="Parameter/20220111075331.098076.11">
+        <name>sensorLocation._HH.amplitudes.amplitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220111075331.098091.12">
+        <name>sensorLocation._HH.magnitudes.magnitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220111075331.098103.13">
+        <name>sensorLocation._HH.channelCode</name>
+        <value>HH</value>
+      </parameter>
+      <parameter publicID="Parameter/20220111075331.098114.14">
+        <name>sensorLocationProfiles</name>
+        <value>_HH</value>
+      </parameter>
+    </parameterSet>
+    <module publicID="Config/trunk" name="trunk" enabled="true">
+      <station publicID="Config/trunk/CH/GRIMS" networkCode="CH" stationCode="GRIMS" enabled="true">
+        <creationInfo>
+          <agencyID>FOO_AGENCY</agencyID>
+          <author>bindings2cfg</author>
+          <creationTime>2022-01-11T07:53:31.097595Z</creationTime>
+        </creationInfo>
+        <setup name="scdetect-cc" enabled="true">
+          <parameterSetID>ParameterSet/trunk/Station/CH/GRIMS/scdetect-cc</parameterSetID>
+        </setup>
+      </station>
+      <station publicID="Config/trunk/CH/HASLI" networkCode="CH" stationCode="HASLI" enabled="true">
+        <creationInfo>
+          <agencyID>FOO_AGENCY</agencyID>
+          <author>bindings2cfg</author>
+          <creationTime>2022-01-11T07:53:31.098014Z</creationTime>
+        </creationInfo>
+        <setup name="scdetect-cc" enabled="true">
+          <parameterSetID>ParameterSet/trunk/Station/CH/HASLI/scdetect-cc</parameterSetID>
+        </setup>
+      </station>
+    </module>
+  </Config>
+</seiscomp>
