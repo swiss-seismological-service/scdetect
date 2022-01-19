@@ -250,7 +250,7 @@ class Application : public Client::StreamApplication {
     DataModel::OriginPtr origin;
 
     std::string detectorId;
-    detector::Detector::DetectionCPtr detection;
+    std::shared_ptr<const detector::Detector::Detection> detection;
 
     std::size_t numberOfRequiredAmplitudes{};
     std::size_t numberOfRequiredMagnitudes{};
@@ -361,9 +361,9 @@ class Application : public Client::StreamApplication {
   // Removes a detection
   void removeDetection(const std::shared_ptr<DetectionItem> &detection);
 
-  void processDetection(const detector::Detector *processor,
-                        const Record *record,
-                        const detector::Detector::DetectionCPtr &detection);
+  void processDetection(
+      const detector::Detector *processor, const Record *record,
+      std::unique_ptr<const detector::Detector::Detection> detection);
 
   void publishDetection(const DetectionItem &detectionItem);
 

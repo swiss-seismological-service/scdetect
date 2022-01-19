@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_CC_DETECTOR_DETECTOR_H_
 #define SCDETECT_APPS_CC_DETECTOR_DETECTOR_H_
 
-#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
@@ -32,8 +31,7 @@ class Detector : public processing::WaveformProcessor {
   explicit Detector(const DataModel::OriginCPtr &origin);
 
  public:
-  DEFINE_SMARTPOINTER(Detection);
-  struct Detection : public Core::BaseObject {
+  struct Detection {
     double fit{};
 
     Core::Time time;
@@ -54,8 +52,8 @@ class Detector : public processing::WaveformProcessor {
     TemplateResults templateResults;
   };
 
-  using PublishDetectionCallback =
-      std::function<void(const Detector *, const Record *, DetectionCPtr)>;
+  using PublishDetectionCallback = std::function<void(
+      const Detector *, const Record *, std::unique_ptr<const Detection>)>;
 
   class Builder : public detect::Builder<Detector> {
    public:
@@ -137,10 +135,12 @@ class Detector : public processing::WaveformProcessor {
 
   // Callback function storing `res`
   void storeDetection(const DetectorImpl::Result &res);
-  // Prepares the detection from `res`
-  void prepareDetection(DetectionPtr &d, const DetectorImpl::Result &res);
+  // Creates a detection from `res`
+  std::unique_ptr<const Detection> createDetection(
+      const DetectorImpl::Result &res);
 
-  void emitDetection(const Record *record, const DetectionCPtr &detection);
+  void emitDetection(const Record *record,
+                     std::unique_ptr<const Detection> detection);
 
  private:
   using WaveformStreamID = std::string;

@@ -2,6 +2,7 @@
 
 #include "../exception.h"
 #include "../log.h"
+#include "../util/memory.h"
 #include "../util/waveform_stream_id.h"
 #include "exception.h"
 #include "validators.h"

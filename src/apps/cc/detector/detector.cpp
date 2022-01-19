@@ -401,9 +401,7 @@ void Detector::terminate() {
 
   _detectorImpl.terminate();
   if (_detection) {
-    auto detection{util::make_smart<Detection>()};
-    prepareDetection(detection, *_detection);
-    emitDetection(nullptr, detection);
+    emitDetection(nullptr, createDetection(*_detection));
 
     _detection = boost::none;
   }
@@ -446,9 +444,7 @@ void Detector::process(StreamState &streamState, const Record *record,
 
   if (!finished()) {
     if (_detection) {
-      auto detection{util::make_smart<Detection>()};
-      prepareDetection(detection, *_detection);
-      emitDetection(record, detection);
+      emitDetection(record, createDetection(*_detection));
 
       _detection = boost::none;
     }
@@ -476,49 +472,54 @@ void Detector::storeDetection(const detector::DetectorImpl::Result &res) {
   _detection = res;
 }
 
-void Detector::prepareDetection(DetectionPtr &d,
-                                const detector::DetectorImpl::Result &res) {
+std::unique_ptr<const Detector::Detection> Detector::createDetection(
+    const detector::DetectorImpl::Result &res) {
   const Core::TimeSpan timeCorrection{_config.timeCorrection};
 
-  d->fit = _detection.value().fit;
-  d->time = res.originTime + timeCorrection;
-  d->latitude = _origin->latitude().value();
-  d->longitude = _origin->longitude().value();
-  d->depth = _origin->depth().value();
+  auto ret{util::make_unique<Detection>()};
 
-  d->numChannelsAssociated = res.numChannelsAssociated;
-  d->numChannelsUsed = res.numChannelsUsed;
-  d->numStationsAssociated = res.numStationsAssociated;
-  d->numStationsUsed = res.numStationsUsed;
+  ret->fit = _detection.value().fit;
+  ret->time = res.originTime + timeCorrection;
+  ret->latitude = _origin->latitude().value();
+  ret->longitude = _origin->longitude().value();
+  ret->depth = _origin->depth().value();
 
-  d->publishConfig.createArrivals = _publishConfig.createArrivals;
-  d->publishConfig.createTemplateArrivals =
+  ret->numChannelsAssociated = res.numChannelsAssociated;
+  ret->numChannelsUsed = res.numChannelsUsed;
+  ret->numStationsAssociated = res.numStationsAssociated;
+  ret->numStationsUsed = res.numStationsUsed;
+
+  ret->publishConfig.createArrivals = _publishConfig.createArrivals;
+  ret->publishConfig.createTemplateArrivals =
       _publishConfig.createTemplateArrivals;
-  d->publishConfig.originMethodId = _publishConfig.originMethodId;
-  d->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
-  d->publishConfig.createMagnitudes = _publishConfig.createMagnitudes;
+  ret->publishConfig.originMethodId = _publishConfig.originMethodId;
+  ret->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
+  ret->publishConfig.createMagnitudes = _publishConfig.createMagnitudes;
 
   if (_publishConfig.createTemplateArrivals) {
     for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {
       auto theoreticalTemplateArrival{arrival};
       theoreticalTemplateArrival.pick.time =
           res.originTime + arrival.pick.offset + timeCorrection;
-      d->publishConfig.theoreticalTemplateArrivals.push_back(
+      ret->publishConfig.theoreticalTemplateArrivals.push_back(
           theoreticalTemplateArrival);
     }
   }
 
-  d->templateResults = res.templateResults;
+  ret->templateResults = res.templateResults;
   if (timeCorrection) {
-    for (auto &templateResultPair : d->templateResults) {
+    for (auto &templateResultPair : ret->templateResults) {
       templateResultPair.second.arrival.pick.time += timeCorrection;
     }
   }
+
+  return ret;
 }
+
 void Detector::emitDetection(const Record *record,
-                             const DetectionCPtr &detection) {
+                             std::unique_ptr<const Detection> detection) {
   if (enabled() && _detectionCallback) {
-    _detectionCallback(this, record, detection);
+    _detectionCallback(this, record, std::move(detection));
   }
 }
 

@@ -26,6 +26,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
+#include <cassert>
 #include <exception>
 #include <ios>
 #include <iterator>
@@ -43,6 +44,7 @@
 #include "config/exception.h"
 #include "config/validators.h"
 #include "detector/arrival.h"
+#include "detector/detector.h"
 #include "eventstore.h"
 #include "log.h"
 #include "magnitude/regression.h"
@@ -712,7 +714,9 @@ void Application::handleRecord(Record *rec) {
 
 void Application::processDetection(
     const detector::Detector *processor, const Record *record,
-    const detector::Detector::DetectionCPtr &detection) {
+    std::unique_ptr<const detector::Detector::Detection> detection) {
+  assert(detection);
+
   SCDETECT_LOG_DEBUG_PROCESSOR(
       processor,
       "Start processing detection (time=%s, associated_results=%d) ...",
@@ -797,7 +801,7 @@ void Application::processDetection(
 
   DetectionItem detectionItem{origin};
   detectionItem.detectorId = processor->id();
-  detectionItem.detection = detection;
+  detectionItem.detection = std::move(detection);
 
   detectionItem.config = DetectionItem::ProcessorConfig{
       processor->gapInterpolation(), processor->gapThreshold(),
@@ -847,9 +851,9 @@ void Application::processDetection(
     return ret;
   };
 
-  auto createPicks{detection->publishConfig.createArrivals ||
-                   detection->publishConfig.createAmplitudes ||
-                   detection->publishConfig.createMagnitudes};
+  auto createPicks{detectionItem.detection->publishConfig.createArrivals ||
+                   detectionItem.detection->publishConfig.createAmplitudes ||
+                   detectionItem.detection->publishConfig.createMagnitudes};
   if (createPicks) {
     using PhaseCode = std::string;
     using ProcessedPhaseCodes = std::unordered_set<PhaseCode>;
@@ -858,7 +862,7 @@ void Application::processDetection(
         std::unordered_map<SensorLocationStreamId, ProcessedPhaseCodes>;
     SensorLocationStreamIdProcessedPhaseCodesMap processedPhaseCodes;
 
-    for (const auto &resultPair : detection->templateResults) {
+    for (const auto &resultPair : detectionItem.detection->templateResults) {
       const auto &res{resultPair.second};
 
       auto sensorLocationStreamId{util::getSensorLocationStreamId(
@@ -877,14 +881,15 @@ void Application::processDetection(
             std::find(std::begin(processed), std::end(processed),
                       res.arrival.phase) != std::end(processed)};
         // XXX(damb): assign a phase only once per sensor location
-        if (detection->publishConfig.createArrivals && !phaseAlreadyProcessed) {
+        if (detectionItem.detection->publishConfig.createArrivals &&
+            !phaseAlreadyProcessed) {
           const auto arrival{createArrival(res.arrival, pick)};
           detectionItem.arrivalPicks.push_back({arrival, pick});
           processed.emplace(res.arrival.phase);
         }
 
-        if (detection->publishConfig.createAmplitudes ||
-            detection->publishConfig.createMagnitudes) {
+        if (detectionItem.detection->publishConfig.createAmplitudes ||
+            detectionItem.detection->publishConfig.createMagnitudes) {
           detectionItem.amplitudePickMap.emplace(
               res.processorId,
               DetectionItem::Pick{res.arrival.pick.waveformStreamId, pick});
@@ -898,8 +903,9 @@ void Application::processDetection(
   }
 
   // create theoretical template arrivals
-  if (detection->publishConfig.createTemplateArrivals) {
-    for (const auto &a : detection->publishConfig.theoreticalTemplateArrivals) {
+  if (detectionItem.detection->publishConfig.createTemplateArrivals) {
+    for (const auto &a :
+         detectionItem.detection->publishConfig.theoreticalTemplateArrivals) {
       try {
         const auto pick{createPick(a, true)};
         const auto arrival{createArrival(a, pick)};
@@ -922,7 +928,8 @@ void Application::processDetection(
       !magnitudeForcedEnabled};
 
   if (amplitudeForcedEnabled ||
-      (!amplitudeForcedDisabled && detection->publishConfig.createAmplitudes)) {
+      (!amplitudeForcedDisabled &&
+       detectionItem.detection->publishConfig.createAmplitudes)) {
     // XXX(damb): as soon as either amplitudes or magnitudes need to be
     // computed, the detection is issued as a wholesale due to simplicity.
     // (Note that the amplitudes could be issued independently from the origin
@@ -1520,8 +1527,9 @@ bool Application::initDetectors(std::ifstream &ifs,
             detectorBuilder.build()};
         detectorPtr->setResultCallback(
             [this](const detector::Detector *processor, const Record *record,
-                   detector::Detector::DetectionCPtr detection) {
-              processDetection(processor, record, detection);
+                   std::unique_ptr<const detector::Detector::Detection>
+                       detection) {
+              processDetection(processor, record, std::move(detection));
             });
 
         for (const auto &waveformStreamId : waveformStreamIds) {
