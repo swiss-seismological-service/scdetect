@@ -22,8 +22,8 @@ namespace detect {
 namespace detector {
 
 // Detector waveform processor implementation
-class DetectorWaveformProcessor : public processing::WaveformProcessor {
-  explicit DetectorWaveformProcessor(const DataModel::OriginCPtr &origin);
+class Detector : public processing::WaveformProcessor {
+  explicit Detector(const DataModel::OriginCPtr &origin);
 
  public:
   DEFINE_SMARTPOINTER(Detection);
@@ -47,8 +47,8 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
     // Template specific results
     TemplateResults templateResults;
   };
-  using PublishDetectionCallback = std::function<void(
-      const DetectorWaveformProcessor *, const Record *, DetectionCPtr)>;
+  using PublishDetectionCallback =
+      std::function<void(const Detector *, const Record *, DetectionCPtr)>;
 
   friend class DetectorBuilder;
   static DetectorBuilder Create(const std::string &originId);

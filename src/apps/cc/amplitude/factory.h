@@ -67,11 +67,9 @@ std::unique_ptr<AmplitudeProcessor> createMLx(
 
 }  // namespace factory
 
-class Factory
-    : public detect::Factory<AmplitudeProcessor, std::string,
-                             const binding::Bindings&,
-                             const factory::Detection&,
-                             const detector::DetectorWaveformProcessor&> {
+class Factory : public detect::Factory<
+                    AmplitudeProcessor, std::string, const binding::Bindings&,
+                    const factory::Detection&, const detector::Detector&> {
  public:
   class BaseException : public Exception {
    public:
@@ -81,11 +79,11 @@ class Factory
 
   static std::unique_ptr<detect::AmplitudeProcessor> createMRelative(
       const binding::Bindings& bindings, const factory::Detection& detection,
-      const detector::DetectorWaveformProcessor& detector);
+      const detector::Detector& detector);
 
   static std::unique_ptr<AmplitudeProcessor> createMLx(
       const binding::Bindings& bindings, const factory::Detection& detection,
-      const detector::DetectorWaveformProcessor& detector);
+      const detector::Detector& detector);
 
   // Resets the factory
   static void reset();
@@ -93,7 +91,7 @@ class Factory
  private:
   static std::unique_ptr<AmplitudeProcessor> createRatioAmplitude(
       const binding::Bindings& bindings, const factory::Detection& detection,
-      const detector::DetectorWaveformProcessor& detector,
+      const detector::Detector& detector,
       const std::string& baseProcessorId = "");
 };
 

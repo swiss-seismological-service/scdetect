@@ -712,8 +712,8 @@ void Application::handleRecord(Record *rec) {
 }
 
 void Application::processDetection(
-    const detector::DetectorWaveformProcessor *processor, const Record *record,
-    const detector::DetectorWaveformProcessor::DetectionCPtr &detection) {
+    const detector::Detector *processor, const Record *record,
+    const detector::Detector::DetectionCPtr &detection) {
   SCDETECT_LOG_DEBUG_PROCESSOR(
       processor,
       "Start processing detection (time=%s, associated_results=%d) ...",
@@ -1471,7 +1471,7 @@ bool Application::initDetectors(std::ifstream &ifs,
                            tc.detectorId().c_str());
 
         auto detectorBuilder{
-            std::move(detector::DetectorWaveformProcessor::Create(tc.originId())
+            std::move(detector::Detector::Create(tc.originId())
                           .setId(tc.detectorId())
                           .setConfig(tc.publishConfig(), tc.detectorConfig(),
                                      _config.playbackConfig.enabled))};
@@ -1517,13 +1517,11 @@ bool Application::initDetectors(std::ifstream &ifs,
           waveformStreamIds.push_back(streamConfigPair.first);
         }
 
-        std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
+        std::shared_ptr<detector::Detector> detectorPtr{
             detectorBuilder.build()};
         detectorPtr->setResultCallback(
-            [this](
-                const detector::DetectorWaveformProcessor *processor,
-                const Record *record,
-                detector::DetectorWaveformProcessor::DetectionCPtr detection) {
+            [this](const detector::Detector *processor, const Record *record,
+                   detector::Detector::DetectionCPtr detection) {
               processDetection(processor, record, detection);
             });
 
@@ -1564,7 +1562,7 @@ bool Application::initDetectors(std::ifstream &ifs,
 
 bool Application::initAmplitudeProcessors(
     std::shared_ptr<DetectionItem> &detectionItem,
-    const detector::DetectorWaveformProcessor &detectorProcessor) {
+    const detector::Detector &detectorProcessor) {
   using PickMap = std::pair<DetectionItem::ProcessorId, DetectionItem::Pick>;
   using SensorLocationId = std::string;
   using SensorLocationPickMap =
@@ -1933,8 +1931,7 @@ void Application::removeDetection(
 
 std::unique_ptr<DataModel::Comment>
 Application::createTemplateWaveformTimeInfoComment(
-    const detector::DetectorWaveformProcessor::Detection::TemplateResult
-        &templateResult) {
+    const detector::Detector::Detection::TemplateResult &templateResult) {
   auto ret{util::make_unique<DataModel::Comment>()};
   ret->setId(settings::kTemplateWaveformTimeInfoPickCommentId);
   ret->setText(templateResult.templateWaveformStartTime.iso() +

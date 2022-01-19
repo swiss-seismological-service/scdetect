@@ -20,9 +20,9 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-class DetectorWaveformProcessor;
+class Detector;
 
-class DetectorBuilder : public Builder<DetectorWaveformProcessor> {
+class DetectorBuilder : public Builder<Detector> {
  public:
   DetectorBuilder(const std::string &originId);
 

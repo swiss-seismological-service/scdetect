@@ -37,8 +37,7 @@ DetectorBuilder::DetectorBuilder(const std::string &originId)
 
   // XXX(damb): Using `new` to access a non-public ctor; see also
   // https://abseil.io/tips/134
-  setProduct(std::unique_ptr<DetectorWaveformProcessor>(
-      new DetectorWaveformProcessor{origin}));
+  setProduct(std::unique_ptr<Detector>(new Detector{origin}));
 }
 
 DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
@@ -171,7 +170,7 @@ DetectorBuilder &DetectorBuilder::setStream(
               templateWaveformProcessorId);
   SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
 
-  product()->_streamStates[streamId] = DetectorWaveformProcessor::StreamState{};
+  product()->_streamStates[streamId] = Detector::StreamState{};
 
   // template related filter configuration (used for template waveform
   // processing)

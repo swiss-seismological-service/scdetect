@@ -158,7 +158,7 @@ Factory::BaseException::BaseException()
 
 std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const detector::DetectorWaveformProcessor &detector) {
+    const detector::Detector &detector) {
   assert(detection.origin);
   assert(!detection.pickMap.empty());
 
@@ -192,7 +192,7 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
 
 std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const detector::DetectorWaveformProcessor &detector) {
+    const detector::Detector &detector) {
   factory::DetectorConfig detectorConfig;
   detectorConfig.id = detector.id();
   detectorConfig.gapThreshold = detector.gapThreshold();
@@ -206,8 +206,7 @@ void Factory::reset() { resetCallbacks(); }
 
 std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const detector::DetectorWaveformProcessor &detector,
-    const std::string &baseProcessorId) {
+    const detector::Detector &detector, const std::string &baseProcessorId) {
   assert(detection.origin);
   assert((detection.pickMap.size() == 1));
 

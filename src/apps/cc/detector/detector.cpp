@@ -8,20 +8,18 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-DetectorWaveformProcessor::DetectorWaveformProcessor(
-    const DataModel::OriginCPtr &origin)
+Detector::Detector(const DataModel::OriginCPtr &origin)
     : _detectorImpl{origin}, _origin{origin} {}
 
-DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
+DetectorBuilder Detector::Create(const std::string &originId) {
   return DetectorBuilder(originId);
 }
 
-void DetectorWaveformProcessor::setResultCallback(
-    const PublishDetectionCallback &callback) {
+void Detector::setResultCallback(const PublishDetectionCallback &callback) {
   _detectionCallback = callback;
 }
 
-void DetectorWaveformProcessor::reset() {
+void Detector::reset() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
 
   // reset template (child) related facilities
@@ -34,7 +32,7 @@ void DetectorWaveformProcessor::reset() {
   WaveformProcessor::reset();
 }
 
-void DetectorWaveformProcessor::terminate() {
+void Detector::terminate() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Terminating ...");
 
   _detectorImpl.terminate();
@@ -48,23 +46,22 @@ void DetectorWaveformProcessor::terminate() {
   WaveformProcessor::terminate();
 }
 
-const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
+const config::PublishConfig &Detector::publishConfig() const {
   return _publishConfig;
 }
 
-const TemplateWaveformProcessor *DetectorWaveformProcessor::processor(
+const TemplateWaveformProcessor *Detector::processor(
     const std::string &processorId) const {
   return _detectorImpl.processor(processorId);
 }
 
-processing::WaveformProcessor::StreamState *
-DetectorWaveformProcessor::streamState(const Record *record) {
+processing::WaveformProcessor::StreamState *Detector::streamState(
+    const Record *record) {
   return &_streamStates.at(record->streamID());
 }
 
-void DetectorWaveformProcessor::process(StreamState &streamState,
-                                        const Record *record,
-                                        const DoubleArray &filteredData) {
+void Detector::process(StreamState &streamState, const Record *record,
+                       const DoubleArray &filteredData) {
   try {
     _detectorImpl.feed(record);
   } catch (detector::DetectorImpl::ProcessingError &e) {
@@ -94,31 +91,29 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
   }
 }
 
-void DetectorWaveformProcessor::reset(StreamState &streamState) {
+void Detector::reset(StreamState &streamState) {
   // XXX(damb): drops all pending events
   _detectorImpl.reset();
 
   WaveformProcessor::reset(streamState);
 }
 
-bool DetectorWaveformProcessor::fill(processing::StreamState &streamState,
-                                     const Record *record,
-                                     DoubleArrayPtr &data) {
-  // XXX(damb): `DetectorWaveformProcessor` does neither implement filtering
-  // facilities nor does it perform a saturation check
+bool Detector::fill(processing::StreamState &streamState, const Record *record,
+                    DoubleArrayPtr &data) {
+  // XXX(damb): `Detector` does neither implement filtering facilities nor does
+  // it perform a saturation check
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
   s.receivedSamples += data->size();
 
   return true;
 }
 
-void DetectorWaveformProcessor::storeDetection(
-    const detector::DetectorImpl::Result &res) {
+void Detector::storeDetection(const detector::DetectorImpl::Result &res) {
   _detection = res;
 }
 
-void DetectorWaveformProcessor::prepareDetection(
-    DetectionPtr &d, const detector::DetectorImpl::Result &res) {
+void Detector::prepareDetection(DetectionPtr &d,
+                                const detector::DetectorImpl::Result &res) {
   const Core::TimeSpan timeCorrection{_config.timeCorrection};
 
   d->fit = _detection.value().fit;
@@ -156,8 +151,8 @@ void DetectorWaveformProcessor::prepareDetection(
     }
   }
 }
-void DetectorWaveformProcessor::emitDetection(const Record *record,
-                                              const DetectionCPtr &detection) {
+void Detector::emitDetection(const Record *record,
+                             const DetectionCPtr &detection) {
   if (enabled() && _detectionCallback) {
     _detectionCallback(this, record, detection);
   }
