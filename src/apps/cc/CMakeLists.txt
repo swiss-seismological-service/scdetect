@@ -20,7 +20,6 @@ set(
     detail/sqlite.cpp
     detector/arrival.cpp
     detector/detector_impl.cpp
-    detector/detectorbuilder.cpp
     detector/detector.cpp
     detector/linker/association.cpp
     detector/linker/pot.cpp

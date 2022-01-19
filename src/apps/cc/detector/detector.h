@@ -5,16 +5,22 @@
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/pick.h>
+#include <seiscomp/datamodel/sensorlocation.h>
 
 #include <boost/optional/optional.hpp>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
+#include "../builder.h"
 #include "../config/detector.h"
 #include "../processing/waveform_processor.h"
+#include "../waveform.h"
 #include "detector_impl.h"
-#include "detectorbuilder.h"
+#include "linker/strategy.h"
 #include "templatewaveformprocessor.h"
 
 namespace Seiscomp {
@@ -47,11 +53,61 @@ class Detector : public processing::WaveformProcessor {
     // Template specific results
     TemplateResults templateResults;
   };
+
   using PublishDetectionCallback =
       std::function<void(const Detector *, const Record *, DetectionCPtr)>;
 
-  friend class DetectorBuilder;
-  static DetectorBuilder Create(const std::string &originId);
+  class Builder : public detect::Builder<Detector> {
+   public:
+    Builder(const std::string &originId);
+
+    Builder &setId(const std::string &id);
+
+    Builder &setConfig(const config::PublishConfig &publishConfig,
+                       const config::DetectorConfig &detectorConfig,
+                       bool playback);
+
+    // Set stream related template configuration where `streamId` refers to the
+    // waveform stream identifier of the stream to be processed.
+    Builder &setStream(const std::string &streamId,
+                       const config::StreamConfig &streamConfig,
+                       WaveformHandlerIface *waveformHandler);
+
+   protected:
+    void finalize() override;
+
+   private:
+    bool isValidArrival(const DataModel::ArrivalCPtr arrival,
+                        const DataModel::PickCPtr pick);
+
+    struct TemplateProcessorConfig {
+      // Template matching processor
+      std::unique_ptr<TemplateWaveformProcessor> processor;
+      // `TemplateWaveformProcessor` specific merging threshold
+      boost::optional<double> mergingThreshold;
+
+      struct MetaData {
+        // The template's sensor location associated
+        DataModel::SensorLocationCPtr sensorLocation;
+        // The template related pick
+        DataModel::PickCPtr pick;
+        // The template related arrival
+        DataModel::ArrivalCPtr arrival;
+      } metadata;
+    };
+
+    std::string _originId;
+
+    using TemplateProcessorConfigs =
+        std::unordered_map<std::string, TemplateProcessorConfig>;
+    TemplateProcessorConfigs _processorConfigs;
+
+    static const std::unordered_map<std::string, linker::MergingStrategy::Type>
+        _mergingStrategyLookupTable;
+  };
+
+  friend class Builder;
+  static Builder Create(const std::string &originId);
 
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishDetectionCallback &callback);

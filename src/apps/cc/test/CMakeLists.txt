@@ -41,7 +41,6 @@ set(SOURCES_integration
   ../detector/arrival.cpp
   ../detector/detector.cpp
   ../detector/detector_impl.cpp
-  ../detector/detectorbuilder.cpp
   ../detector/linker/association.cpp
   ../detector/linker/pot.cpp
   ../detector/linker/strategy.cpp
