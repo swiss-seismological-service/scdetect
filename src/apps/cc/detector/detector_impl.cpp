@@ -23,37 +23,37 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-const Core::TimeSpan Detector::_linkerSafetyMargin{1.0};
+const Core::TimeSpan DetectorImpl::_linkerSafetyMargin{1.0};
 
-Detector::Detector(const DataModel::OriginCPtr &origin)
+DetectorImpl::DetectorImpl(const DataModel::OriginCPtr &origin)
     : Processor{}, _origin{origin} {
   _linker.setResultCallback([this](const linker::Association &res) {
     return storeLinkerResult(res);
   });
 }
 
-Detector::BaseException::BaseException()
+DetectorImpl::BaseException::BaseException()
     : Processor::BaseException{"base detector exception"} {}
 
-Detector::ProcessingError::ProcessingError()
+DetectorImpl::ProcessingError::ProcessingError()
     : BaseException{"error while processing"} {}
 
-Detector::TemplateMatchingError::TemplateMatchingError()
+DetectorImpl::TemplateMatchingError::TemplateMatchingError()
     : ProcessingError{"error while matching template"} {}
 
-Detector::Status Detector::status() const { return _status; }
+DetectorImpl::Status DetectorImpl::status() const { return _status; }
 
-const Core::TimeWindow &Detector::processed() const { return _processed; }
+const Core::TimeWindow &DetectorImpl::processed() const { return _processed; }
 
-bool Detector::triggered() const { return static_cast<bool>(_triggerEnd); }
+bool DetectorImpl::triggered() const { return static_cast<bool>(_triggerEnd); }
 
-void Detector::enableTrigger(const Core::TimeSpan &duration) {
+void DetectorImpl::enableTrigger(const Core::TimeSpan &duration) {
   _triggerDuration = duration;
 }
 
-void Detector::disableTrigger() { _triggerDuration = boost::none; }
+void DetectorImpl::disableTrigger() { _triggerDuration = boost::none; }
 
-void Detector::setTriggerThresholds(double triggerOn, double triggerOff) {
+void DetectorImpl::setTriggerThresholds(double triggerOn, double triggerOff) {
   _thresTriggerOn = triggerOn;
   _linker.setThresAssociation(_thresTriggerOn);
 
@@ -62,39 +62,40 @@ void Detector::setTriggerThresholds(double triggerOn, double triggerOff) {
   }
 }
 
-void Detector::setArrivalOffsetThreshold(
+void DetectorImpl::setArrivalOffsetThreshold(
     const boost::optional<Core::TimeSpan> &thres) {
   _linker.setThresArrivalOffset(thres);
 }
 
-boost::optional<Core::TimeSpan> Detector::arrivalOffsetThreshold() const {
+boost::optional<Core::TimeSpan> DetectorImpl::arrivalOffsetThreshold() const {
   return _linker.thresArrivalOffset();
 }
 
-void Detector::setMinArrivals(const boost::optional<size_t> &n) {
+void DetectorImpl::setMinArrivals(const boost::optional<size_t> &n) {
   _linker.setMinArrivals(n);
 }
 
-boost::optional<size_t> Detector::minArrivals() const {
+boost::optional<size_t> DetectorImpl::minArrivals() const {
   return _linker.minArrivals();
 }
 
-void Detector::setMergingStrategy(
+void DetectorImpl::setMergingStrategy(
     linker::MergingStrategy::Type mergingStrategyTypeId) {
   _linker.setMergingStrategy(mergingStrategyTypeId);
 }
 
-void Detector::setMaxLatency(const boost::optional<Core::TimeSpan> &latency) {
+void DetectorImpl::setMaxLatency(
+    const boost::optional<Core::TimeSpan> &latency) {
   _maxLatency = latency;
 }
 
-boost::optional<Core::TimeSpan> Detector::maxLatency() const {
+boost::optional<Core::TimeSpan> DetectorImpl::maxLatency() const {
   return _maxLatency;
 }
 
-size_t Detector::processorCount() const { return _processors.size(); }
+size_t DetectorImpl::processorCount() const { return _processors.size(); }
 
-const TemplateWaveformProcessor *Detector::processor(
+const TemplateWaveformProcessor *DetectorImpl::processor(
     const std::string &processorId) const {
   try {
     return _processors.at(processorId).processor.get();
@@ -103,10 +104,11 @@ const TemplateWaveformProcessor *Detector::processor(
   return nullptr;
 }
 
-void Detector::add(std::unique_ptr<TemplateWaveformProcessor> proc,
-                   const std::string &waveformStreamId, const Arrival &arrival,
-                   const Detector::SensorLocation &loc,
-                   const boost::optional<double> &mergingThreshold) {
+void DetectorImpl::add(std::unique_ptr<TemplateWaveformProcessor> proc,
+                       const std::string &waveformStreamId,
+                       const Arrival &arrival,
+                       const DetectorImpl::SensorLocation &loc,
+                       const boost::optional<double> &mergingThreshold) {
   proc->setResultCallback(
       [this](const TemplateWaveformProcessor *processor, const Record *record,
              TemplateWaveformProcessor::MatchResultCPtr result) {
@@ -133,7 +135,7 @@ void Detector::add(std::unique_ptr<TemplateWaveformProcessor> proc,
   _processorIdx.emplace(waveformStreamId, procId);
 }
 
-void Detector::remove(const std::string &waveformStreamId) {
+void DetectorImpl::remove(const std::string &waveformStreamId) {
   auto range{_processorIdx.equal_range(waveformStreamId)};
   for (auto &rit = range.first; rit != range.second; ++rit) {
     _linker.remove(rit->first);
@@ -161,7 +163,7 @@ void Detector::remove(const std::string &waveformStreamId) {
   }
 }
 
-void Detector::feed(const Record *record) {
+void DetectorImpl::feed(const Record *record) {
   if (status() == Status::kTerminated) {
     throw BaseException{"error while processing: status=" +
                         std::to_string(util::asInteger(Status::kTerminated))};
@@ -202,7 +204,7 @@ void Detector::feed(const Record *record) {
   }
 }
 
-void Detector::reset() {
+void DetectorImpl::reset() {
   _linker.reset();
   resetProcessors();
   resetProcessing();
@@ -210,7 +212,7 @@ void Detector::reset() {
   _status = Status::kWaitingForData;
 }
 
-void Detector::terminate() {
+void DetectorImpl::terminate() {
   _linker.terminate();
 
   if (triggered()) {
@@ -246,11 +248,11 @@ void Detector::terminate() {
   _status = Status::kTerminated;
 }
 
-void Detector::setResultCallback(const PublishResultCallback &callback) {
+void DetectorImpl::setResultCallback(const PublishResultCallback &callback) {
   _resultCallback = callback;
 }
 
-bool Detector::process(const Record *record) {
+bool DetectorImpl::process(const Record *record) {
   auto range{_processorIdx.equal_range(record->streamID())};
   for (auto rit{range.first}; rit != range.second; ++rit) {
     const auto &procId{rit->second};
@@ -284,7 +286,7 @@ bool Detector::process(const Record *record) {
   return true;
 }
 
-bool Detector::hasAcceptableLatency(const Record *record) {
+bool DetectorImpl::hasAcceptableLatency(const Record *record) {
   if (_maxLatency) {
     return record->endTime() > Core::Time::GMT() - *_maxLatency;
   }
@@ -292,7 +294,7 @@ bool Detector::hasAcceptableLatency(const Record *record) {
   return true;
 }
 
-void Detector::processResultQueue() {
+void DetectorImpl::processResultQueue() {
   while (!_resultQueue.empty()) {
     processLinkerResult(_resultQueue.front());
     _resultQueue.pop_front();
@@ -300,7 +302,7 @@ void Detector::processResultQueue() {
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-void Detector::processLinkerResult(const linker::Association &result) {
+void DetectorImpl::processLinkerResult(const linker::Association &result) {
   const auto triggerOnThreshold{_thresTriggerOn.value_or(-1)};
   const auto triggerOffThreshold{_thresTriggerOff.value_or(1)};
 
@@ -372,7 +374,7 @@ void Detector::processLinkerResult(const linker::Association &result) {
   }
 }
 
-void Detector::disableProcessorsNotContributing(
+void DetectorImpl::disableProcessorsNotContributing(
     const linker::Association &result) {
   // disable those processors not contributing to the triggering event
   std::vector<std::string> contributing;
@@ -390,13 +392,14 @@ void Detector::disableProcessorsNotContributing(
                 });
 }
 
-std::string Detector::triggerProcessorId(const linker::Association &result) {
+std::string DetectorImpl::triggerProcessorId(
+    const linker::Association &result) {
   // determine the processor with the first arrival
   return sortByArrivalTime(result).at(0).processorId;
 }
 
-void Detector::prepareResult(const linker::Association &linkerResult,
-                             Detector::Result &result) const {
+void DetectorImpl::prepareResult(const linker::Association &linkerResult,
+                                 DetectorImpl::Result &result) const {
   auto sorted{sortByArrivalTime(linkerResult)};
 
   const auto &referenceResult{sorted.at(0)};
@@ -410,7 +413,7 @@ void Detector::prepareResult(const linker::Association &linkerResult,
   std::unordered_set<std::string> usedStas;
   std::vector<double> alignedArrivalOffsets;
 
-  Detector::Result::TemplateResults templateResults;
+  DetectorImpl::Result::TemplateResults templateResults;
   for (const auto &result : sorted) {
     const auto &procId{result.processorId};
     const auto &templateResult{result.result};
@@ -433,7 +436,7 @@ void Detector::prepareResult(const linker::Association &linkerResult,
 
       templateResults.emplace(
           templateResult.arrival.pick.waveformStreamId,
-          Detector::Result::TemplateResult{
+          DetectorImpl::Result::TemplateResult{
               templateResult.arrival, proc.sensorLocation,
               proc.processor->templateWaveform().startTime(),
               proc.processor->templateWaveform().endTime(),
@@ -466,13 +469,13 @@ void Detector::prepareResult(const linker::Association &linkerResult,
   result.numStationsAssociated = associatedStations.size();
 }
 
-void Detector::emitResult(const Detector::Result &result) {
+void DetectorImpl::emitResult(const DetectorImpl::Result &result) {
   if (_resultCallback) {
     _resultCallback.value()(result);
   }
 }
 
-void Detector::resetProcessing() {
+void DetectorImpl::resetProcessing() {
   _currentResult = boost::none;
   // enable processors
   for (auto &procPair : _processors) {
@@ -482,12 +485,12 @@ void Detector::resetProcessing() {
   resetTrigger();
 }
 
-void Detector::resetTrigger() {
+void DetectorImpl::resetTrigger() {
   _triggerProcId = boost::none;
   _triggerEnd = boost::none;
 }
 
-void Detector::resetProcessors() {
+void DetectorImpl::resetProcessors() {
   std::for_each(std::begin(_processors), std::end(_processors),
                 [](ProcessorStates::value_type &p) {
                   p.second.processor->reset();
@@ -495,7 +498,7 @@ void Detector::resetProcessors() {
                 });
 }
 
-void Detector::storeTemplateResult(
+void DetectorImpl::storeTemplateResult(
     const TemplateWaveformProcessor *processor, const Record *record,
     const TemplateWaveformProcessor::MatchResultCPtr &result) {
   if (!processor || !record || !result) {
@@ -517,11 +520,11 @@ void Detector::storeTemplateResult(
   _linker.feed(processor, result);
 }
 
-void Detector::storeLinkerResult(const linker::Association &linkerResult) {
+void DetectorImpl::storeLinkerResult(const linker::Association &linkerResult) {
   _resultQueue.emplace_back(linkerResult);
 }
 
-std::vector<Detector::TemplateResult> Detector::sortByArrivalTime(
+std::vector<DetectorImpl::TemplateResult> DetectorImpl::sortByArrivalTime(
     const linker::Association &linkerResult) {
   std::vector<TemplateResult> ret;
   for (const auto &resultPair : linkerResult.results) {

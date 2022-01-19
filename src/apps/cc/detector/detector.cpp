@@ -10,7 +10,7 @@ namespace detector {
 
 DetectorWaveformProcessor::DetectorWaveformProcessor(
     const DataModel::OriginCPtr &origin)
-    : _detector{origin}, _origin{origin} {}
+    : _detectorImpl{origin}, _origin{origin} {}
 
 DetectorBuilder DetectorWaveformProcessor::Create(const std::string &originId) {
   return DetectorBuilder(originId);
@@ -29,7 +29,7 @@ void DetectorWaveformProcessor::reset() {
     streamStatePair.second = WaveformProcessor::StreamState{};
   }
 
-  _detector.reset();
+  _detectorImpl.reset();
 
   WaveformProcessor::reset();
 }
@@ -37,7 +37,7 @@ void DetectorWaveformProcessor::reset() {
 void DetectorWaveformProcessor::terminate() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Terminating ...");
 
-  _detector.terminate();
+  _detectorImpl.terminate();
   if (_detection) {
     auto detection{util::make_smart<Detection>()};
     prepareDetection(detection, *_detection);
@@ -54,7 +54,7 @@ const config::PublishConfig &DetectorWaveformProcessor::publishConfig() const {
 
 const TemplateWaveformProcessor *DetectorWaveformProcessor::processor(
     const std::string &processorId) const {
-  return _detector.processor(processorId);
+  return _detectorImpl.processor(processorId);
 }
 
 processing::WaveformProcessor::StreamState *
@@ -66,11 +66,11 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
                                         const Record *record,
                                         const DoubleArray &filteredData) {
   try {
-    _detector.feed(record);
-  } catch (detector::Detector::ProcessingError &e) {
+    _detectorImpl.feed(record);
+  } catch (detector::DetectorImpl::ProcessingError &e) {
     SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
                                    record->streamID().c_str(), e.what());
-    _detector.reset();
+    _detectorImpl.reset();
   } catch (std::exception &e) {
     SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unhandled exception: %s",
                                  record->streamID().c_str(), e.what());
@@ -96,7 +96,7 @@ void DetectorWaveformProcessor::process(StreamState &streamState,
 
 void DetectorWaveformProcessor::reset(StreamState &streamState) {
   // XXX(damb): drops all pending events
-  _detector.reset();
+  _detectorImpl.reset();
 
   WaveformProcessor::reset(streamState);
 }
@@ -113,12 +113,12 @@ bool DetectorWaveformProcessor::fill(processing::StreamState &streamState,
 }
 
 void DetectorWaveformProcessor::storeDetection(
-    const detector::Detector::Result &res) {
+    const detector::DetectorImpl::Result &res) {
   _detection = res;
 }
 
 void DetectorWaveformProcessor::prepareDetection(
-    DetectionPtr &d, const detector::Detector::Result &res) {
+    DetectionPtr &d, const detector::DetectorImpl::Result &res) {
   const Core::TimeSpan timeCorrection{_config.timeCorrection};
 
   d->fit = _detection.value().fit;

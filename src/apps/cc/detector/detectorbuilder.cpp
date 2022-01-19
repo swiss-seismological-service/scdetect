@@ -43,7 +43,7 @@ DetectorBuilder::DetectorBuilder(const std::string &originId)
 
 DetectorBuilder &DetectorBuilder::setId(const std::string &id) {
   product()->setId(id);
-  product()->_detector.setId(id);
+  product()->_detectorImpl.setId(id);
   return *this;
 }
 
@@ -60,15 +60,15 @@ DetectorBuilder &DetectorBuilder::setConfig(
   product()->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
   product()->setGapInterpolation(detectorConfig.gapInterpolation);
 
-  product()->_detector.setMergingStrategy(
+  product()->_detectorImpl.setMergingStrategy(
       _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
 
   // configure playback related facilities
   if (playback) {
-    product()->_detector.setMaxLatency(boost::none);
+    product()->_detectorImpl.setMaxLatency(boost::none);
   } else {
     if (detectorConfig.maximumLatency > 0) {
-      product()->_detector.setMaxLatency(
+      product()->_detectorImpl.setMaxLatency(
           Core::TimeSpan{detectorConfig.maximumLatency});
     }
   }
@@ -257,27 +257,27 @@ void DetectorBuilder::finalize() {
   product()->_initTime = Core::TimeSpan{0.0};
 
   const auto &cfg{product()->_config};
-  product()->_detector.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
+  product()->_detectorImpl.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
   if (cfg.triggerDuration >= 0) {
-    product()->_detector.enableTrigger(Core::TimeSpan{cfg.triggerDuration});
+    product()->_detectorImpl.enableTrigger(Core::TimeSpan{cfg.triggerDuration});
   }
   auto productCopy{product()};
-  product()->_detector.setResultCallback(
-      [productCopy](const detector::Detector::Result &res) {
+  product()->_detectorImpl.setResultCallback(
+      [productCopy](const detector::DetectorImpl::Result &res) {
         productCopy->storeDetection(res);
       });
 
   if (cfg.arrivalOffsetThreshold < 0) {
-    product()->_detector.setArrivalOffsetThreshold(boost::none);
+    product()->_detectorImpl.setArrivalOffsetThreshold(boost::none);
   } else {
-    product()->_detector.setArrivalOffsetThreshold(
+    product()->_detectorImpl.setArrivalOffsetThreshold(
         Core::TimeSpan{cfg.arrivalOffsetThreshold});
   }
 
   if (cfg.minArrivals < 0) {
-    product()->_detector.setMinArrivals(boost::none);
+    product()->_detectorImpl.setMinArrivals(boost::none);
   } else {
-    product()->_detector.setMinArrivals(cfg.minArrivals);
+    product()->_detectorImpl.setMinArrivals(cfg.minArrivals);
   }
 
   std::unordered_set<std::string> usedPicks;
@@ -292,7 +292,7 @@ void DetectorBuilder::finalize() {
     } catch (Core::ValueException &e) {
     }
     // initialize detection processing
-    product()->_detector.add(
+    product()->_detectorImpl.add(
         std::move(procConfig.processor), streamId,
         detector::Arrival{
             {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
@@ -300,7 +300,7 @@ void DetectorBuilder::finalize() {
             meta.arrival->phase(),
             meta.arrival->weight(),
         },
-        detector::Detector::SensorLocation{
+        detector::DetectorImpl::SensorLocation{
             meta.sensorLocation->latitude(), meta.sensorLocation->longitude(),
             meta.sensorLocation->station()->publicID()},
         procConfig.mergingThreshold);

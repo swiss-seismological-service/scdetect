@@ -42,8 +42,8 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
 
     config::PublishConfig publishConfig;
 
-    using TemplateResult = Detector::Result::TemplateResult;
-    using TemplateResults = Detector::Result::TemplateResults;
+    using TemplateResult = DetectorImpl::Result::TemplateResult;
+    using TemplateResults = DetectorImpl::Result::TemplateResults;
     // Template specific results
     TemplateResults templateResults;
   };
@@ -80,9 +80,9 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
             DoubleArrayPtr &data) override;
 
   // Callback function storing `res`
-  void storeDetection(const Detector::Result &res);
+  void storeDetection(const DetectorImpl::Result &res);
   // Prepares the detection from `res`
-  void prepareDetection(DetectionPtr &d, const Detector::Result &res);
+  void prepareDetection(DetectionPtr &d, const DetectorImpl::Result &res);
 
   void emitDetection(const Record *record, const DetectionCPtr &detection);
 
@@ -95,11 +95,11 @@ class DetectorWaveformProcessor : public processing::WaveformProcessor {
 
   config::DetectorConfig _config;
 
-  Detector _detector;
+  DetectorImpl _detectorImpl;
 
   PublishDetectionCallback _detectionCallback;
 
-  boost::optional<Detector::Result> _detection;
+  boost::optional<DetectorImpl::Result> _detection;
 
   // Reference to the *template* origin
   DataModel::OriginCPtr _origin;

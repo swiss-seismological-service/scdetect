@@ -29,9 +29,9 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-class Detector : public detect::processing::Processor {
+class DetectorImpl : public detect::processing::Processor {
  public:
-  explicit Detector(const DataModel::OriginCPtr &origin);
+  explicit DetectorImpl(const DataModel::OriginCPtr &origin);
 
   class BaseException : public Processor::BaseException {
    public:
@@ -133,7 +133,7 @@ class Detector : public detect::processing::Processor {
   // `loc`.
   void add(std::unique_ptr<TemplateWaveformProcessor> proc,
            const std::string &waveformStreamId, const Arrival &arrival,
-           const Detector::SensorLocation &loc,
+           const DetectorImpl::SensorLocation &loc,
            const boost::optional<double> &mergingThreshold);
   // Removes the processors processing streams identified by `waveformStreamId`
   void remove(const std::string &waveformStreamId);
