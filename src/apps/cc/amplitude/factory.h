@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 #include "../binding.h"
-#include "../detector/detectorwaveformprocessor.h"
+#include "../detector/detector.h"
 #include "../factory.h"
 
 namespace Seiscomp {

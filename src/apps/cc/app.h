@@ -32,7 +32,7 @@
 #include "binding.h"
 #include "config/detector.h"
 #include "config/template_family.h"
-#include "detector/detectorwaveformprocessor.h"
+#include "detector/detector.h"
 #include "exception.h"
 #include "processing/timewindow_processor.h"
 #include "settings.h"

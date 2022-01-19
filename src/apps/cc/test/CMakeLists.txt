@@ -40,8 +40,8 @@ set(SOURCES_integration
   ../detail/sqlite.cpp
   ../detector/arrival.cpp
   ../detector/detector.cpp
+  ../detector/detector_impl.cpp
   ../detector/detectorbuilder.cpp
-  ../detector/detectorwaveformprocessor.cpp
   ../detector/linker/association.cpp
   ../detector/linker/pot.cpp
   ../detector/linker/strategy.cpp

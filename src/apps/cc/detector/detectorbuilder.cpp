@@ -19,7 +19,7 @@
 #include "../util/memory.h"
 #include "../util/util.h"
 #include "../util/waveform_stream_id.h"
-#include "detectorwaveformprocessor.h"
+#include "detector.h"
 
 namespace Seiscomp {
 namespace detect {

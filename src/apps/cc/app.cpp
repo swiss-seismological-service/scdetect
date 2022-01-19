@@ -44,7 +44,6 @@
 #include "config/validators.h"
 #include "detector/arrival.h"
 #include "detector/detectorbuilder.h"
-#include "detector/detectorwaveformprocessor.h"
 #include "eventstore.h"
 #include "log.h"
 #include "magnitude/regression.h"
