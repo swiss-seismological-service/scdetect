@@ -138,6 +138,12 @@ void TemplateWaveformProcessor::process(StreamState &streamState,
   emitResult(record, std::move(result));
 }
 
+bool TemplateWaveformProcessor::store(const Record *record) {
+  processing::WaveformProcessor::store(record);
+
+  return !finished();
+}
+
 bool TemplateWaveformProcessor::fill(processing::StreamState &streamState,
                                      const Record *record,
                                      DoubleArrayPtr &data) {

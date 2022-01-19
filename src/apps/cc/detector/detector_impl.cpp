@@ -263,14 +263,15 @@ bool DetectorImpl::process(const Record *record) {
     if (!procState.processor->feed(record)) {
       const auto &status{procState.processor->status()};
       const auto &statusValue{procState.processor->statusValue()};
-      SCDETECT_LOG_ERROR_TAGGED(procState.processor->id(),
-                                "%s: failed to feed data (tw.start=%s, "
-                                "tw.end=%s) to processor. Reason: status=%d, "
-                                "statusValue=%f",
-                                record->streamID().c_str(),
-                                record->startTime().iso().c_str(),
-                                record->endTime().iso().c_str(),
-                                util::asInteger(status), statusValue);
+      logging::TaggedMessage msg{
+          record->streamID(),
+          "failed to feed data (tw.start=" + record->startTime().iso() +
+              ", tw.end=" + record->endTime().iso() +
+              ") to processor. Reason: status=" +
+              std::to_string(util::asInteger(status)) +
+              ", status_value=" + std::to_string(statusValue)};
+      SCDETECT_LOG_ERROR_TAGGED(procState.processor->id(), "%s",
+                                logging::to_string(msg).c_str());
 
       return false;
     }
@@ -279,10 +280,6 @@ bool DetectorImpl::process(const Record *record) {
       procState.dataTimeWindowFed.setStartTime(record->startTime());
     }
     procState.dataTimeWindowFed.setEndTime(record->endTime());
-
-    if (procState.processor->finished()) {
-      return false;
-    }
   }
 
   return true;

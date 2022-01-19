@@ -93,6 +93,8 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
+  bool store(const Record *record) override;
+
   bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 

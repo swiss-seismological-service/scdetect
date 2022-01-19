@@ -589,22 +589,10 @@ void Application::handleRecord(Record *rec) {
   for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
     auto &detector{it->second};
     if (detector->enabled()) {
-      if (!detector->feed(rec) && detector->finished()) {
+      if (!detector->feed(rec)) {
         logging::TaggedMessage msg{it->first,
                                    "Failed to feed record into detector (" +
                                        detector->id() + "). Resetting."};
-        SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
-        detector->reset();
-        continue;
-      }
-
-      if (detector->finished()) {
-        logging::TaggedMessage msg{
-            it->first,
-            "Detector finished (id=" + detector->id() + ", status=" +
-                std::to_string(util::asInteger(detector->status())) +
-                ", status_value=" + std::to_string(detector->statusValue()) +
-                "). Resetting."};
         SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
         detector->reset();
         continue;

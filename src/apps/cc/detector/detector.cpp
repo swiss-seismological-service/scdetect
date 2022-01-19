@@ -451,6 +451,12 @@ void Detector::process(StreamState &streamState, const Record *record,
   }
 }
 
+bool Detector::store(const Record *record) {
+  processing::WaveformProcessor::store(record);
+
+  return !finished();
+}
+
 void Detector::reset(StreamState &streamState) {
   // XXX(damb): drops all pending events
   _detectorImpl.reset();

@@ -128,6 +128,8 @@ class Detector : public processing::WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
+  bool store(const Record *record) override;
+
   void reset(StreamState &streamState) override;
 
   bool fill(processing::StreamState &streamState, const Record *record,
