@@ -80,7 +80,12 @@ Detector::Builder &Detector::Builder::setStream(
     }
 
     pick = EventStore::Instance().get<DataModel::Pick>(arrival->pickID());
-    if (!isValidArrival(arrival, pick)) {
+    if (!pick) {
+      SCDETECT_LOG_DEBUG("Failed to load pick with id: %s",
+                         arrival->pickID().c_str());
+      continue;
+    }
+    if (!isValidArrival(*arrival, *pick)) {
       continue;
     }
 
@@ -302,8 +307,17 @@ void Detector::Builder::finalize() {
 
       bool isDetectorArrival{usedPicks.find(arrival->pickID()) !=
                              usedPicks.end()};
-      if (isDetectorArrival || arrival->phase().code().empty() ||
-          !isValidArrival(arrival, pick)) {
+      if (isDetectorArrival || arrival->phase().code().empty()) {
+        continue;
+      }
+
+      if (!pick) {
+        SCDETECT_LOG_DEBUG("Failed to load pick with id: %s",
+                           arrival->pickID().c_str());
+        continue;
+      }
+
+      if (!isValidArrival(*arrival, *pick)) {
         continue;
       }
 
@@ -335,16 +349,12 @@ void Detector::Builder::finalize() {
   }
 }
 
-bool Detector::Builder::isValidArrival(const DataModel::ArrivalCPtr arrival,
-                                       const DataModel::PickCPtr pick) {
-  if (!pick) {
-    SCDETECT_LOG_DEBUG("Failed loading pick: %s", arrival->pickID().c_str());
-    return false;
-  }
+bool Detector::Builder::isValidArrival(const DataModel::Arrival &arrival,
+                                       const DataModel::Pick &pick) {
   // check if both pick and arrival are properly configured
   try {
-    if (pick->evaluationMode() != DataModel::MANUAL &&
-        (arrival->weight() == 0 || !arrival->timeUsed())) {
+    if (pick.evaluationMode() != DataModel::MANUAL &&
+        (arrival.weight() == 0 || !arrival.timeUsed())) {
       return false;
     }
   } catch (Core::ValueException &e) {

@@ -77,8 +77,8 @@ class Detector : public processing::WaveformProcessor {
     void finalize() override;
 
    private:
-    bool isValidArrival(const DataModel::ArrivalCPtr arrival,
-                        const DataModel::PickCPtr pick);
+    static bool isValidArrival(const DataModel::Arrival &arrival,
+                               const DataModel::Pick &pick);
 
     struct TemplateProcessorConfig {
       // Template matching processor
