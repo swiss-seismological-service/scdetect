@@ -172,14 +172,22 @@ void DetectorImpl::feed(const Record *record) {
   }
 
   if (!hasAcceptableLatency(record)) {
+    logging::TaggedMessage msg{
+        record->streamID(),
+        "record exceeds acceptable latency. Dropping record (start=" +
+            record->startTime().iso() + ", end=" + record->endTime().iso() +
+            ")"};
+    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s", logging::to_string(msg).c_str());
     // nothing to do
     return;
   }
 
   // process data by means of underlying template processors
   if (!process(record)) {
-    throw ProcessingError{
-        "error while while processing data with template processors"};
+    logging::TaggedMessage msg{
+        record->streamID(),
+        "error while processing data with template processors"};
+    throw ProcessingError{logging::to_string(msg)};
   }
 
   processResultQueue();
