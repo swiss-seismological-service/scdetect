@@ -603,10 +603,6 @@ void Application::handleRecord(Record *rec) {
   }
 }
 
-bool Application::isEventDatabaseEnabled() const {
-  return _config.urlEventDb.empty();
-}
-
 void Application::processDetection(
     const detector::DetectorWaveformProcessor *processor, const Record *record,
     const detector::DetectorWaveformProcessor::DetectionCPtr &detection) {
@@ -1192,6 +1188,10 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
     return false;
   }
   return true;
+}
+
+bool Application::isEventDatabaseEnabled() const {
+  return _config.urlEventDb.empty();
 }
 
 bool Application::loadEvents(const std::string &eventDb,

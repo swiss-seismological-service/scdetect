@@ -184,7 +184,6 @@ class Application : public Client::StreamApplication {
 
   void handleRecord(Record *rec) override;
 
-  bool isEventDatabaseEnabled() const;
 
  private:
   using Picks = std::vector<DataModel::PickCPtr>;
@@ -282,6 +281,8 @@ class Application : public Client::StreamApplication {
                                    const TemplateConfigs &templateConfigs,
                                    const binding::Bindings &bindings,
                                    const Config &appConfig);
+
+  bool isEventDatabaseEnabled() const;
 
   // Load events either from `eventDb` or `db`
   bool loadEvents(const std::string &eventDb, DataModel::DatabaseQueryPtr db);
