@@ -2,6 +2,7 @@
 #define SCDETECT_APPS_CC_APP_H_
 
 #include <seiscomp/client/application.h>
+#include <seiscomp/client/monitor.h>
 #include <seiscomp/client/streamapplication.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/record.h>
@@ -17,6 +18,7 @@
 
 #include <boost/optional/optional.hpp>
 #include <cassert>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <list>
@@ -33,6 +35,7 @@
 #include "exception.h"
 #include "processing/timewindow_processor.h"
 #include "reducing_amplitude_processor.h"
+#include "settings.h"
 #include "util/waveform_stream_id.h"
 #include "waveform.h"
 
@@ -156,6 +159,12 @@ class Application : public Client::StreamApplication {
 
     std::string amplitudeMessagingGroup{"AMPLITUDE"};
 
+    // Monitoring
+    boost::optional<std::size_t> objectThroughputInfoThreshold;
+    boost::optional<std::size_t> objectThroughputWarningThreshold;
+
+    boost::optional<std::size_t> objectThroughputNofificationInterval;
+
     // default configurations
     config::PublishConfig publishConfig;
 
@@ -182,8 +191,11 @@ class Application : public Client::StreamApplication {
   bool run() override;
   void done() override;
 
-  void handleRecord(Record *rec) override;
+  bool dispatch(Core::BaseObject *obj) override;
 
+  void handleTimeout() override;
+
+  void handleRecord(Record *rec) override;
 
  private:
   using Picks = std::vector<DataModel::PickCPtr>;
@@ -394,6 +406,10 @@ class Application : public Client::StreamApplication {
   // The queue used for time window processor removal
   TimeWindowProcessorQueue _timeWindowProcessorRemovalQueue;
   bool _timeWindowProcessorRegistrationBlocked{false};
+
+  // Used to monitor the average object throughput
+  Client::RunningAverage _averageObjectThroughputMonitor{
+      settings::kObjectThroughputAverageTimeSpan};
 };
 
 }  // namespace detect
