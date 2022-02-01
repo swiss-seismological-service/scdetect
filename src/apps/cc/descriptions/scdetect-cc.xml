@@ -332,6 +332,24 @@
         </option>
       </group>
 
+      <group name="Monitor">
+        <option flag="" long-flag="monitor-throughput-info-threshold">
+          <description>
+            Object throughput threshold for logging messages with level INFO.
+          </description>
+        </option>
+        <option flag="" long-flag="monitor-throughput-warning-threshold">
+          <description>
+            Object throughput threshold for logging messages with level WARNING.
+          </description>
+        </option>
+        <option flag="" long-flag="monitor-throughput-log-interval">
+          <description>
+            Log message interval in seconds for object throughput monitoring.
+          </description>
+        </option>
+      </group>
+
       <group name="Input">
         <option flag="" long-flag="templates-json">
           <description>

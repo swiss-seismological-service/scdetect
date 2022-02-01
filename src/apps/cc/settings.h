@@ -40,6 +40,8 @@ const std::vector<std::string> kValidPrioritizedStationMagnitudeTypes{"MLhc",
 constexpr bool kCacheRawWaveforms{true};
 constexpr double kTemplateWaveformResampleMargin{2};
 
+constexpr int kObjectThroughputAverageTimeSpan{10};
+
 }  // namespace settings
 }  // namespace detect
 }  // namespace Seiscomp

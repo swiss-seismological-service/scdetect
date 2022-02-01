@@ -53,7 +53,6 @@
 #include "processing/timewindow_processor.h"
 #include "processing/waveform_processor.h"
 #include "resamplerstore.h"
-#include "settings.h"
 #include "util/horizontal_components.h"
 #include "util/memory.h"
 #include "util/util.h"
@@ -159,6 +158,20 @@ void Application::createCommandLineDescription() {
       "enables/disables the calculation of magnitudes regardless of the "
       "configuration provided on detector configuration level granularity",
       &_config.magnitudesForceMode, false);
+
+  commandline().addGroup("Monitor");
+  commandline().addOption(
+      "Monitor", "monitor-throughput-info-threshold",
+      "object throughput threshold for logging messages with level INFO",
+      &_config.objectThroughputInfoThreshold, false);
+  commandline().addOption(
+      "Monitor", "monitor-throughput-warning-threshold",
+      "object throughput threshold for logging messages with level WARNING",
+      &_config.objectThroughputWarningThreshold, false);
+  commandline().addOption(
+      "Monitor", "monitor-throughput-log-interval",
+      "log message interval in seconds for object throughput monitoring",
+      &_config.objectThroughputNofificationInterval, false);
 
   commandline().addGroup("Input");
   commandline().addOption(
@@ -271,6 +284,25 @@ bool Application::validateParameters() {
     return false;
   }
 
+  if (_config.objectThroughputInfoThreshold &&
+      _config.objectThroughputWarningThreshold &&
+      *_config.objectThroughputInfoThreshold <
+          *_config.objectThroughputWarningThreshold) {
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'monitor-throughput-info-threshold' < "
+        "'monitor-throughput-warning-threshold': %lu < %lu",
+        *_config.objectThroughputInfoThreshold,
+        *_config.objectThroughputWarningThreshold);
+    return false;
+  }
+  if (_config.objectThroughputNofificationInterval &&
+      *_config.objectThroughputNofificationInterval < 1) {
+    SCDETECT_LOG_ERROR(
+        "Invalid configuration: 'monitor-throughput-log-interval': %lu < 1",
+        *_config.objectThroughputNofificationInterval);
+    return false;
+  }
+
   return true;
 }
 
@@ -323,6 +355,10 @@ bool Application::initConfiguration() {
 
 bool Application::init() {
   if (!StreamApplication::init()) return false;
+
+  if (_config.objectThroughputNofificationInterval) {
+    enableTimer(*_config.objectThroughputNofificationInterval);
+  }
 
   _outputOrigins = addOutputObjectLog("origin", primaryMessagingGroup());
   _outputAmplitudes =
@@ -480,6 +516,50 @@ void Application::done() {
   StreamApplication::done();
 }
 
+bool Application::dispatch(Core::BaseObject *obj) {
+  // XXX(damb): except of the status messages all objects should be records and
+  // thus the actual record throughput is monitored
+  _averageObjectThroughputMonitor.push(Core::Time::GMT(), 1);
+  return Client::StreamApplication::dispatch(obj);
+}
+
+void Application::handleTimeout() {
+  auto runningMean{_averageObjectThroughputMonitor.value(Core::Time::GMT())};
+  std::string msg{"Current object throughput per second (averaged): " +
+                  std::to_string(runningMean)};
+
+  bool levelInfo{false};
+  bool levelWarning{false};
+  if (_config.objectThroughputInfoThreshold &&
+      _config.objectThroughputWarningThreshold) {
+    if (runningMean <= *_config.objectThroughputInfoThreshold) {
+      if (runningMean <= *_config.objectThroughputWarningThreshold) {
+        levelWarning = true;
+      } else {
+        levelInfo = true;
+      }
+    } else if (_config.objectThroughputInfoThreshold &&
+               !_config.objectThroughputWarningThreshold) {
+      if (runningMean <= *_config.objectThroughputInfoThreshold) {
+        levelInfo = true;
+      }
+    } else if (_config.objectThroughputWarningThreshold &&
+               !_config.objectThroughputInfoThreshold) {
+      if (runningMean <= *_config.objectThroughputInfoThreshold) {
+        levelWarning = true;
+      }
+    }
+
+    if (levelWarning) {
+      SCDETECT_LOG_WARNING("%s", msg.c_str());
+    } else if (levelInfo) {
+      SCDETECT_LOG_INFO("%s", msg.c_str());
+    } else {
+      SCDETECT_LOG_DEBUG("%s", msg.c_str());
+    }
+  }
+}
+
 void Application::handleRecord(Record *rec) {
   if (!rec->data()) return;
 
@@ -601,10 +681,6 @@ void Application::handleRecord(Record *rec) {
       registerDetection(detection);
     }
   }
-}
-
-bool Application::isEventDatabaseEnabled() const {
-  return _config.urlEventDb.empty();
 }
 
 void Application::processDetection(
@@ -821,9 +897,9 @@ void Application::processDetection(
   if (amplitudeForcedEnabled ||
       (!amplitudeForcedDisabled && detection->publishConfig.createAmplitudes)) {
     // XXX(damb): as soon as either amplitudes or magnitudes need to be
-    // computed, the detection is issued as a wholesale due to simplicity. (Note
-    // that the amplitudes could be issued independently from the origin while
-    // magnitudes need to be associated to the origin.)
+    // computed, the detection is issued as a wholesale due to simplicity.
+    // (Note that the amplitudes could be issued independently from the origin
+    // while magnitudes need to be associated to the origin.)
     auto detectionItemPtr{
         std::make_shared<DetectionItem>(std::move(detectionItem))};
     registerDetection(detectionItemPtr);
@@ -1192,6 +1268,10 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
     return false;
   }
   return true;
+}
+
+bool Application::isEventDatabaseEnabled() const {
+  return _config.urlEventDb.empty();
 }
 
 bool Application::loadEvents(const std::string &eventDb,
