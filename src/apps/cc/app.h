@@ -84,6 +84,10 @@ class Application : public Client::StreamApplication {
     // detector configuration level granularity.
     boost::optional<bool> magnitudesForceMode;
 
+    // Flag with forces the waveform buffer size
+    boost::optional<Core::TimeSpan> forcedWaveformBufferSize{
+        Core::TimeSpan{300.0}};
+
     // Defines if a detector should be initialized although template
     // processors could not be initialized due to missing waveform data.
     // XXX(damb): For the time being, this configuration parameter is not
@@ -294,6 +298,10 @@ class Application : public Client::StreamApplication {
                                    const binding::Bindings &bindings,
                                    const Config &appConfig);
 
+  static Core::TimeSpan computeWaveformBufferSize(
+      const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
+      const Config &appConfig);
+
   bool isEventDatabaseEnabled() const;
 
   // Load events either from `eventDb` or `db`
@@ -373,7 +381,7 @@ class Application : public Client::StreamApplication {
   DetectorMap _detectors;
 
   // Ringbuffer
-  Processing::StreamBuffer _waveformBuffer{30 * 60 /*seconds*/};
+  Processing::StreamBuffer _waveformBuffer;
 
   using Detections =
       std::unordered_multimap<WaveformStreamId, std::shared_ptr<DetectionItem>>;

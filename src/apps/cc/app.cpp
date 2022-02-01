@@ -244,12 +244,19 @@ bool Application::validateParameters() {
     }
   }
   if (!util::isGeZero(_config.streamConfig.initTime)) {
+    SCDETECT_LOG_ERROR("Invalid configuration: 'initTime': %f. Must be >= 0.",
+                       _config.streamConfig.initTime);
+    return false;
+  }
+
+  if (_config.forcedWaveformBufferSize &&
+      !util::isGeZero(*_config.forcedWaveformBufferSize)) {
     SCDETECT_LOG_ERROR(
-        "Invalid configuration: 'initTime': %f. Must be "
-        "greater equal 0.",
+        "Invalid configuration: 'waveformBufferSize': %f. Must be >= 0.",
         _config.streamConfig.initTime);
     return false;
   }
+
   if (!config::validateArrivalOffsetThreshold(
           _config.detectorConfig.arrivalOffsetThreshold)) {
     SCDETECT_LOG_ERROR(
@@ -431,6 +438,14 @@ bool Application::init() {
   }
 
   initAmplitudeProcessorFactory();
+
+  try {
+    _waveformBuffer.setTimeSpan(
+        computeWaveformBufferSize(templateConfigs, _bindings, _config));
+  } catch (const ConfigError &e) {
+    SCDETECT_LOG_ERROR("Failed to configure waveform buffer: %s", e.what());
+    return false;
+  }
 
   bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
                                 !*_config.magnitudesForceMode};
@@ -1273,6 +1288,31 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
   return true;
 }
 
+Core::TimeSpan Application::computeWaveformBufferSize(
+    const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
+    const Config &appConfig) {
+  if (appConfig.forcedWaveformBufferSize) {
+    return *appConfig.forcedWaveformBufferSize;
+  }
+
+  auto magnitudeForcedEnabled{appConfig.magnitudesForceMode &&
+                              *appConfig.magnitudesForceMode};
+  auto amplitudeForcedDisabled{
+      (appConfig.amplitudesForceMode && !*appConfig.amplitudesForceMode) &&
+      !magnitudeForcedEnabled};
+
+  if (amplitudeForcedDisabled) {
+    return Core::TimeSpan{};
+  }
+
+  throw Application::ConfigError{
+      "missing waveform buffer size; computing the size automatically is "
+      "currently not implemented"};
+
+  // TODO(damb): use both the template configurations and the bindings and
+  // compute the waveform buffer size.
+}
+
 bool Application::isEventDatabaseEnabled() const {
   return _config.urlEventDb.empty();
 }
@@ -1930,6 +1970,12 @@ void Application::Config::init(const Client::Application *app) {
   try {
     streamConfig.templateConfig.wfEnd =
         app->configGetDouble("template.waveformEnd");
+  } catch (...) {
+  }
+
+  try {
+    forcedWaveformBufferSize =
+        Core::TimeSpan{app->configGetDouble("processing.waveformBufferSize")};
   } catch (...) {
   }
 
