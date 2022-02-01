@@ -561,7 +561,10 @@ void Application::handleTimeout() {
 }
 
 void Application::handleRecord(Record *rec) {
-  if (!rec->data()) return;
+  // XXX(damb): the ownership of `rec` is transferred.
+  RecordPtr ownershipGuard{rec};
+
+  if (!rec || !rec->data()) return;
 
   if (!_waveformBuffer.feed(rec)) return;
 
