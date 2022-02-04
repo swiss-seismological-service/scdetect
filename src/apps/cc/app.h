@@ -28,13 +28,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "amplitude_processor.h"
 #include "binding.h"
 #include "config/detector.h"
 #include "config/template_family.h"
 #include "detector/detectorwaveformprocessor.h"
 #include "exception.h"
 #include "processing/timewindow_processor.h"
-#include "reducing_amplitude_processor.h"
 #include "settings.h"
 #include "util/waveform_stream_id.h"
 #include "waveform.h"
@@ -222,7 +222,8 @@ class Application : public Client::StreamApplication {
 
     ProcessorConfig config;
 
-    using Amplitudes = std::vector<DataModel::AmplitudePtr>;
+    using ProcessorId = std::string;
+    using Amplitudes = std::unordered_map<ProcessorId, DataModel::AmplitudePtr>;
     Amplitudes amplitudes;
     using Magnitudes = std::vector<DataModel::StationMagnitudePtr>;
     Magnitudes magnitudes;
@@ -236,7 +237,6 @@ class Application : public Client::StreamApplication {
     // detected picks and *template picks*)
     ArrivalPicks arrivalPicks;
 
-    using ProcessorId = std::string;
     using WaveformStreamId = std::string;
     struct Pick {
       // The authorative full waveform stream identifier
@@ -260,7 +260,13 @@ class Application : public Client::StreamApplication {
     const std::string &id() const { return origin->publicID(); }
 
     bool amplitudesReady() const {
-      return numberOfRequiredAmplitudes == amplitudes.size();
+      std::size_t count{};
+      for (const auto &amplitudePair : amplitudes) {
+        if (amplitudePair.second) {
+          ++count;
+        }
+      }
+      return numberOfRequiredAmplitudes == count;
     }
     bool magnitudesReady() const {
       return numberOfRequiredMagnitudes == magnitudes.size();
@@ -341,12 +347,13 @@ class Application : public Client::StreamApplication {
   using WaveformStreamId = std::string;
   // Registers an amplitude `processor` for `waveformStreamIds`
   void registerAmplitudeProcessor(
-      const std::shared_ptr<AmplitudeProcessor> &processor);
+      const std::shared_ptr<AmplitudeProcessor> &processor,
+      DetectionItem &detection);
   // Registers a time window `processor` for `waveformStreamIds`
   void registerTimeWindowProcessor(
       const std::vector<WaveformStreamId> &waveformStreamIds,
       const std::shared_ptr<processing::TimeWindowProcessor> &);
-  // Removes an amplitude processor
+  // Unregisters time window `processor`
   void removeTimeWindowProcessor(
       const std::shared_ptr<processing::TimeWindowProcessor> &processor);
 
@@ -392,7 +399,6 @@ class Application : public Client::StreamApplication {
   DetectionQueue _detectionQueue;
   // The queue used for detection removal
   DetectionQueue _detectionRemovalQueue;
-
   bool _detectionRegistrationBlocked{false};
 
   using TimeWindowProcessors =

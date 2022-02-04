@@ -679,6 +679,15 @@ void Application::handleRecord(Record *rec) {
         continue;
       }
 
+      for (const auto &amplitudePair : detection->amplitudes) {
+        bool amplitudeProcessorAlreadyRemoved{
+            _timeWindowProcessorIdx.find(amplitudePair.first) ==
+            std::end(_timeWindowProcessorIdx)};
+        if (amplitudeProcessorAlreadyRemoved && !amplitudePair.second) {
+          --detection->numberOfRequiredAmplitudes;
+        }
+      }
+
       // schedule the detection for deletion when finished
       if (detection->ready()) {
         publishAndRemoveDetection(detection);
@@ -992,15 +1001,20 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
   }
 
   // amplitudes
-  for (auto &amp : detectionItem.amplitudes) {
+  for (auto &ampPair : detectionItem.amplitudes) {
+    if (!ampPair.second) {
+      continue;
+    }
+
     logObject(_outputAmplitudes, Core::Time::GMT());
     if (connection() && !_config.noPublish) {
       SCDETECT_LOG_DEBUG_TAGGED(detectionItem.detectorId,
                                 "Sending event parameters (amplitude) ...");
 
       auto notifierMsg{util::make_smart<DataModel::NotifierMessage>()};
+
       auto notifier{util::make_smart<DataModel::Notifier>(
-          "EventParameters", DataModel::OP_ADD, amp.get())};
+          "EventParameters", DataModel::OP_ADD, ampPair.second.get())};
       notifierMsg->attach(notifier.get());
 
       if (!connection()->send(_config.amplitudeMessagingGroup,
@@ -1012,7 +1026,7 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
     }
 
     if (_ep) {
-      _ep->add(amp.get());
+      _ep->add(ampPair.second.get());
     }
   }
 }
@@ -1649,18 +1663,18 @@ bool Application::initAmplitudeProcessors(
             try {
               amplitude = createAmplitude(processor, record, result,
                                           boost::none, magnitudeType);
-
-              if (!amplitude) {
-                --detectionItem->numberOfRequiredAmplitudes;
-                return;
-              }
             } catch (Exception &e) {
               --detectionItem->numberOfRequiredAmplitudes;
               SCDETECT_LOG_WARNING_PROCESSOR(
                   processor, "Failed to create amplitude: %s", e.what());
             }
 
-            detectionItem->amplitudes.emplace_back(amplitude);
+            if (!amplitude) {
+              --detectionItem->numberOfRequiredAmplitudes;
+              return;
+            }
+
+            detectionItem->amplitudes.at(processor->id()) = amplitude;
 
             if (magnitudeCalculationEnabled) {
               ++detectionItem->numberOfRequiredMagnitudes;
@@ -1691,7 +1705,8 @@ bool Application::initAmplitudeProcessors(
           });
 
       try {
-        registerAmplitudeProcessor(std::move(amplitudeProcessor));
+        registerAmplitudeProcessor(std::move(amplitudeProcessor),
+                                   *detectionItem);
       } catch (Exception &e) {
         SCDETECT_LOG_WARNING("Failed to register amplitude processor: %s",
                              e.what());
@@ -1740,7 +1755,10 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
 }
 
 void Application::registerAmplitudeProcessor(
-    const std::shared_ptr<AmplitudeProcessor> &processor) {
+    const std::shared_ptr<AmplitudeProcessor> &processor,
+    DetectionItem &detection) {
+  detection.amplitudes[processor->id()];
+
   registerTimeWindowProcessor(processor->associatedWaveformStreamIds(),
                               processor);
 }
