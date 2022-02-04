@@ -581,7 +581,9 @@ void Application::handleRecord(Record *rec) {
 
   if (!rec || !rec->data()) return;
 
-  if (!_waveformBuffer.feed(rec)) return;
+  bool waveformBufferingEnabled{_config.forcedWaveformBufferSize.value_or(
+                                    Core::TimeSpan{0.0}) > Core::TimeSpan{0.0}};
+  if (waveformBufferingEnabled && !_waveformBuffer.feed(rec)) return;
 
   auto detectorRange{_detectors.equal_range(std::string{rec->streamID()})};
   for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
