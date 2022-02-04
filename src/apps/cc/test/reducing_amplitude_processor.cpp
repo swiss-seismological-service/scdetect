@@ -288,7 +288,7 @@ class TestReducingAmplitudeProcessor : public ReducingAmplitudeProcessor {
 
 // samples for parameterized testing
 using Samples = std::vector<ds::Sample>;
-Samples dataset{
+const Samples dataset{
     {/*description=*/"single stream, single record (constant sample values)",
      /*validatorCallback=*/
      [](const AmplitudeProcessor *proc, const Record *record,
