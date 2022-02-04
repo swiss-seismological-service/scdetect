@@ -1787,7 +1787,7 @@ void Application::registerTimeWindowProcessor(
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     _timeWindowProcessors.emplace(waveformStreamId, processor);
-    SCDETECT_LOG_DEBUG("[%s] Added time window processor with id: %s",
+    SCDETECT_LOG_DEBUG("[%s] Added time window processor: id=%s",
                        waveformStreamId.c_str(), processor->id().c_str());
     SCDETECT_LOG_DEBUG("Current time window processor count: %lu",
                        _timeWindowProcessors.size());
@@ -1850,8 +1850,13 @@ void Application::removeTimeWindowProcessor(
     auto it{range.first};
     while (it != range.second) {
       if (it->second == processor) {
-        SCDETECT_LOG_DEBUG("[%s] Removed time window processor with id: %s",
-                           waveformStreamId.c_str(), processor->id().c_str());
+        logging::TaggedMessage msg{
+            waveformStreamId,
+            "Removing time window processor: id=" + processor->id() +
+                ", status=" +
+                std::to_string(util::asInteger(processor->status())) +
+                ", status_value=" + std::to_string(processor->statusValue())};
+        SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
         it = _timeWindowProcessors.erase(it);
         SCDETECT_LOG_DEBUG("Current time window processor count: %lu",
                            _timeWindowProcessors.size());
@@ -1886,8 +1891,8 @@ void Application::registerDetection(
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     _detections.emplace(waveformStreamId, detection);
-    SCDETECT_LOG_DEBUG("[%s] Added detection with id: %s",
-                       waveformStreamId.c_str(), detection->id().c_str());
+    SCDETECT_LOG_DEBUG("[%s] Added detection: id= %s", waveformStreamId.c_str(),
+                       detection->id().c_str());
     SCDETECT_LOG_DEBUG("Current detection count: %lu", _detections.size());
   }
 }
@@ -1906,7 +1911,7 @@ void Application::removeDetection(
     auto it{range.first};
     while (it != range.second) {
       if (it->second == detection) {
-        SCDETECT_LOG_DEBUG("[%s] Removed detection with id: %s",
+        SCDETECT_LOG_DEBUG("[%s] Removed detection: id=%s",
                            waveformStreamId.c_str(), detection->id().c_str());
         it = _detections.erase(it);
         SCDETECT_LOG_DEBUG("Current detection count: %lu", _detections.size());

@@ -269,6 +269,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   if (!record->timeWindow().overlaps(safetyTimeWindow()) ||
       (isFirstStreamRecord &&
        (record->timeWindow().startTime() > safetyTimeWindow().startTime()))) {
+    setStatus(Status::kTerminated, 0.0);
     return false;
   }
 
