@@ -248,7 +248,7 @@ void ReducingAmplitudeProcessor::process(StreamState &streamState,
   amplitude->time.reference = signalStartTime;
   amplitude->time.end = static_cast<double>(signalEndTime - signalStartTime);
 
-  setStatus(Status::kFinished, 100);
+  setStatus(Status::kFinished, 100.0);
   emitAmplitude(record, amplitude);
 }
 
@@ -269,6 +269,7 @@ bool ReducingAmplitudeProcessor::store(const Record *record) {
   if (!record->timeWindow().overlaps(safetyTimeWindow()) ||
       (isFirstStreamRecord &&
        (record->timeWindow().startTime() > safetyTimeWindow().startTime()))) {
+    setStatus(Status::kTerminated, 0.0);
     return false;
   }
 

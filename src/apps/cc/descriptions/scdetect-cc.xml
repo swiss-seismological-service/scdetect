@@ -73,6 +73,19 @@
             reset.
           </description>
         </parameter>
+        <parameter name="waveformBufferSize" type="double" default="300.0"
+                   unit="s">
+          <description>
+            Defines the waveform ringbuffer size in seconds. Buffering waveform
+            is required for amplitude calculation. The buffer's size must cover
+            the time window required for amplitude calculation. This may vary
+            from amplitude processor implementation to amplitude processor
+            implementation. Additionally, it depends on the configuration, too.
+            If amplitudes are not going to be calculated buffering records is
+            not required at all and therefore can be disabled by means of
+            setting the value to 0.
+          </description>
+        </parameter>
       </group>
       <group name="detector">
         <parameter name="timeCorrection" type="double" default="0"

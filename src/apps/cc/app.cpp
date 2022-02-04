@@ -244,12 +244,19 @@ bool Application::validateParameters() {
     }
   }
   if (!util::isGeZero(_config.streamConfig.initTime)) {
+    SCDETECT_LOG_ERROR("Invalid configuration: 'initTime': %f. Must be >= 0.",
+                       _config.streamConfig.initTime);
+    return false;
+  }
+
+  if (_config.forcedWaveformBufferSize &&
+      !util::isGeZero(*_config.forcedWaveformBufferSize)) {
     SCDETECT_LOG_ERROR(
-        "Invalid configuration: 'initTime': %f. Must be "
-        "greater equal 0.",
+        "Invalid configuration: 'waveformBufferSize': %f. Must be >= 0.",
         _config.streamConfig.initTime);
     return false;
   }
+
   if (!config::validateArrivalOffsetThreshold(
           _config.detectorConfig.arrivalOffsetThreshold)) {
     SCDETECT_LOG_ERROR(
@@ -432,6 +439,14 @@ bool Application::init() {
 
   initAmplitudeProcessorFactory();
 
+  try {
+    _waveformBuffer.setTimeSpan(
+        computeWaveformBufferSize(templateConfigs, _bindings, _config));
+  } catch (const ConfigError &e) {
+    SCDETECT_LOG_ERROR("Failed to configure waveform buffer: %s", e.what());
+    return false;
+  }
+
   bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
                                 !*_config.magnitudesForceMode};
   // optionally configure magnitude processors
@@ -566,7 +581,9 @@ void Application::handleRecord(Record *rec) {
 
   if (!rec || !rec->data()) return;
 
-  if (!_waveformBuffer.feed(rec)) return;
+  bool waveformBufferingEnabled{_config.forcedWaveformBufferSize.value_or(
+                                    Core::TimeSpan{0.0}) > Core::TimeSpan{0.0}};
+  if (waveformBufferingEnabled && !_waveformBuffer.feed(rec)) return;
 
   auto detectorRange{_detectors.equal_range(std::string{rec->streamID()})};
   for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
@@ -660,6 +677,15 @@ void Application::handleRecord(Record *rec) {
                     std::end(_detectionRemovalQueue),
                     detection) != std::end(_detectionRemovalQueue)) {
         continue;
+      }
+
+      for (const auto &amplitudePair : detection->amplitudes) {
+        bool amplitudeProcessorAlreadyRemoved{
+            _timeWindowProcessorIdx.find(amplitudePair.first) ==
+            std::end(_timeWindowProcessorIdx)};
+        if (amplitudeProcessorAlreadyRemoved && !amplitudePair.second) {
+          --detection->numberOfRequiredAmplitudes;
+        }
       }
 
       // schedule the detection for deletion when finished
@@ -975,15 +1001,20 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
   }
 
   // amplitudes
-  for (auto &amp : detectionItem.amplitudes) {
+  for (auto &ampPair : detectionItem.amplitudes) {
+    if (!ampPair.second) {
+      continue;
+    }
+
     logObject(_outputAmplitudes, Core::Time::GMT());
     if (connection() && !_config.noPublish) {
       SCDETECT_LOG_DEBUG_TAGGED(detectionItem.detectorId,
                                 "Sending event parameters (amplitude) ...");
 
       auto notifierMsg{util::make_smart<DataModel::NotifierMessage>()};
+
       auto notifier{util::make_smart<DataModel::Notifier>(
-          "EventParameters", DataModel::OP_ADD, amp.get())};
+          "EventParameters", DataModel::OP_ADD, ampPair.second.get())};
       notifierMsg->attach(notifier.get());
 
       if (!connection()->send(_config.amplitudeMessagingGroup,
@@ -995,7 +1026,7 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
     }
 
     if (_ep) {
-      _ep->add(amp.get());
+      _ep->add(ampPair.second.get());
     }
   }
 }
@@ -1271,6 +1302,31 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
     return false;
   }
   return true;
+}
+
+Core::TimeSpan Application::computeWaveformBufferSize(
+    const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
+    const Config &appConfig) {
+  if (appConfig.forcedWaveformBufferSize) {
+    return *appConfig.forcedWaveformBufferSize;
+  }
+
+  auto magnitudeForcedEnabled{appConfig.magnitudesForceMode &&
+                              *appConfig.magnitudesForceMode};
+  auto amplitudeForcedDisabled{
+      (appConfig.amplitudesForceMode && !*appConfig.amplitudesForceMode) &&
+      !magnitudeForcedEnabled};
+
+  if (amplitudeForcedDisabled) {
+    return Core::TimeSpan{};
+  }
+
+  throw Application::ConfigError{
+      "missing waveform buffer size; computing the size automatically is "
+      "currently not implemented"};
+
+  // TODO(damb): use both the template configurations and the bindings and
+  // compute the waveform buffer size.
 }
 
 bool Application::isEventDatabaseEnabled() const {
@@ -1570,89 +1626,101 @@ bool Application::initAmplitudeProcessors(
 
     // initialize amplitude processors
     for (const auto &amplitudeType : amplitudeTypes) {
-      auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
-          amplitudeType, _bindings, detection, detectorProcessor)};
+      try {
+        auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
+            amplitudeType, _bindings, detection, detectorProcessor)};
 
-      // configure callback
-      bool magnitudesForcedEnabled{_config.magnitudesForceMode &&
-                                   *_config.magnitudesForceMode};
-      bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
-                                    !*_config.magnitudesForceMode};
+        // configure callback
+        bool magnitudesForcedEnabled{_config.magnitudesForceMode &&
+                                     *_config.magnitudesForceMode};
+        bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
+                                      !*_config.magnitudesForceMode};
 
-      const auto &magnitudeProcessingConfig{
-          sensorLocationBindings.magnitudeProcessingConfig};
-      const auto magnitudeType{amplitudeType};
-      bool magnitudeCalculationEnabled{
-          magnitudesForcedEnabled ||
-          (!magnitudesForcedDisabled &&
-           detectorProcessor.publishConfig().createMagnitudes &&
-           magnitudeProcessingConfig.enabled &&
-           std::find(std::begin(magnitudeProcessingConfig.magnitudeTypes),
-                     std::end(magnitudeProcessingConfig.magnitudeTypes),
-                     magnitudeType) !=
-               std::end(magnitudeProcessingConfig.magnitudeTypes))};
-      auto magnitudeProcessorId{detectorProcessor.id() +
-                                settings::kProcessorIdSep + util::createUUID()};
+        const auto &magnitudeProcessingConfig{
+            sensorLocationBindings.magnitudeProcessingConfig};
+        const auto magnitudeType{amplitudeType};
+        bool magnitudeCalculationEnabled{
+            magnitudesForcedEnabled ||
+            (!magnitudesForcedDisabled &&
+             detectorProcessor.publishConfig().createMagnitudes &&
+             magnitudeProcessingConfig.enabled &&
+             std::find(std::begin(magnitudeProcessingConfig.magnitudeTypes),
+                       std::end(magnitudeProcessingConfig.magnitudeTypes),
+                       magnitudeType) !=
+                 std::end(magnitudeProcessingConfig.magnitudeTypes))};
+        auto magnitudeProcessorId{detectorProcessor.id() +
+                                  settings::kProcessorIdSep +
+                                  util::createUUID()};
 
-      ++detectionItem->numberOfRequiredAmplitudes;
+        ++detectionItem->numberOfRequiredAmplitudes;
 
-      amplitudeProcessor->setResultCallback(
-          [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
-           magnitudeProcessorId](const AmplitudeProcessor *processor,
-                                 const Record *record,
-                                 AmplitudeProcessor::AmplitudeCPtr result) {
-            assert(processor);
-            DataModel::AmplitudePtr amplitude;
-            // create amplitude
+        amplitudeProcessor->setResultCallback([this, detectionItem,
+                                               magnitudeType,
+                                               magnitudeCalculationEnabled,
+                                               magnitudeProcessorId](
+                                                  const AmplitudeProcessor
+                                                      *processor,
+                                                  const Record *record,
+                                                  AmplitudeProcessor::
+                                                      AmplitudeCPtr result) {
+          assert(processor);
+          DataModel::AmplitudePtr amplitude;
+          // create amplitude
+          try {
+            amplitude = createAmplitude(processor, record, result, boost::none,
+                                        magnitudeType);
+          } catch (Exception &e) {
+            --detectionItem->numberOfRequiredAmplitudes;
+            SCDETECT_LOG_WARNING_PROCESSOR(
+                processor, "Failed to create amplitude: %s", e.what());
+          }
+
+          if (!amplitude) {
+            --detectionItem->numberOfRequiredAmplitudes;
+            return;
+          }
+
+          detectionItem->amplitudes.at(processor->id()) = amplitude;
+
+          if (magnitudeCalculationEnabled) {
+            ++detectionItem->numberOfRequiredMagnitudes;
+            // create station magnitude
             try {
-              amplitude = createAmplitude(processor, record, result,
-                                          boost::none, magnitudeType);
-
-              if (!amplitude) {
-                --detectionItem->numberOfRequiredAmplitudes;
+              auto mag{createMagnitude(*amplitude, "", magnitudeProcessorId)};
+              if (!mag) {
+                --detectionItem->numberOfRequiredMagnitudes;
                 return;
               }
+
+              detectionItem->magnitudes.emplace_back(mag);
+
+              SCDETECT_LOG_DEBUG_TAGGED(
+                  magnitudeProcessorId,
+                  "Created station magnitude for origin (%s): public_id=%s, "
+                  "type=%s",
+                  detectionItem->origin->publicID().c_str(),
+                  mag->publicID().c_str(), mag->type().c_str());
+
             } catch (Exception &e) {
-              --detectionItem->numberOfRequiredAmplitudes;
-              SCDETECT_LOG_WARNING_PROCESSOR(
-                  processor, "Failed to create amplitude: %s", e.what());
+              --detectionItem->numberOfRequiredMagnitudes;
+              SCDETECT_LOG_WARNING_TAGGED(
+                  magnitudeProcessorId,
+                  "Failed to create station magnitude: %s", e.what());
             }
+          }
+        });
 
-            detectionItem->amplitudes.emplace_back(amplitude);
-
-            if (magnitudeCalculationEnabled) {
-              ++detectionItem->numberOfRequiredMagnitudes;
-              // create station magnitude
-              try {
-                auto mag{createMagnitude(*amplitude, "", magnitudeProcessorId)};
-                if (!mag) {
-                  --detectionItem->numberOfRequiredMagnitudes;
-                  return;
-                }
-
-                detectionItem->magnitudes.emplace_back(mag);
-
-                SCDETECT_LOG_DEBUG_TAGGED(
-                    magnitudeProcessorId,
-                    "Created station magnitude for origin (%s): public_id=%s, "
-                    "type=%s",
-                    detectionItem->origin->publicID().c_str(),
-                    mag->publicID().c_str(), mag->type().c_str());
-
-              } catch (Exception &e) {
-                --detectionItem->numberOfRequiredMagnitudes;
-                SCDETECT_LOG_WARNING_TAGGED(
-                    magnitudeProcessorId,
-                    "Failed to create station magnitude: %s", e.what());
-              }
-            }
-          });
-
-      try {
-        registerAmplitudeProcessor(std::move(amplitudeProcessor));
-      } catch (Exception &e) {
-        SCDETECT_LOG_WARNING("Failed to register amplitude processor: %s",
-                             e.what());
+        registerAmplitudeProcessor(std::move(amplitudeProcessor),
+                                   *detectionItem);
+      } catch (const AmplitudeProcessor::Factory::BaseException &e) {
+        SCDETECT_LOG_WARNING(
+            "Failed to create amplitude processor (type=\"%s\"): %s",
+            amplitudeType.c_str(), e.what());
+        continue;
+      } catch (const Exception &e) {
+        SCDETECT_LOG_WARNING(
+            "Failed to register amplitude processor (type=\"%s\"): %s",
+            amplitudeType.c_str(), e.what());
         continue;
       }
     }
@@ -1698,7 +1766,10 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
 }
 
 void Application::registerAmplitudeProcessor(
-    const std::shared_ptr<AmplitudeProcessor> &processor) {
+    const std::shared_ptr<AmplitudeProcessor> &processor,
+    DetectionItem &detection) {
+  detection.amplitudes[processor->id()];
+
   registerTimeWindowProcessor(processor->associatedWaveformStreamIds(),
                               processor);
 }
@@ -1716,7 +1787,7 @@ void Application::registerTimeWindowProcessor(
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     _timeWindowProcessors.emplace(waveformStreamId, processor);
-    SCDETECT_LOG_DEBUG("[%s] Added time window processor with id: %s",
+    SCDETECT_LOG_DEBUG("[%s] Added time window processor: id=%s",
                        waveformStreamId.c_str(), processor->id().c_str());
     SCDETECT_LOG_DEBUG("Current time window processor count: %lu",
                        _timeWindowProcessors.size());
@@ -1779,8 +1850,13 @@ void Application::removeTimeWindowProcessor(
     auto it{range.first};
     while (it != range.second) {
       if (it->second == processor) {
-        SCDETECT_LOG_DEBUG("[%s] Removed time window processor with id: %s",
-                           waveformStreamId.c_str(), processor->id().c_str());
+        logging::TaggedMessage msg{
+            waveformStreamId,
+            "Removing time window processor: id=" + processor->id() +
+                ", status=" +
+                std::to_string(util::asInteger(processor->status())) +
+                ", status_value=" + std::to_string(processor->statusValue())};
+        SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
         it = _timeWindowProcessors.erase(it);
         SCDETECT_LOG_DEBUG("Current time window processor count: %lu",
                            _timeWindowProcessors.size());
@@ -1815,8 +1891,8 @@ void Application::registerDetection(
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     _detections.emplace(waveformStreamId, detection);
-    SCDETECT_LOG_DEBUG("[%s] Added detection with id: %s",
-                       waveformStreamId.c_str(), detection->id().c_str());
+    SCDETECT_LOG_DEBUG("[%s] Added detection: id= %s", waveformStreamId.c_str(),
+                       detection->id().c_str());
     SCDETECT_LOG_DEBUG("Current detection count: %lu", _detections.size());
   }
 }
@@ -1835,7 +1911,7 @@ void Application::removeDetection(
     auto it{range.first};
     while (it != range.second) {
       if (it->second == detection) {
-        SCDETECT_LOG_DEBUG("[%s] Removed detection with id: %s",
+        SCDETECT_LOG_DEBUG("[%s] Removed detection: id=%s",
                            waveformStreamId.c_str(), detection->id().c_str());
         it = _detections.erase(it);
         SCDETECT_LOG_DEBUG("Current detection count: %lu", _detections.size());
@@ -1930,6 +2006,12 @@ void Application::Config::init(const Client::Application *app) {
   try {
     streamConfig.templateConfig.wfEnd =
         app->configGetDouble("template.waveformEnd");
+  } catch (...) {
+  }
+
+  try {
+    forcedWaveformBufferSize =
+        Core::TimeSpan{app->configGetDouble("processing.waveformBufferSize")};
   } catch (...) {
   }
 

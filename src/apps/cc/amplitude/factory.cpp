@@ -95,9 +95,9 @@ std::unique_ptr<AmplitudeProcessor> createMLx(
       msg.setText(e.what());
       throw Factory::BaseException{logging::to_string(msg)};
     }
-    msg.setText(
-        "Configured amplitude processor filter: filter=\"" + filter +
-        "init_time=" + std::to_string(amplitudeProcessingConfig.mlx.initTime));
+    msg.setText("Configured amplitude processor filter: filter=\"" + filter +
+                "\", init_time=" +
+                std::to_string(amplitudeProcessingConfig.mlx.initTime));
     SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
   } else {
     msg.setText("Configured amplitude processor without filter: filter=\"\"");
