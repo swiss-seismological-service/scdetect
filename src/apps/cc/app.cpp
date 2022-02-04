@@ -1626,90 +1626,101 @@ bool Application::initAmplitudeProcessors(
 
     // initialize amplitude processors
     for (const auto &amplitudeType : amplitudeTypes) {
-      auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
-          amplitudeType, _bindings, detection, detectorProcessor)};
-
-      // configure callback
-      bool magnitudesForcedEnabled{_config.magnitudesForceMode &&
-                                   *_config.magnitudesForceMode};
-      bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
-                                    !*_config.magnitudesForceMode};
-
-      const auto &magnitudeProcessingConfig{
-          sensorLocationBindings.magnitudeProcessingConfig};
-      const auto magnitudeType{amplitudeType};
-      bool magnitudeCalculationEnabled{
-          magnitudesForcedEnabled ||
-          (!magnitudesForcedDisabled &&
-           detectorProcessor.publishConfig().createMagnitudes &&
-           magnitudeProcessingConfig.enabled &&
-           std::find(std::begin(magnitudeProcessingConfig.magnitudeTypes),
-                     std::end(magnitudeProcessingConfig.magnitudeTypes),
-                     magnitudeType) !=
-               std::end(magnitudeProcessingConfig.magnitudeTypes))};
-      auto magnitudeProcessorId{detectorProcessor.id() +
-                                settings::kProcessorIdSep + util::createUUID()};
-
-      ++detectionItem->numberOfRequiredAmplitudes;
-
-      amplitudeProcessor->setResultCallback(
-          [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
-           magnitudeProcessorId](const AmplitudeProcessor *processor,
-                                 const Record *record,
-                                 AmplitudeProcessor::AmplitudeCPtr result) {
-            assert(processor);
-            DataModel::AmplitudePtr amplitude;
-            // create amplitude
-            try {
-              amplitude = createAmplitude(processor, record, result,
-                                          boost::none, magnitudeType);
-            } catch (Exception &e) {
-              --detectionItem->numberOfRequiredAmplitudes;
-              SCDETECT_LOG_WARNING_PROCESSOR(
-                  processor, "Failed to create amplitude: %s", e.what());
-            }
-
-            if (!amplitude) {
-              --detectionItem->numberOfRequiredAmplitudes;
-              return;
-            }
-
-            detectionItem->amplitudes.at(processor->id()) = amplitude;
-
-            if (magnitudeCalculationEnabled) {
-              ++detectionItem->numberOfRequiredMagnitudes;
-              // create station magnitude
-              try {
-                auto mag{createMagnitude(*amplitude, "", magnitudeProcessorId)};
-                if (!mag) {
-                  --detectionItem->numberOfRequiredMagnitudes;
-                  return;
-                }
-
-                detectionItem->magnitudes.emplace_back(mag);
-
-                SCDETECT_LOG_DEBUG_TAGGED(
-                    magnitudeProcessorId,
-                    "Created station magnitude for origin (%s): public_id=%s, "
-                    "type=%s",
-                    detectionItem->origin->publicID().c_str(),
-                    mag->publicID().c_str(), mag->type().c_str());
-
-              } catch (Exception &e) {
-                --detectionItem->numberOfRequiredMagnitudes;
-                SCDETECT_LOG_WARNING_TAGGED(
-                    magnitudeProcessorId,
-                    "Failed to create station magnitude: %s", e.what());
-              }
-            }
-          });
-
       try {
+        auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
+            amplitudeType, _bindings, detection, detectorProcessor)};
+
+        // configure callback
+        bool magnitudesForcedEnabled{_config.magnitudesForceMode &&
+                                     *_config.magnitudesForceMode};
+        bool magnitudesForcedDisabled{_config.magnitudesForceMode &&
+                                      !*_config.magnitudesForceMode};
+
+        const auto &magnitudeProcessingConfig{
+            sensorLocationBindings.magnitudeProcessingConfig};
+        const auto magnitudeType{amplitudeType};
+        bool magnitudeCalculationEnabled{
+            magnitudesForcedEnabled ||
+            (!magnitudesForcedDisabled &&
+             detectorProcessor.publishConfig().createMagnitudes &&
+             magnitudeProcessingConfig.enabled &&
+             std::find(std::begin(magnitudeProcessingConfig.magnitudeTypes),
+                       std::end(magnitudeProcessingConfig.magnitudeTypes),
+                       magnitudeType) !=
+                 std::end(magnitudeProcessingConfig.magnitudeTypes))};
+        auto magnitudeProcessorId{detectorProcessor.id() +
+                                  settings::kProcessorIdSep +
+                                  util::createUUID()};
+
+        ++detectionItem->numberOfRequiredAmplitudes;
+
+        amplitudeProcessor->setResultCallback([this, detectionItem,
+                                               magnitudeType,
+                                               magnitudeCalculationEnabled,
+                                               magnitudeProcessorId](
+                                                  const AmplitudeProcessor
+                                                      *processor,
+                                                  const Record *record,
+                                                  AmplitudeProcessor::
+                                                      AmplitudeCPtr result) {
+          assert(processor);
+          DataModel::AmplitudePtr amplitude;
+          // create amplitude
+          try {
+            amplitude = createAmplitude(processor, record, result, boost::none,
+                                        magnitudeType);
+          } catch (Exception &e) {
+            --detectionItem->numberOfRequiredAmplitudes;
+            SCDETECT_LOG_WARNING_PROCESSOR(
+                processor, "Failed to create amplitude: %s", e.what());
+          }
+
+          if (!amplitude) {
+            --detectionItem->numberOfRequiredAmplitudes;
+            return;
+          }
+
+          detectionItem->amplitudes.at(processor->id()) = amplitude;
+
+          if (magnitudeCalculationEnabled) {
+            ++detectionItem->numberOfRequiredMagnitudes;
+            // create station magnitude
+            try {
+              auto mag{createMagnitude(*amplitude, "", magnitudeProcessorId)};
+              if (!mag) {
+                --detectionItem->numberOfRequiredMagnitudes;
+                return;
+              }
+
+              detectionItem->magnitudes.emplace_back(mag);
+
+              SCDETECT_LOG_DEBUG_TAGGED(
+                  magnitudeProcessorId,
+                  "Created station magnitude for origin (%s): public_id=%s, "
+                  "type=%s",
+                  detectionItem->origin->publicID().c_str(),
+                  mag->publicID().c_str(), mag->type().c_str());
+
+            } catch (Exception &e) {
+              --detectionItem->numberOfRequiredMagnitudes;
+              SCDETECT_LOG_WARNING_TAGGED(
+                  magnitudeProcessorId,
+                  "Failed to create station magnitude: %s", e.what());
+            }
+          }
+        });
+
         registerAmplitudeProcessor(std::move(amplitudeProcessor),
                                    *detectionItem);
-      } catch (Exception &e) {
-        SCDETECT_LOG_WARNING("Failed to register amplitude processor: %s",
-                             e.what());
+      } catch (const AmplitudeProcessor::Factory::BaseException &e) {
+        SCDETECT_LOG_WARNING(
+            "Failed to create amplitude processor (type=\"%s\"): %s",
+            amplitudeType.c_str(), e.what());
+        continue;
+      } catch (const Exception &e) {
+        SCDETECT_LOG_WARNING(
+            "Failed to register amplitude processor (type=\"%s\"): %s",
+            amplitudeType.c_str(), e.what());
         continue;
       }
     }
