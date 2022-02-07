@@ -313,18 +313,23 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
   const auto triggerOnThreshold{_thresTriggerOn.value_or(-1)};
   const auto triggerOffThreshold{_thresTriggerOff.value_or(1)};
 
+  const auto sorted{sortByArrivalTime(result)};
+  const auto &earliestArrivalTemplateResult{sorted.at(0)};
+  const auto &pickTime{earliestArrivalTemplateResult.result.arrival.pick.time};
+
+  bool newTrigger{false};
+  bool updatedResult{false};
   if (result.fit > triggerOnThreshold) {
     if (!_currentResult) {
       _currentResult = result;
 
-      // set trigger duration
+      // enable trigger
       if (_triggerDuration && *_triggerDuration > Core::TimeSpan{0.0}) {
         SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
                                      result.debugString().c_str());
-        _triggerProcId = triggerProcessorId(result);
-        const auto &endtime{
-            _processors.at(*_triggerProcId).processor->processed().endTime()};
-        _triggerEnd = endtime + *_triggerDuration;
+
+        _triggerProcId = earliestArrivalTemplateResult.processorId;
+        _triggerEnd = pickTime + *_triggerDuration;
         // XXX(damb): A side-note on trigger facilities when it comes to the
         // linker:
         // - The linker processes only those template results which are fed to
@@ -334,39 +339,43 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
         // state* by only feeding data to those processors which are part of the
         // triggering event.
         disableProcessorsNotContributing(result);
+
+        newTrigger = true;
       } else {
         SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result %s",
                                      result.debugString().c_str());
       }
-    } else if (triggered() && result.fit > _currentResult.value().fit &&
+    } else if (triggered() && (pickTime <= *_triggerEnd) &&
+               result.fit > _currentResult.value().fit &&
                result.processorCount() >=
                    _currentResult.value().processorCount()) {
       SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                    "Detector result (triggered, updating) %s",
                                    result.debugString().c_str());
       _currentResult = result;
-      const auto triggerProcessorId{this->triggerProcessorId(result)};
-      if (_triggerProcId != triggerProcessorId) {
-        _triggerProcId = triggerProcessorId;
-        const auto &endtime{
-            _processors.at(*_triggerProcId).processor->processed().endTime()};
-        _triggerEnd = endtime + *_triggerDuration;
+
+      updatedResult = true;
+
+      if (_triggerProcId != earliestArrivalTemplateResult.processorId) {
+        _triggerProcId = earliestArrivalTemplateResult.processorId;
+        _triggerEnd = pickTime + *_triggerDuration;
         disableProcessorsNotContributing(result);
       }
     }
   }
 
+  bool expired{false};
   if (triggered()) {
-    if (result.fit <= _currentResult.value().fit &&
+    expired = pickTime > *_triggerEnd;
+
+    if (!expired && !newTrigger && !updatedResult &&
+        result.fit <= _currentResult.value().fit &&
         result.fit >= triggerOffThreshold) {
       SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                    "Detector result (triggered, dropped) %s",
                                    result.debugString().c_str());
     }
 
-    const auto &endtime{
-        _processors.at(*_triggerProcId).processor->processed().endTime()};
-    const auto expired{endtime > *_triggerEnd};
     // disable trigger if required
     if (expired || result.fit < triggerOffThreshold) {
       resetTrigger();
@@ -378,6 +387,17 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
     Result prepared;
     prepareResult(*_currentResult, prepared);
     emitResult(prepared);
+  }
+
+  // re-trigger
+  if (expired && result.fit > triggerOnThreshold && *_currentResult != result) {
+    SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
+                                 result.debugString().c_str());
+
+    _currentResult = result;
+
+    _triggerProcId = earliestArrivalTemplateResult.processorId;
+    _triggerEnd = pickTime + *_triggerDuration;
   }
 }
 
