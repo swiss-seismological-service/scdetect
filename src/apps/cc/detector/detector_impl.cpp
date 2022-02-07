@@ -401,7 +401,7 @@ void DetectorImpl::disableProcessorsNotContributing(
 
 std::string DetectorImpl::triggerProcessorId(
     const linker::Association &result) {
-  // determine the processor with the first arrival
+  // determine the processor with the earliest arrival
   return sortByArrivalTime(result).at(0).processorId;
 }
 
