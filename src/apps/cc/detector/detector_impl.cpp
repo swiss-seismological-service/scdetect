@@ -215,36 +215,8 @@ void DetectorImpl::reset() {
 
 void DetectorImpl::flush() {
   _linker.flush();
-
-  if (triggered()) {
-    while (!_resultQueue.empty()) {
-      const auto &result{_resultQueue.front()};
-
-      if (result.score > _currentResult.value().score &&
-          result.processorCount() >= _currentResult.value().processorCount()) {
-        _currentResult = result;
-      }
-
-      _resultQueue.pop_front();
-    }
-
-    Result prepared;
-    prepareResult(*_currentResult, prepared);
-    emitResult(prepared);
-
-  } else if (!_triggerDuration) {
-    while (!_resultQueue.empty()) {
-      const auto &result{_resultQueue.front()};
-      _currentResult = result;
-      _resultQueue.pop_front();
-
-      Result prepared;
-      prepareResult(*_currentResult, prepared);
-      emitResult(prepared);
-
-      _currentResult = boost::none;
-    }
-  }
+  processResultQueue();
+  resetProcessing();
 }
 
 void DetectorImpl::setResultCallback(const PublishResultCallback &callback) {

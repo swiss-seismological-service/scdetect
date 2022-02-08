@@ -10,6 +10,7 @@
 #include <seiscomp/datamodel/sensorlocation.h>
 
 #include <boost/optional/optional.hpp>
+#include <list>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -145,6 +146,8 @@ class Detector : public processing::WaveformProcessor {
                      std::unique_ptr<const Detection> detection);
 
  private:
+  void processDetections(const Record *record);
+
   using WaveformStreamID = std::string;
   using StreamStates =
       std::unordered_map<WaveformStreamID,
@@ -157,7 +160,8 @@ class Detector : public processing::WaveformProcessor {
 
   PublishDetectionCallback _detectionCallback;
 
-  boost::optional<DetectorImpl::Result> _detection;
+  using DetectionQueue = std::list<DetectorImpl::Result>;
+  DetectionQueue _detectionQueue;
 
   // Reference to the *template* origin
   DataModel::OriginCPtr _origin;

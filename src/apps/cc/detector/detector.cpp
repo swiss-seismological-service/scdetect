@@ -400,11 +400,8 @@ void Detector::terminate() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Terminating ...");
 
   _detectorImpl.flush();
-  if (_detection) {
-    emitDetection(nullptr, createDetection(*_detection));
+  processDetections(nullptr);
 
-    _detection = boost::none;
-  }
   WaveformProcessor::terminate();
 }
 
@@ -443,11 +440,7 @@ void Detector::process(StreamState &streamState, const Record *record,
   }
 
   if (!finished()) {
-    if (_detection) {
-      emitDetection(record, createDetection(*_detection));
-
-      _detection = boost::none;
-    }
+    processDetections(record);
   }
 }
 
@@ -475,7 +468,7 @@ bool Detector::fill(processing::StreamState &streamState, const Record *record,
 }
 
 void Detector::storeDetection(const detector::DetectorImpl::Result &res) {
-  _detection = res;
+  _detectionQueue.emplace_back(res);
 }
 
 std::unique_ptr<const Detector::Detection> Detector::createDetection(
@@ -484,7 +477,7 @@ std::unique_ptr<const Detector::Detection> Detector::createDetection(
 
   auto ret{util::make_unique<Detection>()};
 
-  ret->score = _detection.value().score;
+  ret->score = res.score;
   ret->time = res.originTime + timeCorrection;
   ret->latitude = _origin->latitude().value();
   ret->longitude = _origin->longitude().value();
@@ -526,6 +519,13 @@ void Detector::emitDetection(const Record *record,
                              std::unique_ptr<const Detection> detection) {
   if (enabled() && _detectionCallback) {
     _detectionCallback(this, record, std::move(detection));
+  }
+}
+
+void Detector::processDetections(const Record *record) {
+  while (!_detectionQueue.empty()) {
+    emitDetection(record, createDetection(_detectionQueue.front()));
+    _detectionQueue.pop_front();
   }
 }
 
