@@ -27,7 +27,7 @@ namespace detector {
 const Core::TimeSpan DetectorImpl::_linkerSafetyMargin{1.0};
 
 DetectorImpl::DetectorImpl(const DataModel::OriginCPtr &origin)
-    : Processor{}, _origin{origin} {
+    : _origin{origin} {
   _linker.setResultCallback([this](const linker::Association &res) {
     return storeLinkerResult(res);
   });

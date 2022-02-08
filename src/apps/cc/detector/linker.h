@@ -22,8 +22,9 @@ namespace detector {
 // Associates `TemplateWaveformProcessor` results
 class Linker {
  public:
-  Linker(const Core::TimeSpan &onHold = Core::TimeSpan{0.0},
-         const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{2.0e-6});
+  explicit Linker(const Core::TimeSpan &onHold = Core::TimeSpan{0.0},
+                  const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{
+                      2.0e-6});
 
   // Sets the arrival offset threshold
   void setThresArrivalOffset(const boost::optional<Core::TimeSpan> &thres);
@@ -106,7 +107,7 @@ class Linker {
     // The time after the event is considered as expired
     Core::Time expired;
 
-    Candidate(const Core::Time &expired);
+    explicit Candidate(const Core::Time &expired);
     // Feeds the template result `res` to the event in order to be merged
     void feed(const std::string &procId,
               const linker::Association::TemplateResult &res);
