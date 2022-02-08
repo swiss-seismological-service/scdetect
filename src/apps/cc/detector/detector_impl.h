@@ -63,7 +63,7 @@ class DetectorImpl : public detect::processing::Processor {
 
   struct Result {
     Core::Time originTime;
-    double fit;
+    double score;
 
     struct TemplateResult {
       Arrival arrival;

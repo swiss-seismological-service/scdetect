@@ -32,7 +32,7 @@ class Detector : public processing::WaveformProcessor {
 
  public:
   struct Detection {
-    double fit{};
+    double score{};
 
     Core::Time time;
     double latitude{};

@@ -35,8 +35,8 @@ struct Association {
   using TemplateResults = std::map<ProcessorId, TemplateResult>;
   TemplateResults results;
 
-  // The association's fit [-1,1]
-  double fit;
+  // The association's score [-1,1]
+  double score;
 
   // Returns the total number of associated processors
   std::size_t processorCount() const;

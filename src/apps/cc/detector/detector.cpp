@@ -484,7 +484,7 @@ std::unique_ptr<const Detector::Detection> Detector::createDetection(
 
   auto ret{util::make_unique<Detection>()};
 
-  ret->fit = _detection.value().fit;
+  ret->score = _detection.value().score;
   ret->time = res.originTime + timeCorrection;
   ret->latitude = _origin->latitude().value();
   ret->longitude = _origin->longitude().value();

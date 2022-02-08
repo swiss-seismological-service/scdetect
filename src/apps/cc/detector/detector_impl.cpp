@@ -229,7 +229,7 @@ void DetectorImpl::terminate() {
     while (!_resultQueue.empty()) {
       const auto &result{_resultQueue.front()};
 
-      if (result.fit > _currentResult.value().fit &&
+      if (result.score > _currentResult.value().score &&
           result.processorCount() >= _currentResult.value().processorCount()) {
         _currentResult = result;
       }
@@ -319,7 +319,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
 
   bool newTrigger{false};
   bool updatedResult{false};
-  if (result.fit > triggerOnThreshold) {
+  if (result.score > triggerOnThreshold) {
     if (!_currentResult) {
       _currentResult = result;
 
@@ -346,7 +346,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
                                      result.debugString().c_str());
       }
     } else if (triggered() && (pickTime <= *_triggerEnd) &&
-               result.fit > _currentResult.value().fit &&
+               result.score > _currentResult.value().score &&
                result.processorCount() >=
                    _currentResult.value().processorCount()) {
       SCDETECT_LOG_DEBUG_PROCESSOR(this,
@@ -369,15 +369,15 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
     expired = pickTime > *_triggerEnd;
 
     if (!expired && !newTrigger && !updatedResult &&
-        result.fit <= _currentResult.value().fit &&
-        result.fit >= triggerOffThreshold) {
+        result.score <= _currentResult.value().score &&
+        result.score >= triggerOffThreshold) {
       SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                    "Detector result (triggered, dropped) %s",
                                    result.debugString().c_str());
     }
 
     // disable trigger if required
-    if (expired || result.fit < triggerOffThreshold) {
+    if (expired || result.score < triggerOffThreshold) {
       resetTrigger();
     }
   }
@@ -390,7 +390,8 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
   }
 
   // re-trigger
-  if (expired && result.fit > triggerOnThreshold && *_currentResult != result) {
+  if (expired && result.score > triggerOnThreshold &&
+      *_currentResult != result) {
     SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
                                  result.debugString().c_str());
 
@@ -480,7 +481,7 @@ void DetectorImpl::prepareResult(const linker::Association &linkerResult,
   result.originTime = referenceStartTime + Core::TimeSpan{referenceLag} -
                       referenceOriginArrivalOffset +
                       Core::TimeSpan{arrivalOffsetCorrection};
-  result.fit = linkerResult.fit;
+  result.score = linkerResult.score;
   // template results i.e. theoretical arrivals including some meta data
   result.templateResults = templateResults;
   // number of channels used

@@ -733,7 +733,7 @@ void Application::processDetection(
   {
     auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId("scdetectResultCCC");
-    comment->setText(std::to_string(detection->fit));
+    comment->setText(std::to_string(detection->score));
     origin->add(comment.get());
   }
 
@@ -779,7 +779,7 @@ void Application::processDetection(
     originQuality.setMedianDistance(distances[distances.size() / 2]);
   }
 
-  originQuality.setStandardError(1.0 - detection->fit);
+  originQuality.setStandardError(1.0 - detection->score);
   originQuality.setAssociatedStationCount(detection->numStationsAssociated);
   originQuality.setUsedStationCount(detection->numStationsUsed);
   originQuality.setAssociatedPhaseCount(detection->numChannelsAssociated);

@@ -21,12 +21,13 @@ bool operator!=(const Association::TemplateResult &lhs,
 size_t Association::processorCount() const { return results.size(); }
 
 std::string Association::debugString() const {
-  return std::string{"fit=" + std::to_string(fit) + ", associated_results=" +
-                     std::to_string(processorCount())};
+  return std::string{
+      "score=" + std::to_string(score) +
+      ", associated_results=" + std::to_string(processorCount())};
 }
 
 bool operator==(const Association &lhs, const Association &rhs) {
-  return lhs.fit == rhs.fit && lhs.results == rhs.results;
+  return lhs.score == rhs.score && lhs.results == rhs.results;
 }
 
 bool operator!=(const Association &lhs, const Association &rhs) {

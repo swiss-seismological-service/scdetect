@@ -92,7 +92,7 @@ void Linker::terminate() {
     const auto event{_queue.front()};
     if (event.associatedProcessorCount() >=
             _minArrivals.value_or(processorCount()) &&
-        (!_thresAssociation || event.association.fit >= *_thresAssociation)) {
+        (!_thresAssociation || event.association.score >= *_thresAssociation)) {
       emitResult(event.association);
     }
 
@@ -140,7 +140,7 @@ void Linker::feed(
         SCDETECT_LOG_DEBUG_PROCESSOR(
             proc,
             "[%s] [%s - %s] Dropping result due to merging "
-            "strategy applied: time=%s, fit=%9f, lag=%10f",
+            "strategy applied: time=%s, score=%9f, lag=%10f",
             newArrival.pick.waveformStreamId.c_str(),
             result->timeWindow.startTime().iso().c_str(),
             result->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
@@ -152,7 +152,7 @@ void Linker::feed(
 #ifdef SCDETECT_DEBUG
       SCDETECT_LOG_DEBUG_PROCESSOR(
           proc,
-          "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
+          "[%s] [%s - %s] Trying to merge result: time=%s, score=%9f, lag=%10f",
           newArrival.pick.waveformStreamId.c_str(),
           result->timeWindow.startTime().iso().c_str(),
           result->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
@@ -212,7 +212,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
       if (arrivalCount == processorCount() ||
           (now >= it->expired &&
            arrivalCount >= _minArrivals.value_or(processorCount()))) {
-        if (!_thresAssociation || it->association.fit >= *_thresAssociation) {
+        if (!_thresAssociation || it->association.score >= *_thresAssociation) {
           emitResult(it->association);
         }
         ready.push_back(it);
@@ -295,15 +295,15 @@ void Linker::Candidate::feed(const std::string &procId,
   auto &templateResults{association.results};
   templateResults.emplace(procId, res);
 
-  std::vector<double> fits;
+  std::vector<double> scores;
   std::transform(std::begin(templateResults), std::end(templateResults),
-                 std::back_inserter(fits),
+                 std::back_inserter(scores),
                  [](const linker::Association::TemplateResults::value_type &p) {
                    return p.second.resultIt->coefficient;
                  });
 
   // compute the overall event's score
-  association.fit = util::cma(fits.data(), fits.size());
+  association.score = util::cma(scores.data(), scores.size());
 }
 
 size_t Linker::Candidate::associatedProcessorCount() const {
