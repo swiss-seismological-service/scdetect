@@ -48,9 +48,8 @@ void Linker::setOnHold(const Core::TimeSpan &duration) { _onHold = duration; }
 
 Core::TimeSpan Linker::onHold() const { return _onHold; }
 
-void Linker::setMergingStrategy(
-    linker::MergingStrategy::Type mergingStrategyTypeId) {
-  _mergingStrategy = linker::MergingStrategy::Create(mergingStrategyTypeId);
+void Linker::setMergingStrategy(MergingStrategy mergingStrategy) {
+  _mergingStrategy = std::move(mergingStrategy);
 }
 
 size_t Linker::channelCount() const {
@@ -125,8 +124,8 @@ void Linker::feed(
     linker::Association::TemplateResult templateResult{newArrival, valueIt,
                                                        result};
     // filter/drop based on merging strategy
-    if (_mergingStrategy && _thresAssociation &&
-        !_mergingStrategy->operator()(
+    if (_thresAssociation &&
+        !_mergingStrategy(
             templateResult, *_thresAssociation,
             linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
 #ifdef SCDETECT_DEBUG

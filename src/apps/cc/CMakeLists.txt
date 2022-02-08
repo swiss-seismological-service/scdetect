@@ -23,7 +23,6 @@ set(
     detector/detector.cpp
     detector/linker/association.cpp
     detector/linker/pot.cpp
-    detector/linker/strategy.cpp
     detector/linker.cpp
     detector/template_waveform_processor.cpp
     eventstore.cpp

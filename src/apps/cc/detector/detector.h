@@ -20,7 +20,6 @@
 #include "../processing/waveform_processor.h"
 #include "../waveform.h"
 #include "detector_impl.h"
-#include "linker/strategy.h"
 #include "template_waveform_processor.h"
 
 namespace Seiscomp {
@@ -76,6 +75,8 @@ class Detector : public processing::WaveformProcessor {
     void finalize() override;
 
    private:
+    void setMergingStrategy(const std::string &strategyId);
+
     static bool isValidArrival(const DataModel::Arrival &arrival,
                                const DataModel::Pick &pick);
 
@@ -100,9 +101,6 @@ class Detector : public processing::WaveformProcessor {
     using TemplateProcessorConfigs =
         std::unordered_map<std::string, TemplateProcessorConfig>;
     TemplateProcessorConfigs _processorConfigs;
-
-    static const std::unordered_map<std::string, linker::MergingStrategy::Type>
-        _mergingStrategyLookupTable;
   };
 
   friend class Builder;

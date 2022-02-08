@@ -7,6 +7,7 @@
 #include "../settings.h"
 #include "../util/memory.h"
 #include "../util/waveform_stream_id.h"
+#include "linker/association.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -45,8 +46,7 @@ Detector::Builder &Detector::Builder::setConfig(
   product()->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
   product()->setGapInterpolation(detectorConfig.gapInterpolation);
 
-  product()->_detectorImpl.setMergingStrategy(
-      _mergingStrategyLookupTable.at(detectorConfig.mergingStrategy));
+  setMergingStrategy(detectorConfig.mergingStrategy);
 
   // configure playback related facilities
   if (playback) {
@@ -349,6 +349,30 @@ void Detector::Builder::finalize() {
   }
 }
 
+void Detector::Builder::setMergingStrategy(const std::string &strategyId) {
+  if ("all" == strategyId) {
+    product()->_detectorImpl.setMergingStrategy(
+        [](const linker::Association::TemplateResult &result,
+           double associationThreshold,
+           double mergingThreshold) { return true; });
+  } else if ("greaterEqualTriggerOnThreshold" == strategyId) {
+    product()->_detectorImpl.setMergingStrategy(
+        [](const linker::Association::TemplateResult &result,
+           double associationThreshold, double mergingThreshold) {
+          return result.resultIt->coefficient >= associationThreshold;
+        });
+
+  } else if ("greaterEqualMergingThreshold" == strategyId) {
+    product()->_detectorImpl.setMergingStrategy(
+        [](const linker::Association::TemplateResult &result,
+           double associationThreshold, double mergingThreshold) {
+          return result.resultIt->coefficient >= mergingThreshold;
+        });
+  } else {
+    throw builder::BaseException{"invalid merging strategy: " + strategyId};
+  }
+}
+
 bool Detector::Builder::isValidArrival(const DataModel::Arrival &arrival,
                                        const DataModel::Pick &pick) {
   // check if both pick and arrival are properly configured
@@ -362,14 +386,6 @@ bool Detector::Builder::isValidArrival(const DataModel::Arrival &arrival,
   }
   return true;
 }
-
-const std::unordered_map<std::string, linker::MergingStrategy::Type>
-    Detector::Builder::_mergingStrategyLookupTable{
-        {"all", linker::MergingStrategy::Type::kAll},
-        {"greaterEqualTriggerOnThreshold",
-         linker::MergingStrategy::Type::kGreaterEqualAssociationThres},
-        {"greaterEqualMergingThreshold",
-         linker::MergingStrategy::Type::kGreaterEqualMergingThres}};
 
 /* ------------------------------------------------------------------------- */
 Detector::Detector(const DataModel::OriginCPtr &origin)

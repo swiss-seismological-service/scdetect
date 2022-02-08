@@ -22,7 +22,6 @@
 #include "arrival.h"
 #include "linker.h"
 #include "linker/association.h"
-#include "linker/strategy.h"
 #include "template_waveform_processor.h"
 
 namespace Seiscomp {
@@ -108,7 +107,7 @@ class DetectorImpl : public detect::processing::Processor {
   // event as a detection
   boost::optional<size_t> minArrivals() const;
   // Sets the merging strategy applied while linking
-  void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
+  void setMergingStrategy(Linker::MergingStrategy mergingStrategy);
   // Sets the maximum data latency w.r.t. `NOW`. If configured with
   // `boost::none` latency is not taken into account and thus not validated
   void setMaxLatency(const boost::optional<Core::TimeSpan> &latency);

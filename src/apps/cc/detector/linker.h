@@ -12,7 +12,6 @@
 #include "arrival.h"
 #include "linker/association.h"
 #include "linker/pot.h"
-#include "linker/strategy.h"
 #include "template_waveform_processor.h"
 
 namespace Seiscomp {
@@ -43,8 +42,11 @@ class Linker {
   void setOnHold(const Core::TimeSpan &duration);
   // Returns the current *on hold* duration
   Core::TimeSpan onHold() const;
+
+  using MergingStrategy = std::function<bool(
+      const linker::Association::TemplateResult &, double, double)>;
   // Sets the linker's merging strategy based on `mergingStrategyTypeId`
-  void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
+  void setMergingStrategy(MergingStrategy mergingStrategy);
   // Returns the number of associated channels
   size_t channelCount() const;
   // Returns the number of associated processors
@@ -140,7 +142,11 @@ class Linker {
   Core::TimeSpan _onHold{0.0};
 
   // The merging strategy used while linking
-  std::unique_ptr<linker::MergingStrategy> _mergingStrategy;
+  MergingStrategy _mergingStrategy{
+      [](const linker::Association::TemplateResult &result,
+         double associationThreshold, double mergingThreshold) {
+        return result.resultIt->coefficient >= associationThreshold;
+      }};
 
   // The result callback function
   boost::optional<PublishResultCallback> _resultCallback;
