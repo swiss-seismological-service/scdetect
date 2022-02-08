@@ -74,7 +74,7 @@
         <usedPhaseCount>3</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>7.771561172e-16</standardError>
+        <standardError>0.0</standardError>
         <azimuthalGap>0</azimuthalGap>
         <maximumDistance>0.03223286148</maximumDistance>
         <minimumDistance>0.03223286148</minimumDistance>
