@@ -42,8 +42,6 @@ DetectorImpl::ProcessingError::ProcessingError()
 DetectorImpl::TemplateMatchingError::TemplateMatchingError()
     : ProcessingError{"error while matching template"} {}
 
-DetectorImpl::Status DetectorImpl::status() const { return _status; }
-
 const Core::TimeWindow &DetectorImpl::processed() const { return _processed; }
 
 bool DetectorImpl::triggered() const { return static_cast<bool>(_triggerEnd); }
@@ -166,11 +164,6 @@ void DetectorImpl::remove(const std::string &waveformStreamId) {
 }
 
 void DetectorImpl::feed(const Record *record) {
-  if (status() == Status::kTerminated) {
-    throw BaseException{"error while processing: status=" +
-                        std::to_string(util::asInteger(Status::kTerminated))};
-  }
-
   if (!hasAcceptableLatency(record)) {
     logging::TaggedMessage msg{
         record->streamID(),
@@ -218,12 +211,10 @@ void DetectorImpl::reset() {
   _linker.reset();
   resetProcessors();
   resetProcessing();
-
-  _status = Status::kWaitingForData;
 }
 
-void DetectorImpl::terminate() {
-  _linker.terminate();
+void DetectorImpl::flush() {
+  _linker.flush();
 
   if (triggered()) {
     while (!_resultQueue.empty()) {
@@ -254,8 +245,6 @@ void DetectorImpl::terminate() {
       _currentResult = boost::none;
     }
   }
-
-  _status = Status::kTerminated;
 }
 
 void DetectorImpl::setResultCallback(const PublishResultCallback &callback) {

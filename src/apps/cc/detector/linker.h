@@ -25,8 +25,6 @@ class Linker {
   Linker(const Core::TimeSpan &onHold = Core::TimeSpan{0.0},
          const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{2.0e-6});
 
-  enum class Status { kWaitingForData, kTerminated };
-
   // Sets the arrival offset threshold
   void setThresArrivalOffset(const boost::optional<Core::TimeSpan> &thres);
   // Returns the current arrival offset threshold
@@ -46,8 +44,6 @@ class Linker {
   Core::TimeSpan onHold() const;
   // Sets the linker's merging strategy based on `mergingStrategyTypeId`
   void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
-  // Returns the linker's status
-  Status status() const;
   // Returns the number of associated channels
   size_t channelCount() const;
   // Returns the number of associated processors
@@ -63,10 +59,8 @@ class Linker {
   //
   // - drops all pending results
   void reset();
-  // Terminates the linker
-  //
-  // - flushes pending detections
-  void terminate();
+  // Flushes the linker
+  void flush();
 
   // Feeds the `proc`'s result `res` to the linker
   void feed(const TemplateWaveformProcessor *proc,
@@ -92,8 +86,6 @@ class Linker {
   linker::POT createCandidatePOT(
       const Candidate &candidate, const std::string &processorId,
       const linker::Association::TemplateResult &newResult);
-
-  Status _status{Status::kWaitingForData};
 
   // `TemplateWaveformProcessor` processor
   struct Processor {

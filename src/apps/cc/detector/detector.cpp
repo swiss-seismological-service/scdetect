@@ -399,7 +399,7 @@ void Detector::reset() {
 void Detector::terminate() {
   SCDETECT_LOG_DEBUG_PROCESSOR(this, "Terminating ...");
 
-  _detectorImpl.terminate();
+  _detectorImpl.flush();
   if (_detection) {
     emitDetection(nullptr, createDetection(*_detection));
 

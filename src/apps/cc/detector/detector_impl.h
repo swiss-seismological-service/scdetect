@@ -51,8 +51,6 @@ class DetectorImpl : public detect::processing::Processor {
     TemplateMatchingError();
   };
 
-  enum class Status { kWaitingForData, kTerminated };
-
   struct SensorLocation {
     double latitude;
     double longitude;
@@ -89,8 +87,6 @@ class DetectorImpl : public detect::processing::Processor {
     size_t numStationsAssociated;
   };
 
-  // Returns the detector's status
-  Status status() const;
   // Returns the overall time window processed
   const Core::TimeWindow &processed() const;
   // Returns `true` if the detector is currently triggered, else `false`
@@ -142,10 +138,8 @@ class DetectorImpl : public detect::processing::Processor {
   void feed(const Record *record);
   // Reset the detector
   void reset();
-  // Terminates the detector
-  //
-  // - if triggered forces flushing the pending detection
-  void terminate();
+  // Flushes pending detections
+  void flush();
 
   using PublishResultCallback = std::function<void(const Result &result)>;
   void setResultCallback(const PublishResultCallback &callback);
@@ -221,8 +215,6 @@ class DetectorImpl : public detect::processing::Processor {
   using ProcessorIdx = std::unordered_multimap<std::string, ProcessorId>;
   ProcessorIdx _processorIdx;
 
-  // The detector's status
-  Status _status{Status::kWaitingForData};
   // The overall time window processed
   Core::TimeWindow _processed;
 
