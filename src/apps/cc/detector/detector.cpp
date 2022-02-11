@@ -18,7 +18,7 @@ Detector::Builder::Builder(const std::string &originId) : _originId{originId} {
       EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
   if (!origin) {
     SCDETECT_LOG_WARNING("Origin %s not found.", originId.c_str());
-    throw builder::BaseException{std::string{"Error while assigning origin: "} +
+    throw builder::BaseException{std::string{"error while assigning origin: "} +
                                  originId};
   }
 
