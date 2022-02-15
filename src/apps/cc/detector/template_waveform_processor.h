@@ -1,7 +1,6 @@
 #ifndef SCDETECT_APPS_CC_DETECTOR_TEMPLATEWAVEFORMPROCESSOR_H_
 #define SCDETECT_APPS_CC_DETECTOR_TEMPLATEWAVEFORMPROCESSOR_H_
 
-#include <seiscomp/core/baseobject.h>
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/timewindow.h>
 
@@ -49,8 +48,7 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   // forwarded to the underlying cross-correlation instance.
   explicit TemplateWaveformProcessor(TemplateWaveform templateWaveform);
 
-  DEFINE_SMARTPOINTER(MatchResult);
-  struct MatchResult : public Core::BaseObject {
+  struct MatchResult {
     struct Value {
       Core::TimeSpan lag;
       double coefficient;
@@ -62,8 +60,9 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
     // Time window for w.r.t. the match results
     Core::TimeWindow timeWindow;
   };
-  using PublishMatchResultCallback = std::function<void(
-      const TemplateWaveformProcessor *, const Record *, MatchResultCPtr)>;
+  using PublishMatchResultCallback =
+      std::function<void(const TemplateWaveformProcessor *, const Record *,
+                         std::unique_ptr<const MatchResult>)>;
 
   // Sets `filter` with the corresponding filter `initTime`
   void setFilter(std::unique_ptr<Filter> filter,
@@ -94,12 +93,15 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
   void process(StreamState &streamState, const Record *record,
                const DoubleArray &filteredData) override;
 
+  bool store(const Record *record) override;
+
   bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
 
   void setupStream(StreamState &streamState, const Record *record) override;
 
-  void emitResult(const Record *record, const MatchResultCPtr &result);
+  void emitResult(const Record *record,
+                  std::unique_ptr<const MatchResult> result);
 
  private:
   StreamState _streamState;

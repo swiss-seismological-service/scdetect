@@ -1,538 +1,548 @@
 #include "detector.h"
 
-#include <seiscomp/core/strings.h>
+#include <seiscomp/client/inventory.h>
 
-#include <algorithm>
-#include <iterator>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
-#include "../config/validators.h"
+#include "../eventstore.h"
 #include "../log.h"
-#include "../util/floating_point_comparison.h"
-#include "../util/math.h"
-#include "../util/util.h"
-#include "arrival.h"
+#include "../settings.h"
+#include "../util/memory.h"
+#include "../util/waveform_stream_id.h"
+#include "linker/association.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 
-const Core::TimeSpan Detector::_linkerSafetyMargin{1.0};
-
-Detector::Detector(const DataModel::OriginCPtr &origin)
-    : Processor{}, _origin{origin} {
-  _linker.setResultCallback([this](const linker::Association &res) {
-    return storeLinkerResult(res);
-  });
-}
-
-Detector::BaseException::BaseException()
-    : Processor::BaseException{"base detector exception"} {}
-
-Detector::ProcessingError::ProcessingError()
-    : BaseException{"error while processing"} {}
-
-Detector::TemplateMatchingError::TemplateMatchingError()
-    : ProcessingError{"error while matching template"} {}
-
-Detector::Status Detector::status() const { return _status; }
-
-const Core::TimeWindow &Detector::processed() const { return _processed; }
-
-bool Detector::triggered() const { return static_cast<bool>(_triggerEnd); }
-
-void Detector::enableTrigger(const Core::TimeSpan &duration) {
-  _triggerDuration = duration;
-}
-
-void Detector::disableTrigger() { _triggerDuration = boost::none; }
-
-void Detector::setTriggerThresholds(double triggerOn, double triggerOff) {
-  _thresTriggerOn = triggerOn;
-  _linker.setThresAssociation(_thresTriggerOn);
-
-  if (_thresTriggerOn && config::validateXCorrThreshold(triggerOff)) {
-    _thresTriggerOff = triggerOff;
+Detector::Builder::Builder(const std::string &originId) : _originId{originId} {
+  DataModel::OriginCPtr origin{
+      EventStore::Instance().getWithChildren<DataModel::Origin>(originId)};
+  if (!origin) {
+    SCDETECT_LOG_WARNING("Origin %s not found.", originId.c_str());
+    throw builder::BaseException{std::string{"Error while assigning origin: "} +
+                                 originId};
   }
+
+  // XXX(damb): Using `new` to access a non-public ctor; see also
+  // https://abseil.io/tips/134
+  setProduct(std::unique_ptr<Detector>(new Detector{origin}));
 }
 
-void Detector::setArrivalOffsetThreshold(
-    const boost::optional<Core::TimeSpan> &thres) {
-  _linker.setThresArrivalOffset(thres);
+Detector::Builder &Detector::Builder::setId(const std::string &id) {
+  product()->setId(id);
+  product()->_detectorImpl.setId(id);
+  return *this;
 }
 
-boost::optional<Core::TimeSpan> Detector::arrivalOffsetThreshold() const {
-  return _linker.thresArrivalOffset();
+Detector::Builder &Detector::Builder::setConfig(
+    const config::PublishConfig &publishConfig,
+    const config::DetectorConfig &detectorConfig, bool playback) {
+  product()->_publishConfig = publishConfig;
+
+  product()->_config = detectorConfig;
+
+  product()->_enabled = detectorConfig.enabled;
+
+  product()->setGapThreshold(Core::TimeSpan{detectorConfig.gapThreshold});
+  product()->setGapTolerance(Core::TimeSpan{detectorConfig.gapTolerance});
+  product()->setGapInterpolation(detectorConfig.gapInterpolation);
+
+  setMergingStrategy(detectorConfig.mergingStrategy);
+
+  // configure playback related facilities
+  if (playback) {
+    product()->_detectorImpl.setMaxLatency(boost::none);
+  } else {
+    if (detectorConfig.maximumLatency > 0) {
+      product()->_detectorImpl.setMaxLatency(
+          Core::TimeSpan{detectorConfig.maximumLatency});
+    }
+  }
+
+  return *this;
 }
 
-void Detector::setMinArrivals(const boost::optional<size_t> &n) {
-  _linker.setMinArrivals(n);
-}
+Detector::Builder &Detector::Builder::setStream(
+    const std::string &streamId, const config::StreamConfig &streamConfig,
+    WaveformHandlerIface *waveformHandler) {
+  const auto &templateStreamId{streamConfig.templateConfig.wfStreamId};
+  util::WaveformStreamID templateWfStreamId{templateStreamId};
 
-boost::optional<size_t> Detector::minArrivals() const {
-  return _linker.minArrivals();
-}
+  logging::TaggedMessage msg{streamId + " (" + templateStreamId + ")"};
+  // configure pick from arrival
+  DataModel::PickPtr pick;
+  DataModel::WaveformStreamID pickWaveformId;
+  DataModel::ArrivalPtr arrival;
+  for (size_t i = 0; i < product()->_origin->arrivalCount(); ++i) {
+    arrival = product()->_origin->arrival(i);
 
-void Detector::setMergingStrategy(
-    linker::MergingStrategy::Type mergingStrategyTypeId) {
-  _linker.setMergingStrategy(mergingStrategyTypeId);
-}
+    if (arrival->phase().code() != streamConfig.templateConfig.phase) {
+      continue;
+    }
 
-void Detector::setMaxLatency(const boost::optional<Core::TimeSpan> &latency) {
-  _maxLatency = latency;
-}
+    pick = EventStore::Instance().get<DataModel::Pick>(arrival->pickID());
+    if (!pick) {
+      SCDETECT_LOG_DEBUG("Failed to load pick with id: %s",
+                         arrival->pickID().c_str());
+      continue;
+    }
+    if (!isValidArrival(*arrival, *pick)) {
+      continue;
+    }
 
-boost::optional<Core::TimeSpan> Detector::maxLatency() const {
-  return _maxLatency;
-}
+    // compare sensor locations
+    try {
+      pick->time().value();
+    } catch (...) {
+      continue;
+    }
+    auto templateWfSensorLocation{
+        Client::Inventory::Instance()->getSensorLocation(
+            templateWfStreamId.netCode(), templateWfStreamId.staCode(),
+            templateWfStreamId.locCode(), pick->time().value())};
+    if (!templateWfSensorLocation) {
+      msg.setText("sensor location not found in inventory for time: " +
+                  pick->time().value().iso());
+      throw builder::NoSensorLocation{logging::to_string(msg)};
+    }
+    pickWaveformId = pick->waveformID();
+    auto pickWfSensorLocation{Client::Inventory::Instance()->getSensorLocation(
+        pickWaveformId.networkCode(), pickWaveformId.stationCode(),
+        pickWaveformId.locationCode(), pick->time().value())};
+    if (!pickWfSensorLocation ||
+        *templateWfSensorLocation != *pickWfSensorLocation) {
+      continue;
+    }
 
-size_t Detector::processorCount() const { return _processors.size(); }
+    break;
+  }
 
-const TemplateWaveformProcessor *Detector::processor(
-    const std::string &processorId) const {
+  if (!pick) {
+    arrival.reset();
+    msg.setText("failed to load pick: origin=" + _originId +
+                ", phase=" + streamConfig.templateConfig.phase);
+    throw builder::NoPick{logging::to_string(msg)};
+  }
+
+  msg.setText("using arrival pick: origin=" + _originId +
+              ", time=" + pick->time().value().iso() +
+              ", phase=" + streamConfig.templateConfig.phase + ", stream=" +
+              util::to_string(util::WaveformStreamID{pickWaveformId}));
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
+
+  auto templateWaveformStartTime{
+      pick->time().value() +
+      Core::TimeSpan{streamConfig.templateConfig.wfStart}};
+  auto templateWaveformEndTime{
+      pick->time().value() + Core::TimeSpan{streamConfig.templateConfig.wfEnd}};
+
+  // load stream metadata from inventory
+  util::WaveformStreamID wfStreamId{streamId};
+  auto *stream{Client::Inventory::Instance()->getStream(
+      wfStreamId.netCode(), wfStreamId.staCode(), wfStreamId.locCode(),
+      wfStreamId.chaCode(), templateWaveformStartTime)};
+
+  if (!stream) {
+    msg.setText("failed to load stream from inventory: start=" +
+                templateWaveformStartTime.iso() +
+                ", end=" + templateWaveformEndTime.iso());
+    throw builder::NoStream{logging::to_string(msg)};
+  }
+
+  msg.setText("loaded stream from inventory for epoch: start=" +
+              templateWaveformStartTime.iso() +
+              ", end=" + templateWaveformEndTime.iso());
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
+
+  const auto templateWaveformProcessorId{
+      product()->id().empty() ? streamConfig.templateId
+                              : product()->id() + settings::kProcessorIdSep +
+                                    streamConfig.templateId};
+  msg.setText("creating template waveform processor with id: " +
+              templateWaveformProcessorId);
+  SCDETECT_LOG_DEBUG("%s", logging::to_string(msg).c_str());
+
+  product()->_streamStates[streamId] = Detector::StreamState{};
+
+  // template related filter configuration (used for template waveform
+  // processing)
+  TemplateWaveform::ProcessingConfig processingConfig;
+  processingConfig.templateStartTime = templateWaveformStartTime;
+  processingConfig.templateEndTime = templateWaveformEndTime;
+  processingConfig.safetyMargin = settings::kTemplateWaveformResampleMargin;
+  processingConfig.detrend = false;
+  processingConfig.demean = true;
+
+  auto pickFilterId{pick->filterID()};
+  auto templateWfFilterId{
+      streamConfig.templateConfig.filter.value_or(pickFilterId)};
+  if (!templateWfFilterId.empty()) {
+    util::replaceEscapedXMLFilterIdChars(templateWfFilterId);
+    processingConfig.filter = templateWfFilterId;
+    processingConfig.initTime = Core::TimeSpan{streamConfig.initTime};
+  }
+
+  // template waveform processor
+  std::unique_ptr<detector::TemplateWaveformProcessor>
+      templateWaveformProcessor;
   try {
-    return _processors.at(processorId).processor.get();
-  } catch (std::out_of_range &) {
+    auto templateWaveform{TemplateWaveform::load(
+        waveformHandler, templateWfStreamId.netCode(),
+        templateWfStreamId.staCode(), templateWfStreamId.locCode(),
+        templateWfStreamId.chaCode(), processingConfig)};
+
+    templateWaveform.setReferenceTime(pick->time().value());
+
+    templateWaveformProcessor =
+        util::make_unique<detector::TemplateWaveformProcessor>(
+            templateWaveform);
+  } catch (WaveformHandler::NoData &e) {
+    msg.setText("failed to load template waveform: " + std::string{e.what()});
+    throw builder::NoWaveformData{logging::to_string(msg)};
   }
-  return nullptr;
+
+  templateWaveformProcessor->setId(templateWaveformProcessorId);
+
+  std::string rtFilterId{streamConfig.filter.value_or(pickFilterId)};
+  // configure template related filter (used during real-time stream
+  // processing)
+  if (!rtFilterId.empty()) {
+    util::replaceEscapedXMLFilterIdChars(rtFilterId);
+    try {
+      templateWaveformProcessor->setFilter(processing::createFilter(rtFilterId),
+                                           streamConfig.initTime);
+    } catch (processing::WaveformProcessor::BaseException &e) {
+      msg.setText(e.what());
+      throw builder::BaseException{logging::to_string(msg)};
+    }
+  }
+
+  if (streamConfig.targetSamplingFrequency) {
+    templateWaveformProcessor->setTargetSamplingFrequency(
+        *streamConfig.targetSamplingFrequency);
+  }
+
+  std::string text{"filters configured: filter=\"" + rtFilterId + "\""};
+  if (rtFilterId != templateWfFilterId) {
+    text += " (template_filter=\"" + templateWfFilterId + "\")";
+  }
+  msg.setText(text);
+  SCDETECT_LOG_DEBUG_PROCESSOR(templateWaveformProcessor, "%s",
+                               logging::to_string(msg).c_str());
+
+  TemplateProcessorConfig c{std::move(templateWaveformProcessor),
+                            streamConfig.mergingThreshold,
+                            {stream->sensorLocation(), pick, arrival}};
+
+  _processorConfigs.emplace(streamId, std::move(c));
+
+  return *this;
 }
 
-void Detector::add(std::unique_ptr<TemplateWaveformProcessor> proc,
-                   const std::string &waveformStreamId, const Arrival &arrival,
-                   const Detector::SensorLocation &loc,
-                   const boost::optional<double> &mergingThreshold) {
-  proc->setResultCallback(
-      [this](const TemplateWaveformProcessor *processor, const Record *record,
-             TemplateWaveformProcessor::MatchResultCPtr result) {
-        storeTemplateResult(processor, record, result);
+void Detector::Builder::finalize() {
+  auto hasNoChildren{_processorConfigs.empty()};
+  if (hasNoChildren) {
+    product()->disable();
+  }
+
+  product()->_initTime = Core::TimeSpan{0.0};
+
+  const auto &cfg{product()->_config};
+  product()->_detectorImpl.setTriggerThresholds(cfg.triggerOn, cfg.triggerOff);
+  if (cfg.triggerDuration >= 0) {
+    product()->_detectorImpl.enableTrigger(Core::TimeSpan{cfg.triggerDuration});
+  }
+  auto productCopy{product()};
+  product()->_detectorImpl.setResultCallback(
+      [productCopy](const detector::DetectorImpl::Result &res) {
+        productCopy->storeDetection(res);
       });
 
-  // XXX(damb): Replace the arrival with a *pseudo arrival* i.e. an arrival
-  // which is associated with the stream to be processed
-  Arrival pseudoArrival{arrival};
-  pseudoArrival.pick.waveformStreamId = waveformStreamId;
-
-  _linker.add(proc.get(), pseudoArrival, mergingThreshold);
-  const auto onHoldDuration{_maxLatency.value_or(0.0) + proc->initTime() +
-                            _linkerSafetyMargin};
-
-  if (_linker.onHold() < onHoldDuration) {
-    _linker.setOnHold(onHoldDuration);
+  if (cfg.arrivalOffsetThreshold < 0) {
+    product()->_detectorImpl.setArrivalOffsetThreshold(boost::none);
+  } else {
+    product()->_detectorImpl.setArrivalOffsetThreshold(
+        Core::TimeSpan{cfg.arrivalOffsetThreshold});
   }
 
-  const auto procId{proc->id()};
-  ProcessorState p{loc, Core::TimeWindow{}, arrival.pick.time, std::move(proc)};
-  _processors.emplace(procId, std::move(p));
+  if (cfg.minArrivals < 0) {
+    product()->_detectorImpl.setMinArrivals(boost::none);
+  } else {
+    product()->_detectorImpl.setMinArrivals(cfg.minArrivals);
+  }
 
-  _processorIdx.emplace(waveformStreamId, procId);
+  std::unordered_set<std::string> usedPicks;
+  for (auto &procConfigPair : _processorConfigs) {
+    const auto &streamId{procConfigPair.first};
+    auto &procConfig{procConfigPair.second};
+
+    const auto &meta{procConfig.metadata};
+    boost::optional<std::string> phase_hint;
+    try {
+      phase_hint = meta.pick->phaseHint();
+    } catch (Core::ValueException &e) {
+    }
+    // initialize detection processing
+    product()->_detectorImpl.add(
+        std::move(procConfig.processor), streamId,
+        detector::Arrival{
+            {meta.pick->time().value(), meta.pick->waveformID(), phase_hint,
+             meta.pick->time().value() - product()->_origin->time().value()},
+            meta.arrival->phase(),
+            meta.arrival->weight(),
+        },
+        detector::DetectorImpl::SensorLocation{
+            meta.sensorLocation->latitude(), meta.sensorLocation->longitude(),
+            meta.sensorLocation->station()->publicID()},
+        procConfig.mergingThreshold);
+
+    usedPicks.emplace(meta.pick->publicID());
+  }
+
+  // attach reference theoretical template arrivals to the product
+  if (product()->_publishConfig.createTemplateArrivals) {
+    for (size_t i = 0; i < product()->_origin->arrivalCount(); ++i) {
+      const auto &arrival{product()->_origin->arrival(i)};
+      const auto &pick{
+          EventStore::Instance().get<DataModel::Pick>(arrival->pickID())};
+
+      bool isDetectorArrival{usedPicks.find(arrival->pickID()) !=
+                             usedPicks.end()};
+      if (isDetectorArrival || arrival->phase().code().empty()) {
+        continue;
+      }
+
+      if (!pick) {
+        SCDETECT_LOG_DEBUG("Failed to load pick with id: %s",
+                           arrival->pickID().c_str());
+        continue;
+      }
+
+      if (!isValidArrival(*arrival, *pick)) {
+        continue;
+      }
+
+      boost::optional<std::string> phaseHint;
+      try {
+        phaseHint = pick->phaseHint();
+      } catch (Core::ValueException &e) {
+      }
+      boost::optional<double> lowerUncertainty;
+      try {
+        lowerUncertainty = pick->time().lowerUncertainty();
+      } catch (Core::ValueException &e) {
+      }
+      boost::optional<double> upperUncertainty;
+      try {
+        upperUncertainty = pick->time().upperUncertainty();
+      } catch (Core::ValueException &e) {
+      }
+
+      product()->_publishConfig.theoreticalTemplateArrivals.push_back(
+          {{pick->time().value(),
+            util::to_string(util::WaveformStreamID{pick->waveformID()}),
+            phaseHint,
+            pick->time().value() - product()->_origin->time().value(),
+            lowerUncertainty, upperUncertainty},
+           arrival->phase(),
+           arrival->weight()});
+    }
+  }
 }
 
-void Detector::remove(const std::string &waveformStreamId) {
-  auto range{_processorIdx.equal_range(waveformStreamId)};
-  for (auto &rit = range.first; rit != range.second; ++rit) {
-    _linker.remove(rit->first);
+void Detector::Builder::setMergingStrategy(const std::string &strategyId) {
+  if ("all" == strategyId) {
+    product()->_detectorImpl.setMergingStrategy(
+        [](const linker::Association::TemplateResult &result,
+           double associationThreshold,
+           double mergingThreshold) { return true; });
+  } else if ("greaterEqualTriggerOnThreshold" == strategyId) {
+    product()->_detectorImpl.setMergingStrategy(
+        [](const linker::Association::TemplateResult &result,
+           double associationThreshold, double mergingThreshold) {
+          return result.resultIt->coefficient >= associationThreshold;
+        });
 
-    _processorIdx.erase(rit);
-    _processors.erase(rit->second);
-  }
-
-  // update linker
-  using pair_type = ProcessorStates::value_type;
-  const auto it{
-      std::max_element(std::begin(_processors), std::end(_processors),
-                       [](const pair_type &lhs, const pair_type &rhs) {
-                         return lhs.second.processor->initTime() <
-                                rhs.second.processor->initTime();
-                       })};
-  if (it == std::end(_processors)) {
-    return;
-  }
-
-  const auto maxOnHoldDuration{it->second.processor->initTime() +
-                               _maxLatency.value_or(0.0) + _linkerSafetyMargin};
-  if (maxOnHoldDuration > _linker.onHold()) {
-    _linker.setOnHold(maxOnHoldDuration);
+  } else if ("greaterEqualMergingThreshold" == strategyId) {
+    product()->_detectorImpl.setMergingStrategy(
+        [](const linker::Association::TemplateResult &result,
+           double associationThreshold, double mergingThreshold) {
+          return result.resultIt->coefficient >= mergingThreshold;
+        });
+  } else {
+    throw builder::BaseException{"invalid merging strategy: " + strategyId};
   }
 }
 
-void Detector::feed(const Record *record) {
-  if (status() == Status::kTerminated) {
-    throw BaseException{"error while processing: status=" +
-                        std::to_string(util::asInteger(Status::kTerminated))};
-  }
-
-  if (!hasAcceptableLatency(record)) {
-    // nothing to do
-    return;
-  }
-
-  // process data by means of underlying template processors
-  if (!process(record)) {
-    throw ProcessingError{
-        "error while while processing data with template processors"};
-  }
-
-  processResultQueue();
-
-  // overall processed endtime
-  Core::TimeWindow processed;
-  for (const auto &procPair : _processors) {
-    const auto procProcessed{procPair.second.processor->processed()};
-    if (!procProcessed) {
-      processed.setLength(0);
-      break;
+bool Detector::Builder::isValidArrival(const DataModel::Arrival &arrival,
+                                       const DataModel::Pick &pick) {
+  // check if both pick and arrival are properly configured
+  try {
+    if (pick.evaluationMode() != DataModel::MANUAL &&
+        (arrival.weight() == 0 || !arrival.timeUsed())) {
+      return false;
     }
-
-    if (_processed && _processed.endTime() < procProcessed.endTime()) {
-      processed = processed | procProcessed;
-    } else {
-      processed = procProcessed;
-    }
+  } catch (Core::ValueException &e) {
+    return false;
   }
-  _processed = processed;
+  return true;
+}
 
-  if (!triggered()) {
-    resetProcessing();
-  }
+/* ------------------------------------------------------------------------- */
+Detector::Detector(const DataModel::OriginCPtr &origin)
+    : _detectorImpl{origin}, _origin{origin} {}
+
+Detector::Builder Detector::Create(const std::string &originId) {
+  return Builder(originId);
+}
+
+void Detector::setResultCallback(const PublishDetectionCallback &callback) {
+  _detectionCallback = callback;
 }
 
 void Detector::reset() {
-  _linker.reset();
-  resetProcessors();
-  resetProcessing();
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Resetting detector ...");
 
-  _status = Status::kWaitingForData;
+  // reset template (child) related facilities
+  for (auto &streamStatePair : _streamStates) {
+    streamStatePair.second = WaveformProcessor::StreamState{};
+  }
+
+  _detectorImpl.reset();
+
+  WaveformProcessor::reset();
 }
 
 void Detector::terminate() {
-  _linker.terminate();
+  SCDETECT_LOG_DEBUG_PROCESSOR(this, "Terminating ...");
 
-  if (triggered()) {
-    while (!_resultQueue.empty()) {
-      const auto &result{_resultQueue.front()};
+  _detectorImpl.flush();
+  processDetections(nullptr);
 
-      if (result.fit > _currentResult.value().fit &&
-          result.processorCount() >= _currentResult.value().processorCount()) {
-        _currentResult = result;
-      }
-
-      _resultQueue.pop_front();
-    }
-
-    Result prepared;
-    prepareResult(*_currentResult, prepared);
-    emitResult(prepared);
-
-  } else if (!_triggerDuration) {
-    while (!_resultQueue.empty()) {
-      const auto &result{_resultQueue.front()};
-      _currentResult = result;
-      _resultQueue.pop_front();
-
-      Result prepared;
-      prepareResult(*_currentResult, prepared);
-      emitResult(prepared);
-
-      _currentResult = boost::none;
-    }
-  }
-
-  _status = Status::kTerminated;
+  WaveformProcessor::terminate();
 }
 
-void Detector::setResultCallback(const PublishResultCallback &callback) {
-  _resultCallback = callback;
+const config::PublishConfig &Detector::publishConfig() const {
+  return _publishConfig;
 }
 
-bool Detector::process(const Record *record) {
-  auto range{_processorIdx.equal_range(record->streamID())};
-  for (auto rit{range.first}; rit != range.second; ++rit) {
-    const auto &procId{rit->second};
-    auto &procState{_processors.at(procId)};
+const TemplateWaveformProcessor *Detector::processor(
+    const std::string &processorId) const {
+  return _detectorImpl.processor(processorId);
+}
 
-    if (!procState.processor->feed(record)) {
-      const auto &status{procState.processor->status()};
-      const auto &statusValue{procState.processor->statusValue()};
-      SCDETECT_LOG_ERROR_TAGGED(procState.processor->id(),
-                                "%s: failed to feed data (tw.start=%s, "
-                                "tw.end=%s) to processor. Reason: status=%d, "
-                                "statusValue=%f",
-                                record->streamID().c_str(),
-                                record->startTime().iso().c_str(),
-                                record->endTime().iso().c_str(),
-                                util::asInteger(status), statusValue);
+processing::WaveformProcessor::StreamState *Detector::streamState(
+    const Record *record) {
+  return &_streamStates.at(record->streamID());
+}
 
-      return false;
-    }
+void Detector::process(StreamState &streamState, const Record *record,
+                       const DoubleArray &filteredData) {
+  try {
+    _detectorImpl.feed(record);
+  } catch (detector::DetectorImpl::ProcessingError &e) {
+    SCDETECT_LOG_WARNING_PROCESSOR(this, "%s: %s. Resetting.",
+                                   record->streamID().c_str(), e.what());
+    _detectorImpl.reset();
+  } catch (std::exception &e) {
+    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unhandled exception: %s",
+                                 record->streamID().c_str(), e.what());
 
-    if (!procState.dataTimeWindowFed) {
-      procState.dataTimeWindowFed.setStartTime(record->startTime());
-    }
-    procState.dataTimeWindowFed.setEndTime(record->endTime());
+    setStatus(WaveformProcessor::Status::kError, 0);
+  } catch (...) {
+    SCDETECT_LOG_ERROR_PROCESSOR(this, "%s: unknown exception",
+                                 record->streamID().c_str());
 
-    if (procState.processor->finished()) {
-      return false;
-    }
+    setStatus(WaveformProcessor::Status::kError, 0);
   }
+
+  if (!finished()) {
+    processDetections(record);
+  }
+}
+
+bool Detector::store(const Record *record) {
+  processing::WaveformProcessor::store(record);
+
+  return !finished();
+}
+
+void Detector::reset(StreamState &streamState) {
+  // XXX(damb): drops all pending events
+  _detectorImpl.reset();
+
+  WaveformProcessor::reset(streamState);
+}
+
+bool Detector::fill(processing::StreamState &streamState, const Record *record,
+                    DoubleArrayPtr &data) {
+  // XXX(damb): `Detector` does neither implement filtering facilities nor does
+  // it perform a saturation check
+  auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
+  s.receivedSamples += data->size();
 
   return true;
 }
 
-bool Detector::hasAcceptableLatency(const Record *record) {
-  if (_maxLatency) {
-    return record->endTime() > Core::Time::GMT() - *_maxLatency;
-  }
-
-  return true;
+void Detector::storeDetection(const detector::DetectorImpl::Result &res) {
+  _detectionQueue.emplace_back(res);
 }
 
-void Detector::processResultQueue() {
-  while (!_resultQueue.empty()) {
-    processLinkerResult(_resultQueue.front());
-    _resultQueue.pop_front();
-  }
-}
+std::unique_ptr<const Detector::Detection> Detector::createDetection(
+    const detector::DetectorImpl::Result &res) {
+  const Core::TimeSpan timeCorrection{_config.timeCorrection};
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-void Detector::processLinkerResult(const linker::Association &result) {
-  const auto triggerOnThreshold{_thresTriggerOn.value_or(-1)};
-  const auto triggerOffThreshold{_thresTriggerOff.value_or(1)};
+  auto ret{util::make_unique<Detection>()};
 
-  if (result.fit > triggerOnThreshold) {
-    if (!_currentResult) {
-      _currentResult = result;
+  ret->score = res.score;
+  ret->time = res.originTime + timeCorrection;
+  ret->latitude = _origin->latitude().value();
+  ret->longitude = _origin->longitude().value();
+  ret->depth = _origin->depth().value();
 
-      // set trigger duration
-      if (_triggerDuration && *_triggerDuration > Core::TimeSpan{0.0}) {
-        SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
-                                     result.debugString().c_str());
-        _triggerProcId = triggerProcessorId(result);
-        const auto &endtime{
-            _processors.at(*_triggerProcId).processor->processed().endTime()};
-        _triggerEnd = endtime + *_triggerDuration;
-        // XXX(damb): A side-note on trigger facilities when it comes to the
-        // linker:
-        // - The linker processes only those template results which are fed to
-        // the linker i.e. the linker is not aware of the the fact whether a
-        // template waveform processor is enabled or disabled, respectively.
-        // - Thus, the detector processor can force the linker into a *triggered
-        // state* by only feeding data to those processors which are part of the
-        // triggering event.
-        disableProcessorsNotContributing(result);
-      } else {
-        SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result %s",
-                                     result.debugString().c_str());
-      }
-    } else if (triggered() && result.fit > _currentResult.value().fit &&
-               result.processorCount() >=
-                   _currentResult.value().processorCount()) {
-      SCDETECT_LOG_DEBUG_PROCESSOR(this,
-                                   "Detector result (triggered, updating) %s",
-                                   result.debugString().c_str());
-      _currentResult = result;
-      const auto triggerProcessorId{this->triggerProcessorId(result)};
-      if (_triggerProcId != triggerProcessorId) {
-        _triggerProcId = triggerProcessorId;
-        const auto &endtime{
-            _processors.at(*_triggerProcId).processor->processed().endTime()};
-        _triggerEnd = endtime + *_triggerDuration;
-        disableProcessorsNotContributing(result);
-      }
+  ret->numChannelsAssociated = res.numChannelsAssociated;
+  ret->numChannelsUsed = res.numChannelsUsed;
+  ret->numStationsAssociated = res.numStationsAssociated;
+  ret->numStationsUsed = res.numStationsUsed;
+
+  ret->publishConfig.createArrivals = _publishConfig.createArrivals;
+  ret->publishConfig.createTemplateArrivals =
+      _publishConfig.createTemplateArrivals;
+  ret->publishConfig.originMethodId = _publishConfig.originMethodId;
+  ret->publishConfig.createAmplitudes = _publishConfig.createAmplitudes;
+  ret->publishConfig.createMagnitudes = _publishConfig.createMagnitudes;
+
+  if (_publishConfig.createTemplateArrivals) {
+    for (const auto &arrival : _publishConfig.theoreticalTemplateArrivals) {
+      auto theoreticalTemplateArrival{arrival};
+      theoreticalTemplateArrival.pick.time =
+          res.originTime + arrival.pick.offset + timeCorrection;
+      ret->publishConfig.theoreticalTemplateArrivals.push_back(
+          theoreticalTemplateArrival);
     }
   }
 
-  if (triggered()) {
-    if (result.fit <= _currentResult.value().fit &&
-        result.fit >= triggerOffThreshold) {
-      SCDETECT_LOG_DEBUG_PROCESSOR(this,
-                                   "Detector result (triggered, dropped) %s",
-                                   result.debugString().c_str());
-    }
-
-    const auto &endtime{
-        _processors.at(*_triggerProcId).processor->processed().endTime()};
-    const auto expired{endtime > *_triggerEnd};
-    // disable trigger if required
-    if (expired || result.fit < triggerOffThreshold) {
-      resetTrigger();
+  ret->templateResults = res.templateResults;
+  if (timeCorrection) {
+    for (auto &templateResultPair : ret->templateResults) {
+      templateResultPair.second.arrival.pick.time += timeCorrection;
     }
   }
 
-  // emit detection
-  if (!triggered()) {
-    Result prepared;
-    prepareResult(*_currentResult, prepared);
-    emitResult(prepared);
-  }
-}
-
-void Detector::disableProcessorsNotContributing(
-    const linker::Association &result) {
-  // disable those processors not contributing to the triggering event
-  std::vector<std::string> contributing;
-  std::transform(std::begin(result.results), std::end(result.results),
-                 std::back_inserter(contributing),
-                 [](const linker::Association::TemplateResults::value_type &p) {
-                   return p.first;
-                 });
-  std::for_each(
-      std::begin(_processors), std::end(_processors),
-      [](ProcessorStates::value_type &p) { p.second.processor->disable(); });
-  std::for_each(std::begin(contributing), std::end(contributing),
-                [this](const std::string &proc_id) {
-                  _processors.at(proc_id).processor->enable();
-                });
-}
-
-std::string Detector::triggerProcessorId(const linker::Association &result) {
-  // determine the processor with the first arrival
-  return sortByArrivalTime(result).at(0).processorId;
-}
-
-void Detector::prepareResult(const linker::Association &linkerResult,
-                             Detector::Result &result) const {
-  auto sorted{sortByArrivalTime(linkerResult)};
-
-  const auto &referenceResult{sorted.at(0)};
-  const auto &referenceArrival{referenceResult.result.arrival};
-  const auto referenceMatchResult{referenceResult.result.matchResult};
-  const auto &referenceStartTime{referenceMatchResult->timeWindow.startTime()};
-  const auto referenceLag{
-      static_cast<double>(referenceArrival.pick.time - referenceStartTime)};
-
-  std::unordered_set<std::string> usedChas;
-  std::unordered_set<std::string> usedStas;
-  std::vector<double> alignedArrivalOffsets;
-
-  Detector::Result::TemplateResults templateResults;
-  for (const auto &result : sorted) {
-    const auto &procId{result.processorId};
-    const auto &templateResult{result.result};
-    const auto &proc{_processors.at(procId)};
-    if (templateResult.matchResult) {
-      const auto matchResult{templateResult.matchResult};
-      const auto &startTime{matchResult->timeWindow.startTime()};
-
-      auto arrivalOffset{templateResult.arrival.pick.time -
-                         referenceArrival.pick.time};
-      // compute alignment correction using the POT offset (required, since
-      // traces to be cross-correlated cannot be guaranteed to be aligned to
-      // sub-sampling interval accuracy)
-      const auto &alignmentCorrection{referenceStartTime + arrivalOffset -
-                                      startTime};
-
-      alignedArrivalOffsets.push_back(
-          static_cast<double>(templateResult.arrival.pick.time - startTime) -
-          alignmentCorrection - referenceLag);
-
-      templateResults.emplace(
-          templateResult.arrival.pick.waveformStreamId,
-          Detector::Result::TemplateResult{
-              templateResult.arrival, proc.sensorLocation,
-              proc.processor->templateWaveform().startTime(),
-              proc.processor->templateWaveform().endTime(),
-              proc.templateWaveformReferenceTime, procId});
-      usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
-      usedStas.emplace(proc.sensorLocation.stationId);
-    }
-  }
-
-  // compute origin time
-  const auto &arrivalOffsetCorrection{
-      util::cma(alignedArrivalOffsets.data(), alignedArrivalOffsets.size())};
-  const auto &referenceOriginArrivalOffset{referenceArrival.pick.offset};
-  result.originTime = referenceStartTime + Core::TimeSpan{referenceLag} -
-                      referenceOriginArrivalOffset +
-                      Core::TimeSpan{arrivalOffsetCorrection};
-  result.fit = linkerResult.fit;
-  // template results i.e. theoretical arrivals including some meta data
-  result.templateResults = templateResults;
-  // number of channels used
-  result.numChannelsUsed = usedChas.size();
-  // number of stations used
-  result.numStationsUsed = usedStas.size();
-  // number of channels/stations associated
-  std::unordered_set<std::string> associatedStations;
-  for (const auto &procPair : _processors) {
-    associatedStations.emplace(procPair.second.sensorLocation.stationId);
-  }
-  result.numChannelsAssociated = _linker.channelCount();
-  result.numStationsAssociated = associatedStations.size();
-}
-
-void Detector::emitResult(const Detector::Result &result) {
-  if (_resultCallback) {
-    _resultCallback.value()(result);
-  }
-}
-
-void Detector::resetProcessing() {
-  _currentResult = boost::none;
-  // enable processors
-  for (auto &procPair : _processors) {
-    procPair.second.processor->enable();
-  }
-
-  resetTrigger();
-}
-
-void Detector::resetTrigger() {
-  _triggerProcId = boost::none;
-  _triggerEnd = boost::none;
-}
-
-void Detector::resetProcessors() {
-  std::for_each(std::begin(_processors), std::end(_processors),
-                [](ProcessorStates::value_type &p) {
-                  p.second.processor->reset();
-                  p.second.dataTimeWindowFed = Core::TimeWindow{};
-                });
-}
-
-void Detector::storeTemplateResult(
-    const TemplateWaveformProcessor *processor, const Record *record,
-    const TemplateWaveformProcessor::MatchResultCPtr &result) {
-  if (!processor || !record || !result) {
-    return;
-  }
-
-  auto &p{_processors.at(processor->id())};
-  if (p.processor->finished()) {
-    const auto &status{p.processor->status()};
-    const auto &statusValue{p.processor->statusValue()};
-    auto msg{Core::stringify(
-        "Failed to match template (proc_id=%s). Reason: "
-        "status=%d, statusValue=%f",
-        p.processor->id().c_str(), util::asInteger(status), statusValue)};
-
-    throw TemplateMatchingError{msg};
-  }
-
-  _linker.feed(processor, result);
-}
-
-void Detector::storeLinkerResult(const linker::Association &linkerResult) {
-  _resultQueue.emplace_back(linkerResult);
-}
-
-std::vector<Detector::TemplateResult> Detector::sortByArrivalTime(
-    const linker::Association &linkerResult) {
-  std::vector<TemplateResult> ret;
-  for (const auto &resultPair : linkerResult.results) {
-    ret.push_back({resultPair.second, resultPair.first});
-  }
-  std::sort(std::begin(ret), std::end(ret),
-            [](const TemplateResult &lhs, const TemplateResult &rhs) {
-              return lhs.result.arrival.pick.time <
-                     rhs.result.arrival.pick.time;
-            });
   return ret;
+}
+
+void Detector::emitDetection(const Record *record,
+                             std::unique_ptr<const Detection> detection) {
+  if (enabled() && _detectionCallback) {
+    _detectionCallback(this, record, std::move(detection));
+  }
+}
+
+void Detector::processDetections(const Record *record) {
+  while (!_detectionQueue.empty()) {
+    emitDetection(record, createDetection(_detectionQueue.front()));
+    _detectionQueue.pop_front();
+  }
 }
 
 }  // namespace detector

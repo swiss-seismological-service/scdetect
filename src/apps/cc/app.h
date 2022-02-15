@@ -32,7 +32,7 @@
 #include "binding.h"
 #include "config/detector.h"
 #include "config/template_family.h"
-#include "detector/detectorwaveformprocessor.h"
+#include "detector/detector.h"
 #include "exception.h"
 #include "processing/timewindow_processor.h"
 #include "settings.h"
@@ -250,7 +250,7 @@ class Application : public Client::StreamApplication {
     DataModel::OriginPtr origin;
 
     std::string detectorId;
-    detector::DetectorWaveformProcessor::DetectionCPtr detection;
+    std::shared_ptr<const detector::Detector::Detection> detection;
 
     std::size_t numberOfRequiredAmplitudes{};
     std::size_t numberOfRequiredMagnitudes{};
@@ -326,9 +326,8 @@ class Application : public Client::StreamApplication {
                      TemplateConfigs &templateConfigs);
 
   // Initialize amplitude processors
-  bool initAmplitudeProcessors(
-      std::shared_ptr<DetectionItem> &detectionItem,
-      const detector::DetectorWaveformProcessor &detectorProcessor);
+  bool initAmplitudeProcessors(std::shared_ptr<DetectionItem> &detectionItem,
+                               const detector::Detector &detectorProcessor);
 
   // Creates an amplitude
   //
@@ -363,17 +362,15 @@ class Application : public Client::StreamApplication {
   void removeDetection(const std::shared_ptr<DetectionItem> &detection);
 
   void processDetection(
-      const detector::DetectorWaveformProcessor *processor,
-      const Record *record,
-      const detector::DetectorWaveformProcessor::DetectionCPtr &detection);
+      const detector::Detector *processor, const Record *record,
+      std::unique_ptr<const detector::Detector::Detection> detection);
 
   void publishDetection(const DetectionItem &detectionItem);
 
   void publishAndRemoveDetection(std::shared_ptr<DetectionItem> &detection);
 
   std::unique_ptr<DataModel::Comment> createTemplateWaveformTimeInfoComment(
-      const detector::DetectorWaveformProcessor::Detection::TemplateResult
-          &templateResult);
+      const detector::Detector::Detection::TemplateResult &templateResult);
 
   Config _config;
   binding::Bindings _bindings;
@@ -383,8 +380,9 @@ class Application : public Client::StreamApplication {
 
   DataModel::EventParametersPtr _ep;
 
-  using DetectorMap = std::unordered_multimap<
-      WaveformStreamId, std::shared_ptr<detector::DetectorWaveformProcessor>>;
+  using DetectorMap =
+      std::unordered_multimap<WaveformStreamId,
+                              std::shared_ptr<detector::Detector>>;
   DetectorMap _detectors;
 
   // Ringbuffer

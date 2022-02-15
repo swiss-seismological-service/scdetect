@@ -37,7 +37,7 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>2</associatedStationCount>
         <usedStationCount>2</usedStationCount>
-        <standardError>0</standardError>
+        <standardError>0.0</standardError>
         <maximumDistance>0.6822777327</maximumDistance>
         <minimumDistance>0.6415833155</minimumDistance>
         <medianDistance>0.6822777327</medianDistance>

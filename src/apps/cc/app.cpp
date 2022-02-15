@@ -26,6 +26,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
+#include <cassert>
 #include <exception>
 #include <ios>
 #include <iterator>
@@ -43,8 +44,7 @@
 #include "config/exception.h"
 #include "config/validators.h"
 #include "detector/arrival.h"
-#include "detector/detectorbuilder.h"
-#include "detector/detectorwaveformprocessor.h"
+#include "detector/detector.h"
 #include "eventstore.h"
 #include "log.h"
 #include "magnitude/regression.h"
@@ -589,22 +589,10 @@ void Application::handleRecord(Record *rec) {
   for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
     auto &detector{it->second};
     if (detector->enabled()) {
-      if (!detector->feed(rec) && detector->finished()) {
+      if (!detector->feed(rec)) {
         logging::TaggedMessage msg{it->first,
                                    "Failed to feed record into detector (" +
                                        detector->id() + "). Resetting."};
-        SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
-        detector->reset();
-        continue;
-      }
-
-      if (detector->finished()) {
-        logging::TaggedMessage msg{
-            it->first,
-            "Detector finished (id=" + detector->id() + ", status=" +
-                std::to_string(util::asInteger(detector->status())) +
-                ", status_value=" + std::to_string(detector->statusValue()) +
-                "). Resetting."};
         SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
         detector->reset();
         continue;
@@ -713,8 +701,10 @@ void Application::handleRecord(Record *rec) {
 }
 
 void Application::processDetection(
-    const detector::DetectorWaveformProcessor *processor, const Record *record,
-    const detector::DetectorWaveformProcessor::DetectionCPtr &detection) {
+    const detector::Detector *processor, const Record *record,
+    std::unique_ptr<const detector::Detector::Detection> detection) {
+  assert(detection);
+
   SCDETECT_LOG_DEBUG_PROCESSOR(
       processor,
       "Start processing detection (time=%s, associated_results=%d) ...",
@@ -743,7 +733,7 @@ void Application::processDetection(
   {
     auto comment{util::make_smart<DataModel::Comment>()};
     comment->setId("scdetectResultCCC");
-    comment->setText(std::to_string(detection->fit));
+    comment->setText(std::to_string(detection->score));
     origin->add(comment.get());
   }
 
@@ -789,7 +779,7 @@ void Application::processDetection(
     originQuality.setMedianDistance(distances[distances.size() / 2]);
   }
 
-  originQuality.setStandardError(1.0 - detection->fit);
+  originQuality.setStandardError(1.0 - detection->score);
   originQuality.setAssociatedStationCount(detection->numStationsAssociated);
   originQuality.setUsedStationCount(detection->numStationsUsed);
   originQuality.setAssociatedPhaseCount(detection->numChannelsAssociated);
@@ -799,7 +789,7 @@ void Application::processDetection(
 
   DetectionItem detectionItem{origin};
   detectionItem.detectorId = processor->id();
-  detectionItem.detection = detection;
+  detectionItem.detection = std::move(detection);
 
   detectionItem.config = DetectionItem::ProcessorConfig{
       processor->gapInterpolation(), processor->gapThreshold(),
@@ -849,9 +839,9 @@ void Application::processDetection(
     return ret;
   };
 
-  auto createPicks{detection->publishConfig.createArrivals ||
-                   detection->publishConfig.createAmplitudes ||
-                   detection->publishConfig.createMagnitudes};
+  auto createPicks{detectionItem.detection->publishConfig.createArrivals ||
+                   detectionItem.detection->publishConfig.createAmplitudes ||
+                   detectionItem.detection->publishConfig.createMagnitudes};
   if (createPicks) {
     using PhaseCode = std::string;
     using ProcessedPhaseCodes = std::unordered_set<PhaseCode>;
@@ -860,7 +850,7 @@ void Application::processDetection(
         std::unordered_map<SensorLocationStreamId, ProcessedPhaseCodes>;
     SensorLocationStreamIdProcessedPhaseCodesMap processedPhaseCodes;
 
-    for (const auto &resultPair : detection->templateResults) {
+    for (const auto &resultPair : detectionItem.detection->templateResults) {
       const auto &res{resultPair.second};
 
       auto sensorLocationStreamId{util::getSensorLocationStreamId(
@@ -879,14 +869,15 @@ void Application::processDetection(
             std::find(std::begin(processed), std::end(processed),
                       res.arrival.phase) != std::end(processed)};
         // XXX(damb): assign a phase only once per sensor location
-        if (detection->publishConfig.createArrivals && !phaseAlreadyProcessed) {
+        if (detectionItem.detection->publishConfig.createArrivals &&
+            !phaseAlreadyProcessed) {
           const auto arrival{createArrival(res.arrival, pick)};
           detectionItem.arrivalPicks.push_back({arrival, pick});
           processed.emplace(res.arrival.phase);
         }
 
-        if (detection->publishConfig.createAmplitudes ||
-            detection->publishConfig.createMagnitudes) {
+        if (detectionItem.detection->publishConfig.createAmplitudes ||
+            detectionItem.detection->publishConfig.createMagnitudes) {
           detectionItem.amplitudePickMap.emplace(
               res.processorId,
               DetectionItem::Pick{res.arrival.pick.waveformStreamId, pick});
@@ -900,8 +891,9 @@ void Application::processDetection(
   }
 
   // create theoretical template arrivals
-  if (detection->publishConfig.createTemplateArrivals) {
-    for (const auto &a : detection->publishConfig.theoreticalTemplateArrivals) {
+  if (detectionItem.detection->publishConfig.createTemplateArrivals) {
+    for (const auto &a :
+         detectionItem.detection->publishConfig.theoreticalTemplateArrivals) {
       try {
         const auto pick{createPick(a, true)};
         const auto arrival{createArrival(a, pick)};
@@ -924,7 +916,8 @@ void Application::processDetection(
       !magnitudeForcedEnabled};
 
   if (amplitudeForcedEnabled ||
-      (!amplitudeForcedDisabled && detection->publishConfig.createAmplitudes)) {
+      (!amplitudeForcedDisabled &&
+       detectionItem.detection->publishConfig.createAmplitudes)) {
     // XXX(damb): as soon as either amplitudes or magnitudes need to be
     // computed, the detection is issued as a wholesale due to simplicity.
     // (Note that the amplitudes could be issued independently from the origin
@@ -1472,7 +1465,7 @@ bool Application::initDetectors(std::ifstream &ifs,
                            tc.detectorId().c_str());
 
         auto detectorBuilder{
-            std::move(detector::DetectorWaveformProcessor::Create(tc.originId())
+            std::move(detector::Detector::Create(tc.originId())
                           .setId(tc.detectorId())
                           .setConfig(tc.publishConfig(), tc.detectorConfig(),
                                      _config.playbackConfig.enabled))};
@@ -1518,14 +1511,13 @@ bool Application::initDetectors(std::ifstream &ifs,
           waveformStreamIds.push_back(streamConfigPair.first);
         }
 
-        std::shared_ptr<detector::DetectorWaveformProcessor> detectorPtr{
+        std::shared_ptr<detector::Detector> detectorPtr{
             detectorBuilder.build()};
         detectorPtr->setResultCallback(
-            [this](
-                const detector::DetectorWaveformProcessor *processor,
-                const Record *record,
-                detector::DetectorWaveformProcessor::DetectionCPtr detection) {
-              processDetection(processor, record, detection);
+            [this](const detector::Detector *processor, const Record *record,
+                   std::unique_ptr<const detector::Detector::Detection>
+                       detection) {
+              processDetection(processor, record, std::move(detection));
             });
 
         for (const auto &waveformStreamId : waveformStreamIds) {
@@ -1565,7 +1557,7 @@ bool Application::initDetectors(std::ifstream &ifs,
 
 bool Application::initAmplitudeProcessors(
     std::shared_ptr<DetectionItem> &detectionItem,
-    const detector::DetectorWaveformProcessor &detectorProcessor) {
+    const detector::Detector &detectorProcessor) {
   using PickMap = std::pair<DetectionItem::ProcessorId, DetectionItem::Pick>;
   using SensorLocationId = std::string;
   using SensorLocationPickMap =
@@ -1934,8 +1926,7 @@ void Application::removeDetection(
 
 std::unique_ptr<DataModel::Comment>
 Application::createTemplateWaveformTimeInfoComment(
-    const detector::DetectorWaveformProcessor::Detection::TemplateResult
-        &templateResult) {
+    const detector::Detector::Detection::TemplateResult &templateResult) {
   auto ret{util::make_unique<DataModel::Comment>()};
   ret->setId(settings::kTemplateWaveformTimeInfoPickCommentId);
   ret->setText(templateResult.templateWaveformStartTime.iso() +

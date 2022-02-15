@@ -9,11 +9,29 @@ namespace detect {
 namespace detector {
 namespace linker {
 
+bool operator==(const Association::TemplateResult &lhs,
+                const Association::TemplateResult &rhs) {
+  return lhs.arrival == rhs.arrival;
+}
+bool operator!=(const Association::TemplateResult &lhs,
+                const Association::TemplateResult &rhs) {
+  return !(lhs == rhs);
+}
+
 size_t Association::processorCount() const { return results.size(); }
 
 std::string Association::debugString() const {
-  return std::string{"fit=" + std::to_string(fit) + ", associated_results=" +
-                     std::to_string(processorCount())};
+  return std::string{
+      "score=" + std::to_string(score) +
+      ", associated_results=" + std::to_string(processorCount())};
+}
+
+bool operator==(const Association &lhs, const Association &rhs) {
+  return lhs.score == rhs.score && lhs.results == rhs.results;
+}
+
+bool operator!=(const Association &lhs, const Association &rhs) {
+  return !(lhs == rhs);
 }
 
 }  // namespace linker

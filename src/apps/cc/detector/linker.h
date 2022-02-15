@@ -5,7 +5,6 @@
 #include <seiscomp/core/timewindow.h>
 
 #include <boost/optional/optional.hpp>
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -13,8 +12,7 @@
 #include "arrival.h"
 #include "linker/association.h"
 #include "linker/pot.h"
-#include "linker/strategy.h"
-#include "templatewaveformprocessor.h"
+#include "template_waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -23,10 +21,9 @@ namespace detector {
 // Associates `TemplateWaveformProcessor` results
 class Linker {
  public:
-  Linker(const Core::TimeSpan &onHold = Core::TimeSpan{0.0},
-         const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{2.0e-6});
-
-  enum class Status { kWaitingForData, kTerminated };
+  explicit Linker(const Core::TimeSpan &onHold = Core::TimeSpan{0.0},
+                  const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{
+                      2.0e-6});
 
   // Sets the arrival offset threshold
   void setThresArrivalOffset(const boost::optional<Core::TimeSpan> &thres);
@@ -45,10 +42,11 @@ class Linker {
   void setOnHold(const Core::TimeSpan &duration);
   // Returns the current *on hold* duration
   Core::TimeSpan onHold() const;
+
+  using MergingStrategy = std::function<bool(
+      const linker::Association::TemplateResult &, double, double)>;
   // Sets the linker's merging strategy based on `mergingStrategyTypeId`
-  void setMergingStrategy(linker::MergingStrategy::Type mergingStrategyTypeId);
-  // Returns the linker's status
-  Status status() const;
+  void setMergingStrategy(MergingStrategy mergingStrategy);
   // Returns the number of associated channels
   size_t channelCount() const;
   // Returns the number of associated processors
@@ -64,14 +62,13 @@ class Linker {
   //
   // - drops all pending results
   void reset();
-  // Terminates the linker
-  //
-  // - flushes pending detections
-  void terminate();
+  // Flushes the linker
+  void flush();
 
   // Feeds the `proc`'s result `res` to the linker
   void feed(const TemplateWaveformProcessor *proc,
-            const TemplateWaveformProcessor::MatchResultCPtr &matchResult);
+            std::unique_ptr<const TemplateWaveformProcessor::MatchResult>
+                matchResult);
 
   using PublishResultCallback =
       std::function<void(const linker::Association &)>;
@@ -93,8 +90,6 @@ class Linker {
       const Candidate &candidate, const std::string &processorId,
       const linker::Association::TemplateResult &newResult);
 
-  Status _status{Status::kWaitingForData};
-
   // `TemplateWaveformProcessor` processor
   struct Processor {
     const TemplateWaveformProcessor *proc;
@@ -114,7 +109,7 @@ class Linker {
     // The time after the event is considered as expired
     Core::Time expired;
 
-    Candidate(const Core::Time &expired);
+    explicit Candidate(const Core::Time &expired);
     // Feeds the template result `res` to the event in order to be merged
     void feed(const std::string &procId,
               const linker::Association::TemplateResult &res);
@@ -147,7 +142,11 @@ class Linker {
   Core::TimeSpan _onHold{0.0};
 
   // The merging strategy used while linking
-  std::unique_ptr<linker::MergingStrategy> _mergingStrategy;
+  MergingStrategy _mergingStrategy{
+      [](const linker::Association::TemplateResult &result,
+         double associationThreshold, double mergingThreshold) {
+        return result.resultIt->coefficient >= associationThreshold;
+      }};
 
   // The result callback function
   boost::optional<PublishResultCallback> _resultCallback;

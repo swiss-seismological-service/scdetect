@@ -1,8 +1,9 @@
 #include "linker.h"
 
 #include <algorithm>
-#include <boost/functional/hash.hpp>
+#include <cassert>
 #include <iterator>
+#include <memory>
 #include <unordered_set>
 
 #include "../util/math.h"
@@ -47,12 +48,9 @@ void Linker::setOnHold(const Core::TimeSpan &duration) { _onHold = duration; }
 
 Core::TimeSpan Linker::onHold() const { return _onHold; }
 
-void Linker::setMergingStrategy(
-    linker::MergingStrategy::Type mergingStrategyTypeId) {
-  _mergingStrategy = linker::MergingStrategy::Create(mergingStrategyTypeId);
+void Linker::setMergingStrategy(MergingStrategy mergingStrategy) {
+  _mergingStrategy = std::move(mergingStrategy);
 }
-
-Linker::Status Linker::status() const { return _status; }
 
 size_t Linker::channelCount() const {
   std::unordered_set<std::string> wfIds;
@@ -81,84 +79,78 @@ void Linker::remove(const std::string &procId) {
 void Linker::reset() {
   _queue.clear();
   _potValid = false;
-
-  _status = Status::kWaitingForData;
 }
 
-void Linker::terminate() {
+void Linker::flush() {
   // flush pending events
   while (!_queue.empty()) {
     const auto event{_queue.front()};
     if (event.associatedProcessorCount() >=
             _minArrivals.value_or(processorCount()) &&
-        (!_thresAssociation || event.association.fit >= *_thresAssociation)) {
+        (!_thresAssociation || event.association.score >= *_thresAssociation)) {
       emitResult(event.association);
     }
 
     _queue.pop_front();
   }
-  _status = Status::kTerminated;
 }
 
 void Linker::feed(
     const TemplateWaveformProcessor *proc,
-    const TemplateWaveformProcessor::MatchResultCPtr &matchResult) {
-  if (!proc || !matchResult) {
+    std::unique_ptr<const TemplateWaveformProcessor::MatchResult> matchResult) {
+  assert((proc && matchResult));
+
+  auto it{_processors.find(proc->id())};
+  if (it == _processors.end()) {
     return;
   }
 
-  if (status() < Status::kTerminated) {
-    auto it{_processors.find(proc->id())};
-    if (it == _processors.end()) {
-      return;
-    }
+  auto &linkerProc{it->second};
+  // create a new arrival from a *template arrival*
+  auto newArrival{linkerProc.arrival};
 
-    auto &linkerProc{it->second};
-    // create a new arrival from a *template arrival*
-    auto newArrival{linkerProc.arrival};
+  std::shared_ptr<const TemplateWaveformProcessor::MatchResult> result{
+      std::move(matchResult)};
+  // XXX(damb): recompute the pickOffset; the template proc might have
+  // changed the underlying template waveform (due to resampling)
+  const auto currentPickOffset{linkerProc.arrival.pick.time -
+                               linkerProc.proc->templateWaveform().startTime()};
+  for (auto valueIt{result->localMaxima.begin()};
+       valueIt != result->localMaxima.end(); ++valueIt) {
+    const auto time{result->timeWindow.startTime() + valueIt->lag +
+                    currentPickOffset};
+    newArrival.pick.time = time;
 
-    // XXX(damb): recompute the pickOffset; the template proc might have
-    // changed the underlying template waveform (due to resampling)
-    const auto currentPickOffset{
-        linkerProc.arrival.pick.time -
-        linkerProc.proc->templateWaveform().startTime()};
-    for (auto valueIt{matchResult->localMaxima.begin()};
-         valueIt != matchResult->localMaxima.end(); ++valueIt) {
-      const auto time{matchResult->timeWindow.startTime() + valueIt->lag +
-                      currentPickOffset};
-      newArrival.pick.time = time;
-
-      linker::Association::TemplateResult templateResult{newArrival, valueIt,
-                                                         matchResult};
-      // filter/drop based on merging strategy
-      if (_mergingStrategy && _thresAssociation &&
-          !_mergingStrategy->operator()(
-              templateResult, *_thresAssociation,
-              linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
-#ifdef SCDETECT_DEBUG
-        SCDETECT_LOG_DEBUG_PROCESSOR(
-            proc,
-            "[%s] [%s - %s] Dropping result due to merging "
-            "strategy applied: time=%s, fit=%9f, lag=%10f",
-            newArrival.pick.waveformStreamId.c_str(),
-            matchResult->timeWindow.startTime().iso().c_str(),
-            matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
-            valueIt->coefficient, static_cast<double>(valueIt->lag));
-#endif
-        continue;
-      }
-
+    linker::Association::TemplateResult templateResult{newArrival, valueIt,
+                                                       result};
+    // filter/drop based on merging strategy
+    if (_thresAssociation &&
+        !_mergingStrategy(
+            templateResult, *_thresAssociation,
+            linkerProc.mergingThreshold.value_or(*_thresAssociation))) {
 #ifdef SCDETECT_DEBUG
       SCDETECT_LOG_DEBUG_PROCESSOR(
           proc,
-          "[%s] [%s - %s] Trying to merge result: time=%s, fit=%9f, lag=%10f",
+          "[%s] [%s - %s] Dropping result due to merging "
+          "strategy applied: time=%s, score=%9f, lag=%10f",
           newArrival.pick.waveformStreamId.c_str(),
-          matchResult->timeWindow.startTime().iso().c_str(),
-          matchResult->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+          result->timeWindow.startTime().iso().c_str(),
+          result->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
           valueIt->coefficient, static_cast<double>(valueIt->lag));
 #endif
-      process(proc, templateResult);
+      continue;
     }
+
+#ifdef SCDETECT_DEBUG
+    SCDETECT_LOG_DEBUG_PROCESSOR(
+        proc,
+        "[%s] [%s - %s] Trying to merge result: time=%s, score=%9f, lag=%10f",
+        newArrival.pick.waveformStreamId.c_str(),
+        result->timeWindow.startTime().iso().c_str(),
+        result->timeWindow.endTime().iso().c_str(), time.iso().c_str(),
+        valueIt->coefficient, static_cast<double>(valueIt->lag));
+#endif
+    process(proc, templateResult);
   }
 }
 
@@ -211,7 +203,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
       if (arrivalCount == processorCount() ||
           (now >= it->expired &&
            arrivalCount >= _minArrivals.value_or(processorCount()))) {
-        if (!_thresAssociation || it->association.fit >= *_thresAssociation) {
+        if (!_thresAssociation || it->association.score >= *_thresAssociation) {
           emitResult(it->association);
         }
         ready.push_back(it);
@@ -294,15 +286,15 @@ void Linker::Candidate::feed(const std::string &procId,
   auto &templateResults{association.results};
   templateResults.emplace(procId, res);
 
-  std::vector<double> fits;
+  std::vector<double> scores;
   std::transform(std::begin(templateResults), std::end(templateResults),
-                 std::back_inserter(fits),
+                 std::back_inserter(scores),
                  [](const linker::Association::TemplateResults::value_type &p) {
                    return p.second.resultIt->coefficient;
                  });
 
   // compute the overall event's score
-  association.fit = util::cma(fits.data(), fits.size());
+  association.score = util::cma(scores.data(), scores.size());
 }
 
 size_t Linker::Candidate::associatedProcessorCount() const {

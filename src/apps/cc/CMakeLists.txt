@@ -19,14 +19,12 @@ set(
     datamodel/ddl.cpp
     detail/sqlite.cpp
     detector/arrival.cpp
+    detector/detector_impl.cpp
     detector/detector.cpp
-    detector/detectorbuilder.cpp
-    detector/detectorwaveformprocessor.cpp
     detector/linker/association.cpp
     detector/linker/pot.cpp
-    detector/linker/strategy.cpp
     detector/linker.cpp
-    detector/templatewaveformprocessor.cpp
+    detector/template_waveform_processor.cpp
     eventstore.cpp
     exception.cpp
     filter.cpp
