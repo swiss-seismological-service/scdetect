@@ -1246,46 +1246,51 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
 
       } catch (builder::NoSensorLocation &e) {
         if (appConfig.skipReferenceConfigIfNoSensorLocationData) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
+          msg.setText(std::string{e.what()} +
+                      ". Skipping template family initialization.");
+          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
           continue;
         }
         throw;
       } catch (builder::NoStream &e) {
         if (appConfig.skipReferenceConfigIfNoStreamData) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
+          msg.setText(std::string{e.what()} +
+                      ". Skipping template family initialization.");
+          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
           continue;
         }
         throw;
       } catch (builder::NoPick &e) {
         if (appConfig.skipReferenceConfigIfNoPick) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
+          msg.setText(std::string{e.what()} +
+                      ". Skipping template family initialization.");
+          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
           continue;
         }
         throw;
       } catch (builder::NoBindings &e) {
         if (appConfig.skipReferenceConfigIfNoBindings) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
+          msg.setText(std::string{e.what()} +
+                      ". Skipping template family initialization.");
+          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
           continue;
         }
         throw;
       } catch (builder::NoWaveformData &e) {
         if (appConfig.skipReferenceConfigIfNoWaveformData) {
-          SCDETECT_LOG_WARNING("%s. Skipping template family initialization.",
-                               e.what());
+          msg.setText(std::string{e.what()} +
+                      ". Skipping template family initialization.");
+          SCDETECT_LOG_WARNING("%s", logging::to_string(msg).c_str());
           continue;
         }
         throw;
       } catch (builder::BaseException &e) {
-        SCDETECT_LOG_ERROR("%s. Skipping template family initialization.",
-                           e.what());
+        msg.setText(std::string{e.what()} +
+                    ". Skipping template family initialization.");
+        SCDETECT_LOG_ERROR("%s", logging::to_string(msg).c_str());
         return false;
       }
     }
-
   } catch (config::ValidationError &e) {
     SCDETECT_LOG_ERROR(
         "JSON template family configuration file does not validate (%s): %s",
