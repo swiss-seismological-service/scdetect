@@ -67,8 +67,10 @@ std::unique_ptr<AmplitudeProcessor> createMLx(
     ret->computeTimeWindow();
   }
   ret->setGapInterpolation(detectorConfig.gapInterpolation);
-  ret->setGapThreshold(detectorConfig.gapThreshold);
-  ret->setGapTolerance(detectorConfig.gapTolerance);
+  if (detectorConfig.gapInterpolation) {
+    ret->setGapThreshold(detectorConfig.gapThreshold);
+    ret->setGapTolerance(detectorConfig.gapTolerance);
+  }
 
   std::vector<std::string> sensorLocationStreamIdTokens;
   util::tokenizeWaveformStreamId(detection.sensorLocationStreamId,
