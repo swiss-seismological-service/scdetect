@@ -40,6 +40,7 @@
 
 #include "amplitude/factory.h"
 #include "amplitude_processor.h"
+#include "builder.h"
 #include "config/detector.h"
 #include "config/exception.h"
 #include "config/validators.h"
@@ -1119,6 +1120,9 @@ bool Application::initMagnitudeProcessorFactory(
       std::ifstream ifs{appConfig.pathTemplateFamilyJson};
       if (!initTemplateFamilies(ifs, waveformHandler, templateConfigs, bindings,
                                 appConfig)) {
+        SCDETECT_LOG_ERROR(
+            "Failed to initialize template families. No magnitudes of type "
+            "\"MLx\" will be computed.");
         return false;
       }
     } catch (std::ifstream::failure &e) {
@@ -1275,6 +1279,10 @@ bool Application::initTemplateFamilies(std::ifstream &ifs,
           continue;
         }
         throw;
+      } catch (builder::BaseException &e) {
+        SCDETECT_LOG_ERROR("%s. Skipping template family initialization.",
+                           e.what());
+        return false;
       }
     }
 
