@@ -253,7 +253,10 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
           proc->feed(record.get());
         }
       } catch (processing::WaveformProcessor::BaseException& e) {
-        msg.setText("failed to load data");
+        msg.setText("failed to compute regression sample amplitude");
+        throw builder::BaseException{logging::to_string(msg)};
+      } catch (WaveformHandlerIface::BaseException& e) {
+        msg.setText("failed to load waveform data");
         throw builder::BaseException{logging::to_string(msg)};
       } catch (Exception& e) {
         msg.setText("failed to load streams from inventory for time: " +
