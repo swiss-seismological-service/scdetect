@@ -497,15 +497,9 @@ bool Application::run() {
 
 void Application::done() {
   if (!_config.templatesPrepare) {
-    std::unordered_set<std::string> detectorIds;
     // terminate detectors
-    for (const auto &detectorPair : _detectors) {
-      auto &detector{detectorPair.second};
-      const auto detectorId{detector->id()};
-      if (detectorIds.find(detectorId) == detectorIds.end()) {
-        detectorIds.emplace(detector->id());
-        detector->terminate();
-      }
+    for (const auto &detector : _detectors) {
+      detector->terminate();
     }
 
     // flush pending detections
@@ -586,9 +580,9 @@ void Application::handleRecord(Record *rec) {
                                     Core::TimeSpan{0.0}) > Core::TimeSpan{0.0}};
   if (waveformBufferingEnabled && !_waveformBuffer.feed(rec)) return;
 
-  auto detectorRange{_detectors.equal_range(std::string{rec->streamID()})};
+  auto detectorRange{_detectorIdx.equal_range(std::string{rec->streamID()})};
   for (auto it = detectorRange.first; it != detectorRange.second; ++it) {
-    auto &detector{it->second};
+    auto &detector{_detectors[it->second]};
     if (detector->enabled()) {
       if (!detector->feed(rec)) {
         logging::TaggedMessage msg{it->first,
@@ -698,6 +692,16 @@ void Application::handleRecord(Record *rec) {
       _detectionQueue.pop_front();
       registerDetection(detection);
     }
+  }
+}
+
+const Application::Detectors &Application::detectors() const {
+  return _detectors;
+}
+
+void Application::resetDetectors() {
+  for (auto &detector : _detectors) {
+    detector->reset();
   }
 }
 
@@ -1403,11 +1407,12 @@ std::set<util::WaveformStreamID> Application::collectStreams() const {
           ? Core::Time::GMT()
           : _config.playbackConfig.startTime};
 
-  for (const auto &detectorPair : _detectors) {
-    util::WaveformStreamID waveformStreamId{detectorPair.first};
+  for (const auto &detectorIdxPair : _detectorIdx) {
+    util::WaveformStreamID waveformStreamId{detectorIdxPair.first};
+
     ret.emplace(waveformStreamId);
 
-    if (detectorPair.second->publishConfig().createAmplitudes) {
+    if (_detectors[detectorIdxPair.second]->publishConfig().createAmplitudes) {
       try {
         auto amplitudeProcessingConfig{
             _bindings
@@ -1524,17 +1529,19 @@ bool Application::initDetectors(std::ifstream &ifs,
           waveformStreamIds.push_back(streamConfigPair.first);
         }
 
-        std::shared_ptr<detector::Detector> detectorPtr{
-            detectorBuilder.build()};
-        detectorPtr->setResultCallback(
+        auto detector{detectorBuilder.build()};
+        detector->setResultCallback(
             [this](const detector::Detector *processor, const Record *record,
                    std::unique_ptr<const detector::Detector::Detection>
                        detection) {
               processDetection(processor, record, std::move(detection));
             });
 
+        _detectors.emplace_back(std::move(detector));
+        auto idx{_detectors.size() - 1};
+
         for (const auto &waveformStreamId : waveformStreamIds) {
-          _detectors.emplace(waveformStreamId, detectorPtr);
+          _detectorIdx.emplace(waveformStreamId, idx);
         }
 
         templateConfigs.push_back(tc);

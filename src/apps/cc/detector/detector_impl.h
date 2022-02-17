@@ -20,6 +20,7 @@
 #include "../processing/processor.h"
 #include "../processing/waveform_operator.h"
 #include "arrival.h"
+#include "detail.h"
 #include "linker.h"
 #include "linker/association.h"
 #include "template_waveform_processor.h"
@@ -27,6 +28,45 @@
 namespace Seiscomp {
 namespace detect {
 namespace detector {
+
+namespace detail {
+struct SensorLocation {
+  double latitude;
+  double longitude;
+
+  // The unique station's identifier (usually the station's public id)
+  std::string stationId;
+};
+
+struct ProcessorState {
+  ProcessorState(ProcessorState &&other) = default;
+  ProcessorState &operator=(ProcessorState &&other) = default;
+  ~ProcessorState() = default;
+
+  // The sensor location w.r.t. the template waveform `processor`
+  SensorLocation sensorLocation;
+  // The time window fed
+  // XXX(damb): The data time window fed might be different from the data
+  // time window processed (e.g. due to the usage of certain waveform
+  // operators). Therefore, keep track of the time window fed, too.
+  Core::TimeWindow dataTimeWindowFed;
+  // The template waveform reference time w.r.t. the template waveform
+  // `processor`
+  Core::Time templateWaveformReferenceTime;
+
+  std::unique_ptr<TemplateWaveformProcessor> processor;
+};
+
+using ProcessorStatesType = std::unordered_map<ProcessorIdType, ProcessorState>;
+
+struct TemplateWaveformProcessorIterator
+    : public ProcessorStatesType::const_iterator {
+  explicit TemplateWaveformProcessorIterator(
+      ProcessorStatesType::const_iterator it);
+  const TemplateWaveformProcessor &operator*() const;
+};
+
+}  // namespace detail
 
 class DetectorImpl : public detect::processing::Processor {
  public:
@@ -50,13 +90,7 @@ class DetectorImpl : public detect::processing::Processor {
     TemplateMatchingError();
   };
 
-  struct SensorLocation {
-    double latitude;
-    double longitude;
-
-    // The unique station's identifier (usually the station's public id)
-    std::string stationId;
-  };
+  using SensorLocation = detail::SensorLocation;
 
   struct Result {
     Core::Time originTime;
@@ -122,6 +156,12 @@ class DetectorImpl : public detect::processing::Processor {
   const TemplateWaveformProcessor *processor(
       const std::string &processorId) const;
 
+  using const_iterator = detail::TemplateWaveformProcessorIterator;
+  const_iterator begin() const { return const_iterator{_processors.begin()}; }
+  const_iterator end() const { return const_iterator{_processors.end()}; }
+  const_iterator cbegin() const { return const_iterator{_processors.cbegin()}; }
+  const_iterator cend() const { return const_iterator{_processors.cend()}; }
+
   // Register the template waveform processor `proc`. Records are identified by
   // the waveform stream identifier `waveformStreamId`. `proc` is registered
   // together with the template arrival `arrival` and the sensor location
@@ -179,10 +219,9 @@ class DetectorImpl : public detect::processing::Processor {
   // Callback storing results from the linker
   void storeLinkerResult(const linker::Association &linkerResult);
 
-  using ProcessorId = std::string;
   struct TemplateResult {
     linker::Association::TemplateResult result;
-    ProcessorId processorId;
+    detail::ProcessorIdType processorId;
   };
   static std::vector<TemplateResult> sortByArrivalTime(
       const linker::Association &linkerResult);
@@ -190,28 +229,9 @@ class DetectorImpl : public detect::processing::Processor {
   // Safety margin for linker on hold duration
   static const Core::TimeSpan _linkerSafetyMargin;
 
-  struct ProcessorState {
-    ProcessorState(ProcessorState &&other) = default;
-    ProcessorState &operator=(ProcessorState &&other) = default;
-    ~ProcessorState() = default;
-
-    // The sensor location w.r.t. the template waveform `processor`
-    SensorLocation sensorLocation;
-    // The time window fed
-    // XXX(damb): The data time window fed might be different from the data
-    // time window processed (e.g. due to the usage of certain waveform
-    // operators). Therefore, keep track of the time window fed, too.
-    Core::TimeWindow dataTimeWindowFed;
-    // The template waveform reference time w.r.t. the template waveform
-    // `processor`
-    Core::Time templateWaveformReferenceTime;
-
-    std::unique_ptr<TemplateWaveformProcessor> processor;
-  };
-
-  using ProcessorStates = std::unordered_map<ProcessorId, ProcessorState>;
-  ProcessorStates _processors;
-  using ProcessorIdx = std::unordered_multimap<std::string, ProcessorId>;
+  detail::ProcessorStatesType _processors;
+  using ProcessorIdx =
+      std::unordered_multimap<std::string, detail::ProcessorIdType>;
   ProcessorIdx _processorIdx;
 
   // The overall time window processed
@@ -241,6 +261,13 @@ class DetectorImpl : public detect::processing::Processor {
 
   DataModel::OriginCPtr _origin;
 };
+
+namespace detail {
+
+/* const auto processorView = [](const DetectorImpl::ProcessorState &s) */
+/*     -> const TemplateWaveformProcessor * { return s.processor.get(); }; */
+
+}  // namespace detail
 
 }  // namespace detector
 }  // namespace detect

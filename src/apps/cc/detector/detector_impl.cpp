@@ -24,6 +24,18 @@ namespace Seiscomp {
 namespace detect {
 namespace detector {
 
+namespace detail {
+TemplateWaveformProcessorIterator::TemplateWaveformProcessorIterator(
+    ProcessorStatesType::const_iterator it)
+    : ProcessorStatesType::const_iterator{it} {}
+
+const TemplateWaveformProcessor &TemplateWaveformProcessorIterator::operator*()
+    const {
+  return *ProcessorStatesType::const_iterator::operator*().second.processor;
+}
+
+}  // namespace detail
+
 const Core::TimeSpan DetectorImpl::_linkerSafetyMargin{1.0};
 
 DetectorImpl::DetectorImpl(const DataModel::OriginCPtr &origin)
@@ -128,7 +140,8 @@ void DetectorImpl::add(std::unique_ptr<TemplateWaveformProcessor> proc,
   }
 
   const auto procId{proc->id()};
-  ProcessorState p{loc, Core::TimeWindow{}, arrival.pick.time, std::move(proc)};
+  detail::ProcessorState p{loc, Core::TimeWindow{}, arrival.pick.time,
+                           std::move(proc)};
   _processors.emplace(procId, std::move(p));
 
   _processorIdx.emplace(waveformStreamId, procId);
@@ -144,7 +157,7 @@ void DetectorImpl::remove(const std::string &waveformStreamId) {
   }
 
   // update linker
-  using pair_type = ProcessorStates::value_type;
+  using pair_type = detail::ProcessorStatesType::value_type;
   const auto it{
       std::max_element(std::begin(_processors), std::end(_processors),
                        [](const pair_type &lhs, const pair_type &rhs) {
@@ -371,9 +384,10 @@ void DetectorImpl::disableProcessorsNotContributing(
                  [](const linker::Association::TemplateResults::value_type &p) {
                    return p.first;
                  });
-  std::for_each(
-      std::begin(_processors), std::end(_processors),
-      [](ProcessorStates::value_type &p) { p.second.processor->disable(); });
+  std::for_each(std::begin(_processors), std::end(_processors),
+                [](detail::ProcessorStatesType::value_type &p) {
+                  p.second.processor->disable();
+                });
   std::for_each(std::begin(contributing), std::end(contributing),
                 [this](const std::string &proc_id) {
                   _processors.at(proc_id).processor->enable();
@@ -480,7 +494,7 @@ void DetectorImpl::resetTrigger() {
 
 void DetectorImpl::resetProcessors() {
   std::for_each(std::begin(_processors), std::end(_processors),
-                [](ProcessorStates::value_type &p) {
+                [](detail::ProcessorStatesType::value_type &p) {
                   p.second.processor->reset();
                   p.second.dataTimeWindowFed = Core::TimeWindow{};
                 });
