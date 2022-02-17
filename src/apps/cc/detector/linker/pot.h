@@ -10,6 +10,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "../detail.h"
+
 namespace Seiscomp {
 namespace detect {
 namespace detector {
@@ -73,14 +75,14 @@ class POT {
   void setEnable(const std::string& processorId, bool enable);
   void setEnableAll(bool enable);
 
-  using ProcessorId = std::string;
-  Matrix<bool> createMask(const std::vector<ProcessorId>& enabledProcessors);
+  Matrix<bool> createMask(
+      const std::vector<detail::ProcessorIdType>& enabledProcessors);
 
   struct Item {
     size_type idx;
     bool enabled;
   };
-  using ProcessorIdxMap = std::map<ProcessorId, Item>;
+  using ProcessorIdxMap = std::map<detail::ProcessorIdType, Item>;
   ProcessorIdxMap _processorIdxMap;
 
   OffsetTable _offsets;
