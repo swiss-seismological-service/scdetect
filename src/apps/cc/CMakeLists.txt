@@ -75,3 +75,8 @@ sc_install_init(${DETECT_TARGET}
 
 file(GLOB descs "${CMAKE_CURRENT_SOURCE_DIR}/descriptions/*.xml")
 install(FILES ${descs} DESTINATION ${SC3_PACKAGE_APP_DESC_DIR})
+
+option("SCDETECT_CC_BUILD_BENCHMARKS" "Build the scdetect-cc benchmarks" OFF)
+if (${SCDETECT_CC_BUILD_BENCHMARKS})
+  add_subdirectory(perf)
+endif()

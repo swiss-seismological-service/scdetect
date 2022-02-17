@@ -1,0 +1,45 @@
+[
+  {
+    "detectorId": "detector-01",
+    "createArrivals": true,
+    "triggerDuration": 0.5,
+    "triggerOnThreshold": 0.7,
+    "triggerOffThreshold": 0.4,
+    "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+    "initTime": 10,
+    "templateWaveformStart": -1,
+    "templateWaveformEnd": 2,
+    "streams": [
+      {
+        "templateId": "template-01",
+        "waveformId": "CH.WGT..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-02",
+        "waveformId": "CH.WGT..HHN",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-03",
+        "waveformId": "CH.WGT..HHE",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-04",
+        "waveformId": "CH.PANIX..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-05",
+        "waveformId": "CH.PANIX..HHN",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-06",
+        "waveformId": "CH.PANIX..HHE",
+        "templatePhase": "Sg"
+      }
+    ]
+  }
+]
