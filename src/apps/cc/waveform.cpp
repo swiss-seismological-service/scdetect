@@ -180,7 +180,14 @@ bool write(const GenericRecord &trace, std::ostream &out) {
   int recLength = rec.data()->size() * rec.data()->elementSize() + 64;
   recLength = nextPowerOfTwo<int>(recLength, 128,
                                   1048576);  // MINRECLEN 128, MAXRECLEN 1048576
-  if (recLength <= 0) return false;
+  if (recLength <= 0) {
+    // XXX(damb): from http://www.fdsn.org/pdf/SEEDManual_V2.4.pdf:
+    //
+    // Volume logical record length expressed as a power of 2. A 4096 byte
+    // record would be 12. Logical record lengths. can be from 256 bytes to
+    // 32768 bytes. 4096 bytes is preferred.
+    recLength = 4096;
+  }
 
   try {
     rec.setOutputRecordLength(recLength);
