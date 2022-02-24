@@ -74,7 +74,7 @@ class PerfApplication : public Application {
 
  private:
   bool reloadRecordStream() {
-    const auto tmp{Client::Application::_recordStream};
+    const auto tmp{Client::Application::_settings.recordstream.URI};
     try {
       std::string inputFile{commandline().option<std::string>("record-file")};
       std::string type;
@@ -93,7 +93,7 @@ class PerfApplication : public Application {
         // XXX(damb): this is a workaround. Since
         // StreamApplication::_recordStream is a private member resetting the
         // record stream url is required.
-        Client::Application::_recordStream =
+        Client::Application::_settings.recordstream.URI =
             "file://" + fs::absolute(p).string();
         openStream();
         if (!recordStream()) {
@@ -109,7 +109,7 @@ class PerfApplication : public Application {
         }
       }
     } catch (...) {
-      Client::Application::_recordStream = tmp;
+      Client::Application::_settings.recordstream.URI = tmp;
       openStream();
     }
 
