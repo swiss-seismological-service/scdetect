@@ -64,6 +64,7 @@ jobs:
         libboost-regex-dev
         libboost-system-dev
         libboost-test-dev
+        libboost-timer-dev
         libssl-dev
         libsqlite3-dev
         ccache
