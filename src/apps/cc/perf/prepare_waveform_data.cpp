@@ -108,12 +108,15 @@ int main(int argc, char **argv) {
   double targetFrequency{0};
 
   po::options_description generic{"Allowed options"};
-  generic.add_options()("help,h", "show this help message and exit")(
-      "starttime", po::value<std::string>(&startTimeStr),
-      "trim data to starttime")("endtime", po::value<std::string>(&endTimeStr),
-                                "trim data to endtime")(
-      "target-frequency", po::value<double>(&targetFrequency)->default_value(0),
-      "resampling target frequency; if 0 no resampling is performed");
+  // clang-format off
+  generic.add_options()
+    ("help,h", "show this help message and exit")
+    ("starttime", po::value<std::string>(&startTimeStr),
+     "trim data to starttime")
+    ("endtime", po::value<std::string>(&endTimeStr), "trim data to endtime")
+    ("target-frequency", po::value<double>(&targetFrequency)->default_value(0),
+     "resampling target frequency; if 0 no resampling is performed");
+  // clang-format on
 
   std::string recordStreamURI;
   std::vector<fs::path> templateConfigPaths;
