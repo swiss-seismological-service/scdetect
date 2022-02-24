@@ -121,6 +121,12 @@ class Detector : public processing::WaveformProcessor {
   const TemplateWaveformProcessor *processor(
       const std::string &processorId) const;
 
+  using const_iterator = DetectorImpl::const_iterator;
+  const_iterator begin() const { return _detectorImpl.begin(); }
+  const_iterator end() const { return _detectorImpl.end(); }
+  const_iterator cbegin() const { return _detectorImpl.cbegin(); }
+  const_iterator cend() const { return _detectorImpl.cend(); }
+
  protected:
   WaveformProcessor::StreamState *streamState(const Record *record) override;
 
@@ -142,6 +148,8 @@ class Detector : public processing::WaveformProcessor {
 
   void emitDetection(const Record *record,
                      std::unique_ptr<const Detection> detection);
+
+  const DetectorImpl &detectorImpl() const;
 
  private:
   void processDetections(const Record *record);

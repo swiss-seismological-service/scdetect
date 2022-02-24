@@ -99,7 +99,7 @@ bool POT::validateEnabledOffsets(const POT &other, Core::TimeSpan thres) {
   }
 
   // create mask with common enabled processors
-  std::vector<ProcessorId> enabledProcessors;
+  std::vector<detail::ProcessorIdType> enabledProcessors;
   for (const auto &p : _processorIdxMap) {
     if (p.second.enabled && other.enabled(p.first)) {
       enabledProcessors.push_back(p.first);
@@ -138,7 +138,7 @@ void POT::setEnableAll(bool enable) {
 }
 
 POT::Matrix<bool> POT::createMask(
-    const std::vector<ProcessorId> &enabledProcessors) {
+    const std::vector<detail::ProcessorIdType> &enabledProcessors) {
   auto ret{Matrix<bool>(size(), std::vector<bool>(size(), false))};
   for (const auto &lhs : enabledProcessors) {
     for (const auto &rhs : enabledProcessors) {

@@ -1,0 +1,11 @@
+=== Station detector report - real-time overload capacity estimation ===
+sampling frequency (Hz),length_template_waveform (s),num_detectors
+50.0,4,2321
+50.0,8,1503
+50.0,12,1111
+100.0,4,713
+100.0,8,431
+100.0,12,298
+200.0,4,260
+200.0,8,137
+200.0,12,93

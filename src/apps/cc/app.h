@@ -201,6 +201,11 @@ class Application : public Client::StreamApplication {
 
   void handleRecord(Record *rec) override;
 
+  using Detectors = std::vector<std::unique_ptr<detector::Detector>>;
+  const Detectors &detectors() const;
+  // Reset detectors
+  void resetDetectors();
+
  private:
   using Picks = std::vector<DataModel::PickCPtr>;
   using TemplateConfigs = std::vector<config::TemplateConfig>;
@@ -380,10 +385,10 @@ class Application : public Client::StreamApplication {
 
   DataModel::EventParametersPtr _ep;
 
-  using DetectorMap =
-      std::unordered_multimap<WaveformStreamId,
-                              std::shared_ptr<detector::Detector>>;
-  DetectorMap _detectors;
+  Detectors _detectors;
+
+  using DetectorIdx = std::unordered_multimap<WaveformStreamId, std::size_t>;
+  DetectorIdx _detectorIdx;
 
   // Ringbuffer
   Processing::StreamBuffer _waveformBuffer;

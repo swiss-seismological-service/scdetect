@@ -7,6 +7,7 @@
 #include <string>
 
 #include "../arrival.h"
+#include "../detail.h"
 #include "../template_waveform_processor.h"
 
 namespace Seiscomp {
@@ -31,8 +32,7 @@ struct Association {
 
   // Associates `TemplateResult` with a processor (i.e. by means of the
   // processor's identifier)
-  using ProcessorId = std::string;
-  using TemplateResults = std::map<ProcessorId, TemplateResult>;
+  using TemplateResults = std::map<detail::ProcessorIdType, TemplateResult>;
   TemplateResults results;
 
   // The association's score [-1,1]

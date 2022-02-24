@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #include "arrival.h"
+#include "detail.h"
 #include "linker/association.h"
 #include "linker/pot.h"
 #include "template_waveform_processor.h"
@@ -100,7 +101,7 @@ class Linker {
   };
 
   // Maps the processor id with `Processor`
-  using Processors = std::unordered_map<std::string, Processor>;
+  using Processors = std::unordered_map<detail::ProcessorIdType, Processor>;
   Processors _processors;
 
   struct Candidate {

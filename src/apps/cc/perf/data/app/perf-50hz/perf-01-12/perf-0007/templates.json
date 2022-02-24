@@ -1,0 +1,76 @@
+[
+  {
+    "detectorId": "detector-01",
+    "createArrivals": true,
+    "triggerDuration": 0.5,
+    "triggerOnThreshold": 0.7,
+    "triggerOffThreshold": 0.4,
+    "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
+    "filter": "RMHP(4)->BW_BP(2,1,15)",
+    "initTime": 10,
+    "templateWaveformStart": -1,
+    "templateWaveformEnd": 8,
+    "streams": [
+      {
+        "templateId": "template-01",
+        "waveformId": "CH.WGT..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-02",
+        "waveformId": "CH.WGT..HHN",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-03",
+        "waveformId": "CH.WGT..HHE",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-04",
+        "waveformId": "CH.PANIX..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-05",
+        "waveformId": "CH.PANIX..HHN",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-06",
+        "waveformId": "CH.PANIX..HHE",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-07",
+        "waveformId": "CH.FIESA..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-08",
+        "waveformId": "CH.FIESA..HHN",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-09",
+        "waveformId": "CH.FIESA..HHE",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-10",
+        "waveformId": "CH.GRYON..HHZ",
+        "templatePhase": "Pg"
+      },
+      {
+        "templateId": "template-11",
+        "waveformId": "CH.GRYON..HHN",
+        "templatePhase": "Sg"
+      },
+      {
+        "templateId": "template-12",
+        "waveformId": "CH.GRYON..HHE",
+        "templatePhase": "Sg"
+      }
+    ]
+  }
+]

@@ -8,6 +8,7 @@
 #include <seiscomp/core/typedarray.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
 
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <unordered_map>

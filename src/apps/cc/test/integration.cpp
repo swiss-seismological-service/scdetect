@@ -51,21 +51,21 @@ struct Sample {
   using Flags = std::vector<std::shared_ptr<cli::Flag>>;
   Flags customFlags;
 
-  std::vector<std::string> AsFlags(const fs::path &path_data) const {
+  std::vector<std::string> asFlags(const fs::path &pathData) const {
     std::vector<std::string> flags{
-        cli::to_string(cli::FlagTemplatesJSON{path_data / pathSample /
-                                              pathTemplateConfig}),
         cli::to_string(
-            cli::FlagInventoryDB{path_data / pathSample / pathInventory}),
+            cli::FlagTemplatesJSON{pathData / pathSample / pathTemplateConfig}),
+        cli::to_string(
+            cli::FlagInventoryDB{pathData / pathSample / pathInventory}),
         cli::to_string(cli::FlagRecordStartTime{startTime}),
         cli::to_string(cli::FlagRecordURL{
-            "file://" + (path_data / pathSample / pathRecords).string()}),
-        cli::to_string(cli::FlagEventDB{path_data / pathSample / pathCatalog}),
+            "file://" + (pathData / pathSample / pathRecords).string()}),
+        cli::to_string(cli::FlagEventDB{pathData / pathSample / pathCatalog}),
     };
 
     if (pathConfigDB) {
       flags.emplace_back(cli::to_string(
-          cli::FlagConfigDB{path_data / pathSample / *pathConfigDB}));
+          cli::FlagConfigDB{pathData / pathSample / *pathConfigDB}));
     }
 
     // serialize custom flags
@@ -449,7 +449,7 @@ BOOST_DATA_TEST_CASE(cc_integration, utf_data::make(dataset)) {
       cli::to_string(cli::FlagTemplatesReload{}),
       cli::to_string(cli::FlagEp{pathEpResultSCML}),
       cli::to_string(cli::FlagAgencyId{"TEST"})};
-  auto flagsSample{sample.AsFlags(CLIParserFixture::pathData)};
+  auto flagsSample{sample.asFlags(CLIParserFixture::pathData)};
   flagsStr.insert(std::end(flagsStr), std::begin(flagsSample),
                   std::end(flagsSample));
 
