@@ -77,16 +77,17 @@ void RatioAmplitude::process(
     return;
   }
 
-  double ratio{0};
-  const auto templateWaveformAbsMax{
-      DoubleArray::ConstCast(_templateWaveform.waveform().data())->absMax()};
-
-  if (0 != templateWaveformAbsMax) {
-    const auto dataAbsMax{_buffer.absMax()};
-    ratio = dataAbsMax / templateWaveformAbsMax;
+  const auto templateWaveformAbsMax{std::abs(
+      DoubleArray::ConstCast(_templateWaveform.waveform().data())->absMax())};
+  if (templateWaveformAbsMax == 0) {
+    setStatus(Status::kError, 0);
+    return;
   }
 
   auto amplitude{util::make_smart<Amplitude>()};
+
+  const auto dataAbsMax{std::abs(_buffer.absMax())};
+  const auto ratio{dataAbsMax / templateWaveformAbsMax};
   amplitude->value.value = ratio;
 
   // time window based amplitude time

@@ -28,8 +28,10 @@ double MRelative::computeMagnitude(const DataModel::Amplitude* amplitude) {
   assert(amplitude);
   assert(_templateMagnitude);
 
-  return _templateMagnitude->magnitude().value() +
-         std::log10(amplitude->amplitude().value());
+  const auto amplitudeValue{amplitude->amplitude().value()};
+  assert((std::isfinite(amplitudeValue) && amplitudeValue > 0));
+
+  return _templateMagnitude->magnitude().value() + std::log10(amplitudeValue);
 }
 
 }  // namespace magnitude
