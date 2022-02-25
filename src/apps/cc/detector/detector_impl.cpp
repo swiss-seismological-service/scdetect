@@ -228,6 +228,13 @@ void DetectorImpl::reset() {
 void DetectorImpl::flush() {
   _linker.flush();
   processResultQueue();
+  // emit pending result
+  if (_currentResult && _currentResult != _lastResult) {
+    Result prepared;
+    prepareResult(*_currentResult, prepared);
+    emitResult(prepared);
+    _lastResult = *_currentResult;
+  }
   resetProcessing();
 }
 
@@ -360,6 +367,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
     Result prepared;
     prepareResult(*_currentResult, prepared);
     emitResult(prepared);
+    _lastResult = *_currentResult;
   }
 
   // re-trigger
