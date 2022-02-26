@@ -1,7 +1,5 @@
 #include "detector_impl.h"
 
-#include <seiscomp/core/strings.h>
-
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -517,11 +515,9 @@ void DetectorImpl::storeTemplateResult(
   if (p.processor->finished()) {
     const auto &status{p.processor->status()};
     const auto &statusValue{p.processor->statusValue()};
-    auto msg{Core::stringify(
-        "Failed to match template (proc_id=%s). Reason: status=%d, "
-        "statusValue=%f",
-        p.processor->id().c_str(), util::asInteger(status), statusValue)};
-
+    auto msg{"failed to match template (proc_id=" + p.processor->id() +
+             "). Reason: status=" + std::to_string(util::asInteger(status)) +
+             ", statusValue=" + std::to_string(statusValue)};
     throw TemplateMatchingError{msg};
   }
 
