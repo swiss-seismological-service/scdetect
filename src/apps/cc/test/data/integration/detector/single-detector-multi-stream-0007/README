@@ -1,0 +1,14 @@
+Detect (peer reviewed)
+
+- Configuration:
+
+  + Single detector; multiple streams from two stations
+
+- Data and streams:
+
+```
+CH.SENIN..HHZ | 2019-11-05T04:21:58.775000Z - 2019-11-05T04:25:01.000000Z | 200.0 Hz, 36446 samples
+CH.SENIN..HHZ | 2019-11-05T04:29:57.415000Z - 2019-11-05T04:31:01.500000Z | 200.0 Hz, 12818 samples
+8D.RAW2..HHZ  | 2019-11-05T04:21:58.810000Z - 2019-11-05T04:25:01.995000Z | 200.0 Hz, 36638 samples
+8D.RAW2..HHZ  | 2019-11-05T04:29:58.360000Z - 2019-11-05T04:31:02.025000Z | 200.0 Hz, 12734 samples
+```

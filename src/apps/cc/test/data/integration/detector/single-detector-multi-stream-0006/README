@@ -1,0 +1,14 @@
+Detect (peer reviewed)
+
+- Configuration:
+
+  + Single station; multiple streams
+
+- Data and streams:
+
+```
+8D.RAW2..HHE | 2019-11-05T04:21:58.660000Z - 2019-11-05T04:25:00.425000Z | 200.0 Hz, 36354 samples
+8D.RAW2..HHE | 2019-11-05T05:01:00.000000Z - 2019-11-05T05:02:00.000000Z | 200.0 Hz, 12001 samples
+8D.RAW2..HHN | 2019-11-05T04:21:59.380000Z - 2019-11-05T04:25:00.485000Z | 200.0 Hz, 36222 samples
+8D.RAW2..HHN | 2019-11-05T05:01:00.000000Z - 2019-11-05T05:02:00.000000Z | 200.0 Hz, 12001 samples
+```
