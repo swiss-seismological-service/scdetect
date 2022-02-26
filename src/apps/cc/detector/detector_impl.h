@@ -265,13 +265,6 @@ class DetectorImpl : public detect::processing::Processor {
   DataModel::OriginCPtr _origin;
 };
 
-namespace detail {
-
-/* const auto processorView = [](const DetectorImpl::ProcessorState &s) */
-/*     -> const TemplateWaveformProcessor * { return s.processor.get(); }; */
-
-}  // namespace detail
-
 }  // namespace detector
 }  // namespace detect
 }  // namespace Seiscomp
