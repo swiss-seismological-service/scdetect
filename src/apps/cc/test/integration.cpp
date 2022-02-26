@@ -293,6 +293,28 @@ const Samples dataset{
      /*customFlags=*/
      {std::make_shared<cli::FlagAmplitudesForce>(false),
       std::make_shared<cli::FlagMagnitudesForce>(false)}},
+    {"templates.json",
+     "inventory.scml",
+     "catalog.scml",
+     "data.mseed",
+     /*pathConfigDB=*/boost::none,
+     /*starttime=*/"2019-11-05T05:01:00",
+     "expected.scml",
+     /*pathSample=*/"integration/detector/single-detector-multi-stream-0006",
+     /*customFlags=*/
+     {std::make_shared<cli::FlagAmplitudesForce>(false),
+      std::make_shared<cli::FlagMagnitudesForce>(false)}},
+    {"templates.json",
+     "inventory.scml",
+     "catalog.scml",
+     "data.mseed",
+     /*pathConfigDB=*/boost::none,
+     /*starttime=*/"2019-11-05T04:30:00",
+     "expected.scml",
+     /*pathSample=*/"integration/detector/single-detector-multi-stream-0007",
+     /*customFlags=*/
+     {std::make_shared<cli::FlagAmplitudesForce>(false),
+      std::make_shared<cli::FlagMagnitudesForce>(false)}},
 
     // processing: resample
     {"templates.json",
