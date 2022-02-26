@@ -227,11 +227,10 @@ void DetectorImpl::flush() {
   _linker.flush();
   processResultQueue();
   // emit pending result
-  if (_currentResult && _currentResult != _lastResult) {
+  if (_currentResult) {
     Result prepared;
     prepareResult(*_currentResult, prepared);
     emitResult(prepared);
-    _lastResult = *_currentResult;
   }
   resetProcessing();
 }
@@ -365,7 +364,6 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
     Result prepared;
     prepareResult(*_currentResult, prepared);
     emitResult(prepared);
-    _lastResult = *_currentResult;
   }
 
   // re-trigger
@@ -378,6 +376,10 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
 
     _triggerProcId = earliestArrivalTemplateResult.processorId;
     _triggerEnd = pickTime + *_triggerDuration;
+  }
+
+  if (!triggered()) {
+    _currentResult = boost::none;
   }
 }
 

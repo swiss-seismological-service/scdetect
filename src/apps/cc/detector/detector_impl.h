@@ -239,8 +239,6 @@ class DetectorImpl : public detect::processing::Processor {
 
   // The current linker result
   boost::optional<linker::Association> _currentResult;
-  // The last linker result emitted
-  boost::optional<linker::Association> _lastResult;
 
   // The result callback function
   boost::optional<PublishResultCallback> _resultCallback;
