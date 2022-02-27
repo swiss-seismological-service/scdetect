@@ -1,8 +1,8 @@
 set(TESTS
-  filter_crosscorrelation.cpp
+  # filter_crosscorrelation.cpp
   integration.cpp
-  reducing_amplitude_processor.cpp
-  util_math_cma.cpp
+  # reducing_amplitude_processor.cpp
+  # util_math_cma.cpp
 )
 
 SET(SOURCES_filter_crosscorrelation
@@ -108,6 +108,6 @@ foreach(TEST_SRC ${TESTS})
 	add_test(
 		NAME ${TEST_TARGET}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${TEST_TARGET} --log_level=message -- "${CMAKE_CURRENT_SOURCE_DIR}/data"
+		COMMAND ${TEST_TARGET} --log_level=message -- --path-data "${CMAKE_CURRENT_SOURCE_DIR}/data/integration/" "${CMAKE_CURRENT_SOURCE_DIR}/data/integration/dataset.conf"
 	)
 endforeach(TEST_SRC)

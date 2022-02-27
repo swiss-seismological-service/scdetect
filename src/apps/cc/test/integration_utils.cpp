@@ -153,7 +153,9 @@ FlagEventDB::FlagEventDB(const fs::path &fpath)
     : FlagEventDB{std::string{"file://" + fpath.string()}} {}
 std::string FlagEventDB::flag() const { return "--event-db"; }
 
-FlagRecordURL ::FlagRecordURL(const std::string &url) : ArgFlag{url} {}
+FlagRecordURL::FlagRecordURL(const std::string &url) : ArgFlag{url} {}
+FlagRecordURL::FlagRecordURL(const fs::path &fpath)
+    : FlagRecordURL{"file://" + fpath.string()} {}
 std::string FlagRecordURL::flag() const { return "--record-url"; }
 
 FlagRecordStartTime::FlagRecordStartTime(const std::string &timeStr)

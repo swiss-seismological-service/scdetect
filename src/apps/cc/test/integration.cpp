@@ -1,13 +1,19 @@
+#include <boost/program_options/value_semantic.hpp>
+#include <cstddef>
+#include <fstream>
+#include <sstream>
 #define SEISCOMP_TEST_MODULE test_cc_integration_general
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/unittest/unittests.h>
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/optional/optional.hpp>
+#include <boost/program_options.hpp>
 #include <boost/test/data/dataset.hpp>
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -15,6 +21,7 @@
 #include <cstdlib>
 #include <memory>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -23,8 +30,8 @@
 #include "integration_utils.h"
 
 namespace utf = boost::unit_test;
-namespace utf_data = utf::data;
 namespace fs = boost::filesystem;
+namespace po = boost::program_options;
 
 constexpr double testUnitTolerance{0.000001};
 
@@ -34,422 +41,223 @@ namespace test {
 
 namespace ds {
 
-struct Sample {
-  std::string pathTemplateConfig;
-  std::string pathInventory;
-  std::string pathCatalog;
-  std::string pathRecords;
+// A file based dataset (using Boost.Test's delayed dataset initialization)
+//
+// - allows the configuration to be read either from a file or from stdin
+class FileBasedDataSet {
+ public:
+  static const int arity = 1;
 
-  boost::optional<std::string> pathConfigDB;
+  using CustomFlags = boost::optional<std::string>;
+  using PathExpected = fs::path;
 
-  std::string startTime;
-
-  std::string pathExpected;
-
-  fs::path pathSample;
-
-  using Flags = std::vector<std::shared_ptr<cli::Flag>>;
-  Flags customFlags;
-
-  std::vector<std::string> asFlags(const fs::path &pathData) const {
-    std::vector<std::string> flags{
-        cli::to_string(
-            cli::FlagTemplatesJSON{pathData / pathSample / pathTemplateConfig}),
-        cli::to_string(
-            cli::FlagInventoryDB{pathData / pathSample / pathInventory}),
-        cli::to_string(cli::FlagRecordStartTime{startTime}),
-        cli::to_string(cli::FlagRecordURL{
-            "file://" + (pathData / pathSample / pathRecords).string()}),
-        cli::to_string(cli::FlagEventDB{pathData / pathSample / pathCatalog}),
+  FileBasedDataSet(std::size_t lineBegin = 0,
+                   std::size_t lineEnd = static_cast<std::size_t>(-1))
+      : _lineBegin{lineBegin}, _lineEnd{lineEnd} {
+    auto countLines = [](std::istream &in) -> std::size_t {
+      return std::count_if(std::istreambuf_iterator<char>(in),
+                           std::istreambuf_iterator<char>(),
+                           [](char c) { return c == '\n'; });
     };
 
-    if (pathConfigDB) {
-      flags.emplace_back(cli::to_string(
-          cli::FlagConfigDB{pathData / pathSample / *pathConfigDB}));
+    try {
+      po::options_description desc;
+      desc.add_options()("path-data", po::value<fs::path>(&_pathData),
+                         "Base path to the test data")(
+
+          "test-dataset",
+          po::value<fs::path>(&_pathTestDataSet)->default_value("-"),
+          "Path to file containing the test data set configuration");
+
+      po::positional_options_description pdesc;
+      pdesc.add("test-dataset", -1);
+
+      po::variables_map vm;
+      po::store(
+          po::command_line_parser(utf::framework::master_test_suite().argc,
+
+                                  utf::framework::master_test_suite().argv)
+
+              .options(desc)
+              .positional(pdesc)
+              .run(),
+          vm);
+      po::notify(vm);
+    } catch (std::exception &e) {
+      throw std::logic_error{"failed to parse commandline arguments"};
     }
 
-    // serialize custom flags
-    for (const auto &flag : customFlags) {
-      flags.emplace_back(cli::to_string(*flag));
+    if (_pathTestDataSet.string() == std::string{"-"}) {
+      _lineEnd = std::min(countLines(std::cin), _lineEnd);
+    } else {
+      _pathTestDataSet = fs::absolute(_pathTestDataSet);
+      std::ifstream ifs{_pathTestDataSet};
+      if (!ifs.is_open()) {
+        throw std::logic_error{"cannot open the file '" +
+                               _pathTestDataSet.string() + "'"};
+      }
+      _lineEnd = std::min(countLines(ifs), _lineEnd);
     }
 
-    return flags;
+    if (!(_lineBegin <= _lineEnd)) {
+      throw std::logic_error{"incorrect line start/end"};
+    }
   }
 
-  friend std::ostream &operator<<(std::ostream &os, const Sample &sample);
-};
+  struct Sample {
+    fs::path pathTemplateConfig;
+    fs::path pathInventoryDB;
+    fs::path pathEventDB;
+    fs::path pathWaveformData;
 
-std::ostream &operator<<(std::ostream &os, const Sample &sample) {
-  auto samplePath = [&sample](const std::string &fname) {
-    return fname.empty() ? "" : (sample.pathSample / fname).string();
+    boost::optional<fs::path> pathConfigDB;
+
+    std::string startTime;
+
+    fs::path pathExpected;
+
+    using CustomFlags = boost::optional<std::string>;
+    CustomFlags customFlags;
+
+    std::vector<std::string> asFlags() const {
+      std::vector<std::string> ret;
+      ret.emplace_back(
+          cli::to_string(cli::FlagTemplatesJSON{pathTemplateConfig}));
+      ret.emplace_back(cli::to_string(cli::FlagInventoryDB{pathInventoryDB}));
+      ret.emplace_back(cli::to_string(cli::FlagEventDB{pathEventDB}));
+      ret.emplace_back(cli::to_string(cli::FlagRecordURL{pathWaveformData}));
+      ret.emplace_back(cli::to_string(cli::FlagRecordStartTime{startTime}));
+      if (pathConfigDB) {
+        ret.emplace_back(cli::to_string(cli::FlagConfigDB{*pathConfigDB}));
+      }
+
+      if (customFlags) {
+        ret.emplace_back(*customFlags);
+      }
+
+      return ret;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Sample &s) {
+      return os << boost::algorithm::join(s.asFlags(), " ");
+    }
   };
 
-  return os << "templateConfig: " << samplePath(sample.pathTemplateConfig)
-            << ", inventory: " << samplePath(sample.pathInventory)
-            << ", catalog: " << samplePath(sample.pathCatalog)
-            << ", starttime: " << sample.startTime
-            << ", records: " << samplePath(sample.pathRecords)
-            << ", expected: " << samplePath(sample.pathExpected);
-}
+  struct Iterator {
+    Iterator(const std::string &filename, std::size_t lineBegin,
+             const fs::path &absPathData)
+        : _absBasePath{absPathData} {
+      if (filename == "-") {
+        _in = &std::cin;
+      } else {
+        _isFile = true;
+        _in = new std::ifstream{filename};
+        if (!(*_in)) {
+          throw std::runtime_error{"cannot open the file '" + filename + "'"};
+        }
+      }
+
+      for (std::size_t i = 0; i <= lineBegin; ++i) {
+        getline(*_in, _currentLine);
+      }
+    }
+
+    ~Iterator() {
+      if (_isFile) {
+        delete _in;
+      }
+    }
+
+    auto operator*() const -> Sample {
+      std::vector<std::string> tokens;
+      std::istringstream iss{_currentLine};
+      std::string token;
+
+      while (std::getline(iss, token, '|')) {
+        tokens.push_back(token);
+      }
+
+      if (tokens.size() < 7) {
+        throw std::logic_error{
+            "invalid sample definition: invalid number of tokens (" +
+            _currentLine + ")"};
+      }
+
+      Sample sample;
+      sample.pathTemplateConfig = _absBasePath / tokens[0];
+      sample.pathInventoryDB = _absBasePath / tokens[1];
+      sample.pathEventDB = _absBasePath / tokens[2];
+      sample.pathWaveformData = _absBasePath / tokens[3];
+      if (!tokens[4].empty()) {
+        sample.pathConfigDB = _absBasePath / tokens[4];
+      }
+      sample.startTime = tokens[5];
+      sample.pathExpected = _absBasePath / tokens[6];
+
+      if (tokens.size() >= 7) {
+        boost::algorithm::trim(tokens[7]);
+        if (!tokens[7].empty()) {
+          sample.customFlags = tokens[7];
+        }
+      }
+
+      return sample;
+    }
+
+    void operator++() { std::getline(*_in, _currentLine); }
+
+   private:
+    fs::path _absBasePath{""};
+    std::string _currentLine;
+    std::istream *_in{nullptr};
+    bool _isFile{false};
+  };
+
+  // Returns the size of the dataset
+  boost::unit_test::data::size_t size() const { return _lineEnd - _lineBegin; }
+
+  // Returns an iterator over the lines of the file
+  Iterator begin() const {
+    return Iterator{_pathTestDataSet.string(), _lineBegin, _pathData};
+  }
+
+ private:
+  fs::path _pathTestDataSet;
+  // Path to the base data directory
+  fs::path _pathData;
+  std::size_t _lineBegin;
+  std::size_t _lineEnd;
+};
 
 }  // namespace ds
+}  // namespace test
+}  // namespace detect
+}  // namespace Seiscomp
 
-// samples for parameterized testing
-using Samples = std::vector<ds::Sample>;
-const Samples dataset{
-    // base: single detector - single stream
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0000",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0001",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0002",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0003",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0004",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0005",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0006",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-single-stream-0007",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
+namespace boost {
+namespace unit_test {
+namespace data {
+namespace monomorphic {
 
-    // base: single detector - multi stream
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-multi-stream-0000",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2019-11-05T05:10:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/single-detector-multi-stream-0001",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
+template <>
+struct is_dataset<Seiscomp::detect::test::ds::FileBasedDataSet>
+    : boost::mpl::true_ {};
 
-    // base: multi detector - single stream
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/base/multi-detector-single-stream-0000",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
+}  // namespace monomorphic
+}  // namespace data
+}  // namespace unit_test
+}  // namespace boost
 
-    // detector: single detector - multi stream
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0000",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:30:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/detector/single-detector-multi-stream-0001",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0002",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/detector/single-detector-multi-stream-0003",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0004",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2019-11-05T05:10:00",
-     "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0005",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2019-11-05T05:01:00",
-     "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0006",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2019-11-05T04:30:00",
-     "expected.scml",
-     /*pathSample=*/"integration/detector/single-detector-multi-stream-0007",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-
-    // processing: resample
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T19:30:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/resample/single-detector-single-stream-0000",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:20:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/resample/single-detector-single-stream-0001",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-
-    // processing: changing sampling frequency
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:20:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0000",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:20:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0001",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:20:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0002",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:20:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0003",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json",
-     "inventory.scml",
-     "catalog.scml",
-     "data.mseed",
-     /*pathConfigDB=*/boost::none,
-     /*starttime=*/"2020-10-25T20:20:00",
-     "expected.scml",
-     /*pathSample=*/
-     "integration/processing/changing-fsamp/"
-     "single-detector-single-stream-0004",
-     /*customFlags=*/
-     {std::make_shared<cli::FlagAmplitudesForce>(false),
-      std::make_shared<cli::FlagMagnitudesForce>(false)}},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*pathConfigDB=*/std::string{"config.scml"},
-     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
-     /*pathSample=*/
-     "integration/magnitude/MRelative/"
-     "single-detector-single-stream-0000"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*pathConfigDB=*/std::string{"config.scml"},
-     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
-     /*pathSample=*/
-     "integration/magnitude/MRelative/"
-     "single-detector-single-stream-0001"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*pathConfigDB=*/std::string{"config.scml"},
-     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
-     /*pathSample=*/
-     "integration/magnitude/MRelative/"
-     "single-detector-single-stream-0002"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*pathConfigDB=*/std::string{"config.scml"},
-     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
-     /*pathSample=*/
-     "integration/magnitude/MRelative/"
-     "single-detector-multi-stream-0000"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*pathConfigDB=*/std::string{"config.scml"},
-     /*starttime=*/"2019-11-05T05:10:00", "expected.scml",
-     /*pathSample=*/
-     "integration/magnitude/MRelative/"
-     "single-detector-multi-stream-0001"},
-    {"templates.json", "inventory.scml", "catalog.scml", "data.mseed",
-     /*pathConfigDB=*/std::string{"config.scml"},
-     /*starttime=*/"2020-10-25T20:30:00", "expected.scml",
-     /*pathSample=*/
-     "integration/magnitude/MRelative/"
-     "single-detector-multi-stream-0002"},
-};
+namespace Seiscomp {
+namespace detect {
+namespace test {
 
 BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
 
 BOOST_TEST_DECORATOR(*utf::tolerance(testUnitTolerance))
-BOOST_DATA_TEST_CASE(cc_integration, utf_data::make(dataset)) {
+BOOST_DATA_TEST_CASE(
+    cc_integration,
+    boost::unit_test::data::make_delayed<ds::FileBasedDataSet>()) {
   TempDirFixture fx{CLIParserFixture::keepTempdir};
   // prepare empty config file
   fs::path pathConfig{fx.pathTempdir / "scdetect-cc.cfg"};
@@ -471,29 +279,31 @@ BOOST_DATA_TEST_CASE(cc_integration, utf_data::make(dataset)) {
       cli::to_string(cli::FlagTemplatesReload{}),
       cli::to_string(cli::FlagEp{pathEpResultSCML}),
       cli::to_string(cli::FlagAgencyId{"TEST"})};
-  auto flagsSample{sample.asFlags(CLIParserFixture::pathData)};
+
+  auto flagsSample{sample.asFlags()};
   flagsStr.insert(std::end(flagsStr), std::begin(flagsSample),
                   std::end(flagsSample));
 
   BOOST_TEST_MESSAGE("Running integration test with CLI args: "
                      << boost::algorithm::join(flagsStr, " "));
   BOOST_TEST_MESSAGE("Path to temporary test data: " << fx.pathTempdir);
-  try {
-    // parse README
-    std::string readmeHeader;
-    fs::ifstream ifs{CLIParserFixture::pathData / sample.pathSample / "README"};
-    getline(ifs, readmeHeader);
-    if (!readmeHeader.empty()) {
-      BOOST_TEST_MESSAGE("Test purpose: " << readmeHeader);
-      getline(ifs, readmeHeader);
-      std::stringstream buffer;
-      if (buffer << ifs.rdbuf()) {
-        BOOST_TEST_MESSAGE("Test description and configuration:\n\n"
-                           << buffer.str());
-      }
-    }
-  } catch (fs::filesystem_error &e) {
-  }
+  /* try { */
+  /*   // parse README */
+  /*   std::string readmeHeader; */
+  /*   fs::ifstream ifs{CLIParserFixture::pathData / sample.pathSample /
+   * "README"}; */
+  /*   getline(ifs, readmeHeader); */
+  /*   if (!readmeHeader.empty()) { */
+  /*     BOOST_TEST_MESSAGE("Test purpose: " << readmeHeader); */
+  /*     getline(ifs, readmeHeader); */
+  /*     std::stringstream buffer; */
+  /*     if (buffer << ifs.rdbuf()) { */
+  /*       BOOST_TEST_MESSAGE("Test description and configuration:\n\n" */
+  /*                          << buffer.str()); */
+  /*     } */
+  /*   } */
+  /* } catch (fs::filesystem_error &e) { */
+  /* } */
 
   int retval{EXIT_FAILURE};
   { retval = ApplicationWrapper<Application>{flagsStr}(); }
@@ -518,8 +328,7 @@ BOOST_DATA_TEST_CASE(cc_integration, utf_data::make(dataset)) {
 
   // read expected result
   DataModel::EventParametersPtr epExpected;
-  fs::path pathEpExpectedSCML{CLIParserFixture::pathData / sample.pathSample /
-                              sample.pathExpected};
+  fs::path pathEpExpectedSCML{sample.pathExpected};
   readEventParameters(pathEpExpectedSCML, epExpected);
   BOOST_TEST_REQUIRE(epExpected, "Failed to read file: " << pathEpExpectedSCML);
 

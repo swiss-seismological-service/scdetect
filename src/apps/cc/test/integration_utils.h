@@ -167,6 +167,7 @@ class FlagEventDB : public ArgFlag {
 class FlagRecordURL : public ArgFlag {
  public:
   explicit FlagRecordURL(const std::string &url);
+  explicit FlagRecordURL(const fs::path &uri);
   std::string flag() const override;
 };
 
