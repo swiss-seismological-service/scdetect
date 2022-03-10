@@ -87,7 +87,7 @@ bool InterpolateGaps::fillGap(StreamState &streamState, const Record *record,
 
       filled->setData(missingSamples, dataPtr->typedData(), Array::DOUBLE);
 
-      fill(streamState, /*record=*/filled.release(), dataPtr);
+      fill(streamState, /*record=*/filled.get(), dataPtr);
 
       return true;
     }
