@@ -607,7 +607,7 @@ void Application::handleRecord(Record *rec) {
     auto range{_timeWindowProcessors.equal_range(rec->streamID())};
     for (auto it = range.first; it != range.second; ++it) {
       const auto &proc{it->second};
-      // the amplitude processor must not be already on the removal list
+      // the time window processor must not be already on the removal list
       if (std::find_if(
               std::begin(_timeWindowProcessorRemovalQueue),
               std::end(_timeWindowProcessorRemovalQueue),
@@ -618,7 +618,7 @@ void Application::handleRecord(Record *rec) {
         continue;
       }
 
-      // schedule the amplitude processor for deletion when finished
+      // schedule the time window processor for deletion when finished
       if (it->second->finished()) {
         removeTimeWindowProcessor(it->second);
       } else {
@@ -631,7 +631,7 @@ void Application::handleRecord(Record *rec) {
 
     _timeWindowProcessorRegistrationBlocked = false;
 
-    // remove outdated amplitude processors
+    // remove outdated time window processors
     while (!_timeWindowProcessorRemovalQueue.empty()) {
       const auto processor{
           _timeWindowProcessorRemovalQueue.front().timeWindowProcessor};
@@ -639,7 +639,7 @@ void Application::handleRecord(Record *rec) {
       removeTimeWindowProcessor(processor);
     }
 
-    // register pending amplitude processors
+    // register pending time window processors
     while (!_timeWindowProcessorRegistrationQueue.empty()) {
       const auto &timeWindowProcessorQueueItem{
           _timeWindowProcessorRegistrationQueue.front()};
