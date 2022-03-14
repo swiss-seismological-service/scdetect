@@ -370,6 +370,7 @@ class Application : public Client::StreamApplication {
       const detector::Detector *processor, const Record *record,
       std::unique_ptr<const detector::Detector::Detection> detection);
 
+  void publishDetection(const std::shared_ptr<DetectionItem> &detection);
   void publishDetection(const DetectionItem &detectionItem);
 
   void publishAndRemoveDetection(std::shared_ptr<DetectionItem> &detection);

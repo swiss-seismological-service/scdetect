@@ -503,9 +503,10 @@ void Application::done() {
     }
 
     // flush pending detections
-    for (auto &detectionPair : _detections) {
-      publishAndRemoveDetection(detectionPair.second);
+    for (const auto &detectionPair : _detections) {
+      publishDetection(detectionPair.second);
     }
+    _detections.clear();
 
     if (_ep) {
       IO::XMLArchive ar;
@@ -934,6 +935,15 @@ void Application::processDetection(
     initAmplitudeProcessors(detectionItemPtr, *processor);
   } else {
     publishDetection(detectionItem);
+  }
+}
+
+void Application::publishDetection(
+    const std::shared_ptr<DetectionItem> &detection) {
+  if (!detection->published) {
+    publishDetection(*detection);
+
+    detection->published = true;
   }
 }
 
@@ -1743,12 +1753,7 @@ bool Application::initAmplitudeProcessors(
 
 void Application::publishAndRemoveDetection(
     std::shared_ptr<DetectionItem> &detection) {
-  if (!detection->published) {
-    publishDetection(*detection);
-
-    detection->published = true;
-  }
-
+  publishDetection(detection);
   removeDetection(detection);
 }
 
