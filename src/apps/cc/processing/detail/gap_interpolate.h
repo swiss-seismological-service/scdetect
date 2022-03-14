@@ -18,28 +18,28 @@ class InterpolateGaps {
   virtual ~InterpolateGaps() = default;
   // Enables/disables the linear interpolation of missing samples
   // if the gap is smaller than the configured gap tolerance
-  void setGapInterpolation(bool gapInterpolation);
+  virtual void setGapInterpolation(bool gapInterpolation);
   // Returns if gap interpolation is enabled or disabled, respectively
   bool gapInterpolation() const;
   // Sets the threshold (i.e. the minimum gap length) for gap interpolation
-  void setGapThreshold(const Core::TimeSpan &duration);
+  virtual void setGapThreshold(const Core::TimeSpan &duration);
   // Returns the gap threshold configured
   const Core::TimeSpan &gapThreshold() const;
   // Sets the maximum gap length to be tolerated
-  void setGapTolerance(const Core::TimeSpan &duration);
+  virtual void setGapTolerance(const Core::TimeSpan &duration);
   // Returns the gap tolerance configured
   const Core::TimeSpan &gapTolerance() const;
 
  protected:
-  bool handleGap(StreamState &streamState, const Record *record,
-                 DoubleArrayPtr &data);
+  virtual bool fill(processing::StreamState &streamState, const Record *record,
+                    DoubleArrayPtr &data) = 0;
+
+  virtual bool handleGap(StreamState &streamState, const Record *record,
+                         DoubleArrayPtr &data);
 
   // Sets the `streamState` specific minimum gap length
   void setMinimumGapThreshold(StreamState &streamState, const Record *record,
                               const std::string &logTag = "");
-
-  virtual bool fill(processing::StreamState &streamState, const Record *record,
-                    DoubleArrayPtr &data) = 0;
 
  private:
   // Fill gaps

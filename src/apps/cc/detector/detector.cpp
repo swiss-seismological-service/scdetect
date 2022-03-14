@@ -281,6 +281,14 @@ void Detector::Builder::finalize() {
       phase_hint = meta.pick->phaseHint();
     } catch (Core::ValueException &e) {
     }
+
+    procConfig.processor->setGapThreshold(
+        Core::TimeSpan{product()->_config.gapThreshold});
+    procConfig.processor->setGapTolerance(
+        Core::TimeSpan{product()->_config.gapTolerance});
+    procConfig.processor->setGapInterpolation(
+        product()->_config.gapInterpolation);
+
     // initialize detection processing
     product()->_detectorImpl.add(
         std::move(procConfig.processor), streamId,
@@ -395,6 +403,21 @@ Detector::Builder Detector::Create(const std::string &originId) {
   return Builder(originId);
 }
 
+void Detector::setGapInterpolation(bool gapInterpolation) {
+  processing::WaveformProcessor::setGapInterpolation(gapInterpolation);
+  _detectorImpl.setGapInterpolation(gapInterpolation);
+}
+
+void Detector::setGapThreshold(const Core::TimeSpan &duration) {
+  processing::WaveformProcessor::setGapThreshold(duration);
+  _detectorImpl.setGapThreshold(duration);
+}
+
+void Detector::setGapTolerance(const Core::TimeSpan &duration) {
+  processing::WaveformProcessor::setGapTolerance(duration);
+  _detectorImpl.setGapTolerance(duration);
+}
+
 void Detector::setResultCallback(const PublishDetectionCallback &callback) {
   _detectionCallback = callback;
 }
@@ -480,6 +503,14 @@ bool Detector::fill(processing::StreamState &streamState, const Record *record,
   auto &s = dynamic_cast<WaveformProcessor::StreamState &>(streamState);
   s.receivedSamples += data->size();
 
+  return true;
+}
+
+bool Detector::handleGap(processing::StreamState &streamState,
+                         const Record *record, DoubleArrayPtr &data) {
+  // XXX(damb): do not perform any gap handling. Instead, the underlying
+  // `TemplateWaveformProcessor`s are performing the gap handling by
+  // themselves.
   return true;
 }
 

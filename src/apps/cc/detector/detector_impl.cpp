@@ -52,6 +52,24 @@ DetectorImpl::ProcessingError::ProcessingError()
 DetectorImpl::TemplateMatchingError::TemplateMatchingError()
     : ProcessingError{"error while matching template"} {}
 
+void DetectorImpl::setGapInterpolation(bool gapInterpolation) {
+  for (auto &procPair : _processors) {
+    procPair.second.processor->setGapInterpolation(gapInterpolation);
+  }
+}
+
+void DetectorImpl::setGapThreshold(const Core::TimeSpan &duration) {
+  for (auto &procPair : _processors) {
+    procPair.second.processor->setGapThreshold(duration);
+  }
+}
+
+void DetectorImpl::setGapTolerance(const Core::TimeSpan &duration) {
+  for (auto &procPair : _processors) {
+    procPair.second.processor->setGapTolerance(duration);
+  }
+}
+
 const Core::TimeWindow &DetectorImpl::processed() const { return _processed; }
 
 bool DetectorImpl::triggered() const { return static_cast<bool>(_triggerEnd); }
