@@ -120,6 +120,10 @@ class DetectorImpl : public detect::processing::Processor {
     size_t numStationsAssociated;
   };
 
+  void setGapInterpolation(bool gapInterpolation);
+  void setGapThreshold(const Core::TimeSpan &duration);
+  void setGapTolerance(const Core::TimeSpan &duration);
+
   // Returns the overall time window processed
   const Core::TimeWindow &processed() const;
   // Returns `true` if the detector is currently triggered, else `false`

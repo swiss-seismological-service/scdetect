@@ -20,6 +20,7 @@
 #include "../processing/waveform_processor.h"
 #include "../waveform.h"
 #include "detector_impl.h"
+#include "seiscomp/core/typedarray.h"
 #include "template_waveform_processor.h"
 
 namespace Seiscomp {
@@ -106,6 +107,10 @@ class Detector : public processing::WaveformProcessor {
   friend class Builder;
   static Builder Create(const std::string &originId);
 
+  void setGapInterpolation(bool gapInterpolation) override;
+  void setGapThreshold(const Core::TimeSpan &duration) override;
+  void setGapTolerance(const Core::TimeSpan &duration) override;
+
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishDetectionCallback &callback);
 
@@ -139,6 +144,9 @@ class Detector : public processing::WaveformProcessor {
 
   bool fill(processing::StreamState &streamState, const Record *record,
             DoubleArrayPtr &data) override;
+
+  bool handleGap(processing::StreamState &streamState, const Record *record,
+                 DoubleArrayPtr &data) override;
 
   // Callback function storing `res`
   void storeDetection(const DetectorImpl::Result &res);
