@@ -503,9 +503,10 @@ void Application::done() {
     }
 
     // flush pending detections
-    for (auto &detectionPair : _detections) {
-      publishAndRemoveDetection(detectionPair.second);
+    for (const auto &detectionPair : _detections) {
+      publishDetection(detectionPair.second);
     }
+    _detections.clear();
 
     if (_ep) {
       IO::XMLArchive ar;
@@ -606,7 +607,7 @@ void Application::handleRecord(Record *rec) {
     auto range{_timeWindowProcessors.equal_range(rec->streamID())};
     for (auto it = range.first; it != range.second; ++it) {
       const auto &proc{it->second};
-      // the amplitude processor must not be already on the removal list
+      // the time window processor must not be already on the removal list
       if (std::find_if(
               std::begin(_timeWindowProcessorRemovalQueue),
               std::end(_timeWindowProcessorRemovalQueue),
@@ -617,7 +618,7 @@ void Application::handleRecord(Record *rec) {
         continue;
       }
 
-      // schedule the amplitude processor for deletion when finished
+      // schedule the time window processor for deletion when finished
       if (it->second->finished()) {
         removeTimeWindowProcessor(it->second);
       } else {
@@ -630,7 +631,7 @@ void Application::handleRecord(Record *rec) {
 
     _timeWindowProcessorRegistrationBlocked = false;
 
-    // remove outdated amplitude processors
+    // remove outdated time window processors
     while (!_timeWindowProcessorRemovalQueue.empty()) {
       const auto processor{
           _timeWindowProcessorRemovalQueue.front().timeWindowProcessor};
@@ -638,7 +639,7 @@ void Application::handleRecord(Record *rec) {
       removeTimeWindowProcessor(processor);
     }
 
-    // register pending amplitude processors
+    // register pending time window processors
     while (!_timeWindowProcessorRegistrationQueue.empty()) {
       const auto &timeWindowProcessorQueueItem{
           _timeWindowProcessorRegistrationQueue.front()};
@@ -934,6 +935,15 @@ void Application::processDetection(
     initAmplitudeProcessors(detectionItemPtr, *processor);
   } else {
     publishDetection(detectionItem);
+  }
+}
+
+void Application::publishDetection(
+    const std::shared_ptr<DetectionItem> &detection) {
+  if (!detection->published) {
+    publishDetection(*detection);
+
+    detection->published = true;
   }
 }
 
@@ -1733,6 +1743,9 @@ bool Application::initAmplitudeProcessors(
         SCDETECT_LOG_WARNING(
             "Failed to register amplitude processor (type=\"%s\"): %s",
             amplitudeType.c_str(), e.what());
+
+        --detectionItem->numberOfRequiredAmplitudes;
+
         continue;
       }
     }
@@ -1743,12 +1756,7 @@ bool Application::initAmplitudeProcessors(
 
 void Application::publishAndRemoveDetection(
     std::shared_ptr<DetectionItem> &detection) {
-  if (!detection->published) {
-    publishDetection(*detection);
-
-    detection->published = true;
-  }
-
+  publishDetection(detection);
   removeDetection(detection);
 }
 
@@ -1782,8 +1790,14 @@ void Application::registerAmplitudeProcessor(
     DetectionItem &detection) {
   detection.amplitudes[processor->id()];
 
-  registerTimeWindowProcessor(processor->associatedWaveformStreamIds(),
-                              processor);
+  try {
+    registerTimeWindowProcessor(processor->associatedWaveformStreamIds(),
+                                processor);
+  } catch (const BaseException &e) {
+    detection.amplitudes.erase(processor->id());
+
+    throw;
+  }
 }
 
 void Application::registerTimeWindowProcessor(
@@ -1806,6 +1820,8 @@ void Application::registerTimeWindowProcessor(
   }
   _timeWindowProcessorIdx.emplace(processor->id(), waveformStreamIds);
 
+  std::vector<bool> bufferedDataAvailable(waveformStreamIds.size(), true);
+  std::size_t idx{0};
   for (const auto &waveformStreamId : waveformStreamIds) {
     if (!processor->finished()) {
       util::WaveformStreamID converted{waveformStreamId};
@@ -1822,7 +1838,12 @@ void Application::registerTimeWindowProcessor(
 
         // actually feed as much data as possible
         for (auto it = sequence->begin(); it != sequence->end(); ++it) {
-          if ((*it)->startTime() > tw.endTime()) break;
+          if ((*it)->startTime() > tw.endTime()) {
+            if (it == sequence->begin()) {
+              bufferedDataAvailable[idx] = false;
+            }
+            break;
+          }
           processor->feed((*it).get());
         }
       } else {
@@ -1841,10 +1862,20 @@ void Application::registerTimeWindowProcessor(
         }
       }
     }
+
+    ++idx;
   }
 
-  if (processor->finished()) {
+  bool noBufferedDataAvailable{std::all_of(std::begin(bufferedDataAvailable),
+                                           std::end(bufferedDataAvailable),
+                                           [](bool v) { return !v; })};
+  if (processor->finished() || noBufferedDataAvailable) {
     removeTimeWindowProcessor(processor);
+    if (noBufferedDataAvailable) {
+      throw BaseException{
+          "no buffered data available for time window processor: id=" +
+          processor->id()};
+    }
   }
 }
 

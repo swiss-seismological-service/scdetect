@@ -106,8 +106,11 @@ bool CombiningAmplitudeProcessor::store(const Record *record) {
 
       logging::TaggedMessage msg{
           record->streamID(),
-          "Failed to feed data (tw.start=" + record->startTime().iso() +
-              ", tw.end=" + record->endTime().iso() + "). Reason: status=" +
+          "Failed to feed data (rec.tw.start=" + record->startTime().iso() +
+              ", rec.tw.end=" + record->endTime().iso() +
+              ", proc.tw.start=" + safetyTimeWindow().startTime().iso() +
+              ", proc.tw.end=" + safetyTimeWindow().endTime().iso() +
+              "). Reason: status=" +
               std::to_string(util::asInteger(processor->status())) +
               ", status_value=" + std::to_string(processor->statusValue()) +
               " (" + e.what() + ")"};

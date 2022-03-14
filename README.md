@@ -315,6 +315,12 @@ detection arrives within this period, the previous one is not used, anymore.
   detection once the detector is triggered. Note that the configured value is
   only taken into account if trigger facilities are enabled.
 
+> **NOTE**: With trigger facilities enabled a detection is processed only once
+> there is the *next* detection already available. Since processing a detection
+> may involve calculating amplitudes the `processing.waveformBufferSize` must
+> cover the corresponding duration in order to successfully compute amplitudes
+> (fetching historical data is currently not implemented, yet).
+
 #### Stream configuration parameters
 
 A stream set must contain at least a single stream configuration. For a
@@ -494,8 +500,13 @@ In general, the computation of amplitudes is sensor location dependent. In order
 to provide dedicated configuration for different sensor locations `scdetect-cc`
 makes use of
 SeisComP's [bindings configuration](https://www.seiscomp.de/doc/base/concepts/configuration.html#bindings-configuration)
-concept. Note that amplitudes are calculated only for those sensor locations
-with bindings configuration available.
+concept. Note that amplitudes are calculated only:
+
+- for those sensor locations with bindings configuration available,
+- if the internal waveform buffer still contains the required time window.
+
+The waveform buffer size may be configured using
+the `processing.waveformBufferSize` module configuration parameter.
 
 #### Bindings configuration
 
