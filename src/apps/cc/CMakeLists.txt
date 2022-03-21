@@ -38,6 +38,7 @@ set(
     magnitude/util.cpp
     magnitude/template_family.cpp
     main.cpp
+    operator/buffer.cpp
     operator/resample.cpp
     operator/ringbuffer.cpp
     processing/detail/gap_interpolate.cpp
@@ -62,9 +63,15 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 
 
-sc_add_executable(DETECT ${DETECT_TARGET})
 find_package(SQLite3 REQUIRED)
+
+set(THREADPOOL_INCLUDE_DIR
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../libs/external/thread-pool)
+
+sc_add_executable(DETECT ${DETECT_TARGET})
+target_compile_features(${DETECT_TARGET} PRIVATE cxx_std_17)
 target_link_libraries(${DETECT_TARGET} ${SQLITE3_LIBRARIES})
+target_include_directories(${DETECT_TARGET} PRIVATE ${THREADPOOL_INCLUDE_DIR})
 sc_link_libraries_internal(${DETECT_TARGET} config client)
 sc_install_init(${DETECT_TARGET}
   "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../base/common/apps/templates/initd.py")

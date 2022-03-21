@@ -44,6 +44,7 @@
 #include "config/detector.h"
 #include "config/exception.h"
 #include "config/validators.h"
+#include "def.h"
 #include "detector/arrival.h"
 #include "detector/detector.h"
 #include "eventstore.h"
@@ -1475,6 +1476,7 @@ bool Application::subscribeToRecordStream(
 bool Application::initDetectors(std::ifstream &ifs,
                                 WaveformHandlerIface *waveformHandler,
                                 TemplateConfigs &templateConfigs) {
+  auto executor{std::make_shared<Executor>()};
   try {
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ifs, pt);
@@ -1496,7 +1498,8 @@ bool Application::initDetectors(std::ifstream &ifs,
             std::move(detector::Detector::Create(tc.originId())
                           .setId(tc.detectorId())
                           .setConfig(tc.publishConfig(), tc.detectorConfig(),
-                                     _config.playbackConfig.enabled))};
+                                     _config.playbackConfig.enabled)
+                          .setExecutor(executor))};
 
         std::vector<WaveformStreamId> waveformStreamIds;
         for (const auto &streamConfigPair : tc) {

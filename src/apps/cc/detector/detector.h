@@ -2,7 +2,6 @@
 #define SCDETECT_APPS_CC_DETECTOR_DETECTOR_H_
 
 #include <seiscomp/core/datetime.h>
-#include <seiscomp/core/defs.h>
 #include <seiscomp/core/timewindow.h>
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/origin.h>
@@ -17,6 +16,7 @@
 
 #include "../builder.h"
 #include "../config/detector.h"
+#include "../def.h"
 #include "../processing/waveform_processor.h"
 #include "../waveform.h"
 #include "detector_impl.h"
@@ -72,6 +72,8 @@ class Detector : public processing::WaveformProcessor {
                        const config::StreamConfig &streamConfig,
                        WaveformHandlerIface *waveformHandler);
 
+    Builder &setExecutor(std::shared_ptr<Executor> executor);
+
    protected:
     void finalize() override;
 
@@ -96,6 +98,8 @@ class Detector : public processing::WaveformProcessor {
         DataModel::ArrivalCPtr arrival;
       } metadata;
     };
+
+    std::shared_ptr<Executor> _executor;
 
     std::string _originId;
 

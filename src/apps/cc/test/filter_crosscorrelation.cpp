@@ -1,3 +1,4 @@
+#include <memory>
 #define SEISCOMP_TEST_MODULE test_filter_crosscorrelation
 #include <seiscomp/core/datetime.h>
 #include <seiscomp/core/genericrecord.h>
@@ -10,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "../def.h"
 #include "../filter/crosscorrelation.h"
 #include "../util/memory.h"
 
@@ -103,7 +105,8 @@ BOOST_DATA_TEST_CASE(crosscorrelation, utf_data::make(dataset)) {
   templateTrace->setData(static_cast<int>(sample.templateData.size()),
                          sample.templateData.data(), Array::DOUBLE);
 
-  filter::CrossCorrelation<double> xcorr{templateTrace};
+  filter::CrossCorrelation<double> xcorr{templateTrace,
+                                         std::make_shared<Executor>()};
 
   std::vector<ds::Sample::TimeSeries> filtered;
   for (auto data : sample.data) {

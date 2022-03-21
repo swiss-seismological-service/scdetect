@@ -36,8 +36,8 @@ void LocalMaxima::feed(double coefficient, std::size_t lagIdx) {
 }  // namespace detail
 
 TemplateWaveformProcessor::TemplateWaveformProcessor(
-    TemplateWaveform templateWaveform)
-    : _crossCorrelation{std::move(templateWaveform)} {}
+    TemplateWaveform templateWaveform, std::shared_ptr<Executor> executor)
+    : _crossCorrelation{std::move(templateWaveform), std::move(executor)} {}
 
 void TemplateWaveformProcessor::setFilter(std::unique_ptr<Filter> filter,
                                           const Core::TimeSpan &initTime) {
@@ -61,9 +61,10 @@ const Core::TimeWindow &TemplateWaveformProcessor::processed() const {
 }
 
 void TemplateWaveformProcessor::reset() {
+  WaveformProcessor::reset();
+
   WaveformProcessor::reset(_streamState);
   _crossCorrelation.reset();
-  WaveformProcessor::reset();
 }
 
 void TemplateWaveformProcessor::setTargetSamplingFrequency(double f) {

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "../def.h"
 #include "../filter/crosscorrelation.h"
 #include "../processing/waveform_processor.h"
 #include "../template_waveform.h"
@@ -46,7 +47,8 @@ class TemplateWaveformProcessor : public processing::WaveformProcessor {
  public:
   // Creates a `TemplateWaveformProcessor`. Waveform related parameters are
   // forwarded to the underlying cross-correlation instance.
-  explicit TemplateWaveformProcessor(TemplateWaveform templateWaveform);
+  explicit TemplateWaveformProcessor(TemplateWaveform templateWaveform,
+                                     std::shared_ptr<Executor> executor);
 
   struct MatchResult {
     struct Value {

@@ -358,6 +358,7 @@ class ThreeStreamDetectorReport:
         x = (t - coeffs[1] * y - coeffs[4] * y ** 2) / (
             coeffs[0] + coeffs[2] * y + coeffs[3] * y ** 2
         )
+
         return math.floor(x)
 
     def __str__(self):
@@ -393,10 +394,13 @@ class ThreeStreamDetectorReport:
 
         for freq, model in self._cached_models.items():
             for l in self._ESTIMATE_TEMPLATE_WAVEFORM_LENGTHS:
-                num_detectors = self._estimate_real_time_overload_capacity(
-                    model, l
-                )
-                ret += f"{freq},{l},{num_detectors}\n"
+                try:
+                    num_detectors = self._estimate_real_time_overload_capacity(
+                        model, l
+                    )
+                    ret += f"{freq},{l},{num_detectors}\n"
+                except OverflowError:
+                    ret += f"{freq},{l},--\n"
 
         return ret
 

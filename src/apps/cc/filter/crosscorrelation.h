@@ -5,10 +5,12 @@
 #include <seiscomp/core/genericrecord.h>
 #include <seiscomp/core/typedarray.h>
 
-#include <boost/circular_buffer.hpp>
 #include <boost/optional/optional.hpp>
+#include <memory>
 #include <string>
+#include <vector>
 
+#include "../def.h"
 #include "../template_waveform.h"
 
 namespace Seiscomp {
@@ -27,9 +29,11 @@ class CrossCorrelation {
   // configured to the sampling frequency provided by `waveform`.
   //
   // - It is a bug if `waveform` is not a valid pointer.
-  explicit CrossCorrelation(const GenericRecordCPtr &waveform);
+  explicit CrossCorrelation(const GenericRecordCPtr &waveform,
+                            std::shared_ptr<Executor> executor);
   // Creates an `CrossCorrelation` filter from `templateWaveform`
-  explicit CrossCorrelation(TemplateWaveform templateWaveform);
+  explicit CrossCorrelation(TemplateWaveform templateWaveform,
+                            std::shared_ptr<Executor> executor);
 
   virtual ~CrossCorrelation() = default;
 
@@ -61,7 +65,8 @@ class CrossCorrelation {
   // The template waveform
   TemplateWaveform _templateWaveform;
   // Buffer for data to be cross-correlated
-  boost::circular_buffer<TData> _buffer;
+  using Buffer = std::vector<TData>;
+  Buffer _buffer;
 
   // Template waveform samples squared summed
   double _sumSquaredTemplateWaveform{0};
@@ -76,6 +81,8 @@ class CrossCorrelation {
   double _sumData{0};
 
   bool _initialized{false};
+
+  std::shared_ptr<Executor> _executor;
 };
 
 }  // namespace filter

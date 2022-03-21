@@ -43,6 +43,7 @@ set(SOURCES_app
   ../magnitude/mrelative.cpp
   ../magnitude/util.cpp
   ../magnitude/template_family.cpp
+  ../operator/buffer.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processing/detail/gap_interpolate.cpp
@@ -75,12 +76,15 @@ set(SOURCES_prepare_waveform_data
 
 find_package(SQLite3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS timer program_options)
+set(THREADPOOL_INCLUDE_DIR
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../../libs/external/thread-pool)
 
 foreach(BENCHMARK_SRC ${BENCHMARKS})
   get_filename_component(BENCHMARK ${BENCHMARK_SRC} NAME_WE)
   set(PERF_TARGET perf_scdetect_cc_${BENCHMARK})
   add_executable(${PERF_TARGET} ${BENCHMARK_SRC} ${SOURCES_${BENCHMARK}})
   target_link_libraries(${PERF_TARGET} ${SQLITE3_LIBRARIES} ${Boost_LIBRARIES})
+  target_include_directories(${PERF_TARGET} PRIVATE ${THREADPOOL_INCLUDE_DIR})
   sc_link_libraries_internal(${PERF_TARGET} core client)
 endforeach()
 
@@ -89,6 +93,7 @@ foreach(UTIL_SRC ${UTILS})
   set(UTIL_TARGET perf_util_scdetect_cc_${UTIL})
   add_executable(${UTIL_TARGET} ${UTIL_SRC} ${SOURCES_${UTIL}})
   target_link_libraries(${UTIL_TARGET} ${Boost_LIBRARIES})
+  target_include_directories(${UTIL_TARGET} PRIVATE ${THREADPOOL_INCLUDE_DIR})
   sc_link_libraries_internal(${UTIL_TARGET} core)
 endforeach()
 

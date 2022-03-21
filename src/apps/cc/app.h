@@ -36,6 +36,7 @@
 #include "exception.h"
 #include "processing/timewindow_processor.h"
 #include "settings.h"
+#include "thread_pool.hpp"
 #include "util/waveform_stream_id.h"
 #include "waveform.h"
 

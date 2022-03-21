@@ -57,6 +57,7 @@ set(SOURCES_integration
   ../magnitude/mrelative.cpp
   ../magnitude/util.cpp
   ../magnitude/template_family.cpp
+  ../operator/buffer.cpp
   ../operator/resample.cpp
   ../operator/ringbuffer.cpp
   ../processing/detail/gap_interpolate.cpp
@@ -99,6 +100,9 @@ add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
 add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
 add_link_options(-fsanitize=address)
 
+set(THREADPOOL_INCLUDE_DIR
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../../libs/external/thread-pool)
+
 foreach(TEST_SRC ${TESTS})
 	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
 	set(TEST_TARGET test_scdetect_cc_${TEST_FNAME})
@@ -106,6 +110,7 @@ foreach(TEST_SRC ${TESTS})
 	sc_link_libraries_internal(${TEST_TARGET} unittest core client)
 	sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
   target_link_libraries(${TEST_TARGET} ${SQLITE3_LIBRARIES})
+  target_include_directories(${TEST_TARGET} PRIVATE ${THREADPOOL_INCLUDE_DIR})
 
 	add_test(
 		NAME ${TEST_TARGET}

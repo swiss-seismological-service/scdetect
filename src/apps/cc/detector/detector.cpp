@@ -4,6 +4,7 @@
 
 #include "../eventstore.h"
 #include "../log.h"
+#include "../operator/buffer.h"
 #include "../settings.h"
 #include "../util/memory.h"
 #include "../util/waveform_stream_id.h"
@@ -193,8 +194,8 @@ Detector::Builder &Detector::Builder::setStream(
     templateWaveform.setReferenceTime(pick->time().value());
 
     templateWaveformProcessor =
-        util::make_unique<detector::TemplateWaveformProcessor>(
-            templateWaveform);
+        util::make_unique<detector::TemplateWaveformProcessor>(templateWaveform,
+                                                               _executor);
   } catch (WaveformHandler::NoData &e) {
     msg.setText("failed to load template waveform: " + std::string{e.what()});
     throw builder::NoWaveformData{logging::to_string(msg)};
@@ -234,6 +235,13 @@ Detector::Builder &Detector::Builder::setStream(
                             {stream->sensorLocation(), pick, arrival}};
 
   _processorConfigs.emplace(streamId, std::move(c));
+
+  return *this;
+}
+
+Detector::Builder &Detector::Builder::setExecutor(
+    std::shared_ptr<Executor> executor) {
+  _executor = std::move(executor);
 
   return *this;
 }
@@ -282,12 +290,16 @@ void Detector::Builder::finalize() {
     } catch (Core::ValueException &e) {
     }
 
-    procConfig.processor->setGapThreshold(
+    // configure buffer operator
+    auto bufferOperator{util::make_unique<waveform_operator::BufferOperator>(
+        15, procConfig.processor->id())};
+    bufferOperator->setGapThreshold(
         Core::TimeSpan{product()->_config.gapThreshold});
-    procConfig.processor->setGapTolerance(
+    bufferOperator->setGapTolerance(
         Core::TimeSpan{product()->_config.gapTolerance});
-    procConfig.processor->setGapInterpolation(
-        product()->_config.gapInterpolation);
+    bufferOperator->setGapInterpolation(product()->_config.gapInterpolation);
+
+    procConfig.processor->setOperator(std::move(bufferOperator));
 
     // initialize detection processing
     product()->_detectorImpl.add(

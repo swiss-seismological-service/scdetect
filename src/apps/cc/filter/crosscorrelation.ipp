@@ -7,24 +7,33 @@
 #include <boost/algorithm/string/join.hpp>
 #include <cfenv>
 #include <cmath>
+#include <cstddef>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include "../filter.h"
 #include "../log.h"
 #include "../util/math.h"
+#include "crosscorrelation.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace filter {
 
 template <typename TData>
-CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &waveform)
-    : _templateWaveform{TemplateWaveform{waveform}} {
+CrossCorrelation<TData>::CrossCorrelation(const GenericRecordCPtr &waveform,
+                                          std::shared_ptr<Executor> executor)
+    : _templateWaveform{TemplateWaveform{waveform}},
+      _executor{std::move(executor)} {
   setupFilter(waveform->samplingFrequency());
 }
 
 template <typename TData>
-CrossCorrelation<TData>::CrossCorrelation(TemplateWaveform templateWaveform)
-    : _templateWaveform{std::move(templateWaveform)} {
+CrossCorrelation<TData>::CrossCorrelation(TemplateWaveform templateWaveform,
+                                          std::shared_ptr<Executor> executor)
+    : _templateWaveform{std::move(templateWaveform)},
+      _executor{std::move(executor)} {
   if (_templateWaveform.processingConfig().samplingFrequency) {
     setupFilter(*_templateWaveform.processingConfig().samplingFrequency);
   }
@@ -63,14 +72,10 @@ void CrossCorrelation<TData>::reset() {
     _sumSquaredTemplateWaveform += util::square(samples_template_wf[i]);
   }
 
-  _denominatorTemplateWaveform =
-      std::sqrt(n * _sumSquaredTemplateWaveform -
-                _sumTemplateWaveform * _sumTemplateWaveform);
+  _denominatorTemplateWaveform = std::sqrt(n * _sumSquaredTemplateWaveform -
+                                           util::square(_sumTemplateWaveform));
 
-  _buffer.set_capacity(n);
-  while (!_buffer.full()) {
-    _buffer.push_back(0);
-  }
+  _buffer = std::vector<TData>(n, 0);
 }
 
 template <typename TData>
@@ -90,6 +95,9 @@ double CrossCorrelation<TData>::samplingFrequency() const {
 
 template <typename TData>
 void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
+  assert(_initialized);
+  assert(_executor);
+
   /*
    * Pearson correlation coefficient for time series X and Y of length n
    *
@@ -116,10 +124,10 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
    *   _denominatorTemplateWaveform = \
    *     sqrt(n*_sumSquaredTemplateWaveform-(_sumTemplateWaveform)^2)
    *
-   * For the parts that involve the data trace (extracted from the circular
-   * buffer) exclusively, compute the components in a rolling fashion (removing
-   * first sample of previous iteration and adding the last sample of the
-   * current iteration):
+   * For the parts that involve the data trace (extracted from the buffer)
+   * exclusively, compute the components in a rolling fashion (removing first
+   * sample of previous iteration and adding the last sample of the current
+   * iteration):
    *
    *   _sumData = sum(Yi)
    *   _sumSquaredData = sum(Yi^2)
@@ -135,60 +143,60 @@ void CrossCorrelation<TData>::correlate(size_t nData, TData *data) {
    * Unfortunately, further optimization of sum(Xi*Yi) is not possible which
    * requires to be computed within an inner loop inside the main
    * cross-correlation loop.
+   *
+   * Note that Pearson correlation coefficients are computed concurrently, i.e.
+   * the cross-correlation loop is parallelized and executed using the
+   * _executor.
    */
 
-  if (!_initialized) {
-    throw BaseException{
-        "failed to apply cross-correlation filter: not initialized"};
-  }
-
-  std::feclearexcept(FE_ALL_EXCEPT);
-
-  const auto n{_buffer.capacity()};
-  const TData *samplesTemplateWf{
-      TypedArray<TData>::ConstCast(_templateWaveform.waveform().data())
-          ->typedData()};
-  // cross-correlation loop
-  for (size_t i = 0; i < nData; ++i) {
+  std::vector<double> sumsData;
+  std::vector<double> sumsSquaredData;
+  sumsData.reserve(nData);
+  sumsSquaredData.reserve(nData);
+  for (std::size_t i{0}; i < nData; ++i) {
     const TData newSample{data[i]};
-    const TData lastSample{_buffer.front()};
+    const TData lastSample{_buffer[i]};
     _sumData += newSample - lastSample;
     _sumSquaredData += util::square(newSample) - util::square(lastSample);
-    const double denominatorData{
-        std::sqrt(n * _sumSquaredData - _sumData * _sumData)};
+
+    sumsData.push_back(_sumData);
+    sumsSquaredData.push_back(_sumSquaredData);
 
     _buffer.push_back(newSample);
-
-    double sumTemplateData{0};
-    for (size_t k = 0; k < n; ++k) {
-      sumTemplateData += samplesTemplateWf[k] * _buffer[k];
-    }
-
-    const double pearsonCoeff{
-        (n * sumTemplateData - _sumTemplateWaveform * _sumData) /
-        (_denominatorTemplateWaveform * denominatorData)};
-
-    int fe{std::fetestexcept(FE_ALL_EXCEPT)};
-    if ((fe & ~FE_INEXACT) != 0)  // we don't care about FE_INEXACT
-    {
-      std::vector<std::string> exceptions;
-      if (fe & FE_DIVBYZERO) exceptions.push_back("FE_DIVBYZERO");
-      if (fe & FE_INVALID) exceptions.push_back("FE_INVALID");
-      if (fe & FE_OVERFLOW) exceptions.push_back("FE_OVERFLOW");
-      if (fe & FE_UNDERFLOW) exceptions.push_back("FE_UNDERFLOW");
-
-      std::string msg{
-          "Floating point exception during cross-correlation (sample_idx=" +
-          std::to_string(i) + ", sample=" + std::to_string(newSample) + "): "};
-      msg += boost::algorithm::join(exceptions, ", ");
-      SCDETECT_LOG_WARNING("%s", msg.c_str());
-
-      std::feclearexcept(FE_ALL_EXCEPT);
-    }
-
-    data[i] =
-        static_cast<TData>(std::isfinite(pearsonCoeff) ? pearsonCoeff : 0);
   }
+
+  const auto n{templateWaveform().size()};
+  const TData *samplesTemplateWaveform{
+      TypedArray<TData>::ConstCast(_templateWaveform.waveform().data())
+          ->typedData()};
+
+  auto loop = [this, n, data, samplesTemplateWaveform, &sumsData,
+               &sumsSquaredData](const std::size_t &a, const std::size_t &b) {
+    // cross-correlation loop
+    for (std::size_t i{a}; i < b; ++i) {
+      const double denominatorData{
+          std::sqrt(n * sumsSquaredData[i] - util::square(sumsData[i]))};
+
+      double sumTemplateData{0};
+      for (std::size_t k{0}; k < n; ++k) {
+        sumTemplateData += samplesTemplateWaveform[k] * _buffer[k + i + 1];
+      }
+
+      const double pearsonCoeff{
+          (n * sumTemplateData - _sumTemplateWaveform * sumsData[i]) /
+          (_denominatorTemplateWaveform * denominatorData)};
+
+      data[i] =
+          static_cast<TData>(std::isfinite(pearsonCoeff) ? pearsonCoeff : 0);
+    }
+  };
+
+  const auto end{_buffer.size() - n};
+  _executor->parallelize_loop(0, end, loop);
+
+  // rollover buffer
+  Buffer next{std::begin(_buffer) + end, std::end(_buffer)};
+  _buffer = next;
 }
 
 template <typename TData>
