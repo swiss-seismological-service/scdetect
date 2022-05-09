@@ -56,7 +56,10 @@ set(
     waveform.cpp
 )
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
+option("SCDETECT_CC_COMPILE_WITH_ASAN" "Build scdetect-cc with address sanitizier" OFF)
+mark_as_advanced(${SCDETECT_CC_COMPILE_WITH_ASAN})
+if (${SCDETECT_CC_COMPILE_WITH_ASAN} AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
   add_compile_options(-fsanitize=address)
   add_link_options(-fsanitize=address)
 endif()

@@ -27,6 +27,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <cassert>
+#include <cstddef>
 #include <exception>
 #include <ios>
 #include <iterator>
@@ -960,6 +961,15 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
     auto notifier{util::make_smart<DataModel::Notifier>(
         "EventParameters", DataModel::OP_ADD, detectionItem.origin.get())};
     notifierMsg->attach(notifier.get());
+
+    // comments
+    for (std::size_t i{0}; i < detectionItem.origin->commentCount(); ++i) {
+      auto notifier{util::make_smart<DataModel::Notifier>(
+          detectionItem.origin->publicID(), DataModel::OP_ADD,
+          detectionItem.origin->comment(i))};
+
+      notifierMsg->attach(notifier.get());
+    }
 
     for (auto &arrivalPick : detectionItem.arrivalPicks) {
       // pick
