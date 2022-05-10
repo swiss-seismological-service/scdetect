@@ -10,6 +10,7 @@
 #include <seiscomp/datamodel/arrival.h>
 #include <seiscomp/datamodel/databasequery.h>
 #include <seiscomp/datamodel/eventparameters.h>
+#include <seiscomp/datamodel/magnitude.h>
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/stationmagnitude.h>
@@ -232,6 +233,8 @@ class Application : public Client::StreamApplication {
     Amplitudes amplitudes;
     using Magnitudes = std::vector<DataModel::StationMagnitudePtr>;
     Magnitudes magnitudes;
+    using NetworkMagnitudes = std::vector<DataModel::MagnitudePtr>;
+    NetworkMagnitudes networkMagnitudes;
 
     struct ArrivalPick {
       DataModel::ArrivalPtr arrival;
@@ -313,6 +316,12 @@ class Application : public Client::StreamApplication {
       const TemplateConfigs &templateConfigs, const binding::Bindings &bindings,
       const Config &appConfig);
 
+  using NetworkMagnitudeComputationStrategy =
+      std::function<void(const std::vector<DataModel::StationMagnitudeCPtr> &,
+                         DataModel::Magnitude &)>;
+  static const NetworkMagnitudeComputationStrategy
+      medianNetworkMagnitudeComputationStrategy;
+
   bool isEventDatabaseEnabled() const;
 
   // Load events either from `eventDb` or `db`
@@ -347,6 +356,12 @@ class Application : public Client::StreamApplication {
   DataModel::StationMagnitudePtr createMagnitude(
       const DataModel::Amplitude &amplitude, const std::string &methodId = "",
       const std::string &processorId = "");
+
+  // Computes the network magnitudes based `stationMagnitudes`
+  std::vector<DataModel::MagnitudePtr> createNetworkMagnitudes(
+      const std::vector<DataModel::StationMagnitudeCPtr> &stationMagnitudes,
+      NetworkMagnitudeComputationStrategy strategy, const std::string &originId,
+      const std::string &methodId = "", const std::string &processorId = "");
 
   using WaveformStreamId = std::string;
   // Registers an amplitude `processor` for `waveformStreamIds`
