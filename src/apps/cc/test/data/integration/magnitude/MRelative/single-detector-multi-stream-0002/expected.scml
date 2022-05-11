@@ -112,6 +112,21 @@
         <type>MRelative</type>
         <amplitudeID>Amplitude/20220111084130.680957.1898</amplitudeID>
       </stationMagnitude>
+      <magnitude publicID="Magnitude/20220511171804.353054.1901">
+        <magnitude>
+          <value>4.333577804</value>
+        </magnitude>
+        <type>MRelative</type>
+        <stationCount>2</stationCount>
+        <stationMagnitudeContribution>
+          <stationMagnitudeID>StationMagnitude/20220111084130.677056.1897</stationMagnitudeID>
+          <weight>0.5</weight>
+        </stationMagnitudeContribution>
+        <stationMagnitudeContribution>
+          <stationMagnitudeID>StationMagnitude/20220111084130.681136.1899</stationMagnitudeID>
+          <weight>0.5</weight>
+        </stationMagnitudeContribution>
+      </magnitude>
     </origin>
   </EventParameters>
 </seiscomp>
