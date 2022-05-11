@@ -360,7 +360,7 @@ class Application : public Client::StreamApplication {
   // Computes the network magnitudes based `stationMagnitudes`
   std::vector<DataModel::MagnitudePtr> createNetworkMagnitudes(
       const std::vector<DataModel::StationMagnitudeCPtr> &stationMagnitudes,
-      NetworkMagnitudeComputationStrategy strategy, const std::string &originId,
+      NetworkMagnitudeComputationStrategy strategy,
       const std::string &methodId = "", const std::string &processorId = "");
 
   using WaveformStreamId = std::string;

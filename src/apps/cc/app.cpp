@@ -998,6 +998,14 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
       notifierMsg->attach(notifier.get());
     }
 
+    // network magnitudes
+    for (auto &mag : detectionItem.networkMagnitudes) {
+      auto notifier{util::make_smart<DataModel::Notifier>(
+          detectionItem.origin->publicID(), DataModel::OP_ADD, mag.get())};
+
+      notifierMsg->attach(notifier.get());
+    }
+
     if (!connection()->send(notifierMsg.get())) {
       SCDETECT_LOG_ERROR_TAGGED(
           detectionItem.detectorId,
@@ -1014,7 +1022,13 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
       _ep->add(arrivalPick.pick.get());
     }
 
+    // station magnitudes
     for (auto &mag : detectionItem.magnitudes) {
+      detectionItem.origin->add(mag.get());
+    }
+
+    // network magnitudes
+    for (auto &mag : detectionItem.networkMagnitudes) {
       detectionItem.origin->add(mag.get());
     }
   }
@@ -1779,8 +1793,7 @@ bool Application::initAmplitudeProcessors(
               try {
                 detectionItem->networkMagnitudes = createNetworkMagnitudes(
                     stationMagnitudes,
-                    medianNetworkMagnitudeComputationStrategy,
-                    detectionItem->origin->publicID(), "",
+                    medianNetworkMagnitudeComputationStrategy, "",
                     detectionItem->detectorId);
               } catch (const Exception &e) {
                 SCDETECT_LOG_WARNING_TAGGED(
@@ -1861,8 +1874,8 @@ void Application::registerAmplitudeProcessor(
 
 std::vector<DataModel::MagnitudePtr> Application::createNetworkMagnitudes(
     const std::vector<DataModel::StationMagnitudeCPtr> &stationMagnitudes,
-    NetworkMagnitudeComputationStrategy strategy, const std::string &originId,
-    const std::string &methodId, const std::string &processorId) {
+    NetworkMagnitudeComputationStrategy strategy, const std::string &methodId,
+    const std::string &processorId) {
   // sort by magnitude type
   std::unordered_map<std::string, std::vector<DataModel::StationMagnitudeCPtr>>
       grouped;
@@ -1894,7 +1907,6 @@ std::vector<DataModel::MagnitudePtr> Application::createNetworkMagnitudes(
     // finalize the network magnitude
     networkMagnitude->setType(groupedPair.first);
     networkMagnitude->setMethodID(methodId);
-    networkMagnitude->setOriginID(originId);
     networkMagnitude->setStationCount(groupedPair.second.size());
 
     ret.emplace_back(networkMagnitude);
