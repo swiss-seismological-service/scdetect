@@ -11,6 +11,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/phase.h>
 #include <seiscomp/datamodel/realquantity.h>
+#include <seiscomp/datamodel/stationmagnitudecontribution.h>
 #include <seiscomp/datamodel/timequantity.h>
 #include <seiscomp/datamodel/timewindow.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
@@ -1378,6 +1379,16 @@ const Application::NetworkMagnitudeComputationStrategy
 
           networkMagnitude.setMagnitude(
               DataModel::RealQuantity{sorted.back()->magnitude().value()});
+
+          // station magnitude contributions
+          double weight{1.0 / stationMagnitudes.size()};
+          for (const auto &stationMagnitude : stationMagnitudes) {
+            auto stationMagnitudeContribution{
+                util::make_smart<DataModel::StationMagnitudeContribution>(
+                    stationMagnitude->publicID())};
+            stationMagnitudeContribution->setWeight(weight);
+            networkMagnitude.add(stationMagnitudeContribution.get());
+          }
         };
 
 bool Application::isEventDatabaseEnabled() const {
