@@ -1847,6 +1847,9 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
 
     mag->setMagnitude(DataModel::RealQuantity{magnitudeValue});
     mag->setAmplitudeID(amplitude.publicID());
+    // XXX(damb): assign the amplitude's waveform stream identifier to the
+    // station magnitude, too.
+    mag->setWaveformID(amplitude.waveformID());
     mag->setMethodID(methodId);
 
     proc->finalize(mag.get());
