@@ -104,6 +104,7 @@
         </magnitude>
         <type>MRelative</type>
         <amplitudeID>Amplitude/20220111084130.676863.1896</amplitudeID>
+        <waveformID networkCode="CH" stationCode="GRIMS"/>
       </stationMagnitude>
       <stationMagnitude publicID="StationMagnitude/20220111084130.681136.1899">
         <magnitude>
@@ -111,6 +112,7 @@
         </magnitude>
         <type>MRelative</type>
         <amplitudeID>Amplitude/20220111084130.680957.1898</amplitudeID>
+        <waveformID networkCode="CH" stationCode="HASLI"/>
       </stationMagnitude>
       <magnitude publicID="Magnitude/20220511171804.353054.1901">
         <magnitude>

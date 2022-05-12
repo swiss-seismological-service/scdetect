@@ -97,6 +97,7 @@
         </magnitude>
         <type>MRelative</type>
         <amplitudeID>Amplitude/20220110195544.008781.241</amplitudeID>
+        <waveformID networkCode="8D" stationCode="RAW2"/>
       </stationMagnitude>
       <magnitude publicID="Magnitude/20220511171146.235473.253">
         <magnitude>
