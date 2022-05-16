@@ -1004,6 +1004,14 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
           detectionItem.origin->publicID(), DataModel::OP_ADD, mag.get())};
 
       notifierMsg->attach(notifier.get());
+      // station magnitude contributions
+      for (std::size_t i{0}; i < mag->stationMagnitudeContributionCount();
+           ++i) {
+        auto notifier{util::make_smart<DataModel::Notifier>(
+            mag->publicID(), DataModel::OP_ADD,
+            mag->stationMagnitudeContribution(i))};
+        notifierMsg->attach(notifier.get());
+      }
     }
 
     if (!connection()->send(notifierMsg.get())) {
