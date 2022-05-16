@@ -120,7 +120,19 @@
         </magnitude>
         <type>MRelative</type>
         <amplitudeID>Amplitude/20220110195700.785857.244</amplitudeID>
+        <waveformID networkCode="8D" stationCode="RAW2"/>
       </stationMagnitude>
+      <magnitude publicID="Magnitude/20220511172048.773852.246">
+        <magnitude>
+          <value>2.757863364</value>
+        </magnitude>
+        <type>MRelative</type>
+        <stationCount>1</stationCount>
+        <stationMagnitudeContribution>
+          <stationMagnitudeID>StationMagnitude/20220110195700.78612.245</stationMagnitudeID>
+          <weight>1</weight>
+        </stationMagnitudeContribution>
+      </magnitude>
     </origin>
   </EventParameters>
 </seiscomp>

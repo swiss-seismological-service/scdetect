@@ -11,6 +11,7 @@
 #include <seiscomp/datamodel/origin.h>
 #include <seiscomp/datamodel/phase.h>
 #include <seiscomp/datamodel/realquantity.h>
+#include <seiscomp/datamodel/stationmagnitudecontribution.h>
 #include <seiscomp/datamodel/timequantity.h>
 #include <seiscomp/datamodel/timewindow.h>
 #include <seiscomp/datamodel/waveformstreamid.h>
@@ -997,6 +998,22 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
       notifierMsg->attach(notifier.get());
     }
 
+    // network magnitudes
+    for (auto &mag : detectionItem.networkMagnitudes) {
+      auto notifier{util::make_smart<DataModel::Notifier>(
+          detectionItem.origin->publicID(), DataModel::OP_ADD, mag.get())};
+
+      notifierMsg->attach(notifier.get());
+      // station magnitude contributions
+      for (std::size_t i{0}; i < mag->stationMagnitudeContributionCount();
+           ++i) {
+        auto notifier{util::make_smart<DataModel::Notifier>(
+            mag->publicID(), DataModel::OP_ADD,
+            mag->stationMagnitudeContribution(i))};
+        notifierMsg->attach(notifier.get());
+      }
+    }
+
     if (!connection()->send(notifierMsg.get())) {
       SCDETECT_LOG_ERROR_TAGGED(
           detectionItem.detectorId,
@@ -1013,7 +1030,13 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
       _ep->add(arrivalPick.pick.get());
     }
 
+    // station magnitudes
     for (auto &mag : detectionItem.magnitudes) {
+      detectionItem.origin->add(mag.get());
+    }
+
+    // network magnitudes
+    for (auto &mag : detectionItem.networkMagnitudes) {
       detectionItem.origin->add(mag.get());
     }
   }
@@ -1359,6 +1382,37 @@ Core::TimeSpan Application::computeWaveformBufferSize(
   // compute the waveform buffer size.
 }
 
+const Application::NetworkMagnitudeComputationStrategy
+    Application::medianNetworkMagnitudeComputationStrategy =
+        [](const std::vector<DataModel::StationMagnitudeCPtr>
+               &stationMagnitudes,
+           DataModel::Magnitude &networkMagnitude) {
+          assert(!stationMagnitudes.empty());
+          std::vector<DataModel::StationMagnitudeCPtr> sorted(
+              static_cast<std::size_t>(std::ceil(
+                  static_cast<double>(stationMagnitudes.size()) / 2)));
+          std::partial_sort_copy(
+              std::begin(stationMagnitudes), std::end(stationMagnitudes),
+              std::begin(sorted), std::end(sorted),
+              [](const DataModel::StationMagnitudeCPtr &lhs,
+                 const DataModel::StationMagnitudeCPtr &rhs) {
+                return lhs->magnitude().value() < rhs->magnitude().value();
+              });
+
+          networkMagnitude.setMagnitude(
+              DataModel::RealQuantity{sorted.back()->magnitude().value()});
+
+          // station magnitude contributions
+          double weight{1.0 / stationMagnitudes.size()};
+          for (const auto &stationMagnitude : stationMagnitudes) {
+            auto stationMagnitudeContribution{
+                util::make_smart<DataModel::StationMagnitudeContribution>(
+                    stationMagnitude->publicID())};
+            stationMagnitudeContribution->setWeight(weight);
+            networkMagnitude.add(stationMagnitudeContribution.get());
+          }
+        };
+
 bool Application::isEventDatabaseEnabled() const {
   return _config.urlEventDb.empty();
 }
@@ -1701,7 +1755,7 @@ bool Application::initAmplitudeProcessors(
           try {
             amplitude = createAmplitude(processor, record, result, boost::none,
                                         magnitudeType);
-          } catch (Exception &e) {
+          } catch (const Exception &e) {
             --detectionItem->numberOfRequiredAmplitudes;
             SCDETECT_LOG_WARNING_PROCESSOR(
                 processor, "Failed to create amplitude: %s", e.what());
@@ -1733,11 +1787,27 @@ bool Application::initAmplitudeProcessors(
                   detectionItem->origin->publicID().c_str(),
                   mag->publicID().c_str(), mag->type().c_str());
 
-            } catch (Exception &e) {
+            } catch (const Exception &e) {
               --detectionItem->numberOfRequiredMagnitudes;
               SCDETECT_LOG_WARNING_TAGGED(
                   magnitudeProcessorId,
                   "Failed to create station magnitude: %s", e.what());
+            }
+
+            if (detectionItem->magnitudesReady()) {
+              std::vector<DataModel::StationMagnitudeCPtr> stationMagnitudes{
+                  std::begin(detectionItem->magnitudes),
+                  std::end(detectionItem->magnitudes)};
+              try {
+                detectionItem->networkMagnitudes = createNetworkMagnitudes(
+                    stationMagnitudes,
+                    medianNetworkMagnitudeComputationStrategy, "",
+                    detectionItem->detectorId);
+              } catch (const Exception &e) {
+                SCDETECT_LOG_WARNING_TAGGED(
+                    detectionItem->detectorId,
+                    "Failed to create network magnitudes: %s", e.what());
+              }
             }
           }
         });
@@ -1785,6 +1855,9 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
 
     mag->setMagnitude(DataModel::RealQuantity{magnitudeValue});
     mag->setAmplitudeID(amplitude.publicID());
+    // XXX(damb): assign the amplitude's waveform stream identifier to the
+    // station magnitude, too.
+    mag->setWaveformID(amplitude.waveformID());
     mag->setMethodID(methodId);
 
     proc->finalize(mag.get());
@@ -1808,6 +1881,49 @@ void Application::registerAmplitudeProcessor(
 
     throw;
   }
+}
+
+std::vector<DataModel::MagnitudePtr> Application::createNetworkMagnitudes(
+    const std::vector<DataModel::StationMagnitudeCPtr> &stationMagnitudes,
+    NetworkMagnitudeComputationStrategy strategy, const std::string &methodId,
+    const std::string &processorId) {
+  // sort by magnitude type
+  std::unordered_map<std::string, std::vector<DataModel::StationMagnitudeCPtr>>
+      grouped;
+  for (const auto &stationMagnitude : stationMagnitudes) {
+    grouped[stationMagnitude->type()].emplace_back(stationMagnitude);
+  }
+
+  std::vector<DataModel::MagnitudePtr> ret;
+  for (const auto &groupedPair : grouped) {
+    if (groupedPair.second.empty()) {
+      continue;
+    }
+
+    DataModel::MagnitudePtr networkMagnitude{DataModel::Magnitude::Create()};
+    if (!networkMagnitude) {
+      throw DuplicatePublicObjectId{"duplicate station magnitude identifier"};
+    }
+
+    try {
+      strategy(groupedPair.second, *networkMagnitude);
+
+    } catch (...) {
+      SCDETECT_LOG_WARNING_TAGGED(processorId,
+                                  "Failed to compute network magnitude: %s",
+                                  groupedPair.first.c_str());
+      continue;
+    }
+
+    // finalize the network magnitude
+    networkMagnitude->setType(groupedPair.first);
+    networkMagnitude->setMethodID(methodId);
+    networkMagnitude->setStationCount(groupedPair.second.size());
+
+    ret.emplace_back(networkMagnitude);
+  }
+
+  return ret;
 }
 
 void Application::registerTimeWindowProcessor(

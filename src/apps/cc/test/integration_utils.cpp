@@ -589,6 +589,12 @@ void magnitudeCmp(const DataModel::MagnitudeCPtr &lhs,
   }));
 
   BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
+    return m->stationMagnitudeContributionCount();
+  }));
+  // XXX(damb): StationMagnitudeContributions are not compared at the moment.
+  // It is questionable anyway, whether this is possible.
+
+  BOOST_TEST_CHECK(equalOptional(lhs, rhs, [](DataModel::MagnitudeCPtr m) {
     return m->creationInfo().agencyID();
   }));
 }
