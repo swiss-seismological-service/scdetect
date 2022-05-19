@@ -1,0 +1,30 @@
+Architecture
+============
+
+
+.. raw:: html
+
+   <p align="center">
+     <img border="-1" src="https://github.com/damb/scdetect/blob/master/doc/diagrams/sc-system-scdetect.svg" title="SCDetect and SeisComP" />
+   </p>
+
+
+Above, the modular organization of SeisComP
+with :external:ref:`messaging system <concepts_messaging>` (mediator),
+:external:term:`RecordStream`
+interface (waveform server) and
+:external:ref:`database <concepts_database>`
+including ``scdetect-cc``\ 's role in the SeisComP overall architecture. In SeisComP
+language ``scdetect-cc`` is implemented in accordance to a :external:term:`trunk module <trunk>`.
+
+From an architectural point of view ``scdetect-cc`` is positioned somewhere
+between :external:ref:`scautopick` and :external:ref:`scautoloc`. That
+is, ``scdetect-cc`` fetches waveform data by means of
+the :external:term:`RecordStream`
+interface, but it also uses data products (i.e. EventParameters) for template
+generation. If connected to the messaging system, results (i.e. declared
+origins (including station magnitudes), picks and amplitudes) are sent to the
+messaging system.
+
+For further information with regard to the SeisComP architecture please refer to
+the :external:ref:`SeisComP documentation <overview>`.

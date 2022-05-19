@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <Config>
+    <parameterSet publicID="ParameterSet/trunk/Station/CH/SENIN/scdetect-cc" created="2022-05-18T10:22:04.372312Z">
+      <moduleID>Config/trunk</moduleID>
+      <parameter publicID="Parameter/20220518102204.372353.5">
+        <name>sensorLocation.default.amplitudes.MRelative.initTime</name>
+        <value>2</value>
+      </parameter>
+      <parameter publicID="Parameter/20220518102204.372418.6">
+        <name>sensorLocation.default.amplitudes.amplitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220518102204.372439.7">
+        <name>sensorLocation.default.magnitudes.magnitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220518102204.372451.8">
+        <name>sensorLocation.default.locationCode</name>
+        <value>*</value>
+      </parameter>
+      <parameter publicID="Parameter/20220518102204.372462.9">
+        <name>sensorLocation.default.channelCode</name>
+        <value>*</value>
+      </parameter>
+      <parameter publicID="Parameter/20220518102204.372472.10">
+        <name>sensorLocationProfiles</name>
+        <value>default</value>
+      </parameter>
+    </parameterSet>
+    <module publicID="Config/trunk" name="trunk" enabled="true">
+      <station publicID="Config/trunk/CH/SENIN" networkCode="CH" stationCode="SENIN" enabled="true">
+        <creationInfo>
+          <agencyID>FOO_AGENCY</agencyID>
+          <author>bindings2cfg</author>
+          <creationTime>2022-05-18T10:22:04.372033Z</creationTime>
+        </creationInfo>
+        <setup name="scdetect-cc" enabled="true">
+          <parameterSetID>ParameterSet/trunk/Station/CH/SENIN/scdetect-cc</parameterSetID>
+        </setup>
+      </station>
+    </module>
+  </Config>
+</seiscomp>
