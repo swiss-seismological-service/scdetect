@@ -2,11 +2,9 @@ Architecture
 ============
 
 
-.. raw:: html
-
-   <p align="center">
-     <img border="-1" src="https://github.com/damb/scdetect/blob/master/doc/diagrams/sc-system-scdetect.svg" title="SCDetect and SeisComP" />
-   </p>
+.. image:: media/sc-system-scdetect.svg
+  :width: 500
+  :align: center
 
 
 Above, the modular organization of SeisComP
