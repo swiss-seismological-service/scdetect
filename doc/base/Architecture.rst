@@ -20,9 +20,10 @@ between :external:ref:`scautopick` and :external:ref:`scautoloc`. That
 is, ``scdetect-cc`` fetches waveform data by means of
 the :external:term:`RecordStream`
 interface, but it also uses data products (i.e. EventParameters) for template
-generation. If connected to the messaging system, results (i.e. declared
-origins (including station magnitudes), picks and amplitudes) are sent to the
-messaging system.
+generation. If connected to the :external:ref:`messaging system
+<concepts_messaging>`, results (i.e. declared origins (including both station
+magnitudes and network magnitudes), picks and amplitudes) are sent to the
+:external:ref:`messaging system <concepts_messaging>`.
 
 For further information with regard to the SeisComP architecture please refer to
 the :external:ref:`SeisComP documentation <overview>`.
