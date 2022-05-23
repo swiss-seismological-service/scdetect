@@ -106,7 +106,7 @@ Please report bugs, issues, feature requests, etc on
 
 ## Contributions
 
-Contributions are very welcome. Made with :two_hearts:.
+Contributions are very welcome. Made with :two_hearts::rainbow:.
 
 ## Cite
 
