@@ -25,7 +25,8 @@ Installation
 
 Instructions for compiling and the installation of the software can be found on
 the
-`SCDetect project page `https://github.com/swiss-seismological-service/scdetect#compiling-and-installation`.
+`SCDetect project page
+<https://github.com/swiss-seismological-service/scdetect#compiling-and-installation>`_.
 
 Cite
 ====
