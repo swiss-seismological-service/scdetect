@@ -36,20 +36,28 @@ For user documentation please refer to [scdetect.readthedocs.io](https://scdetec
 
 ## Compiling and Installation
 
+### Clone
+
 Get a copy of
-[SeisComP/seiscomp](https://github.com/SeisComP/seiscomp):
+[SeisComP](https://github.com/SeisComP):
 
 ```bash
-git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/extras/
+# get a copy of SeisComP (follow the official documentation)
+git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/base
+git clone https://github.com/SeisComP/common.git
+git clone https://github.com/SeisComP/main.git
+
+# [... etc ...]
+
 ```
 
 Next, clone SCDetect:
 
 ```bash
-git clone https://github.com/damb/scdetect.git
+cd seiscomp/src/extras && git clone https://github.com/damb/scdetect.git
 ```
 
-**Dependencies**:
+### Dependencies
 
 Besides of
 the [SeisComP core dependencies](https://github.com/SeisComP/seiscomp#prerequisites)
@@ -57,6 +65,14 @@ the following packages must be installed to compile SCDetect:
 
 - `libsqlite3-dev` (Debian, Ubuntu), `sqlite-devel` (RedHat, Fedora, CentOS),
   `dev-db/sqlite` (Gentoo)
+
+E.g. on Ubuntu simply invoke:
+
+```
+sudo apt-get install libsqlite3-dev
+```
+
+### Compile
 
 For compiling SeisComP (including SCDetect), please refer to
 https://github.com/SeisComP/seiscomp#build.
