@@ -20,6 +20,13 @@ declares a new origin.
 Besides, magnitudes may be estimated based on multiple magnitude estimation
 methods (i.e. regression, amplitude ratios).
 
+Installation
+============
+
+Instructions for compiling and the installation of the software can be found on
+the
+`SCDetect project page `https://github.com/swiss-seismological-service/scdetect#compiling-and-installation`.
+
 Cite
 ====
 
