@@ -43,9 +43,6 @@ if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
 else:
     extensions.append('sphinx.ext.imgmath')
 
-intersphinx_mapping = {'seiscomp': ('https://www.seiscomp.de/doc', None)}
-
-
 
 # bibliography
 bibtex_bibfiles = ['base/references.bib']
@@ -246,7 +243,7 @@ man_pages = []
 
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx_mapping = {'http://docs.python.org/': None}
-
+intersphinx_mapping = {'seiscomp': ('https://www.seiscomp.de/doc', None)}
 
 def setup(app):
     if LooseVersion(sphinx.__version__) < LooseVersion('1.8'):

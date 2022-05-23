@@ -347,26 +347,30 @@ def usage():
 usage: %s [OPTIONS] sourceDir [outputDir]
 
 Options:
-  -h,--help      print this help text
-  -v,--version   version string to use in replace in conf.py template
-  --sc3          build for SeisComP3
-  --skip-category do not generate module category menu
+  -h,--help         print this help text
+  -v,--version      version string to use in replace in conf.py template
+  --sc3             build for SeisComP3
+  --skip-category   do not generate module category menu
+  --skip-build      only generate sources
 ''' % sys.argv[0])
 
 
 # ------------------------------------------------------------------------------
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hv:", [
-                               "help", "version=", "sc3", "skip-category"])
+                               "help", "version=", "sc3", "skip-category",
+                               "skip-build"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
+
 # key value pairs to resolve in templates
 target_sc3 = False
 skip_category = False
+skip_build = False
 resolveDict = {}
 for o, a in opts:
     if o in ('-h', '--help'):
@@ -378,6 +382,8 @@ for o, a in opts:
         target_sc3 = True
     elif o in ('--skip-category'):
         skip_category = True
+    elif o in ('--skip-build'):
+        skip_build = True
     else:
         sys.stderr.write('Unknown option: {}\n'.format(o))
         usage()
@@ -913,7 +919,7 @@ print("# One entry per manual page. List of tuples", file=f)
 print("# (source start file, name, description, authors, manual section).", file=f)
 print("man_pages = [", file=f)
 for man_page in man_pages:
-    author = "GFZ Potsdam"
+    author = "SED"
     if man_page[1]:
         author = man_page[1]
     print("    ('apps/%s', '%s', project + u' Documentation',\
@@ -934,33 +940,34 @@ try:
 except BaseException:
     pass
 
-try:
-    os.environ["PYTHONPATH"] = os.path.abspath(
-        '../src/system/libs/python') + ":" + os.environ["PYTHONPATH"]
-except BaseException:
-    os.environ["PYTHONPATH"] = os.path.abspath('../src/system/libs/python')
+if not skip_build:
+    try:
+        os.environ["PYTHONPATH"] = os.path.abspath(
+            '../src/system/libs/python') + ":" + os.environ["PYTHONPATH"]
+    except BaseException:
+        os.environ["PYTHONPATH"] = os.path.abspath('../src/system/libs/python')
 
-os.environ["PYTHONPATH"] = os.path.join(
-    exe_dir, "libs") + ":" + os.environ["PYTHONPATH"]
+    os.environ["PYTHONPATH"] = os.path.join(
+        exe_dir, "libs") + ":" + os.environ["PYTHONPATH"]
 
-os.system("sphinx-build -b html %s %s" %
-          (out_dir, os.path.join(out_build_dir, "html")))
-#os.system("sphinx-build -b pdf %s %s" % (out_dir, os.path.join(out_build_dir, "pdf")))
-os.system("sphinx-build -b man %s %s" %
-          (out_dir, os.path.join(out_build_dir, "man1")))
+    os.system("sphinx-build -b html %s %s" %
+              (out_dir, os.path.join(out_build_dir, "html")))
+    #os.system("sphinx-build -b pdf %s %s" % (out_dir, os.path.join(out_build_dir, "pdf")))
+    os.system("sphinx-build -b man %s %s" %
+              (out_dir, os.path.join(out_build_dir, "man1")))
 
-print("Clean-up temporary files")
-try:
-    shutil.rmtree(os.path.join(out_build_dir, "man1", ".doctrees"))
-except BaseException:
-    pass
+    print("Clean-up temporary files")
+    try:
+        shutil.rmtree(os.path.join(out_build_dir, "man1", ".doctrees"))
+    except BaseException:
+        pass
 
-try:
-    shutil.rmtree(os.path.join(out_build_dir, "html", ".doctrees"))
-except BaseException:
-    pass
+    try:
+        shutil.rmtree(os.path.join(out_build_dir, "html", ".doctrees"))
+    except BaseException:
+        pass
 
-try:
-    shutil.rmtree(os.path.join(out_build_dir, "pdf", ".doctrees"))
-except BaseException:
-    pass
+    try:
+        shutil.rmtree(os.path.join(out_build_dir, "pdf", ".doctrees"))
+    except BaseException:
+        pass
