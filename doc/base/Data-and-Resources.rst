@@ -12,17 +12,19 @@ SeisComP stores and reads certain data (e.g. :external:term:`inventory`
 , event parameters, etc.) in and from a database. In order to connect to the
 database a *database connection URL* is required. This URL is either configured
 in :external:ref:`global.cfg <concepts_modules_config>`
-or in ``scmaster.cfg`` (i.e. the configuration file of SeisComP's messaging
-mediator module, :external:ref:`scmaster`). In
-the latter case, it is the ``scmaster`` module that passes the database connection
+or in :external:ref:`scmaster.cfg <scmaster_configuration>` (i.e. the
+configuration file of SeisComP's messaging mediator module,
+:external:ref:`scmaster`). In the latter case, it is the
+:external:ref:`scmaster` module that passes the database connection
 URL to every module connecting to the messaging system (usually at module
 startup).
 
 However, when running ``scdetect-cc`` in offline mode (using the CLI option
-``--offline``\ ), and the database connection URL is specified in ``scmaster.cfg``\ ,
-``scdetect-cc`` does not connect to the messaging system and thus, the database
-connection URL never reaches ``scdetect-cc``. For this purpose ``scdetect-cc``
-provides the standard SeisComP CLI options:
+``--offline``\ ), and the database connection URL is specified in
+:external:ref:`scmaster.cfg <scmaster_configuration>`, ``scdetect-cc`` does not
+connect to the messaging system and thus, the database connection URL never
+reaches ``scdetect-cc``. For this purpose ``scdetect-cc`` provides the standard
+SeisComP CLI options:
 
 
 * ``-d|--database URL``

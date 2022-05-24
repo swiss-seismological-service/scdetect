@@ -6,11 +6,14 @@ Getting Started
 New to SCDetect? Don't worry, you've found the perfect place to get started.
 
 We assume that SeisComP and SCDetect are successfully installed on your
-machine. For installation instructions, please refer to the `SCDetect project page <https://github.com/swiss-seismological-service/scdetect/tree/master#compiling-and-installation>`_.
+machine. For installation instructions, please refer to the `SCDetect project
+page
+<https://github.com/swiss-seismological-service/scdetect/tree/master#compiling-and-installation>`_.
 
 In order to get quickly started, we've prepared some exemplary data including
 the required configuration. Simply download it
-`here <https://github.com/damb/scdetect/doc/data/getting.started.tar.xz>`_.
+`here
+<https://github.com/swiss-seismological-service/scdetect/tree/master/doc/data/getting.started.tar.xz>`_.
 
 Once downloaded, extract the ``getting.started.tar.xz`` file and change into the
 directory

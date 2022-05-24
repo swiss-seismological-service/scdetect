@@ -1,6 +1,6 @@
 # SCDetect - Computationally efficient earthquake detection
 
-[![continuous-integration](https://github.com/damb/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/damb/scdetect/actions/workflows/continuous-integration.yml) [![Documentation Status](https://readthedocs.org/projects/scdetect/badge/?version=latest)](https://scdetect.readthedocs.io/?badge=latest)
+[![continuous-integration](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml) [![Documentation Status](https://readthedocs.org/projects/scdetect/badge/?version=latest)](https://scdetect.readthedocs.io/)
 
 ## Content
 
@@ -54,7 +54,7 @@ git clone https://github.com/SeisComP/main.git
 Next, clone SCDetect:
 
 ```bash
-cd seiscomp/src/extras && git clone https://github.com/damb/scdetect.git
+cd seiscomp/src/extras && git clone https://github.com/swiss-seismological-service/scdetect.git
 ```
 
 ### Dependencies
@@ -102,7 +102,7 @@ SeisComP's [unit testing guide](https://docs.gempa.de/seiscomp/current/base/test
 ## Issues
 
 Please report bugs, issues, feature requests, etc on
-[GitHub](https://github.com/damb/scdetect/issues).
+[GitHub](https://github.com/swiss-seismological-service/scdetect/issues).
 
 ## Contributions
 
@@ -126,4 +126,4 @@ DOI: https://doi.org/10.5194/egusphere-egu22-12443
 
 Licensed under the the [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 For more information see the
-[LICENSE](https://github.com/damb/scdetect/tree/master/LICENSE) file.
+[LICENSE](https://github.com/swiss-seismological-service/scdetect/tree/master/LICENSE) file.

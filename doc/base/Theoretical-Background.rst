@@ -112,7 +112,7 @@ of *template station magnitudes*\ :
    **NOTE**\ : Magnitudes of type ``MLhc`` are preferred over magnitudes of type ``MLh``.
 
 
-Recall, that template station magnitudes must be available through event
-parameters (for further details, please refer to the
-related :ref:`section <inventory-events-and-configuration-label>` on providing these data
-products).
+Recall, that template station magnitudes must be available through
+EventParameters (for further details, please refer to the related :ref:`section
+<inventory-events-and-configuration-label>` on providing these data products).
+
