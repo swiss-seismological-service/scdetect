@@ -1,0 +1,14 @@
+IF (SC_DOC_GENERATE)
+    SET(DOC_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build-doc)
+    SET(CONF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/templates/conf.py")
+
+    ADD_CUSTOM_TARGET(scdetectdoc ALL
+                    COMMAND ${PYTHON_EXECUTABLE} build-doc.py --skip-category
+                    --version ${VERSION} . ${DOC_BUILD_DIR}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+    INSTALL(DIRECTORY ${DOC_BUILD_DIR}/html DESTINATION
+      ${SC3_PACKAGE_SHARE_DIR}/doc/scdetect)
+    INSTALL(DIRECTORY ${DOC_BUILD_DIR}/man1 DESTINATION 
+      ${SC3_PACKAGE_SHARE_DIR}/man)
+ENDIF (SC_DOC_GENERATE)
