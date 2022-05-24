@@ -1,6 +1,6 @@
 # SCDetect - Computationally efficient earthquake detection
 
-[![continuous-integration](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml) [![Documentation Status](https://readthedocs.org/projects/scdetect/badge/?version=latest)](https://scdetect.readthedocs.io/?badge=latest)
+[![continuous-integration](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml) [![Documentation Status](https://readthedocs.org/projects/scdetect/badge/?version=latest)](https://scdetect.readthedocs.io/)
 
 ## Content
 
