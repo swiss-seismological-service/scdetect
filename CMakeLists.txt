@@ -1,5 +1,7 @@
 sc_begin_package(DETECT)
 
+SET(VERSION 1.0.0)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/libs)
 
@@ -14,4 +16,4 @@ if (${SCDETECT_DEBUG})
 endif()
 
 
-subdirs(src)
+subdirs(src doc)
