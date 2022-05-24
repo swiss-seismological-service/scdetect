@@ -20,7 +20,7 @@ an important note:
 
 
 In general, bindings are configured the easiest with SeisComP's configuration
-and system management frontend :external:ref:`scconfig <scconfig-bindings>`_
+and system management frontend :external:ref:`scconfig <scconfig-bindings>`
 . Alternatively, *key files* may be created manually.
 
 **Creating key files** (\ ``scconfig``\ ):
