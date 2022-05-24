@@ -174,7 +174,7 @@ is ``smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990``.
    **NOTE**: at the time being you cannot download station magnitudes from
    SeisComP's ``fdsnws-event`` service implementation. For the purpose of this
    tutorial you can get the template Eventparameter configuration from
-   `here <https://github.com/damb/scdetect/doc/data/Offline-Playback/ex-01/template.scml>`_.
+   `here <https://github.com/swiss-seismological-service/scdetect/doc/data/Offline-Playback/ex-01/template.scml>`_.
    Of course, you can also modify this tutorial to match your needs.
 
 
@@ -334,7 +334,7 @@ Lazy Users
 """"""""""
 
 Get the bindings configuration
-from `here <https://github.com/damb/scdetect/doc/data/Offline-Playback/ex-01/bindings.scml>`_.
+from `here <https://github.com/swiss-seismological-service/scdetect/doc/data/Offline-Playback/ex-01/bindings.scml>`_.
 
 Execute
 ~~~~~~~
@@ -523,7 +523,7 @@ from the database with :external:ref:`scxmldump`:
 
 For the purpose of this tutorial you can download the template EventParameter
 data from
-`here <https://github.com/damb/scdetect/doc/data/ex-02/template.scml>`_\ ), since
+`here <https://github.com/swiss-seismological-service/scdetect/doc/data/ex-02/template.scml>`_\ ), since
 you don't have access to the database.
 
 Waveform data
@@ -579,7 +579,7 @@ estimate :ref:`magnitudes <theory-magnitude-estimation-label>`
 Please refer to the :ref:`previous tutorial <ex-01-configure-bindings-label>` for a detailed
 description on how to create the bindings configuration file. Alternatively,
 download the bindings configuration file
-from `here <https://github.com/damb/scdetect/doc/data/Offline-Playback/ex-02/bindings.scml>`_.
+from `here <https://github.com/swiss-seismological-service/scdetect/doc/data/Offline-Playback/ex-02/bindings.scml>`_.
 
 Execute
 ~~~~~~~
@@ -1032,7 +1032,7 @@ database with :external:ref:`scxmldump`:
 
 For the purpose of this tutorial you can download the template EventParameter
 data from
-`here <https://github.com/damb/scdetect/doc/data/Offline-Playback/ex-03/template.scml>`_\ ), since
+`here <https://github.com/swiss-seismological-service/scdetect/doc/data/Offline-Playback/ex-03/template.scml>`_\ ), since
 you don't have access to the database.
 
 Waveform data
@@ -1084,7 +1084,7 @@ estimate :ref:`magnitudes <theory-magnitude-estimation-label>`
 Please refer to the :ref:`first tutorial <ex-01-configure-bindings-label>` for a detailed
 description on how to create the bindings configuration file. Alternatively,
 download the bindings configuration file
-from `here <https://github.com/damb/scdetect/doc/data/Offline-Playback/ex-03/bindings.scml>`_.
+from `here <https://github.com/swiss-seismological-service/scdetect/doc/data/Offline-Playback/ex-03/bindings.scml>`_.
 
 Execute
 ~~~~~~~

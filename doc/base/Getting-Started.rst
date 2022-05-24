@@ -10,7 +10,7 @@ machine. For installation instructions, please refer to the `SCDetect project pa
 
 In order to get quickly started, we've prepared some exemplary data including
 the required configuration. Simply download it
-`here <https://github.com/damb/scdetect/doc/data/getting.started.tar.xz>`_.
+`here <https://github.com/swiss-seismological-service/scdetect/doc/data/getting.started.tar.xz>`_.
 
 Once downloaded, extract the ``getting.started.tar.xz`` file and change into the
 directory
