@@ -142,9 +142,10 @@ following amplitude related configuration parameters may be provided:
   where :external:ref:`bindings configuration <global_bindings_config>`
   is supplied.
 
-..
+.. note::
 
-   **NOTE**\ : Magnitudes are computed only for those detectors with amplitude calculation enabled.
+   Magnitudes are computed only for those detectors with amplitude calculation
+   enabled.
 
 
 **Magnitude estimation**\ :
@@ -196,10 +197,10 @@ configuration include:
     streams are taken into account while linking. Trying to merge all incoming
     cross-correlation results is computationally quite expensive.
 
-..
+.. note::
 
-   **NOTE**\ : The configured merging strategy may have a significant performance
-   impact in a multi-stream detector setup.
+   The configured merging strategy may have a significant performance impact in
+   a multi-stream detector setup.
 
 
 
@@ -251,11 +252,11 @@ detection arrives within this period, the previous one is not used, anymore.
   detection once the detector is triggered. Note that the configured value is
   only taken into account if trigger facilities are enabled.
 
-..
+.. note::
 
-   **NOTE**\ : With trigger facilities enabled a detection is processed only once
-   there is the *next* detection already available. Since processing a detection
-   may involve calculating amplitudes the ``processing.waveformBufferSize`` must
+   With trigger facilities enabled a detection is processed only once there is
+   the *next* detection already available. Since processing a detection may
+   involve calculating amplitudes the ``processing.waveformBufferSize`` must
    cover the corresponding duration in order to successfully compute amplitudes
    (fetching historical data is currently not implemented, yet).
 
@@ -307,11 +308,10 @@ configuration parameters:
   waveform creation all waveform stream identifier components are taken into
   account.
 
-..
+.. note::
 
-   **NOTE**\ : When specifying a ``"templateWaveformId"`` different from
-   ``"waveformId"``\ , ``scdetect-cc`` will not correct potentially differing sensor
-   responses.
+   When specifying a ``"templateWaveformId"`` different from ``"waveformId"``\
+   , ``scdetect-cc`` will not correct potentially differing sensor responses.
 
 
 

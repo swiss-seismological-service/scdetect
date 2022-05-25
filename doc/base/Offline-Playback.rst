@@ -159,9 +159,10 @@ use :external:ref:`scxmldump`:
      -A \
      -o template.scml
 
-..
+.. note::
 
-   **NOTE**\ : ``-d localhost`` refers to your database. It can be something like  ``postgresql://user:password@host/seiscompDbName``
+   ``-d localhost`` refers to your database. It can be something like
+   ``postgresql://user:password@host/seiscompDbName``
 
 
 Here, template EventParameter configuration is downloaded for a single template
@@ -169,9 +170,9 @@ configuration (i.e. identified by the ``detectorId`` ``detector-01``\ ). The
 corresponding template ``originId``
 is ``smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990``.
 
-..
+.. note::
 
-   **NOTE**: at the time being you cannot download station magnitudes from
+   At the time being you cannot download station magnitudes from
    SeisComP's ``fdsnws-event`` service implementation. For the purpose of this
    tutorial you can get the template Eventparameter configuration from
    `here <https://github.com/swiss-seismological-service/scdetect/tree/master/doc/data/Offline-Playback/ex-01/template.scml>`_.
@@ -219,10 +220,10 @@ Waveform data
      wget -i - -O - | \
      $SEISCOMP_ROOT/bin/seiscomp exec scmssort -u -E -v - > data.mseed
 
-  ..
+  .. note::
 
-     **NOTE:** when processing data from multiple streams in *playback mode* it
-     is important to sort data by end time.
+     When processing data from multiple streams in *playback mode* it is
+     important to sort data by end time.
 
 
 .. _ex-01-configure-bindings-label:
@@ -277,10 +278,10 @@ file:
 
        $SEISCOMP_ROOT/bin/seiscomp exec scinv sync
 
-   ..
+   .. note::
 
-      **NOTE**\ : this operation may change possibly preexisting
-      :external:term:`inventory` data on your database.
+      This operation may change possibly preexisting :external:term:`inventory`
+      data on your database.
 
 
 #. 
@@ -468,13 +469,12 @@ vertical instrument components refer to the ``templatePhase`` ``Pg``\ , while th
 template waveforms of the horizontal instrument components refer to
 the ``templatePhase`` ``Sg``.
 
-..
+.. note::
 
-   **NOTE**\ : in contrast to the
-   `previous example <ex-01-label>`,
-   here, we introduce the ``minimumArrivals`` configuration option, which defines
-   the minimum number of phases required to declare a new detection. The default
-   value is the total number of phase templates, i.e. 6 in this case.
+   In contrast to the `previous example <ex-01-label>`, here, we introduce the
+   ``minimumArrivals`` configuration option, which defines the minimum number
+   of phases required to declare a new detection. The default value is the
+   total number of phase templates, i.e. 6 in this case.
 
 
 For a more detailed description of the available configuration options please

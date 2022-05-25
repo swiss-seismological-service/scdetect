@@ -10,13 +10,13 @@ For those users already familiar with
 SeisComP's :external:ref:`bindings configuration <global_bindings_config>`
 an important note:
 
-..
+.. note::
 
-   **NOTE**\ : At the time being, SeisComP's
-   :external:ref:`bindings configuration <global_bindings_config>`
-   allows configuration to be provided for stations, only. In order to allow
-   users to supply configuration on sensor location granularity, ``scdetect-cc``
-   makes use of so called *sensor location profiles*.
+   At the time being, SeisComP's :external:ref:`bindings configuration
+   <global_bindings_config>` allows configuration to be provided for stations,
+   only. In order to allow users to supply configuration on sensor location
+   granularity, ``scdetect-cc`` makes use of so called *sensor location
+   profiles*.
 
 
 In general, bindings are configured the easiest with SeisComP's configuration

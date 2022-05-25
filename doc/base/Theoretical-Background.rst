@@ -208,9 +208,9 @@ of *template station magnitudes*\ :
   corrected for near-field observations) and allows for station specific
   corrections.
 
-..
+.. note::
 
-   **NOTE**\ : Magnitudes of type ``MLhc`` are preferred over magnitudes of type ``MLh``.
+   Magnitudes of type ``MLhc`` are preferred over magnitudes of type ``MLh``.
 
 
 Recall, that template station magnitudes must be available through

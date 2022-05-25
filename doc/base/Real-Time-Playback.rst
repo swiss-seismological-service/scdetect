@@ -75,9 +75,9 @@ Waveform data
 Download both the waveform data the template waveforms are generated from and
 the data to be processed.
 
-..
+.. note::
 
-   **NOTE**\ : it is imported that the data to be processed is sorted by end time.
+   It is imported that the data to be processed is sorted by end time.
 
 
 SeisComP configuration
