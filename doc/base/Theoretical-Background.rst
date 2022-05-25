@@ -10,6 +10,7 @@ Earthquake detection
 
 .. image:: media/scdetect-cc-workflow.png
    :width: 500
+   :align: center
    :alt: scdetect-cc workflow
 
 
