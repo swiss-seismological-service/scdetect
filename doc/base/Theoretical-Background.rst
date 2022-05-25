@@ -8,7 +8,57 @@ Theoretical Background
 Earthquake detection
 --------------------
 
-Here describe the detection process
+.. image:: media/scdetect-cc-workflow.png
+   :width: 500
+   :alt: scdetect-cc workflow
+
+
+``scdetect-cc`` allows to configure multiple detectors by means of the
+:ref:`template configuration <template-configuration-label>`. Detectors are
+handled completely independently. The most important properties of the detector
+configuration are the (template) earthquake ``"originId"`` and a set of
+template waveforms. Again, these template waveforms may be configured
+individually with so-called :ref:`stream configuration parameters
+<stream-configuration-parameters-label>`.
+
+Once ``scdetect-cc`` has successfully initialized the configured detectors it is
+ready for processing. The waveform data to be processed is dispatched
+record-wise to the individual detectors, optionally pre-processed (e.g.
+resampled, filtered, etc.) and cross-correlated. The cross-correlation
+algorithm itself is based on computing the `Pearson Correlation Coefficient
+<https://en.wikipedia.org/wiki/Pearson_correlation_coefficient>`_
+. The results of the cross-correlation are time series of Pearson correlation
+coefficients, i.e. one time series per previously configured template waveform.
+During the next processing step the local maxima are extracted. By now, the
+processing for each template waveform was completely independent. That changes
+during the *linkage phase*. The local maxima are fed to the detector's linker
+whose main task is to associate these tuples (time, correlation coefficient).
+In fact, these tuples already correspond to potential picks. During the
+association process the linker maintains a set of *detection candidate*\s. For
+each detection candidate a score is computed that is the arithmetic mean of
+the correlation coefficients from the associated picks. Once the score of a
+detection candidate exceeds the configured ``"triggerOnThreshold"`` the linker
+emits the detection candidate. In case a ``"triggerDuration"`` was configured the
+detection candidate still is put on hold i.e. it might be overridden by a
+detection candidate with both a higher score and at least the same number of
+associated picks. This approach guarantees that within the
+``"triggerDuration"`` configured only the *best* candidate is emitted until
+either the time from the ``"triggerDuration"`` is passed by or the score of
+subsequently emitted detection candidates falls below the configured
+``"triggerOffThreshold"``. Without a ``"triggerDuration"`` enabled every
+detection candidate immediately qualifies to a detection.
+
+Further processing of the detection involves to optionally compute so-called
+*template arrivals* i.e. arrivals which are part of the origin identified by
+the template earthquake ``"originId"``, but not used for detection. The
+detection's coordinates and depth are those of the template earthquake.
+
+Depending on the configuration ``scdetect-cc`` subsequently computes amplitudes
+and magnitudes.
+
+Finally, the detection (in terms of SeisComP this corresponds to a new origin),
+picks, amplitudes and magnitudes are send to :external:ref:`scmaster` and may
+be used for further processing with other SeisComP modules.
 
 .. _theory-phase-association-label:
 
