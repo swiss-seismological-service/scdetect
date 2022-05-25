@@ -61,12 +61,62 @@ Finally, the detection (in terms of SeisComP this corresponds to a new origin),
 picks, amplitudes and magnitudes are send to :external:ref:`scmaster` and may
 be used for further processing with other SeisComP modules.
 
+
 .. _theory-phase-association-label:
 
 Phase association
 -----------------
 
-Here describe the Linker
+.. note::
+
+  Phase association is only relevant if a dedector is configured with at least
+  two template waveforms.
+
+
+Each detector comes with its dedicated linker which is responsible for phase
+association. The linker continuously consumes local maxima and performs the
+association based on template arrival times and a configurable
+``"arrivalOffsetThreshold"``.
+
+Given a detector is configured with ``N`` template waveforms. Then, the
+template arrival times form a *reference matrix* such as e.g.
+
+.. image:: media/scdetect-cc-pot.svg
+   :width: 500
+   :align: center
+   :alt: scdetect-cc POT
+
+The entry of the ``i-th`` row and ``j-th`` column corresponds to the difference
+between the arrival referring to ``Template-i`` and the arrival referring to
+``Template-j``. Therefore, the diagonal elements are all zero.
+
+Based on this information the linker maintains a list of detection candidates
+where each candiate has its own *association matrix*. During operation the
+linker constantly tries to insert new local maxima into the association
+matrices. A local maxima referring to ``Template-k`` is inserted if the absolute
+values of all the differences in either the ``k-th`` row or the ``k-th`` column
+between the entries of the reference matrix and the association matrix are
+smaller than or equal to the configured ``"arrivalOffsetThreshold"``. Once a
+association matrix is *complete* the candidat's score is computed that is the
+arithmetic mean from the correlation coefficients of the associated local
+maxima. If the score is greater than or equal to the configured
+``"triggerOnThreshold"`` the detection candidate is emitted.
+
+.. figure:: media/scdetect-cc-linking.svg
+   :width: 500
+   :align: center
+   :alt: scdetect-cc linking
+
+   The linker maintains a list of detection candidates where each candidate
+   has its own association matrix. Missing entries are indicated with a ``-``.
+
+Changing the ``"minimumArrivals"`` to a value smaller than ``N`` allows the
+user to influence the completeness of an association matrix. I.e. in fact a
+detection candidate is emitted once both the candidate's score exceeds the
+``"triggerOnThreshold"`` and the number of associated local maxima is at least
+equal to the value specified by the ``"minimumArrivals"`` configuration
+parameter.
+
 
 .. _theory-amplitude-calculation-label:
 
