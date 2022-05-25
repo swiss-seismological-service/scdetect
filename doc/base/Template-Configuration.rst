@@ -167,13 +167,17 @@ configuration include:
 * 
   ``"arrivalOffsetThreshold"``\ : Maximum arrival offset in seconds (i.e. with
   regard to the template arrival) to tolerate when associating an arrival with
-  an *association*. Note that the threshold is only relevant for a multi-stream
-  detector setup.
+  an *association matrix*. Note that the threshold is only relevant for a
+  multi-stream detector setup. For further information please refer to the
+  :ref:`theoretical background on phase association
+  <theory-phase-association-label>`.
 
 * 
   ``"minimumArrivals"``\ : Defines the minimum number of arrivals w.r.t. streams
-  within the stream set configured which must be part of an association to
-  qualify for a detection.
+  within the stream set configured which must be part of an association matrix
+  in order to qualify for a detection. For further information please refer to the
+  :ref:`theoretical background on phase association
+  <theory-phase-association-label>`.
 
 * 
   ``"mergingStrategy"``\ : Defines the merging strategy applied before linking
@@ -221,9 +225,8 @@ configuration include:
 
 **Trigger facilities**\ :
 
-An *association* is considered as a *detected association*\ , also called a
-*detection* if it surpasses the value specified by the ``"triggerOnThreshold"``
-configuration parameter.
+A *detection candidate* is considered as a *detection* if it surpasses the
+value specified by the ``"triggerOnThreshold"`` configuration parameter.
 
 In a multi-stream detector setup, ``scdetect-cc`` uses the *mean* correlation
 coefficient of all streams within the stream set. In future, further methods may
