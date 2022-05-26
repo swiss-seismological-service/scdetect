@@ -41,9 +41,9 @@ based earthquake detection during intense earthquake sequences\ :raw-html-m2r:`<
 EGU22-12443\ :raw-html-m2r:`<br>`
 DOI: https://doi.org/10.5194/egusphere-egu22-12443
 
-..
+.. note::
 
-   **NOTE**\ : A manuscript is currently in preparation.
+   A manuscript is currently in preparation.
 
 
 Help & Feedback
