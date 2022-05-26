@@ -69,7 +69,7 @@ Phase association
 
 .. note::
 
-  Phase association is only relevant if a dedector is configured with at least
+  Phase association is only relevant if a detector is configured with at least
   two template waveforms.
 
 
