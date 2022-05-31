@@ -174,7 +174,7 @@ is ``smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990``.
 
    At the time being you cannot download station magnitudes from
    SeisComP's ``fdsnws-event`` service implementation. For the purpose of this
-   tutorial you can get the template Eventparameter configuration from
+   tutorial you can get the template EventParameter configuration from
    `here <https://github.com/swiss-seismological-service/scdetect/tree/master/doc/data/Offline-Playback/ex-01/template.scml>`_.
    Of course, you can also modify this tutorial to match your needs.
 
