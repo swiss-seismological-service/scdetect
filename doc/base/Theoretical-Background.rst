@@ -133,15 +133,14 @@ implements the following amplitude types to be computed:
 
 * 
   ``MRelative``\ : Amplitude computed as the ratio between the template waveform and
-  the detection. The approach is outlined by
-  e.g. https://doi.org/10.1038/ngeo697
-  and https://doi.org/10.1126/sciadv.1601946 and uses the same instrument
-  components as specified by the detector configuration.
+  the detection. The approach is outlined by e.g. :cite:t:`peng2009` and
+  :cite:t:`ross2017` and uses the same instrument components as specified by
+  the detector configuration.
 
 * 
   ``MLx``\ : Amplitudes required for the *amplitude-magnitude regression* approach.
   The implementation follows the approach outlined
-  in https://doi.org/10.1029/2019JB017468 (section 3.3.3 *Magnitude Estimation*\ )
+  in :cite:t:`herrmann2019` (section 3.3.3 *Magnitude Estimation*\ )
   . Amplitudes used for the amplitude-magnitude regression are so called *sensor
   location* `RMS (root-mean-square) <https://en.wikipedia.org/wiki/Root_mean_square>`_
   *amplitudes* (i.e. the maximum sample-wise RMS regarding the horizontal
@@ -180,8 +179,8 @@ the following magnitude types are available:
   the corresponding amplitudes to be computed, this particular type requires
   station magnitudes to be available
   through :ref:`EventParameters <inventory-events-and-configuration-label>`.
-  (\ **References**\ : https://doi.org/10.1038/ngeo697
-  , https://doi.org/10.1126/sciadv.1601946)
+  For further details please refer to either :cite:t:`peng2009` or
+  :cite:t:`ross2017`.
 
 * 
   ``MLx``\ : Amplitude-magnitude regression based magnitude type. Besides, of the
@@ -192,9 +191,9 @@ the following magnitude types are available:
   *related* templates. The
   corresponding :ref:`template family configuration <template-family-configuration-label>`
   must be provided by ``scdetect-cc``\ '
-  s ``--templates-family-json path/to/templates-family.json`` CLI flag.
-  (\ **References**\ : https://doi.org/10.1029/2019JB017468 (section 3.3.3
-  *Magnitude Estimation*\ ))
+  s ``--templates-family-json path/to/templates-family.json`` CLI flag. For
+  further information please refer to :cite:t:`herrmann2019` (section 3.3.3
+  *Magnitude Estimation*).
 
 All magnitude estimation methods listed above are based on the following types
 of *template station magnitudes*\ :

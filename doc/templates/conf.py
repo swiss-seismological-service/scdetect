@@ -36,7 +36,7 @@ extensions = [
     'sphinx.ext.ifconfig', 'sphinx.ext.todo',
     'sphinx.ext.autodoc', 'sphinx.ext.viewcode',
     'sphinx.ext.graphviz', 'sphinx.ext.intersphinx',
-    'sphinx_rtd_theme']
+    'sphinx_rtd_theme', 'sphinxcontrib.bibtex',]
 
 if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
     extensions.append('sphinx.ext.pngmath')
