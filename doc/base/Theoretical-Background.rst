@@ -50,9 +50,10 @@ subsequently emitted detection candidates falls below the configured
 detection candidate immediately qualifies to a detection.
 
 Further processing of the detection involves to optionally compute so-called
-*template arrivals* i.e. arrivals which are part of the origin identified by
-the template earthquake ``"originId"``, but not used for detection. The
-detection's coordinates and depth are those of the template earthquake.
+*template arrivals* i.e. arrivals which are part of the :external:term:`origin`
+identified by the template earthquake ``"originId"``, but not used for
+detection. The detection's coordinates and depth are those of the template
+earthquake.
 
 Depending on the configuration ``scdetect-cc`` subsequently computes amplitudes
 and magnitudes.
@@ -146,7 +147,7 @@ implements the following amplitude types to be computed:
   *amplitudes* (i.e. the maximum sample-wise RMS regarding the horizontal
   components for a certain sensor location w.r.t. velocity seismograms).
 
-Amplitudes are calculated once an origin has been declared.
+Amplitudes are calculated once an :external:term:`origin` has been declared.
 
 In general, the computation of amplitudes is sensor location dependent. In order
 to provide dedicated configuration for different sensor locations ``scdetect-cc``

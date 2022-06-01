@@ -108,8 +108,8 @@ specified:
   * 
     ``"templateWaveformId"``\ : Required. The template waveform identifier
     regarding a detector configuration stream configuration. Required, in
-    order to fully establish the relation detector - (template) origin -
-    sensor location.
+    order to fully establish the relation detector - (template)
+    :external:term:`origin` - sensor location.
 
     Usually, this refers to
     a `FDSN Source Identifier <http://docs.fdsn.org/projects/source-identifiers/en/v1.0/>`_
@@ -151,9 +151,9 @@ defined:
 
 
 * 
-  ``"originId"``\ : Required. The origin identifier used to establish a reference to
-  an origin in the catalog. Usually, the origin identifier corresponds to a
-  *seismic metadata resource identifier* (\ ``smi``\ ).
+  ``"originId"``\ : Required. The origin identifier used to establish a
+  reference to an :external:term:`origin` in the catalog. Usually, the origin
+  identifier corresponds to a *seismic metadata resource identifier* (``smi``).
 
 * 
   ``"streams"``\ : Required. A JSON array of sensor location configuration objects

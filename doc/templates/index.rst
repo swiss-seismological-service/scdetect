@@ -15,7 +15,7 @@ the `Pearson Correlation Coefficient <https://en.wikipedia.org/wiki/Pearson_corr
 The module allows both single-stream and multi-stream earthquake detection.
 
 In case the detection parameters exceed the configured thresholds, ``scdetect-cc``
-declares a new origin.
+declares a new :external:term:`origin`.
 
 Besides, magnitudes may be estimated based on multiple magnitude estimation
 methods (i.e. regression, amplitude ratios).

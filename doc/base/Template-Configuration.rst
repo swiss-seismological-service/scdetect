@@ -12,9 +12,9 @@ CLI flag.
 
 The template configuration itself is a `JSON <https://www.json.org>`_
 configuration file and contains an array of *detector configuration* JSON
-objects (each detector refers to a template origin identified by its
-``"originId"``\ ). An exemplary multi-stream detector configuration (for the
-streams ``CH.GRIMS..HHZ`` and ``CH.HASLI..HHZ``\ ) may look like:
+objects (each detector refers to a template :external:term:`origin` identified
+by its ``"originId"``\ ). An exemplary multi-stream detector configuration (for
+the streams ``CH.GRIMS..HHZ`` and ``CH.HASLI..HHZ``\ ) may look like:
 
 .. code-block:: json
 
@@ -101,12 +101,12 @@ configuration parameters:
   origins.
 
 * 
-  ``"originId"``\ : Required. The origin identifier of the template origin the
-  detector is referring to. The origin identifier is used for extracting
-  template related data such as template waveforms, etc. Usually, the origin
-  identifier corresponds to a *seismic metadata resource identifier*
-  (\ ``smi``\ ). The relationship between a detector configuration and an origin is
-  one-to-one.
+  ``"originId"``\ : Required. The origin identifier of the template
+  :external:term:`origin` the detector is referring to. The origin identifier
+  is used for extracting template related data such as template waveforms, etc.
+  Usually, the origin identifier corresponds to a *seismic metadata resource
+  identifier* (``smi``). The relationship between a detector configuration and
+  an :external:term:`origin` is one-to-one.
 
 * 
   ``"streams"``\ : Required. An array of stream configuration JSON objects, also
