@@ -49,13 +49,13 @@ DOI: https://doi.org/10.5194/egusphere-egu22-12443
 Help & Feedback
 ===============
 
-Contact us:
+**Contact us**:
 
 *Daniel Armbruster*\ : daniel.armbruster [at]
-sed.ethz.ch `GitHub <https://github.com/damb>`_
+sed.ethz.ch `GitHub <https://github.com/damb>`__
 
 *Maria Mesimeri*\ : maria.mesimeri [at]
-sed.ethz.ch `Github <https://github.com/mmesim>`_ `Twitter <https://twitter.com/QuakeMary>`_ `Gscholar <https://scholar.google.gr/citations?user=Za5cbYUAAAAJ&hl=en>`_
+sed.ethz.ch `Github <https://github.com/mmesim>`__ `Twitter <https://twitter.com/QuakeMary>`__ `Gscholar <https://scholar.google.gr/citations?user=Za5cbYUAAAAJ&hl=en>`__
 
 
 .. toctree::
