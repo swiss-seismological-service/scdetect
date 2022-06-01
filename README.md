@@ -2,16 +2,6 @@
 
 [![continuous-integration](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml) [![Documentation Status](https://readthedocs.org/projects/scdetect/badge/?version=latest)](https://scdetect.readthedocs.io/) [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-## Content
-
-- [About](#about)
-- [Installation](#compiling-and-installation)
-- [Tests](#tests)
-- [Issues](#issues)
-- [Contributions](#contributions)
-- [Cite](#cite)
-- [License](#license)
-
 ## About
 
 SCDetect is a [SeisComP](https://github.com/SeisComP) package. With the
