@@ -12,8 +12,9 @@
 #include <seiscomp/unittest/unittests.h>
 
 #include <algorithm>
-#include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/test/data/dataset.hpp>
 #include <boost/test/data/monomorphic.hpp>
@@ -32,7 +33,6 @@
 #include "../util/memory.h"
 #include "../util/util.h"
 #include "../util/waveform_stream_id.h"
-#include "fixture.h"
 #include "utils.h"
 
 namespace utf = boost::unit_test;
@@ -113,10 +113,13 @@ struct Sample {
   // Initializes the sample and loads the waveform data
   //
   // - must be called at the very beginning of the test
-  void init(const fs::path &pathData) {
+  // - `basePathData` refers to the common base directory waveform data. It may
+  // be configured if waveform data should be loaded from files.
+  void init(const fs::path &basePathData = "") {
     try {
-      waveformDataSource = fs::path{pathData} /
-                           boost::variant2::get<fs::path>(waveformDataSource);
+      waveformDataSource =
+          fs::absolute(fs::path{basePathData} /
+                       boost::variant2::get<fs::path>(waveformDataSource));
     } catch (boost::variant2::bad_variant_access &) {
     }
 
@@ -605,19 +608,12 @@ const Samples dataset{
          Core::Time::FromString("2020-01-01T00:01:00", "%Y-%m-%dT%T"), 120}},
 };
 
-BOOST_TEST_GLOBAL_FIXTURE(CLIParserFixture);
-
 BOOST_DATA_TEST_CASE(reducingamplitudeprocessor, utf_data::make(dataset)) {
   // XXX(damb): in the body of the test case, the samples of the dataset are
   // taken by the variable `sample`.
-  // XXX(damb): const_cast is required in order to finaliza the sample
+  // XXX(damb): const_cast is required in order to finalize the sample
   // initialization procedure
-  // TODO(damb): Make use of a lazily (delayed) generated dataset, instead:
-  // https://www.boost.org/doc/libs/1_77_0/libs/test/doc/html/boost_test/
-  // tests_organization/test_cases/test_case_generation/datasets.html
-  // #boost_test.tests_organization.test_cases.test_case_generation.datasets.
-  // dataset_creation_and_delayed_cre
-  const_cast<ds::Sample &>(sample).init(CLIParserFixture::pathData);
+  const_cast<ds::Sample &>(sample).init();
 
   if (!sample.signalTimeWindow()) {
     BOOST_FAIL("Missing signal time window.");
