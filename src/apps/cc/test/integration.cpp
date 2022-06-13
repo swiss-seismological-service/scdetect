@@ -1,7 +1,3 @@
-#include <boost/program_options/value_semantic.hpp>
-#include <cstddef>
-#include <fstream>
-#include <sstream>
 #define SEISCOMP_TEST_MODULE test_cc_integration_general
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/io/archive/xmlarchive.h>
@@ -9,18 +5,23 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/positional_options.hpp>
+#include <boost/program_options/value_semantic.hpp>
 #include <boost/test/data/dataset.hpp>
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/tools/fpc_tolerance.hpp>
+#include <cstddef>
 #include <cstdlib>
+#include <fstream>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
