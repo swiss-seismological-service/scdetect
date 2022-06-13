@@ -1,4 +1,4 @@
-#define SEISCOMP_TEST_MODULE test_cc_integration_general
+#define SEISCOMP_TEST_MODULE test_cc_integration
 #include <seiscomp/datamodel/eventparameters.h>
 #include <seiscomp/io/archive/xmlarchive.h>
 #include <seiscomp/unittest/unittests.h>
