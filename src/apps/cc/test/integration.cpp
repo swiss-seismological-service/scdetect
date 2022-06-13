@@ -5,7 +5,6 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
@@ -82,7 +81,7 @@ class FileBasedDataSet {
     }
 
     _pathTestDataSet = fs::absolute(_pathTestDataSet);
-    std::ifstream ifs{_pathTestDataSet};
+    std::ifstream ifs{_pathTestDataSet.string()};
     if (!ifs.is_open()) {
       throw std::logic_error{"cannot open the file '" +
                              _pathTestDataSet.string() + "'"};
