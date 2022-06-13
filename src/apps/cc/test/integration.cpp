@@ -54,19 +54,12 @@ class FileBasedDataSet {
   FileBasedDataSet(std::size_t lineBegin = 0,
                    std::size_t lineEnd = static_cast<std::size_t>(-1))
       : _lineBegin{lineBegin}, _lineEnd{lineEnd} {
-    auto countLines = [](std::istream &in) -> std::size_t {
-      return std::count_if(std::istreambuf_iterator<char>(in),
-                           std::istreambuf_iterator<char>(),
-                           [](char c) { return c == '\n'; });
-    };
-
     try {
       po::options_description desc;
       desc.add_options()("path-data", po::value<fs::path>(&_pathData),
                          "Base path to the test data")(
 
-          "test-dataset",
-          po::value<fs::path>(&_pathTestDataSet)->default_value("-"),
+          "test-dataset", po::value<fs::path>(&_pathTestDataSet),
           "Path to file containing the test data set configuration");
 
       po::positional_options_description pdesc;
@@ -87,17 +80,19 @@ class FileBasedDataSet {
       throw std::logic_error{"failed to parse commandline arguments"};
     }
 
-    if (_pathTestDataSet.string() == std::string{"-"}) {
-      _lineEnd = std::min(countLines(std::cin), _lineEnd);
-    } else {
-      _pathTestDataSet = fs::absolute(_pathTestDataSet);
-      std::ifstream ifs{_pathTestDataSet};
-      if (!ifs.is_open()) {
-        throw std::logic_error{"cannot open the file '" +
-                               _pathTestDataSet.string() + "'"};
-      }
-      _lineEnd = std::min(countLines(ifs), _lineEnd);
+    _pathTestDataSet = fs::absolute(_pathTestDataSet);
+    std::ifstream ifs{_pathTestDataSet};
+    if (!ifs.is_open()) {
+      throw std::logic_error{"cannot open the file '" +
+                             _pathTestDataSet.string() + "'"};
     }
+
+    auto countLines = [](std::istream &in) -> std::size_t {
+      return std::count_if(std::istreambuf_iterator<char>(in),
+                           std::istreambuf_iterator<char>(),
+                           [](char c) { return c == '\n'; });
+    };
+    _lineEnd = std::min(countLines(ifs), _lineEnd);
 
     if (!(_lineBegin <= _lineEnd)) {
       throw std::logic_error{"incorrect line start/end"};
@@ -146,25 +141,13 @@ class FileBasedDataSet {
   struct Iterator {
     Iterator(const std::string &filename, std::size_t lineBegin,
              const fs::path &absPathData)
-        : _absBasePath{absPathData} {
-      if (filename == "-") {
-        _in = &std::cin;
-      } else {
-        _isFile = true;
-        _in = new std::ifstream{filename};
-        if (!(*_in)) {
-          throw std::runtime_error{"cannot open the file '" + filename + "'"};
-        }
+        : _ifs{filename, std::ios::binary}, _absBasePath{absPathData} {
+      if (!_ifs) {
+        throw std::runtime_error{"cannot open the file '" + filename + "'"};
       }
 
       for (std::size_t i = 0; i <= lineBegin; ++i) {
-        getline(*_in, _currentLine);
-      }
-    }
-
-    ~Iterator() {
-      if (_isFile) {
-        delete _in;
+        std::getline(_ifs, _currentLine);
       }
     }
 
@@ -177,40 +160,47 @@ class FileBasedDataSet {
         tokens.push_back(token);
       }
 
-      if (tokens.size() < 7) {
+      if (tokens.size() < 8) {
         throw std::logic_error{
             "invalid sample definition: invalid number of tokens (" +
             _currentLine + ")"};
       }
 
-      Sample sample;
-      sample.pathTemplateConfig = _absBasePath / tokens[0];
-      sample.pathInventoryDB = _absBasePath / tokens[1];
-      sample.pathEventDB = _absBasePath / tokens[2];
-      sample.pathWaveformData = _absBasePath / tokens[3];
-      if (!tokens[4].empty()) {
-        sample.pathConfigDB = _absBasePath / tokens[4];
+      auto samplePath = fs::absolute(_absBasePath / tokens[0]);
+      // validate
+      if (!fs::is_directory(samplePath)) {
+        throw std::logic_error{
+            "invalid sample definition: invalid sample directory path: " +
+            samplePath.string()};
       }
-      sample.startTime = tokens[5];
-      sample.pathExpected = _absBasePath / tokens[6];
 
-      if (tokens.size() >= 7) {
-        boost::algorithm::trim(tokens[7]);
-        if (!tokens[7].empty()) {
-          sample.customFlags = tokens[7];
+      Sample sample;
+      sample.pathTemplateConfig = samplePath / tokens[1];
+      sample.pathInventoryDB = samplePath / tokens[2];
+      sample.pathEventDB = samplePath / tokens[3];
+      sample.pathWaveformData = samplePath / tokens[4];
+      if (!tokens[5].empty()) {
+        sample.pathConfigDB = samplePath / tokens[5];
+      }
+      sample.startTime = tokens[6];
+      sample.pathExpected = samplePath / tokens[7];
+
+      if (tokens.size() > 8) {
+        boost::algorithm::trim(tokens[8]);
+        if (!tokens[8].empty()) {
+          sample.customFlags = tokens[8];
         }
       }
 
       return sample;
     }
 
-    void operator++() { std::getline(*_in, _currentLine); }
+    void operator++() { std::getline(_ifs, _currentLine); }
 
    private:
+    std::ifstream _ifs;
     fs::path _absBasePath{""};
     std::string _currentLine;
-    std::istream *_in{nullptr};
-    bool _isFile{false};
   };
 
   // Returns the size of the dataset

@@ -30,12 +30,6 @@ void CLIParserFixture::setup() {
   } catch (std::exception &e) {
     BOOST_TEST_FAIL(e.what());
   }
-
-  // validate
-  /* BOOST_TEST_REQUIRE( */
-  /*     bool{fs::is_directory(pathData) && !fs::is_empty(pathData)}, */
-  /*     "Invalid path to test data directory:" << pathData); */
-  /* pathData = fs::absolute(pathData); */
 }
 
 void CLIParserFixture::teardown() {}
