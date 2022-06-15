@@ -23,7 +23,7 @@
         <begin>0</begin>
         <end>2.505</end>
       </timeWindow>
-      <waveformID networkCode="8D" stationCode="RAW2"/>
+      <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <creationInfo>
         <agencyID>TEST</agencyID>
         <author>scdetect@seiscomp-fedora34</author>
@@ -97,7 +97,7 @@
         </magnitude>
         <type>MRelative</type>
         <amplitudeID>Amplitude/20220110185924.219306.239</amplitudeID>
-        <waveformID networkCode="8D" stationCode="RAW2"/>
+        <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       </stationMagnitude>
       <magnitude publicID="Magnitude/20220511171146.235473.253">
         <magnitude>
