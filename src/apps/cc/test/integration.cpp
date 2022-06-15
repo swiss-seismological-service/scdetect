@@ -106,6 +106,7 @@ class FileBasedDataSet {
     fs::path pathWaveformData;
 
     boost::optional<fs::path> pathConfigDB;
+    boost::optional<fs::path> pathTemplateFamilyConfig;
 
     std::string startTime;
 
@@ -124,6 +125,10 @@ class FileBasedDataSet {
       ret.emplace_back(cli::to_string(cli::FlagRecordStartTime{startTime}));
       if (pathConfigDB) {
         ret.emplace_back(cli::to_string(cli::FlagConfigDB{*pathConfigDB}));
+      }
+      if (pathTemplateFamilyConfig) {
+        ret.emplace_back(cli::to_string(
+            cli::FlagTemplatesFamilyJSON{*pathTemplateFamilyConfig}));
       }
 
       if (customFlags) {
@@ -160,7 +165,7 @@ class FileBasedDataSet {
         tokens.push_back(token);
       }
 
-      if (tokens.size() < 8) {
+      if (tokens.size() < 9) {
         throw std::logic_error{
             "invalid sample definition: invalid number of tokens (" +
             _currentLine + ")"};
@@ -182,13 +187,16 @@ class FileBasedDataSet {
       if (!tokens[5].empty()) {
         sample.pathConfigDB = samplePath / tokens[5];
       }
-      sample.startTime = tokens[6];
-      sample.pathExpected = samplePath / tokens[7];
+      if (!tokens[6].empty()) {
+        sample.pathTemplateFamilyConfig = samplePath / tokens[6];
+      }
+      sample.startTime = tokens[7];
+      sample.pathExpected = samplePath / tokens[8];
 
-      if (tokens.size() > 8) {
-        boost::algorithm::trim(tokens[8]);
-        if (!tokens[8].empty()) {
-          sample.customFlags = tokens[8];
+      if (tokens.size() > 9) {
+        boost::algorithm::trim(tokens[9]);
+        if (!tokens[9].empty()) {
+          sample.customFlags = tokens[9];
         }
       }
 
