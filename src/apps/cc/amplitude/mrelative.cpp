@@ -53,9 +53,10 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
   auto waveformStreamIds{associatedWaveformStreamIds()};
   assert(!waveformStreamIds.empty());
   util::tokenizeWaveformStreamId(waveformStreamIds.front(), tokens);
-  assert((tokens.size() >= 3));
+  assert((tokens.size() == 4));
   amplitude->setWaveformID(
-      DataModel::WaveformStreamID{tokens[0], tokens[1], tokens[2], "", ""});
+      DataModel::WaveformStreamID{tokens[0], tokens[1], tokens[2],
+                                  util::getBandAndSourceCode(tokens[3]), ""});
 
   const auto &env{environment()};
   // forward reference of the detector which declared the origin
