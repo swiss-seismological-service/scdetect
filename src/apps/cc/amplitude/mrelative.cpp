@@ -1,5 +1,7 @@
 #include "mrelative.h"
 
+#include <seiscomp/datamodel/waveformstreamid.h>
+
 #include <cassert>
 #include <memory>
 #include <unordered_set>
@@ -9,7 +11,6 @@
 #include "../util/memory.h"
 #include "../util/waveform_stream_id.h"
 #include "factory.h"
-#include "seiscomp/datamodel/waveformstreamid.h"
 
 namespace Seiscomp {
 namespace detect {
