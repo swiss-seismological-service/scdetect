@@ -7,9 +7,6 @@ namespace Seiscomp {
 namespace detect {
 namespace config {
 
-TemplateFamilyConfig::ReferenceConfig::TemplateConfigsIdx
-    TemplateFamilyConfig::ReferenceConfig::_templateConfigsIdx;
-
 const TemplateFamilyConfig::AllowedMagnitudeTypes
     TemplateFamilyConfig::_allowedMagnitudeTypes{"MLx"};
 
@@ -61,13 +58,12 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
     originId = *oId;
   } else if (dId && !dId.value().empty()) {
-    if (!indexed()) {
-      createIndex(templateConfigs);
-    }
+    const auto templateConfig{std::find_if(
+        templateConfigs.begin(), templateConfigs.end(),
+        [&dId](const TemplateConfig &tc) { return tc.detectorId() == dId; })};
 
     // indirect configuration referencing a detector config
-    const auto it{_templateConfigsIdx.find(*dId)};
-    if (it == std::end(_templateConfigsIdx)) {
+    if (templateConfig == std::end(templateConfigs)) {
       throw config::ParserException{
           "invalid configuration: invalid \"detectorId\": " + *detectorId};
     }
@@ -81,7 +77,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
         const auto waveformId{util::WaveformStreamID{
             streamConfigPt.get<std::string>("templateWaveformId")}};
 
-        detectorStreamConfig = it->second->at(util::to_string(waveformId));
+        detectorStreamConfig = templateConfig->at(util::to_string(waveformId));
 
         sensorLocationConfig.waveformId =
             util::getSensorLocationStreamId(waveformId);
@@ -129,7 +125,7 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
           "invalid configuration: no stream configuration found"};
     }
 
-    originId = it->second->originId();
+    originId = templateConfig->originId();
     detectorId = *dId;
   } else {
     throw config::ParserException{
@@ -140,19 +136,6 @@ TemplateFamilyConfig::ReferenceConfig::ReferenceConfig(
 
 bool TemplateFamilyConfig::ReferenceConfig::referencesDetector() const {
   return static_cast<bool>(detectorId);
-}
-
-void TemplateFamilyConfig::ReferenceConfig::createIndex(
-    const TemplateFamilyConfig::ReferenceConfig::TemplateConfigs
-        &templateConfigs) {
-  for (auto it{std::begin(templateConfigs)}; it != std::end(templateConfigs);
-       ++it) {
-    _templateConfigsIdx.emplace(it->detectorId(), it);
-  }
-}
-
-bool TemplateFamilyConfig::ReferenceConfig::indexed() const {
-  return !_templateConfigsIdx.empty();
 }
 
 TemplateFamilyConfig::TemplateFamilyConfig(
