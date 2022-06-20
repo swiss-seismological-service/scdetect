@@ -1,0 +1,39 @@
+[
+    {
+        "detectorId": "detector-01",
+        "createArrivals": true,
+        "createTemplateArrivals": false,
+        "createAmplitudes": true,
+        "createMagnitudes": true,
+        "gapInterpolation": true,
+        "gapThreshold": 0.1,
+        "gapTolerance": 1.5,
+        "triggerDuration": 0.5,
+        "triggerOnThreshold": 0.5,
+        "triggerOffThreshold": 0.3,
+        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
+        "filter": "BW_BP(2,1.5,15)",
+        "initTime": 10,
+        "templateWaveformStart": -0.5,
+        "templateWaveformEnd": 2,
+        "templatePhase": "Sg",
+        "streams": [
+            {
+                "templateId": "template-01",
+                "waveformId": "8D.RAW2..HHE"
+            },
+            {
+                "templateId": "template-02",
+                "waveformId": "8D.RAW2..HHN"
+            },
+            {
+                "templateId": "template-03",
+                "waveformId": "CH.LAVEY.BT.EH2"
+            },
+            {
+                "templateId": "template-04",
+                "waveformId": "CH.LAVEY.BT.EH3"
+            }
+        ]
+    }
+]
