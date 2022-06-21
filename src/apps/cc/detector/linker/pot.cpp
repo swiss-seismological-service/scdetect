@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -17,7 +18,7 @@ namespace detect {
 namespace detector {
 namespace linker {
 
-const double POT::tableDefault{-1};
+const double POT::tableDefault{std::numeric_limits<double>::max()};
 
 POT::POT(const std::vector<POT::Entry> &entries) {
   auto sorted{entries};
