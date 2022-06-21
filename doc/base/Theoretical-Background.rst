@@ -77,31 +77,46 @@ Phase association
 Each detector comes with its dedicated linker which is responsible for phase
 association. The linker continuously consumes local maxima and performs the
 association based on template arrival times and a configurable
-``"arrivalOffsetThreshold"``.
+``"arrivalOffsetThreshold"`` :math:`\epsilon`.
 
-Given a detector is configured with ``N`` template waveforms. Then, the
-template arrival times form a *reference matrix* such as e.g.
+Given a detector is configured with :math:`n` template waveforms :math:`T_k, k
+\in \mathbb{N}, 1 \leq k \leq n`. Then, the original template arrival times
+form a *reference matrix* :math:`\mathbf{A}`:
 
 .. image:: media/scdetect-cc-pot.svg
    :width: 500
    :align: center
    :alt: scdetect-cc POT
 
-The entry of the ``i-th`` row and ``j-th`` column corresponds to the difference
-between the arrival referring to ``Template-i`` and the arrival referring to
-``Template-j``. Therefore, the diagonal elements are all zero.
+where the entry of the :math:`i-th` row and :math:`j-th` column correspond to
+the absolute value of the difference between the original template arrivals
+referring to :math:`T_i` and the original template arrival referring to
+:math:`T_j`. Therefore, the matrix :math:`\mathbf{A}` has the following
+properties:
+
+- :math:`\mathbf{A}` is `symmetric
+  <https://en.wikipedia.org/wiki/Symmetric_matrix>`_, i.e. :math:`a_{ij} =
+  a_{ji}`
+- the diagonal elements :math:`a_{ii}` are all zero.
 
 Based on this information the linker maintains a list of detection candidates
-where each candiate has its own *association matrix*. During operation the
-linker constantly tries to insert new local maxima into the association
-matrices. A local maxima referring to ``Template-k`` is inserted if the absolute
-values of all the differences in either the ``k-th`` row or the ``k-th`` column
-between the entries of the reference matrix and the association matrix are
-smaller than or equal to the configured ``"arrivalOffsetThreshold"``. Once a
-association matrix is *complete* the candidat's score is computed that is the
-arithmetic mean from the correlation coefficients of the associated local
-maxima. If the score is greater than or equal to the configured
-``"triggerOnThreshold"`` the detection candidate is emitted.
+where each candiate :math:`c` has its own *association matrix*
+:math:`\mathbf{B}^c`. During operation the linker constantly tries to insert
+new local maxima into the association matrices. A local maxima referring to
+:math:`T_k` is inserted if the absolute values of all the differences in either
+the :math:`k-th` row or the :math:`k-th` column between the entries of the
+reference matrix and the association matrix are smaller than or equal to the
+configured ``"arrivalOffsetThreshold"`` :math:`\epsilon`, i.e.
+
+.. math::
+
+  \left|a_{ij} - b_{ij}\right| \leq \epsilon
+
+
+Once a association matrix :math:`\mathbf{B}^c` is *complete* the candidat's
+score is computed that is the arithmetic mean from the correlation coefficients
+of the associated local maxima. If the score is greater than or equal to the
+configured ``"triggerOnThreshold"`` the detection candidate is emitted.
 
 .. figure:: media/scdetect-cc-linking.svg
    :width: 500
@@ -109,9 +124,10 @@ maxima. If the score is greater than or equal to the configured
    :alt: scdetect-cc linking
 
    The linker maintains a list of detection candidates where each candidate
-   has its own association matrix. Missing entries are indicated with a ``-``.
+   has its own association matrix :math:`\mathbf{B}^c`. Missing elements are
+   indicated with a :math:`-`.
 
-Changing the ``"minimumArrivals"`` to a value smaller than ``N`` allows the
+Changing the ``"minimumArrivals"`` to a value smaller than :math:`n` allows the
 user to influence the completeness of an association matrix. I.e. in fact a
 detection candidate is emitted once both the candidate's score exceeds the
 ``"triggerOnThreshold"`` and the number of associated local maxima is at least
