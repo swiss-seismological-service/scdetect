@@ -7,6 +7,8 @@
 #include <unordered_set>
 
 #include "../util/math.h"
+#include "../util/util.h"
+#include "detail.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -180,8 +182,11 @@ void Linker::process(const TemplateWaveformProcessor *proc,
         if (newPick ||
             resultIt->coefficient > it->second.resultIt->coefficient) {
           if (_thresArrivalOffset) {
-            auto cmp{createCandidatePOT(*candidateIt, procId, result)};
-            if (!_pot.validateEnabledOffsets(cmp, *_thresArrivalOffset)) {
+            auto candidatePOTData{
+                createCandidatePOTData(*candidateIt, procId, result)};
+            if (!_pot.validateEnabledOffsets(procId, candidatePOTData.offsets,
+                                             candidatePOTData.mask,
+                                             *_thresArrivalOffset)) {
               continue;
             }
           }
@@ -276,6 +281,41 @@ linker::POT Linker::createCandidatePOT(
   }
 
   return linker::POT(candidatePOTEntries);
+}
+
+Linker::CandidatePOTData Linker::createCandidatePOTData(
+    const Candidate &candidate, const std::string &processorId,
+    const linker::Association::TemplateResult &newResult) {
+  auto allProcessorIds{_pot.processorIds()};
+  const auto &associatedCandidateTemplateResults{candidate.association.results};
+
+  auto associatedProcessorIds{
+      util::map_keys(associatedCandidateTemplateResults)};
+  std::set<detail::ProcessorIdType> enabledProcessorIds{
+      associatedProcessorIds.begin(), associatedProcessorIds.end()};
+  enabledProcessorIds.emplace(processorId);
+
+  CandidatePOTData ret(allProcessorIds.size());
+  for (std::size_t i{0}; i < allProcessorIds.size(); ++i) {
+    const auto &curProcessorId{allProcessorIds[i]};
+    bool disabled{enabledProcessorIds.find(curProcessorId) ==
+                  enabledProcessorIds.end()};
+    if (disabled) {
+      continue;
+    }
+
+    if (curProcessorId != processorId) {
+      ret.offsets[i] = std::abs(static_cast<double>(
+          associatedCandidateTemplateResults.at(curProcessorId)
+              .arrival.pick.time -
+          newResult.arrival.pick.time));
+    } else {
+      ret.offsets[i] = 0;
+    }
+    ret.mask[i] = true;
+  }
+
+  return ret;
 }
 
 /* ------------------------------------------------------------------------- */

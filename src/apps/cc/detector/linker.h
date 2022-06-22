@@ -91,6 +91,18 @@ class Linker {
       const Candidate &candidate, const std::string &processorId,
       const linker::Association::TemplateResult &newResult);
 
+  struct CandidatePOTData {
+    std::vector<double> offsets;
+    std::vector<bool> mask;
+
+    CandidatePOTData() = default;
+    explicit CandidatePOTData(std::size_t n)
+        : offsets(n, linker::POT::tableDefault), mask(n, false) {}
+  };
+  CandidatePOTData createCandidatePOTData(
+      const Candidate &candidate, const std::string &processorId,
+      const linker::Association::TemplateResult &newResult);
+
   // `TemplateWaveformProcessor` processor
   struct Processor {
     const TemplateWaveformProcessor *proc;
