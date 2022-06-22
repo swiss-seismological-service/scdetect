@@ -32,6 +32,8 @@ class POT {
     bool enabled;
   };
 
+  static const double tableDefault;
+
   POT() = default;
   POT(const std::vector<Entry>& entries);
 
@@ -67,7 +69,7 @@ class POT {
   bool validateEnabledOffsets(const POT& other, Core::TimeSpan thres);
 
  private:
-  static const double tableDefault;
+
   bool validEntry(double e) const;
 
   void setEnable(const std::string& processorId, bool enable);
