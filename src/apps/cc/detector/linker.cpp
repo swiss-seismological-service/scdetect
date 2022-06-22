@@ -241,7 +241,7 @@ void Linker::createPot() {
                                              p.second.proc->id(), true};
                  });
 
-  // XXX(damb): The current implementation simply recreates the POT
+  // XXX(damb): the current implementation simply recreates the POT
   _pot = linker::POT(entries);
   _potValid = true;
 }
@@ -249,17 +249,17 @@ void Linker::createPot() {
 linker::POT Linker::createCandidatePOT(
     const Candidate &candidate, const std::string &processorId,
     const linker::Association::TemplateResult &newResult) {
-  std::set<std::string> allProcessorIds;
+  std::set<detail::ProcessorIdType> allProcessorIds;
   for (const auto &processorsPair : _processors) {
     allProcessorIds.emplace(processorsPair.first);
   }
-  std::set<std::string> associatedProcessorId{processorId};
+  std::set<detail::ProcessorIdType> associatedProcessorId{processorId};
   const auto &associatedCandidateTemplateResults{candidate.association.results};
   for (const auto &associatedTemplateResultPair :
        associatedCandidateTemplateResults) {
     associatedProcessorId.emplace(associatedTemplateResultPair.first);
   }
-  std::set<std::string> additionalProcessorIds;
+  std::set<detail::ProcessorIdType> additionalProcessorIds;
   std::set_difference(
       std::begin(allProcessorIds), std::end(allProcessorIds),
       std::begin(associatedProcessorId), std::end(associatedProcessorId),
