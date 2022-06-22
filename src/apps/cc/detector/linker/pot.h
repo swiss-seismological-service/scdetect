@@ -36,8 +36,6 @@ class POT {
   POT(const std::vector<Entry>& entries);
 
   using size_type = OffsetTable::size_type;
-  using iterator = OffsetTable::iterator;
-  using const_iterator = OffsetTable::const_iterator;
 
   size_type size() const noexcept { return _offsets.size(); }
   bool empty() const noexcept { return _offsets.empty(); }
