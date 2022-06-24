@@ -88,10 +88,6 @@ class Linker {
   void createPot();
 
   struct Candidate;
-  linker::POT createCandidatePOT(
-      const Candidate &candidate, const std::string &processorId,
-      const linker::Association::TemplateResult &newResult);
-
   struct CandidatePOTData {
     std::vector<double> offsets;
     std::vector<bool> mask;

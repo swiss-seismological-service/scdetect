@@ -246,43 +246,6 @@ void Linker::createPot() {
   _potValid = true;
 }
 
-linker::POT Linker::createCandidatePOT(
-    const Candidate &candidate, const std::string &processorId,
-    const linker::Association::TemplateResult &newResult) {
-  std::set<detail::ProcessorIdType> allProcessorIds;
-  for (const auto &processorsPair : _processors) {
-    allProcessorIds.emplace(processorsPair.first);
-  }
-  std::set<detail::ProcessorIdType> associatedProcessorId{processorId};
-  const auto &associatedCandidateTemplateResults{candidate.association.results};
-  for (const auto &associatedTemplateResultPair :
-       associatedCandidateTemplateResults) {
-    associatedProcessorId.emplace(associatedTemplateResultPair.first);
-  }
-  std::set<detail::ProcessorIdType> additionalProcessorIds;
-  std::set_difference(
-      std::begin(allProcessorIds), std::end(allProcessorIds),
-      std::begin(associatedProcessorId), std::end(associatedProcessorId),
-      std::inserter(additionalProcessorIds, std::end(additionalProcessorIds)));
-
-  std::vector<linker::POT::Entry> candidatePOTEntries{
-      {newResult.arrival.pick.time, processorId, true}};
-  for (const auto &templateResultPair : associatedCandidateTemplateResults) {
-    const auto associatedProcId{templateResultPair.first};
-    if (processorId != associatedProcId) {
-      const auto &templateResult{templateResultPair.second};
-      candidatePOTEntries.push_back(
-          {templateResult.arrival.pick.time, associatedProcId, true});
-    }
-  }
-
-  for (const auto &p : additionalProcessorIds) {
-    candidatePOTEntries.push_back({Core::Time{}, p, false});
-  }
-
-  return linker::POT(candidatePOTEntries);
-}
-
 Linker::CandidatePOTData Linker::createCandidatePOTData(
     const Candidate &candidate, const std::string &processorId,
     const linker::Association::TemplateResult &newResult) {
