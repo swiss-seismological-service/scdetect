@@ -7,6 +7,8 @@
 #include <unordered_set>
 
 #include "../util/math.h"
+#include "../util/util.h"
+#include "detail.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -160,64 +162,67 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 
 void Linker::process(const TemplateWaveformProcessor *proc,
                      const linker::Association::TemplateResult &result) {
-  if (!_processors.empty()) {
-    // update POT
-    if (!_potValid) {
-      createPot();
-    }
-    _pot.enable();
+  if (_processors.empty()) {
+    return;
+  }
 
-    const auto &procId{proc->id()};
-    auto resultIt{result.resultIt};
-    // merge result into existing candidates
-    for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
-         ++candidateIt) {
-      if (candidateIt->associatedProcessorCount() < processorCount()) {
-        auto &candidateTemplateResults{candidateIt->association.results};
-        auto it{candidateTemplateResults.find(procId)};
+  // update POT
+  if (!_potValid) {
+    createPot();
+  }
 
-        bool newPick{it == candidateTemplateResults.end()};
-        if (newPick ||
-            resultIt->coefficient > it->second.resultIt->coefficient) {
-          if (_thresArrivalOffset) {
-            auto cmp{createCandidatePOT(*candidateIt, procId, result)};
-            if (!_pot.validateEnabledOffsets(cmp, *_thresArrivalOffset)) {
-              continue;
-            }
+  const auto &procId{proc->id()};
+  auto resultIt{result.resultIt};
+  // merge result into existing candidates
+  for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
+       ++candidateIt) {
+    if (candidateIt->associatedProcessorCount() < processorCount()) {
+      auto &candidateTemplateResults{candidateIt->association.results};
+      auto it{candidateTemplateResults.find(procId)};
+
+      bool newPick{it == candidateTemplateResults.end()};
+      if (newPick || resultIt->coefficient > it->second.resultIt->coefficient) {
+        if (_thresArrivalOffset) {
+          auto candidatePOTData{
+              createCandidatePOTData(*candidateIt, procId, result)};
+          if (!_pot.validateEnabledOffsets(procId, candidatePOTData.offsets,
+                                           candidatePOTData.mask,
+                                           *_thresArrivalOffset)) {
+            continue;
           }
-          candidateIt->feed(procId, result);
         }
+        candidateIt->feed(procId, result);
       }
     }
+  }
 
-    const auto now{Core::Time::GMT()};
-    // create new candidate association
-    Candidate newCandidate{now + _onHold};
-    newCandidate.feed(procId, result);
-    _queue.emplace_back(newCandidate);
+  const auto now{Core::Time::GMT()};
+  // create new candidate association
+  Candidate newCandidate{now + _onHold};
+  newCandidate.feed(procId, result);
+  _queue.emplace_back(newCandidate);
 
-    std::vector<CandidateQueue::iterator> ready;
-    for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
-      const auto arrivalCount{it->associatedProcessorCount()};
-      // emit results which are ready and surpass threshold
-      if (arrivalCount == processorCount() ||
-          (now >= it->expired &&
-           arrivalCount >= _minArrivals.value_or(processorCount()))) {
-        if (!_thresAssociation || it->association.score >= *_thresAssociation) {
-          emitResult(it->association);
-        }
-        ready.push_back(it);
+  std::vector<CandidateQueue::iterator> ready;
+  for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
+    const auto arrivalCount{it->associatedProcessorCount()};
+    // emit results which are ready and surpass threshold
+    if (arrivalCount == processorCount() ||
+        (now >= it->expired &&
+         arrivalCount >= _minArrivals.value_or(processorCount()))) {
+      if (!_thresAssociation || it->association.score >= *_thresAssociation) {
+        emitResult(it->association);
       }
-      // drop expired result
-      else if (now >= it->expired) {
-        ready.push_back(it);
-      }
+      ready.push_back(it);
     }
+    // drop expired result
+    else if (now >= it->expired) {
+      ready.push_back(it);
+    }
+  }
 
-    // clean up result queue
-    for (auto &it : ready) {
-      _queue.erase(it);
-    }
+  // clean up result queue
+  for (auto &it : ready) {
+    _queue.erase(it);
   }
 }
 
@@ -236,46 +241,44 @@ void Linker::createPot() {
                                              p.second.proc->id(), true};
                  });
 
-  // XXX(damb): The current implementation simply recreates the POT
+  // XXX(damb): the current implementation simply recreates the POT
   _pot = linker::POT(entries);
   _potValid = true;
 }
 
-linker::POT Linker::createCandidatePOT(
+Linker::CandidatePOTData Linker::createCandidatePOTData(
     const Candidate &candidate, const std::string &processorId,
     const linker::Association::TemplateResult &newResult) {
-  std::set<std::string> allProcessorIds;
-  for (const auto &processorsPair : _processors) {
-    allProcessorIds.emplace(processorsPair.first);
-  }
-  std::set<std::string> associatedProcessorId{processorId};
+  auto allProcessorIds{_pot.processorIds()};
   const auto &associatedCandidateTemplateResults{candidate.association.results};
-  for (const auto &associatedTemplateResultPair :
-       associatedCandidateTemplateResults) {
-    associatedProcessorId.emplace(associatedTemplateResultPair.first);
-  }
-  std::set<std::string> additionalProcessorIds;
-  std::set_difference(
-      std::begin(allProcessorIds), std::end(allProcessorIds),
-      std::begin(associatedProcessorId), std::end(associatedProcessorId),
-      std::inserter(additionalProcessorIds, std::end(additionalProcessorIds)));
 
-  std::vector<linker::POT::Entry> candidatePOTEntries{
-      {newResult.arrival.pick.time, processorId, true}};
-  for (const auto &templateResultPair : associatedCandidateTemplateResults) {
-    const auto associatedProcId{templateResultPair.first};
-    if (processorId != associatedProcId) {
-      const auto &templateResult{templateResultPair.second};
-      candidatePOTEntries.push_back(
-          {templateResult.arrival.pick.time, associatedProcId, true});
+  auto associatedProcessorIds{
+      util::map_keys(associatedCandidateTemplateResults)};
+  std::set<detail::ProcessorIdType> enabledProcessorIds{
+      associatedProcessorIds.begin(), associatedProcessorIds.end()};
+  enabledProcessorIds.emplace(processorId);
+
+  CandidatePOTData ret(allProcessorIds.size());
+  for (std::size_t i{0}; i < allProcessorIds.size(); ++i) {
+    const auto &curProcessorId{allProcessorIds[i]};
+    bool disabled{enabledProcessorIds.find(curProcessorId) ==
+                  enabledProcessorIds.end()};
+    if (disabled) {
+      continue;
     }
+
+    if (curProcessorId != processorId) {
+      ret.offsets[i] = std::abs(static_cast<double>(
+          associatedCandidateTemplateResults.at(curProcessorId)
+              .arrival.pick.time -
+          newResult.arrival.pick.time));
+    } else {
+      ret.offsets[i] = 0;
+    }
+    ret.mask[i] = true;
   }
 
-  for (const auto &p : additionalProcessorIds) {
-    candidatePOTEntries.push_back({Core::Time{}, p, false});
-  }
-
-  return linker::POT(candidatePOTEntries);
+  return ret;
 }
 
 /* ------------------------------------------------------------------------- */

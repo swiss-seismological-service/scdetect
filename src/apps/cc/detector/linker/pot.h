@@ -32,12 +32,12 @@ class POT {
     bool enabled;
   };
 
+  static const double tableDefault;
+
   POT() = default;
   POT(const std::vector<Entry>& entries);
 
   using size_type = OffsetTable::size_type;
-  using iterator = OffsetTable::iterator;
-  using const_iterator = OffsetTable::const_iterator;
 
   size_type size() const noexcept { return _offsets.size(); }
   bool empty() const noexcept { return _offsets.empty(); }
@@ -59,17 +59,37 @@ class POT {
   // Disables the POT for the processor identified by `processorId`
   void disable(const std::string& processorId);
 
+  // Returns the processor identifiers based on the internal sort order
+  std::vector<std::string> processorIds() const;
+
   // Validate pick offsets of this POT with `other` where pick offsets must be
-  // smaller than `thres`.
+  // smaller than or equal to `thres`.
   //
   // - only validates those offsets which are *enabled* both in `this` and
-  // `other`
+  // `other`.
   // - returns `true` if the validation was successful or `false` if not,
   // respectively.
-  bool validateEnabledOffsets(const POT& other, Core::TimeSpan thres);
+  bool validateEnabledOffsets(const POT& other, const Core::TimeSpan& thres);
+
+  // Validates pick offsets of this POT with the `otherOffsets` regarding the
+  // processor identified by `processorId` where pick offsets must be smaller
+  // than or equal to `thres`.
+  //
+  // - both the offsets defined by `otherOffsets` and the masks from
+  // `otherMask` must be sorted by the corresponding template waveform
+  // processor identifier.
+  // - only validates those `otherOffsets` which are *enabled* both in `this`
+  // and `otherMask`.
+  // - returns `true` if the validation was successful or `false` if not,
+  // respectively.
+  bool validateEnabledOffsets(const std::string& processorId,
+                              const std::vector<double>& otherOffsets,
+                              const std::vector<bool>& otherMask,
+                              const Core::TimeSpan& thres);
 
  private:
-  static const double tableDefault;
+  static const double tolerance;
+
   bool validEntry(double e) const;
 
   void setEnable(const std::string& processorId, bool enable);

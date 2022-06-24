@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -11,13 +12,15 @@
 
 #include "../../util/floating_point_comparison.h"
 #include "../../util/util.h"
+#include "exception.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace detector {
 namespace linker {
 
-const double POT::tableDefault{-1};
+const double POT::tableDefault{std::numeric_limits<double>::max()};
+const double POT::tolerance{1e-6};
 
 POT::POT(const std::vector<POT::Entry> &entries) {
   auto sorted{entries};
@@ -88,14 +91,19 @@ void POT::disable(const std::string &processorId) {
   setEnable(processorId, false);
 }
 
-bool POT::validateEnabledOffsets(const POT &other, Core::TimeSpan thres) {
+std::vector<std::string> POT::processorIds() const {
+  return util::map_keys(_processorIdxMap);
+}
+
+bool POT::validateEnabledOffsets(const POT &other,
+                                 const Core::TimeSpan &thres) {
   if (size() != other.size()) {
-    return false;
+    throw BaseException{"invalid POT size"};
   }
 
   if (util::map_keys(_processorIdxMap) !=
       util::map_keys(other._processorIdxMap)) {
-    return false;
+    throw BaseException{"processor id mismatch"};
   }
 
   // create mask with common enabled processors
@@ -107,7 +115,6 @@ bool POT::validateEnabledOffsets(const POT &other, Core::TimeSpan thres) {
   }
   auto mask{createMask(enabledProcessors)};
 
-  constexpr double tolerance{1.0e-6};
   for (size_type i{0}; i < size(); ++i) {
     for (size_type j{0}; j < size(); ++j) {
       if (mask[i][j] && validEntry(_offsets[i][j]) &&
@@ -119,6 +126,45 @@ bool POT::validateEnabledOffsets(const POT &other, Core::TimeSpan thres) {
     }
   }
 
+  return true;
+}
+
+bool POT::validateEnabledOffsets(const std::string &processorId,
+                                 const std::vector<double> &otherOffsets,
+                                 const std::vector<bool> &otherMask,
+                                 const Core::TimeSpan &thres) {
+  if (otherOffsets.size() != size() || otherMask.size() != size()) {
+    throw BaseException{"invalid sizes"};
+  }
+
+  auto it{_processorIdxMap.find(processorId)};
+  if (it == _processorIdxMap.end()) {
+    throw BaseException{"unknown processor id: " + processorId};
+  }
+
+  if (!enabled(processorId)) {
+    return false;
+  }
+
+  // create mask with common enabled processors
+  std::vector<bool> common_mask(size(), false);
+  size_type i{0};
+  for (const auto &p : _processorIdxMap) {
+    if (p.second.enabled && otherMask[i]) {
+      common_mask[i++] = true;
+    }
+  }
+
+  const auto &offsets{_offsets[std::distance(_processorIdxMap.begin(), it)]};
+
+  for (size_type i{0}; i < size(); ++i) {
+    if (common_mask[i] && validEntry(otherOffsets[i]) &&
+        validEntry(offsets[i]) &&
+        util::greaterThan(std::abs(offsets[i] - otherOffsets[i]),
+                          static_cast<double>(thres), tolerance)) {
+      return false;
+    }
+  }
   return true;
 }
 

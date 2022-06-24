@@ -84,10 +84,19 @@ class Linker {
   void emitResult(const linker::Association &result);
 
  private:
+  // Creates a POT where all participating processors are enabled
   void createPot();
 
   struct Candidate;
-  linker::POT createCandidatePOT(
+  struct CandidatePOTData {
+    std::vector<double> offsets;
+    std::vector<bool> mask;
+
+    CandidatePOTData() = default;
+    explicit CandidatePOTData(std::size_t n)
+        : offsets(n, linker::POT::tableDefault), mask(n, false) {}
+  };
+  CandidatePOTData createCandidatePOTData(
       const Candidate &candidate, const std::string &processorId,
       const linker::Association::TemplateResult &newResult);
 

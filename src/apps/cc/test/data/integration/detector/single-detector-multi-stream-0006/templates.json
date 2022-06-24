@@ -10,7 +10,7 @@
     "triggerOnThreshold": 0.5,
     "triggerOffThreshold": 0.0,
     "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
-    "arrivalOffsetThreshold":1,
+    "arrivalOffsetThreshold": 0.02,
     "filter": "BW_BP(2,1.5,15)",
     "initTime": 10,
     "templateWaveformStart": -0.5,
