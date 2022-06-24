@@ -84,6 +84,7 @@ class Linker {
   void emitResult(const linker::Association &result);
 
  private:
+  // Creates a POT where all participating processors are enabled
   void createPot();
 
   struct Candidate;

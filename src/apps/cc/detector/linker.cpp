@@ -167,7 +167,6 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     if (!_potValid) {
       createPot();
     }
-    _pot.enable();
 
     const auto &procId{proc->id()};
     auto resultIt{result.resultIt};
