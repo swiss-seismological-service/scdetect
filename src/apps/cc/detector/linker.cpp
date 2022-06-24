@@ -162,66 +162,67 @@ void Linker::setResultCallback(const PublishResultCallback &callback) {
 
 void Linker::process(const TemplateWaveformProcessor *proc,
                      const linker::Association::TemplateResult &result) {
-  if (!_processors.empty()) {
-    // update POT
-    if (!_potValid) {
-      createPot();
-    }
+  if (_processors.empty()) {
+    return;
+  }
 
-    const auto &procId{proc->id()};
-    auto resultIt{result.resultIt};
-    // merge result into existing candidates
-    for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
-         ++candidateIt) {
-      if (candidateIt->associatedProcessorCount() < processorCount()) {
-        auto &candidateTemplateResults{candidateIt->association.results};
-        auto it{candidateTemplateResults.find(procId)};
+  // update POT
+  if (!_potValid) {
+    createPot();
+  }
 
-        bool newPick{it == candidateTemplateResults.end()};
-        if (newPick ||
-            resultIt->coefficient > it->second.resultIt->coefficient) {
-          if (_thresArrivalOffset) {
-            auto candidatePOTData{
-                createCandidatePOTData(*candidateIt, procId, result)};
-            if (!_pot.validateEnabledOffsets(procId, candidatePOTData.offsets,
-                                             candidatePOTData.mask,
-                                             *_thresArrivalOffset)) {
-              continue;
-            }
+  const auto &procId{proc->id()};
+  auto resultIt{result.resultIt};
+  // merge result into existing candidates
+  for (auto candidateIt = std::begin(_queue); candidateIt != std::end(_queue);
+       ++candidateIt) {
+    if (candidateIt->associatedProcessorCount() < processorCount()) {
+      auto &candidateTemplateResults{candidateIt->association.results};
+      auto it{candidateTemplateResults.find(procId)};
+
+      bool newPick{it == candidateTemplateResults.end()};
+      if (newPick || resultIt->coefficient > it->second.resultIt->coefficient) {
+        if (_thresArrivalOffset) {
+          auto candidatePOTData{
+              createCandidatePOTData(*candidateIt, procId, result)};
+          if (!_pot.validateEnabledOffsets(procId, candidatePOTData.offsets,
+                                           candidatePOTData.mask,
+                                           *_thresArrivalOffset)) {
+            continue;
           }
-          candidateIt->feed(procId, result);
         }
+        candidateIt->feed(procId, result);
       }
     }
+  }
 
-    const auto now{Core::Time::GMT()};
-    // create new candidate association
-    Candidate newCandidate{now + _onHold};
-    newCandidate.feed(procId, result);
-    _queue.emplace_back(newCandidate);
+  const auto now{Core::Time::GMT()};
+  // create new candidate association
+  Candidate newCandidate{now + _onHold};
+  newCandidate.feed(procId, result);
+  _queue.emplace_back(newCandidate);
 
-    std::vector<CandidateQueue::iterator> ready;
-    for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
-      const auto arrivalCount{it->associatedProcessorCount()};
-      // emit results which are ready and surpass threshold
-      if (arrivalCount == processorCount() ||
-          (now >= it->expired &&
-           arrivalCount >= _minArrivals.value_or(processorCount()))) {
-        if (!_thresAssociation || it->association.score >= *_thresAssociation) {
-          emitResult(it->association);
-        }
-        ready.push_back(it);
+  std::vector<CandidateQueue::iterator> ready;
+  for (auto it = std::begin(_queue); it != std::end(_queue); ++it) {
+    const auto arrivalCount{it->associatedProcessorCount()};
+    // emit results which are ready and surpass threshold
+    if (arrivalCount == processorCount() ||
+        (now >= it->expired &&
+         arrivalCount >= _minArrivals.value_or(processorCount()))) {
+      if (!_thresAssociation || it->association.score >= *_thresAssociation) {
+        emitResult(it->association);
       }
-      // drop expired result
-      else if (now >= it->expired) {
-        ready.push_back(it);
-      }
+      ready.push_back(it);
     }
+    // drop expired result
+    else if (now >= it->expired) {
+      ready.push_back(it);
+    }
+  }
 
-    // clean up result queue
-    for (auto &it : ready) {
-      _queue.erase(it);
-    }
+  // clean up result queue
+  for (auto &it : ready) {
+    _queue.erase(it);
   }
 }
 
