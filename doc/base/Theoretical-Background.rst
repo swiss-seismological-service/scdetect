@@ -77,7 +77,7 @@ Phase association
 Each detector comes with its dedicated linker which is responsible for phase
 association. The linker continuously consumes local maxima and performs the
 association based on template arrival times and a configurable
-``"arrivalOffsetThreshold"`` :math:`\epsilon`.
+``"arrivalOffsetThreshold"``.
 
 Given a detector is configured with :math:`n` template waveforms :math:`T_k, k
 \in \mathbb{N}, 1 \leq k \leq n`. Then, the original template arrival times
@@ -102,11 +102,11 @@ properties:
 Based on this information the linker maintains a list of detection candidates
 where each candiate :math:`c` has its own *association matrix*
 :math:`\mathbf{B}^c`. During operation the linker constantly tries to insert
-new local maxima into the association matrices. A local maxima referring to
-:math:`T_k` is inserted if the absolute values of all the differences in either
-the :math:`k-th` row or the :math:`k-th` column between the entries of the
-reference matrix and the association matrix are smaller than or equal to the
-configured ``"arrivalOffsetThreshold"`` :math:`\epsilon`, i.e.
+new local maxima into the association matrices. A local maxima referring to the
+template waveform :math:`T_k` is merged if the absolute values of all the
+differences in either the :math:`k-th` row or the :math:`k-th` column between
+the entries of the reference matrix and the association matrix are smaller than
+or equal to the configured ``"arrivalOffsetThreshold"`` :math:`\epsilon`, i.e.
 
 .. math::
 
@@ -127,11 +127,11 @@ configured ``"triggerOnThreshold"`` the detection candidate is emitted.
    has its own association matrix :math:`\mathbf{B}^c`. Missing elements are
    indicated with a :math:`-`.
 
-Changing the ``"minimumArrivals"`` to a value smaller than :math:`n` allows the
-user to influence the completeness of an association matrix. I.e. in fact a
-detection candidate is emitted once both the candidate's score exceeds the
-``"triggerOnThreshold"`` and the number of associated local maxima is at least
-equal to the value specified by the ``"minimumArrivals"`` configuration
+Changing the number of ``"minimumArrivals"`` to a value smaller than :math:`n`
+allows the user to influence the completeness of an association matrix. I.e. in
+fact a detection candidate is emitted once both the candidate's score exceeds
+the ``"triggerOnThreshold"`` and the number of associated local maxima is at
+least equal to the value specified by the ``"minimumArrivals"`` configuration
 parameter.
 
 
