@@ -1,97 +1,175 @@
 {
-  "type": "array",
-  "minItems": 1,
-  "items": {
-    "title": "Detector Configuration",
-    "type": "object",
-    "properties": {
-      "arrivalOffsetThreshold": {
-        "type": "number"
-      },
-      "createArrivals": {
-        "type": "boolean"
-      },
-      "createTemplateArrivals": {
-        "type": "boolean"
-      },
-      "detectorId": {
-        "type": "string"
-      },
-      "gapInterpolation": {
-        "type": "boolean"
-      },
-      "gapThreshold": {
-        "type": "number",
-        "minimum": 0
-      },
-      "gapTolerance": {
-        "type": "number",
-        "minimum": 0
-      },
-      "maximumLatency": {
-        "type": "number",
-        "minimum": 0
-      },
-      "minimumArrivals": {
-        "type": "integer",
-        "minimum": 1
-      },
-      "originId": {
-        "type": "string"
-      },
-      "streams": {
-        "type": "array", 
-        "minItems": 1,
-        "items": {
-          "type": "object",
-          "title": "Stream Configuration",
-          "properties": {
+    "type": "array",
+    "minItems": 1,
+    "items": {
+        "title": "Detector Configuration",
+        "type": "object",
+        "properties": {
+            "arrivalOffsetThreshold": {
+                "type": "number"
+            },
+            "createArrivals": {
+                "type": "boolean"
+            },
+            "createTemplateArrivals": {
+                "type": "boolean"
+            },
+            "createAmplitudes": {
+                "type": "boolean"
+            },
+            "createMagnitudes": {
+                "type": "boolean"
+            },
+            "detectorId": {
+                "type": "string"
+            },
             "filter": {
-              "type": "string"
+                "$ref": "#/$defs/filter"
+            },
+            "gapInterpolation": {
+                "type": "boolean"
+            },
+            "gapThreshold": {
+                "type": "number",
+                "minimum": 0
+            },
+            "gapTolerance": {
+                "type": "number",
+                "minimum": 0
             },
             "initTime": {
-              "type": "number",
-              "minimum": 0
+                "$ref": "#/$defs/initTime"
             },
-            "templateFilter": {
-              "type": "string"
+            "maximumLatency": {
+                "type": "number",
+                "minimum": 0
             },
-            "templateId": {
-              "type": "string"
+            "minimumArrivals": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "mergingStrategy": {
+                "type": "string",
+                "enum": [
+                    "greaterEqualTriggerOnThreshold",
+                    "greaterEqualMergingThreshold",
+                    "all"
+                ]
+            },
+            "mergingThreshold": {
+                "$ref": "#/$defs/mergingThreshold"
+            },
+            "methodId": {
+                "type": "string"
+            },
+            "originId": {
+                "type": "string"
+            },
+            "streams": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "object",
+                    "title": "Stream Configuration",
+                    "properties": {
+                        "filter": {
+                            "$ref": "#/$defs/filter"
+                        },
+                        "initTime": {
+                            "$ref": "#/$defs/initTime"
+                        },
+                        "mergingThreshold": {
+                            "$ref": "#/$defs/mergingThreshold"
+                        },
+                        "targetSamplingFrequency": {
+                            "$ref": "#/$defs/targetSamplingFrequency"
+                        },
+                        "templateFilter": {
+                            "$ref": "#/$defs/filter"
+                        },
+                        "templateId": {
+                            "type": "string"
+                        },
+                        "templatePhase": {
+                            "$ref": "#/$defs/templatePhase"
+                        },
+                        "templateWaveformId": {
+                            "$ref": "#/$defs/waveformId"
+                        },
+                        "templateWaveformStart": {
+                            "$ref": "#/$defs/templateWaveformStartEnd"
+                        },
+                        "templateWaveformEnd": {
+                            "$ref": "#/$defs/templateWaveformStartEnd"
+                        },
+                        "waveformId": {
+                            "$ref": "#/$defs/waveformId"
+                        }
+                    },
+                    "required": [
+                        "waveformId"
+                    ]
+                }
+            },
+            "targetSamplingFrequency": {
+                "$ref": "#/$defs/targetSamplingFrequency"
             },
             "templatePhase": {
-              "type": "string"
-            },
-            "templateWaveformId": {
-              "type": "string"
+                "$ref": "#/$defs/templatePhase"
             },
             "templateWaveformStart": {
-              "type": "number"
+                "$ref": "#/$defs/templateWaveformStartEnd"
             },
             "templateWaveformEnd": {
-              "type": "number"
+                "$ref": "#/$defs/templateWaveformStartEnd"
+            },
+            "timeCorrection": {
+                "type": "number"
+            },
+            "triggerDuration": {
+                "type": "number"
+            },
+            "triggerOnThreshold": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+            },
+            "triggerOffThreshold": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
             }
-          },
-          "required": ["templatePhase", "waveformId"]
+        },
+        "required": [
+            "originId",
+            "streams"
+        ]
+    },
+    "$defs": {
+        "filter": {
+            "type": "string"
+        },
+        "initTime": {
+            "type": "number",
+            "minimum": 0
+        },
+        "mergingThreshold": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1
+        },
+        "targetSamplingFrequency": {
+            "type": "number",
+            "exclusiveMinimum": 0
+        },
+        "templatePhase": {
+            "type": "string"
+        },
+        "templateWaveformStartEnd": {
+            "type": "number"
+        },
+        "waveformId": {
+            "type": "string"
         }
-      }
-    },
-    "timeCorrection": {
-      "type": "number"
-    },
-    "triggerDuration": {
-      "type": "number"
-    },
-    "triggerOnThreshold": {
-      "type": "number",
-      "minimum": -1,
-      "maximum": 1
-    },
-    "triggerOffThreshold": {
-      "type": "number",
-      "minimum": -1,
-      "maximum": 1
-    },
-    "required": ["originId", "streams"]
-  }
+    }
 }
