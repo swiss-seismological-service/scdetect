@@ -66,8 +66,9 @@ files (\ ``global.cfg``\ , ``scdetect-cc.cfg`` located at corresponding configur
 directory paths).
 
 In order to validate the template configuration, with
-`templates.schema.json <src/apps/scdetect/json-schema/templates.schema.json>`_ a
-rudimentary `JSON schema <https://json-schema.org/>`_ is provided.
+`templates.schema.json
+<https://github.com/swiss-seismological-service/scdetect/blob/master/src/apps/cc/json-schema/templates.schema.json>`__
+a rudimentary `JSON schema <https://json-schema.org/>`_ is provided.
 
 .. _detector-configuration-parameters-label:
 
