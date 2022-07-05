@@ -12,7 +12,6 @@
 #include <seiscomp/unittest/unittests.h>
 
 #include <algorithm>
-#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
