@@ -251,10 +251,9 @@ BOOST_DATA_TEST_CASE(
   TempDirFixture fx{CLIParserFixture::keepTempdir};
   // prepare empty config file
   fs::path pathConfig{fx.pathTempdir / "scdetect-cc.cfg"};
-  try {
-    fs::ofstream{pathConfig};
-  } catch (fs::filesystem_error &e) {
-    BOOST_FAIL("Failed to prepare dummy config file: " << e.what());
+  std::ofstream ofs{pathConfig.string()};
+  if (!ofs) {
+    BOOST_FAIL("Failed to prepare dummy config file: " << pathConfig);
   }
 
   fs::path pathEpResultSCML{fx.pathTempdir / "ep.scml"};
