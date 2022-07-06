@@ -62,12 +62,15 @@ E.g. on Ubuntu simply invoke:
 sudo apt-get install libsqlite3-dev
 ```
 
-### Compile
+### Compile and Install
 
-For compiling SeisComP (including SCDetect), please refer to
+For compiling and installing SeisComP (including SCDetect), please refer to
 https://github.com/SeisComP/seiscomp#build.
 
 ## Tests
+
+> **NOTE**: executing SCDetect related tests requires SeisComP to be installed,
+> beforehand.
 
 In order to run all SeisComP tests (including those of `scdetect-cc` and
 possibly additionally installed third party modules), either execute
