@@ -101,34 +101,34 @@ set(SOURCES_reducing_amplitude_processor
 add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
 
 foreach(TEST_SRC ${UNIT_TESTS})
-	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
-	set(TEST_TARGET test_scdetect_cc_${TEST_FNAME})
+  get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
+  set(TEST_TARGET test_scdetect_cc_${TEST_FNAME})
   add_executable(${TEST_TARGET} ${TEST_SRC} ${SOURCES_${TEST_FNAME}})
-	sc_link_libraries_internal(${TEST_TARGET} unittest core client)
-	sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
+  sc_link_libraries_internal(${TEST_TARGET} unittest core client)
+  sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
   target_link_libraries(${TEST_TARGET} ${SQLITE3_LIBRARIES})
 
-	add_test(
-		NAME ${TEST_TARGET}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${TEST_TARGET} --log_level=message
-	)
+  add_test(
+    NAME ${TEST_TARGET}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${TEST_TARGET} --log_level=message
+  )
 endforeach()
 
 find_package(SQLite3 REQUIRED)
 foreach(TEST_SRC ${INTEGRATION_TESTS})
-	get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
-	set(TEST_TARGET test_scdetect_cc_${TEST_FNAME})
+  get_filename_component(TEST_FNAME ${TEST_SRC} NAME_WE)
+  set(TEST_TARGET test_scdetect_cc_${TEST_FNAME})
   add_executable(${TEST_TARGET} ${TEST_SRC} ${SOURCES_${TEST_FNAME}})
   target_link_libraries(${TEST_TARGET} ${SQLITE3_LIBRARIES})
-	sc_link_libraries_internal(${TEST_TARGET} unittest core client)
-	sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
+  sc_link_libraries_internal(${TEST_TARGET} unittest core client)
+  sc_link_libraries(${TEST_TARGET} ${Boost_unit_test_framework_LIBRARY})
   target_link_libraries(${TEST_TARGET} ${SQLITE3_LIBRARIES})
 
-	add_test(
-		NAME ${TEST_TARGET}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${TEST_TARGET} --log_level=message -- --path-data "${CMAKE_CURRENT_SOURCE_DIR}/data/integration/" "${CMAKE_CURRENT_SOURCE_DIR}/data/integration/dataset.conf"
-	)
+  add_test(
+    NAME ${TEST_TARGET}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${TEST_TARGET} --log_level=message -- --path-data "${CMAKE_CURRENT_SOURCE_DIR}/data/integration/" "${CMAKE_CURRENT_SOURCE_DIR}/data/integration/dataset.conf"
+  )
 endforeach()
 
