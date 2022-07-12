@@ -1,22 +1,31 @@
 #ifndef SCDETECT_APPS_CC_AMPLITUDE_MLX_H_
 #define SCDETECT_APPS_CC_AMPLITUDE_MLX_H_
 
-#include "rms.h"
+#include "../combining_amplitude_processor.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
-// Computes the MLx amplitude
+// Computes the MLx amplitude (Maria Mesimeri approach)
 //
 // - the amplitude is computed on velocity seismograms
 // - required for *amplitude-magnitude regression* magnitudes (see
 // https://doi.org/10.1029/2019JB017468)
-class MLx : public RMSAmplitude {
+class MLx : public CombiningAmplitudeProcessor {
  public:
-  MLx();
+  static const CombiningStrategy max;
+
+  explicit MLx(
+      std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying);
 
   void finalize(DataModel::Amplitude *amplitude) const override;
+
+ private:
+  // TODO(damb): implement common function in order to use it at MRelative,
+  // too
+  static bool validateUniqueSensorLocation(
+      const std::vector<std::string> &waveformStreamIDs);
 };
 
 }  // namespace amplitude

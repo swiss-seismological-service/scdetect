@@ -48,6 +48,8 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     boost::optional<Core::TimeSpan> signalEnd;
   };
 
+  using StreamConfig = Processing::Stream;
+
   struct DeconvolutionConfig {
     DeconvolutionConfig() = default;
     explicit DeconvolutionConfig(
@@ -151,11 +153,12 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   };
 
   struct IndexRange {
-    size_t begin;
-    size_t end;
+    std::size_t begin;
+    std::size_t end;
   };
 
   using Buffer = DoubleArray;
+  using Response = Processing::Response;
 
   // Sets the type of amplitudes the amplitude processor is producing
   void setType(std::string type);
@@ -177,7 +180,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // - called just before the noise and amplitude calculation is performed
   // - the default implementation does nothing
   virtual void preprocessData(StreamState &streamState,
-                              const Processing::Stream &streamConfig,
+                              const StreamConfig &streamConfig,
                               const DeconvolutionConfig &deconvolutionConfig,
                               DoubleArray &data);
 
@@ -187,8 +190,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   //
   // - `numberOfIntegrations` is an integer where a `data` is integrated if
   // greater than zero and derived if less than zero
-  virtual bool deconvolveData(StreamState &streamState,
-                              Processing::Response *resp,
+  virtual bool deconvolveData(StreamState &streamState, Response *resp,
                               const DeconvolutionConfig &config,
                               int numberOfIntegrations, DoubleArray &data);
 

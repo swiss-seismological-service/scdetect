@@ -3,16 +3,15 @@
 
 #include <memory>
 
-#include "../reducing_amplitude_processor.h"
+#include "../amplitude_processor.h"
+#include "../template_waveform.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
-class RMSAmplitude : public ReducingAmplitudeProcessor {
+class RMSAmplitude : public AmplitudeProcessor {
  public:
-  RMSAmplitude();
-
   enum class SignalUnit {
     // displacement
     kMeter = -1,
@@ -22,37 +21,64 @@ class RMSAmplitude : public ReducingAmplitudeProcessor {
     kMeterPerSecondsSquared,
   };
 
-  // Computes time window based on environment picks
+  RMSAmplitude() = default;
+  explicit RMSAmplitude(const TemplateWaveform &templateWaveform);
+
+  static SignalUnit signalUnitFromString(const std::string &signalUnit);
+
+  void reset() override;
+  // Computes time window based on the template waveform and the environment
+  // pick time
   void computeTimeWindow() override;
 
+  // Sets the filter including the filter initialization time
+  //
+  // - implicitly resets the waveform processor
+  void setFilter(std::unique_ptr<DoubleFilter> filter,
+                 Core::TimeSpan initTime = Core::TimeSpan{0.0});
+
+  void setTemplateWaveform(const TemplateWaveform &templateWaveform);
+  const TemplateWaveform &templateWaveform() const;
+
+  void setDeconvolutionConfig(const DeconvolutionConfig &config);
+  const DeconvolutionConfig &deconvolutionConfig() const;
+
+  void setStreamConfig(const StreamConfig &streamConfig);
+  const StreamConfig &streamConfig() const;
+
  protected:
-  // Preprocess `data` by means of deconvolution
+  StreamState *streamState(const Record *record) override;
+
+  void process(StreamState &streamState, const Record *record,
+               const DoubleArray &filteredData) override;
+
+  bool fill(processing::StreamState &streamState, const Record *record,
+            DoubleArrayPtr &data) override;
+
   void preprocessData(StreamState &streamState,
-                      const Processing::Stream &streamConfig,
+                      const StreamConfig &streamConfig,
                       const DeconvolutionConfig &deconvolutionConfig,
                       DoubleArray &data) override;
 
-  DoubleArrayCPtr reduceAmplitudeData(
-      const std::vector<DoubleArray const *> &data,
-      const std::vector<NoiseInfo> &noiseInfos,
-      const IndexRange &idxRange) override;
+ private:
+  // Computes the new time window based on the template waveform related
+  // `startTime` and `endTime` relative to the configured pick time
+  Core::TimeWindow computeTimeWindow(const Core::Time &startTime,
+                                     const Core::Time &endTime) const;
 
-  boost::optional<double> reduceNoiseData(
-      const std::vector<DoubleArray const *> &data,
-      const std::vector<IndexRange> &idxRanges,
-      const std::vector<NoiseInfo> &noiseInfos) override;
+  AmplitudeProcessor::IndexRange computeIndexRange(
+      const Core::TimeWindow &tw) const;
 
-  void computeAmplitude(const DoubleArray &data, const IndexRange &idxRange,
-                        Amplitude &amplitude) override;
+  TemplateWaveform _templateWaveform;
 
-  // Finalizes `amplitude`
-  //
-  // - attaches both pick and stream related identifiers by means of
-  // `DataModel::Comment`s
-  void finalize(DataModel::Amplitude *amplitude) const override;
+  processing::WaveformProcessor::StreamState _streamState;
+  StreamConfig _streamConfig;
+  DeconvolutionConfig _deconvolutionConfig;
+
+  Buffer _buffer;
+
+  Core::TimeWindow _bufferedTimeWindow;
 };
-
-RMSAmplitude::SignalUnit signalUnitFromString(const std::string &signalUnit);
 
 }  // namespace amplitude
 }  // namespace detect
