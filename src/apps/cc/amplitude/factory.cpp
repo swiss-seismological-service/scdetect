@@ -178,7 +178,6 @@ std::unique_ptr<RMSAmplitude> createRMSAmplitude(
       sensorLocationDetectionInfo.sensorLocationStreamId};
 
   const auto &pickPair{*std::begin(sensorLocationDetectionInfo.pickMap)};
-  const auto &processorId{pickPair.first};
   const auto &pick{pickPair.second};
 
   auto ret{util::make_unique<RMSAmplitude>()};
