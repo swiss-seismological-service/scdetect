@@ -284,7 +284,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
       detector.id(), detector.gapThreshold(), detector.gapTolerance(),
       detector.gapInterpolation()};
 
-  factory::SensorLocationTimeInfo sensorLocationTimeInfoConfig;
+  factory::SensorLocationTimeInfo sensorLocationTimeInfo;
   for (const auto &pickMapPair : detection.pickMap) {
     const auto &templateWaveformProcessorId{pickMapPair.first};
     const auto &templateWaveformProcessor{
@@ -295,7 +295,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
     const auto referenceTime{pickInfo.pick->time().value()};
     assert(templateWaveform.referenceTime());
 
-    sensorLocationTimeInfoConfig.timeInfos.emplace(
+    sensorLocationTimeInfo.timeInfos.emplace(
         pickInfo.authorativeWaveformStreamId,
         factory::SensorLocationTimeInfo::TimeInfo{
             referenceTime,
@@ -305,7 +305,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
                 templateWaveform.configuredEndTime()});
   }
 
-  return factory::createMLx(bindings, detection, sensorLocationTimeInfoConfig,
+  return factory::createMLx(bindings, detection, sensorLocationTimeInfo,
                             amplitudeProcessorConfig);
 }
 
