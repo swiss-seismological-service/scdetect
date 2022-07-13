@@ -7,6 +7,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "../def.h"
@@ -61,46 +62,60 @@ std::unique_ptr<amplitude::MLx> createMLx(
   // dispatch and create ratio amplitude processors
   auto baseId{amplitudeProcessorConfig.id + settings::kProcessorIdSep +
               util::createUUID()};
-  for (const auto &pickMapPair : detection.pickMap) {
-    // create pseudo detection
-    auto detectionCopy{detection};
-    detectionCopy.pickMap.clear();
-    detectionCopy.pickMap.emplace(pickMapPair);
 
-    const auto &waveformStreamId{
-        pickMapPair.second.authorativeWaveformStreamId};
+  // index detection info
+  std::unordered_map<Detection::WaveformStreamId,
+                     Detection::PickMap::const_iterator>
+      detectionInfoIdx;
+  for (auto cit{detection.pickMap.cbegin()}; cit != detection.pickMap.cend();
+       ++cit) {
+    detectionInfoIdx.emplace(cit->second.authorativeWaveformStreamId, cit);
+  }
 
-    try {
-      const util::HorizontalComponents horizontalComponents{
-          Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
-          sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
-          sensorLocationStreamIdTokens[3], earliestPick->time().value()};
-      for (const auto &s : horizontalComponents) {
-        processing::StreamConfig streamConfig;
-        streamConfig.init(s);
+  try {
+    const util::HorizontalComponents horizontalComponents{
+        Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
+        sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
+        sensorLocationStreamIdTokens[3], earliestPick->time().value()};
+    for (const auto &s : horizontalComponents) {
+      processing::StreamConfig streamConfig;
+      streamConfig.init(s);
 
-        Core::TimeWindow tw;
-        try {
-          const auto &timeInfoConfig{
-              sensorLocationTimeInfo.timeInfos.at(waveformStreamId)};
-          tw.setStartTime(timeInfoConfig.referenceTime -
-                          timeInfoConfig.leading);
-          tw.setEndTime(timeInfoConfig.referenceTime + timeInfoConfig.trailing);
-        } catch (std::out_of_range &e) {
-          continue;
-        }
+      auto waveformStreamId{util::join(
+          horizontalComponents.netCode(), horizontalComponents.staCode(),
+          horizontalComponents.locCode(), s->code())};
 
-        underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
-            {waveformStreamId},
-            detail::createRMSAmplitude(bindings, detectionCopy, tw,
-                                       amplitudeProcessorConfig, streamConfig,
-                                       baseId)});
+      // create pseudo detection
+      auto detectionCopy{detection};
+      detectionCopy.pickMap.clear();
+      try {
+        const auto &detectionInfo{detectionInfoIdx.at(waveformStreamId)};
+        detectionCopy.pickMap.emplace(detectionInfo->first,
+                                      detectionInfo->second);
+      } catch (const std::out_of_range &e) {
+        continue;
       }
-    } catch (Exception &e) {
-      msg.setText(std::string{e.what()} +
-                  " (pick_time=" + earliestPick->time().value().iso() + ")");
-      throw Factory::BaseException{logging::to_string(msg)};
+
+      Core::TimeWindow tw;
+      try {
+        const auto &timeInfoConfig{
+            sensorLocationTimeInfo.timeInfos.at(waveformStreamId)};
+        tw.setStartTime(timeInfoConfig.referenceTime - timeInfoConfig.leading);
+        tw.setEndTime(timeInfoConfig.referenceTime + timeInfoConfig.trailing);
+      } catch (std::out_of_range &e) {
+        continue;
+      }
+
+      underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
+          {waveformStreamId},
+          detail::createRMSAmplitude(bindings, detectionCopy, tw,
+                                     amplitudeProcessorConfig, streamConfig,
+                                     baseId)});
     }
+  } catch (Exception &e) {
+    msg.setText(std::string{e.what()} +
+                " (pick_time=" + earliestPick->time().value().iso() + ")");
+    throw Factory::BaseException{logging::to_string(msg)};
   }
 
   if (underlying.empty()) {
