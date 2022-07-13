@@ -27,7 +27,6 @@ class MLx;
 
 namespace factory {
 
-// TODO(damb): rename -> SensorLocationDetectionInfo
 struct Detection {
   using WaveformStreamId = std::string;
   struct Pick {
@@ -69,7 +68,7 @@ struct SensorLocationTimeInfo {
 std::unique_ptr<amplitude::MLx> createMLx(
     const binding::Bindings& bindings, const Detection& detection,
     const SensorLocationTimeInfo& SensorLocationTimeInfo,
-    const AmplitudeProcessorConfig& config);
+    const AmplitudeProcessorConfig& amplitudeProcessorConfig);
 
 namespace detail {
 
