@@ -55,7 +55,6 @@ struct AmplitudeProcessorConfig {
 
 struct SensorLocationTimeInfo {
   struct TimeInfo {
-    Core::Time referenceTime;
     Core::TimeSpan leading;
     Core::TimeSpan trailing;
   };

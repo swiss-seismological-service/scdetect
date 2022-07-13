@@ -98,10 +98,12 @@ std::unique_ptr<amplitude::MLx> createMLx(
 
       Core::TimeWindow tw;
       try {
+        const auto &detectionInfo{detectionInfoIdx.at(waveformStreamId)};
+        const auto &referenceTime{detectionInfo->second.pick->time().value()};
         const auto &timeInfoConfig{
             sensorLocationTimeInfo.timeInfos.at(waveformStreamId)};
-        tw.setStartTime(timeInfoConfig.referenceTime - timeInfoConfig.leading);
-        tw.setEndTime(timeInfoConfig.referenceTime + timeInfoConfig.trailing);
+        tw.setStartTime(referenceTime - timeInfoConfig.leading);
+        tw.setEndTime(referenceTime + timeInfoConfig.trailing);
       } catch (std::out_of_range &e) {
         continue;
       }
@@ -298,7 +300,6 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
     sensorLocationTimeInfo.timeInfos.emplace(
         pickInfo.authorativeWaveformStreamId,
         factory::SensorLocationTimeInfo::TimeInfo{
-            referenceTime,
             *templateWaveform.referenceTime() -
                 templateWaveform.configuredStartTime(),
             *templateWaveform.referenceTime() +
