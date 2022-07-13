@@ -12,13 +12,13 @@
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/processing/response.h>
-#include <seiscomp/processing/stream.h>
 
 #include <boost/optional/optional.hpp>
 #include <memory>
 #include <vector>
 
 #include "amplitude/factory.h"
+#include "processing/stream_config.h"
 #include "processing/timewindow_processor.h"
 
 namespace Seiscomp {
@@ -47,8 +47,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     // regard to the end of the overall time window
     boost::optional<Core::TimeSpan> signalEnd;
   };
-
-  using StreamConfig = Processing::Stream;
 
   struct DeconvolutionConfig {
     DeconvolutionConfig() = default;
@@ -180,7 +178,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // - called just before the noise and amplitude calculation is performed
   // - the default implementation does nothing
   virtual void preprocessData(StreamState &streamState,
-                              const StreamConfig &streamConfig,
+                              const processing::StreamConfig &streamConfig,
                               const DeconvolutionConfig &deconvolutionConfig,
                               DoubleArray &data);
 

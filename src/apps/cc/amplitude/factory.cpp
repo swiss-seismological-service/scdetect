@@ -1,5 +1,6 @@
 #include "factory.h"
 
+#include <seiscomp/core/timewindow.h>
 #include <seiscomp/processing/stream.h>
 
 #include <algorithm>
@@ -18,11 +19,103 @@
 #include "mlx.h"
 #include "mrelative.h"
 #include "ratio.h"
+#include "rms.h"
 
 namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 namespace factory {
+
+std::unique_ptr<amplitude::MLx> createMLx(
+    const binding::Bindings &bindings, const Detection &detection,
+    const SensorLocationTimeInfo &sensorLocationTimeInfo,
+    const AmplitudeProcessorConfig &amplitudeProcessorConfig) {
+  assert(detection.origin);
+  assert(!detection.pickMap.empty());
+
+  std::vector<std::string> sensorLocationStreamIdTokens;
+  util::tokenizeWaveformStreamId(detection.sensorLocationStreamId,
+                                 sensorLocationStreamIdTokens);
+  const auto &sensorLocationBindings{factory::detail::loadSensorLocationConfig(
+      bindings, sensorLocationStreamIdTokens[0],
+      sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
+      sensorLocationStreamIdTokens[3])};
+
+  std::vector<DataModel::PickCPtr> picks;
+  std::transform(std::begin(detection.pickMap), std::end(detection.pickMap),
+                 std::back_inserter(picks),
+                 [](const decltype(detection.pickMap)::value_type &p) {
+                   return p.second.pick;
+                 });
+  // choose arbitrarily the earliest pick w.r.t. a sensor location
+  std::sort(std::begin(picks), std::end(picks),
+            [](const decltype(picks)::value_type &lhs,
+               const decltype(picks)::value_type &rhs) {
+              return lhs->time().value() < rhs->time().value();
+            });
+  auto &earliestPick{picks.front()};
+
+  logging::TaggedMessage msg{detection.sensorLocationStreamId};
+
+  std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
+  // dispatch and create ratio amplitude processors
+  auto baseId{amplitudeProcessorConfig.id + settings::kProcessorIdSep +
+              util::createUUID()};
+  for (const auto &pickMapPair : detection.pickMap) {
+    // create pseudo detection
+    auto detectionCopy{detection};
+    detectionCopy.pickMap.clear();
+    detectionCopy.pickMap.emplace(pickMapPair);
+
+    const auto &waveformStreamId{
+        pickMapPair.second.authorativeWaveformStreamId};
+
+    try {
+      const util::HorizontalComponents horizontalComponents{
+          Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
+          sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
+          sensorLocationStreamIdTokens[3], earliestPick->time().value()};
+      for (const auto &s : horizontalComponents) {
+        processing::StreamConfig streamConfig;
+        streamConfig.init(s);
+
+        Core::TimeWindow tw;
+        try {
+          const auto &timeInfoConfig{
+              sensorLocationTimeInfo.timeInfos.at(waveformStreamId)};
+          tw.setStartTime(timeInfoConfig.referenceTime -
+                          timeInfoConfig.leading);
+          tw.setEndTime(timeInfoConfig.referenceTime + timeInfoConfig.trailing);
+        } catch (std::out_of_range &e) {
+          continue;
+        }
+
+        underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
+            {waveformStreamId},
+            detail::createRMSAmplitude(bindings, detectionCopy, tw,
+                                       amplitudeProcessorConfig, streamConfig,
+                                       baseId)});
+      }
+    } catch (Exception &e) {
+      msg.setText(std::string{e.what()} +
+                  " (pick_time=" + earliestPick->time().value().iso() + ")");
+      throw Factory::BaseException{logging::to_string(msg)};
+    }
+  }
+
+  if (underlying.empty()) {
+    msg.setText("failed to initialize underlying amplitude processors");
+    throw Factory::BaseException{logging::to_string(msg)};
+  }
+
+  auto ret{util::make_unique<amplitude::MLx>(std::move(underlying))};
+  ret->computeTimeWindow();
+  ret->setId(baseId);
+  ret->setEnvironment(detection.origin, nullptr, picks);
+
+  return ret;
+}
+
 namespace detail {
 
 const binding::SensorLocationConfig &loadSensorLocationConfig(
@@ -39,120 +132,93 @@ const binding::SensorLocationConfig &loadSensorLocationConfig(
   }
 }
 
-}  // namespace detail
-
-std::unique_ptr<AmplitudeProcessor> createMLx(
+std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     const binding::Bindings &bindings, const factory::Detection &detection,
-    const DetectorConfig &detectorConfig,
-    const boost::optional<Core::TimeWindow> &timeWindow) {
+    const Core::TimeWindow &timeWindow,
+    const AmplitudeProcessorConfig &amplitudeProcessorConfig,
+    const processing::StreamConfig &streamConfig,
+    const std::string &baseProcessorId) {
   assert(detection.origin);
-  assert(!detection.pickMap.empty());
-  std::vector<DataModel::PickCPtr> picks;
-  std::transform(std::begin(detection.pickMap), std::end(detection.pickMap),
-                 std::back_inserter(picks),
-                 [](const decltype(detection.pickMap)::value_type &p) {
-                   return p.second.pick;
-                 });
-
-  auto ret{util::make_unique<MLx>()};
-  ret->setId(detectorConfig.id + settings::kProcessorIdSep +
-             util::createUUID());
-
-  // XXX(damb): do not provide a sensor location (currently not required)
-  ret->setEnvironment(detection.origin, nullptr, picks);
-
-  if (timeWindow) {
-    ret->setTimeWindow(*timeWindow);
-  } else {
-    ret->computeTimeWindow();
-  }
-  ret->setGapInterpolation(detectorConfig.gapInterpolation);
-  if (detectorConfig.gapInterpolation) {
-    ret->setGapThreshold(detectorConfig.gapThreshold);
-    ret->setGapTolerance(detectorConfig.gapTolerance);
-  }
+  assert((detection.pickMap.size() == 1));
 
   std::vector<std::string> sensorLocationStreamIdTokens;
   util::tokenizeWaveformStreamId(detection.sensorLocationStreamId,
                                  sensorLocationStreamIdTokens);
-  const auto &sensorLocationBindings{detail::loadSensorLocationConfig(
+  const auto &sensorLocationBindings{factory::detail::loadSensorLocationConfig(
       bindings, sensorLocationStreamIdTokens[0],
       sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
       sensorLocationStreamIdTokens[3])};
-
   const auto &amplitudeProcessingConfig{
       sensorLocationBindings.amplitudeProcessingConfig};
-  ret->setSaturationThreshold(
-      amplitudeProcessingConfig.mlx.saturationThreshold);
 
   logging::TaggedMessage msg{detection.sensorLocationStreamId};
+
+  const auto &pickPair{*std::begin(detection.pickMap)};
+  const auto &processorId{pickPair.first};
+  const auto &pick{pickPair.second};
+
+  auto ret{util::make_unique<RMSAmplitude>()};
+  ret->setId(baseProcessorId + settings::kProcessorIdSep + util::createUUID());
+
+  // XXX(damb): do not provide a sensor location (currently not required)
+  ret->setEnvironment(detection.origin, nullptr, {pick.pick});
+
+  ret->setStreamConfig(streamConfig);
+  // configure deconvolution configuration
+  AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
+  try {
+    deconvolutionConfig = static_cast<AmplitudeProcessor::DeconvolutionConfig>(
+        sensorLocationBindings.at(streamConfig.code()).deconvolutionConfig);
+  } catch (std::out_of_range &e) {
+    binding::StreamConfig::DeconvolutionConfig fallback;
+    msg.setText(
+        "failed to look up deconvolution configuration related bindings "
+        "(channel code: \"" +
+        streamConfig.code() +
+        "\") required for amplitude processor configuration (" + e.what() +
+        "); using fallback configuration, instead: \"" +
+        fallback.debugString() + "\"");
+    SCDETECT_LOG_WARNING_TAGGED(ret->id(), "%s",
+                                logging::to_string(msg).c_str());
+    deconvolutionConfig =
+        static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
+  }
+
   // configure filter
-  if (!amplitudeProcessingConfig.mlx.filter.value_or("").empty()) {
-    auto filter{amplitudeProcessingConfig.mlx.filter.value()};
-    util::replaceEscapedXMLFilterIdChars(filter);
-    try {
-      ret->setFilter(processing::createFilter(filter),
-                     amplitudeProcessingConfig.mlx.initTime);
-    } catch (processing::WaveformProcessor::BaseException &e) {
-      msg.setText(e.what());
-      throw Factory::BaseException{logging::to_string(msg)};
+  auto filter{amplitudeProcessingConfig.mlx.filter};
+  bool filterConfigured{false};
+  if (filter) {
+    util::replaceEscapedXMLFilterIdChars(*filter);
+    if (!filter.value().empty()) {
+      auto initTime = amplitudeProcessingConfig.mlx.initTime;
+      msg.setText("Configured amplitude processor filter: filter=\"" + *filter +
+                  "init_time=" + std::to_string(initTime));
+      SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
+                                logging::to_string(msg).c_str());
+
+      ret->setFilter(processing::createFilter(*filter), initTime);
+      filterConfigured = true;
     }
-    msg.setText("Configured amplitude processor filter: filter=\"" + filter +
-                "\", init_time=" +
-                std::to_string(amplitudeProcessingConfig.mlx.initTime));
-    SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
-  } else {
+  }
+  if (!filterConfigured) {
     msg.setText("Configured amplitude processor without filter: filter=\"\"");
     SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
   }
 
-  // choose arbitrarily the earliest pick w.r.t. a sensor location
-  std::sort(std::begin(picks), std::end(picks),
-            [](const decltype(picks)::value_type &lhs,
-               const decltype(picks)::value_type &rhs) {
-              return lhs->time().value() < rhs->time().value();
-            });
-  auto &earliestPick{picks.front()};
-  try {
-    const util::HorizontalComponents horizontalComponents{
-        Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
-        sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
-        sensorLocationStreamIdTokens[3], earliestPick->time().value()};
-    for (const auto &s : horizontalComponents) {
-      Processing::Stream stream;
-      stream.init(s);
-
-      AmplitudeProcessor::DeconvolutionConfig deconvolutionConfig;
-      try {
-        deconvolutionConfig =
-            static_cast<AmplitudeProcessor::DeconvolutionConfig>(
-                sensorLocationBindings.at(s->code()).deconvolutionConfig);
-      } catch (std::out_of_range &e) {
-        binding::StreamConfig::DeconvolutionConfig fallback;
-        msg.setText(
-            "failed to look up deconvolution configuration related bindings "
-            "(channel code: \"" +
-            s->code() + "\") required for amplitude processor configuration (" +
-            e.what() + "); using fallback configuration, instead: \"" +
-            fallback.debugString() + "\"");
-        SCDETECT_LOG_WARNING_TAGGED(ret->id(), "%s",
-                                    logging::to_string(msg).c_str());
-        deconvolutionConfig =
-            static_cast<AmplitudeProcessor::DeconvolutionConfig>(fallback);
-      }
-
-      ret->add(horizontalComponents.netCode(), horizontalComponents.staCode(),
-               horizontalComponents.locCode(), stream, deconvolutionConfig);
-    }
-  } catch (Exception &e) {
-    msg.setText(std::string{e.what()} +
-                " (pick_time=" + earliestPick->time().value().iso() + ")");
-    throw Factory::BaseException{logging::to_string(msg)};
+  ret->setTimeWindow(timeWindow);
+  if (amplitudeProcessorConfig.gapInterpolation) {
+    ret->setGapInterpolation(amplitudeProcessorConfig.gapInterpolation);
+    ret->setGapThreshold(amplitudeProcessorConfig.gapThreshold);
+    ret->setGapTolerance(amplitudeProcessorConfig.gapTolerance);
   }
+
+  ret->setSaturationThreshold(
+      amplitudeProcessingConfig.mlx.saturationThreshold);
 
   return ret;
 }
 
+}  // namespace detail
 }  // namespace factory
 
 Factory::BaseException::BaseException()
@@ -171,6 +237,7 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
   for (const auto &pickMapPair : detection.pickMap) {
     picks.push_back(pickMapPair.second.pick);
 
+    // create a pseudo detection
     auto detectionCopy{detection};
     detectionCopy.pickMap.clear();
     detectionCopy.pickMap.emplace(pickMapPair);
@@ -195,13 +262,36 @@ std::unique_ptr<detect::AmplitudeProcessor> Factory::createMRelative(
 std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
     const binding::Bindings &bindings, const factory::Detection &detection,
     const detector::Detector &detector) {
-  factory::DetectorConfig detectorConfig;
-  detectorConfig.id = detector.id();
-  detectorConfig.gapThreshold = detector.gapThreshold();
-  detectorConfig.gapTolerance = detector.gapTolerance();
-  detectorConfig.gapInterpolation = detector.gapInterpolation();
+  assert(detection.origin);
+  assert(!detection.pickMap.empty());
 
-  return factory::createMLx(bindings, detection, detectorConfig);
+  factory::AmplitudeProcessorConfig amplitudeProcessorConfig{
+      detector.id(), detector.gapThreshold(), detector.gapTolerance(),
+      detector.gapInterpolation()};
+
+  factory::SensorLocationTimeInfo sensorLocationTimeInfoConfig;
+  for (const auto &pickMapPair : detection.pickMap) {
+    const auto &templateWaveformProcessorId{pickMapPair.first};
+    const auto &templateWaveformProcessor{
+        detector.processor(templateWaveformProcessorId)};
+    assert(templateWaveformProcessor);
+    const auto &templateWaveform{templateWaveformProcessor->templateWaveform()};
+    const auto &pickInfo{pickMapPair.second};
+    const auto referenceTime{pickInfo.pick->time().value()};
+    assert(templateWaveform.referenceTime());
+
+    sensorLocationTimeInfoConfig.timeInfos.emplace(
+        pickInfo.authorativeWaveformStreamId,
+        factory::SensorLocationTimeInfo::TimeInfo{
+            referenceTime,
+            *templateWaveform.referenceTime() -
+                templateWaveform.configuredStartTime(),
+            *templateWaveform.referenceTime() +
+                templateWaveform.configuredEndTime()});
+  }
+
+  return factory::createMLx(bindings, detection, sensorLocationTimeInfoConfig,
+                            amplitudeProcessorConfig);
 }
 
 void Factory::reset() { resetCallbacks(); }
@@ -253,7 +343,7 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
       templateWaveformHasFilterConfigured = true;
     }
   } else {
-    // use the filter from detector waveform processing as a fallback
+    // use the filter from detection waveform processing as a fallback
     auto processingConfig{templateWaveform.processingConfig()};
     auto *templateWaveformProcessorFilter{templateWaveformProcessor->filter()};
     if (static_cast<bool>(templateWaveformProcessorFilter)) {
@@ -283,9 +373,11 @@ std::unique_ptr<AmplitudeProcessor> Factory::createRatioAmplitude(
   ret->setEnvironment(detection.origin, nullptr, {pick.pick});
 
   ret->computeTimeWindow();
-  ret->setGapInterpolation(detector.gapInterpolation());
-  ret->setGapThreshold(detector.gapThreshold());
-  ret->setGapTolerance(detector.gapTolerance());
+  if (detector.gapInterpolation()) {
+    ret->setGapInterpolation(detector.gapInterpolation());
+    ret->setGapThreshold(detector.gapThreshold());
+    ret->setGapTolerance(detector.gapTolerance());
+  }
 
   ret->setSaturationThreshold(
       amplitudeProcessingConfig.mrelative.saturationThreshold);

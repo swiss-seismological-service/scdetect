@@ -13,6 +13,7 @@
 #include "../binding.h"
 #include "../detector/detector.h"
 #include "../factory.h"
+#include "../processing/stream_config.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -20,16 +21,13 @@ namespace detect {
 class AmplitudeProcessor;
 
 namespace amplitude {
+
+class RMSAmplitude;
+class MLx;
+
 namespace factory {
-namespace detail {
 
-const binding::SensorLocationConfig& loadSensorLocationConfig(
-    const binding::Bindings& bindings, const std::string& netCode,
-    const std::string& staCode, const std::string& locCode,
-    const std::string& chaCode);
-
-}
-
+// TODO(damb): rename -> SensorLocationDetectionInfo
 struct Detection {
   using WaveformStreamId = std::string;
   struct Pick {
@@ -48,23 +46,46 @@ struct Detection {
   DataModel::OriginCPtr origin;
 };
 
-struct DetectorConfig {
+struct AmplitudeProcessorConfig {
   std::string id;
 
   Core::TimeSpan gapThreshold;
   Core::TimeSpan gapTolerance;
-  bool gapInterpolation{false};
+  bool gapInterpolation;
 };
 
-// Creates an instance of an `MLx` amplitude processor preconfigured based on
-// the parameters passed
-//
-// - if `timeWindow` is a valid value the time window is configured explicitly
-std::unique_ptr<AmplitudeProcessor> createMLx(
-    const binding::Bindings& bindings, const factory::Detection& detection,
-    const DetectorConfig& detectorConfig,
-    const boost::optional<Core::TimeWindow>& timeWindow = boost::none);
+struct SensorLocationTimeInfo {
+  struct TimeInfo {
+    Core::Time referenceTime;
+    Core::TimeSpan leading;
+    Core::TimeSpan trailing;
+  };
 
+  using WaveformStreamId = std::string;
+  using TimeInfos = std::map<WaveformStreamId, TimeInfo>;
+  TimeInfos timeInfos;
+};
+
+std::unique_ptr<amplitude::MLx> createMLx(
+    const binding::Bindings& bindings, const Detection& detection,
+    const SensorLocationTimeInfo& SensorLocationTimeInfo,
+    const AmplitudeProcessorConfig& config);
+
+namespace detail {
+
+const binding::SensorLocationConfig& loadSensorLocationConfig(
+    const binding::Bindings& bindings, const std::string& netCode,
+    const std::string& staCode, const std::string& locCode,
+    const std::string& chaCode);
+
+static std::unique_ptr<RMSAmplitude> createRMSAmplitude(
+    const binding::Bindings& bindings, const factory::Detection& detection,
+    const Core::TimeWindow& timeWindow,
+    const AmplitudeProcessorConfig& amplitudeProcessorConfig,
+    const processing::StreamConfig& streamConfig,
+    const std::string& baseProcessorId = "");
+
+}  // namespace detail
 }  // namespace factory
 
 class Factory : public detect::Factory<

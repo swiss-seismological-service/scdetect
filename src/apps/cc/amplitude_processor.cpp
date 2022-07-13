@@ -132,7 +132,7 @@ bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
 }
 
 void AmplitudeProcessor::preprocessData(
-    StreamState &streamState, const Processing::Stream &streamConfig,
+    StreamState &streamState, const processing::StreamConfig &streamConfig,
     const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
 
 bool AmplitudeProcessor::deconvolveData(StreamState &streamState,

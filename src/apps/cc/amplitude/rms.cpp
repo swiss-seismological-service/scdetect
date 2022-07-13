@@ -21,13 +21,6 @@ namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
-RMSAmplitude::RMSAmplitude(const TemplateWaveform &templateWaveform)
-    : _templateWaveform{templateWaveform} {
-  assert(_templateWaveform.referenceTime());
-  assert(_templateWaveform.configuredStartTime());
-  assert(_templateWaveform.configuredEndTime());
-}
-
 RMSAmplitude::SignalUnit RMSAmplitude::signalUnitFromString(
     const std::string &signalUnit) {
   using SignalUnit = RMSAmplitude::SignalUnit;
@@ -42,13 +35,7 @@ RMSAmplitude::SignalUnit RMSAmplitude::signalUnitFromString(
 
 void RMSAmplitude::reset() {
   AmplitudeProcessor::reset();
-  _templateWaveform.reset();
   _buffer.clear();
-}
-
-void RMSAmplitude::computeTimeWindow() {
-  setTimeWindow(computeTimeWindow(_templateWaveform.configuredStartTime(),
-                                  _templateWaveform.configuredEndTime()));
 }
 
 void RMSAmplitude::setFilter(std::unique_ptr<DoubleFilter> filter,
@@ -57,19 +44,6 @@ void RMSAmplitude::setFilter(std::unique_ptr<DoubleFilter> filter,
   _initTime = initTime;
 
   reset();
-}
-
-void RMSAmplitude::setTemplateWaveform(
-    const TemplateWaveform &templateWaveform) {
-  assert(templateWaveform.referenceTime());
-  assert(templateWaveform.configuredStartTime());
-  assert(templateWaveform.configuredEndTime());
-
-  _templateWaveform = templateWaveform;
-}
-
-const TemplateWaveform &RMSAmplitude::templateWaveform() const {
-  return _templateWaveform;
 }
 
 void RMSAmplitude::setDeconvolutionConfig(const DeconvolutionConfig &config) {
@@ -81,11 +55,12 @@ RMSAmplitude::deconvolutionConfig() const {
   return _deconvolutionConfig;
 }
 
-void RMSAmplitude::setStreamConfig(const StreamConfig &streamConfig) {
+void RMSAmplitude::setStreamConfig(
+    const processing::StreamConfig &streamConfig) {
   _streamConfig = streamConfig;
 }
 
-const AmplitudeProcessor::StreamConfig &RMSAmplitude::streamConfig() const {
+const processing::StreamConfig &RMSAmplitude::streamConfig() const {
   return _streamConfig;
 }
 
@@ -124,18 +99,14 @@ bool RMSAmplitude::fill(processing::StreamState &streamState,
 }
 
 void RMSAmplitude::preprocessData(
-    StreamState &streamState, const StreamConfig &streamConfig,
+    StreamState &streamState, const processing::StreamConfig &streamConfig,
     const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {
-  // trim buffered data to configured template waveform time window
-  const auto configuredTemplateWaveformTimeWindow{
-      computeTimeWindow(_templateWaveform.configuredStartTime(),
-                        _templateWaveform.configuredEndTime())};
-  const auto range{computeIndexRange(configuredTemplateWaveformTimeWindow)};
-
+  // trim buffered data to actual time window
+  const auto range{computeIndexRange(timeWindow())};
   assert(range.begin < range.end);
   _buffer.setData(range.end - range.begin, _buffer.typedData() + range.begin);
 
-  _bufferedTimeWindow = configuredTemplateWaveformTimeWindow;
+  _bufferedTimeWindow = timeWindow();
 
   // remove response and apply gain
   auto sensor{streamConfig.sensor()};
@@ -176,21 +147,6 @@ void RMSAmplitude::preprocessData(
 
   // XXX(damb): `streamConfig` is not modified
   const_cast<Processing::Stream &>(streamConfig).applyGain(data);
-}
-
-Core::TimeWindow RMSAmplitude::computeTimeWindow(
-    const Core::Time &startTime, const Core::Time &endTime) const {
-  assert((environment().picks.size() == 1));
-
-  const auto pickTime{environment().picks.front()->time().value()};
-  assert((static_cast<bool>(pickTime)));
-  assert((_templateWaveform.referenceTime()));
-
-  const auto leadingPickOffset{*_templateWaveform.referenceTime() - startTime};
-  const auto trailingPickOffset{endTime - *_templateWaveform.referenceTime()};
-
-  return Core::TimeWindow{pickTime - leadingPickOffset,
-                          pickTime + trailingPickOffset};
 }
 
 AmplitudeProcessor::IndexRange RMSAmplitude::computeIndexRange(
