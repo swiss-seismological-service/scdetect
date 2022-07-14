@@ -1698,23 +1698,23 @@ bool Application::initAmplitudeProcessors(
     }
 
     // prepare `amplitude::factory::Detection`
-    amplitude::factory::Detection detection;
-    detection.origin = detectionItem->origin;
-    detection.sensorLocationStreamId = sensorLocationStreamId;
+    amplitude::factory::SensorLocationDetectionInfo detectionInfo;
+    detectionInfo.origin = detectionItem->origin;
+    detectionInfo.sensorLocationStreamId = sensorLocationStreamId;
 
     for (const auto &pickPair : sensorLocationPicksMapPair.second) {
       const auto &procId{pickPair.first};
-      detection.pickMap.emplace(procId,
-                                amplitude::factory::Detection::Pick{
-                                    pickPair.second.authorativeWaveformStreamId,
-                                    pickPair.second.pick});
+      detectionInfo.pickMap.emplace(
+          procId, amplitude::factory::SensorLocationDetectionInfo::Pick{
+                      pickPair.second.authorativeWaveformStreamId,
+                      pickPair.second.pick});
     }
 
     // initialize amplitude processors
     for (const auto &amplitudeType : amplitudeTypes) {
       try {
         auto amplitudeProcessor{AmplitudeProcessor::Factory::create(
-            amplitudeType, _bindings, detection, detectorProcessor)};
+            amplitudeType, _bindings, detectionInfo, detectorProcessor)};
 
         // configure callback
         bool magnitudesForcedEnabled{_config.magnitudesForceMode &&
