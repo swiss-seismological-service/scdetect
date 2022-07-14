@@ -298,10 +298,10 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
     const auto &templateWaveform{templateWaveformProcessor->templateWaveform()};
     assert(templateWaveform.referenceTime());
 
-    timeInfo.leading = *templateWaveform.referenceTime() -
-                       templateWaveform.configuredStartTime();
-    timeInfo.trailing = *templateWaveform.referenceTime() +
-                        templateWaveform.configuredEndTime();
+    timeInfo.leading = templateWaveform.configuredStartTime() -
+                       *templateWaveform.referenceTime();
+    timeInfo.trailing = templateWaveform.configuredEndTime() -
+                        *templateWaveform.referenceTime();
   }
 
   factory::AmplitudeProcessorConfig amplitudeProcessorConfig{

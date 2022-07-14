@@ -44,7 +44,7 @@ void RMSAmplitude::reset() {
 void RMSAmplitude::computeTimeWindow() {
   assert((environment().picks.size() == 1 && environment().picks.front()));
   auto referenceTime{environment().picks.front()->time().value()};
-  setTimeWindow(Core::TimeWindow{referenceTime - _signalTimeInfo.leading,
+  setTimeWindow(Core::TimeWindow{referenceTime + _signalTimeInfo.leading,
                                  referenceTime + _signalTimeInfo.trailing});
 }
 
@@ -91,10 +91,13 @@ void RMSAmplitude::process(StreamState &streamState, const Record *record,
   auto amplitude{util::make_smart<Amplitude>()};
   amplitude->value.value = _buffer.rms();
 
+  auto referenceTime{environment().picks.front()->time().value()};
   // time window based amplitude time
-  amplitude->time.reference = _bufferedTimeWindow.startTime();
-  amplitude->time.end = static_cast<double>(_bufferedTimeWindow.endTime() -
-                                            _bufferedTimeWindow.startTime());
+  amplitude->time.reference = referenceTime;
+  amplitude->time.begin =
+      static_cast<double>(referenceTime - _bufferedTimeWindow.startTime());
+  amplitude->time.end =
+      static_cast<double>(_bufferedTimeWindow.endTime() - referenceTime);
 
   setStatus(Status::kFinished, 100.0);
   emitAmplitude(record, amplitude);

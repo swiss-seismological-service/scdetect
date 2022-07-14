@@ -69,9 +69,9 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   struct AmplitudeTime {
     // The amplitude reference time
     Core::Time reference;
-    // Duration in seconds before `reference`. Must be positive.
+    // Duration in seconds before `reference`.
     double begin{0};
-    // Duration in seconds after `reference`. Must be positive.
+    // Duration in seconds after `reference`.
     double end{0};
   };
 
