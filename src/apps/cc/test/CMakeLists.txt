@@ -30,7 +30,6 @@ set(SOURCES_integration
   ../amplitude/rms.cpp
   ../amplitude_processor.cpp
   ../combining_amplitude_processor.cpp
-  ../reducing_amplitude_processor.cpp
   ../app.cpp
   ../binding.cpp
   ../builder.cpp
