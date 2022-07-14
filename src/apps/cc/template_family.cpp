@@ -212,8 +212,6 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       const auto authorativeWaveformStreamId{util::join(
           tokens[0], tokens[1], tokens[2], sensorLocationConfig.channelId)};
-      std::vector<amplitude::factory::SensorLocationDetectionInfo::Pick>
-          pickInfo{{authorativeWaveformStreamId, pick}};
 
       amplitude::factory::AmplitudeProcessorConfig amplitudeProcessorConfig;
       amplitudeProcessorConfig.gapInterpolation = false;
@@ -250,7 +248,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
       }
 
       auto proc{amplitude::factory::createMLx(
-          bindings, origin, sensorLocationStreamId, pickInfo,
+          bindings, origin, sensorLocationStreamId, pickInfos,
           {Core::TimeSpan{sensorLocationConfig.waveformStart},
            Core::TimeSpan{sensorLocationConfig.waveformEnd}},
           sensorLocationStreamConfigs, amplitudeProcessorConfig)};
