@@ -259,7 +259,6 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
             storeAmplitude(proc, rec, amplitude);
           });
 
-      proc->setEnvironment(origin, sensorLocation, {pick});
       try {
         WaveformHandlerIface::ProcessingConfig processingConfig;
         // let the amplitude processor decide how to process the waveform
