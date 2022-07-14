@@ -231,7 +231,7 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
         for (const auto& s : horizontalComponents) {
           auto waveformStreamId{
-              util::join(tokens[0], tokens[1], tokens[3], s->code())};
+              util::join(tokens[0], tokens[1], tokens[2], s->code())};
 
           // stream config
           processing::StreamConfig streamConfig;
