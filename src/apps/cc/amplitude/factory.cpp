@@ -39,10 +39,6 @@ std::unique_ptr<amplitude::MLx> createMLx(
   util::tokenizeWaveformStreamId(
       sensorLocationDetectionInfo.sensorLocationStreamId,
       sensorLocationStreamIdTokens);
-  const auto &sensorLocationBindings{factory::detail::loadSensorLocationConfig(
-      bindings, sensorLocationStreamIdTokens[0],
-      sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
-      sensorLocationStreamIdTokens[3])};
 
   std::vector<DataModel::PickCPtr> picks;
   std::transform(
