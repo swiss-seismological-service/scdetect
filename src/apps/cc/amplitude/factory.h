@@ -27,8 +27,9 @@ class MLx;
 
 namespace factory {
 
+using WaveformStreamId = std::string;
+
 struct SensorLocationDetectionInfo {
-  using WaveformStreamId = std::string;
   struct Pick {
     WaveformStreamId authorativeWaveformStreamId;
     DataModel::PickCPtr pick;
@@ -53,21 +54,21 @@ struct AmplitudeProcessorConfig {
   bool gapInterpolation;
 };
 
-struct SensorLocationTimeInfo {
-  struct TimeInfo {
-    Core::TimeSpan leading;
-    Core::TimeSpan trailing;
-  };
-
-  using WaveformStreamId = std::string;
-  using TimeInfos = std::map<WaveformStreamId, TimeInfo>;
-  TimeInfos timeInfos;
+struct TimeInfo {
+  Core::TimeSpan leading;
+  Core::TimeSpan trailing;
 };
 
+using SensorLocationStreamConfigs =
+    std::unordered_map<WaveformStreamId, processing::StreamConfig>;
+
+// Creates an `MLx` amplitude processor
 std::unique_ptr<amplitude::MLx> createMLx(
-    const binding::Bindings& bindings,
-    const SensorLocationDetectionInfo& sensorLocationDetectionInfo,
-    const SensorLocationTimeInfo& SensorLocationTimeInfo,
+    const binding::Bindings& bindings, const DataModel::OriginCPtr& origin,
+    const std::string& sensorLocationStreamId,
+    const std::vector<SensorLocationDetectionInfo::Pick>& pickInfos,
+    const TimeInfo& timeInfo,
+    const SensorLocationStreamConfigs& sensorLocationStreamConfigs,
     const AmplitudeProcessorConfig& amplitudeProcessorConfig);
 
 namespace detail {
@@ -78,8 +79,8 @@ const binding::SensorLocationConfig& loadSensorLocationConfig(
     const std::string& chaCode);
 
 std::unique_ptr<RMSAmplitude> createRMSAmplitude(
-    const binding::Bindings& bindings,
-    const SensorLocationDetectionInfo& sensorLocationDetectionInfo,
+    const binding::Bindings& bindings, const DataModel::OriginCPtr& origin,
+    const SensorLocationDetectionInfo::Pick& pickInfo,
     const Core::TimeWindow& timeWindow,
     const AmplitudeProcessorConfig& amplitudeProcessorConfig,
     const processing::StreamConfig& streamConfig,

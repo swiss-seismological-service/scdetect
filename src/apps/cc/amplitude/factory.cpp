@@ -1,6 +1,7 @@
 #include "factory.h"
 
 #include <seiscomp/core/timewindow.h>
+#include <seiscomp/datamodel/pick.h>
 #include <seiscomp/processing/stream.h>
 
 #include <algorithm>
@@ -28,96 +29,45 @@ namespace amplitude {
 namespace factory {
 
 std::unique_ptr<amplitude::MLx> createMLx(
-    const binding::Bindings &bindings,
-    const SensorLocationDetectionInfo &sensorLocationDetectionInfo,
-    const SensorLocationTimeInfo &sensorLocationTimeInfo,
+    const binding::Bindings &bindings, const DataModel::OriginCPtr &origin,
+    const std::string &sensorLocationStreamId,
+    const std::vector<SensorLocationDetectionInfo::Pick> &pickInfos,
+    const TimeInfo &timeInfo,
+    const SensorLocationStreamConfigs &sensorLocationStreamConfigs,
     const AmplitudeProcessorConfig &amplitudeProcessorConfig) {
-  assert(sensorLocationDetectionInfo.origin);
-  assert(!sensorLocationDetectionInfo.pickMap.empty());
+  // XXX(damb): no dispatch regarding horizontal components, here. Instead, the
+  // `pickInfo` is taken as it is.
+  assert(origin);
+  assert((pickInfos.size() == sensorLocationStreamConfigs.size()));
 
-  std::vector<std::string> sensorLocationStreamIdTokens;
-  util::tokenizeWaveformStreamId(
-      sensorLocationDetectionInfo.sensorLocationStreamId,
-      sensorLocationStreamIdTokens);
+  logging::TaggedMessage msg{sensorLocationStreamId};
 
-  std::vector<DataModel::PickCPtr> picks;
-  std::transform(
-      std::begin(sensorLocationDetectionInfo.pickMap),
-      std::end(sensorLocationDetectionInfo.pickMap), std::back_inserter(picks),
-      [](const decltype(sensorLocationDetectionInfo.pickMap)::value_type &p) {
-        return p.second.pick;
-      });
-  // choose arbitrarily the earliest pick w.r.t. a sensor location
-  std::sort(std::begin(picks), std::end(picks),
-            [](const decltype(picks)::value_type &lhs,
-               const decltype(picks)::value_type &rhs) {
-              return lhs->time().value() < rhs->time().value();
-            });
-  auto &earliestPick{picks.front()};
-
-  logging::TaggedMessage msg{
-      sensorLocationDetectionInfo.sensorLocationStreamId};
-
-  std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
   // dispatch and create ratio amplitude processors
   auto baseId{amplitudeProcessorConfig.id + settings::kProcessorIdSep +
               util::createUUID()};
 
-  // index detection info
-  std::unordered_map<SensorLocationDetectionInfo::WaveformStreamId,
-                     SensorLocationDetectionInfo::PickMap::const_iterator>
-      detectionInfoIdx;
-  for (auto cit{sensorLocationDetectionInfo.pickMap.cbegin()};
-       cit != sensorLocationDetectionInfo.pickMap.cend(); ++cit) {
-    detectionInfoIdx.emplace(cit->second.authorativeWaveformStreamId, cit);
-  }
+  std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying;
+  for (const auto &pickInfo : pickInfos) {
+    const auto &authorativeWaveformStreamId{
+        pickInfo.authorativeWaveformStreamId};
 
-  try {
-    const util::HorizontalComponents horizontalComponents{
-        Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
-        sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
-        sensorLocationStreamIdTokens[3], earliestPick->time().value()};
-    for (const auto &s : horizontalComponents) {
-      processing::StreamConfig streamConfig;
-      streamConfig.init(s);
+    // dispatch and create rms amplitude processors
+    auto baseId{amplitudeProcessorConfig.id + settings::kProcessorIdSep +
+                util::createUUID()};
 
-      auto waveformStreamId{util::join(
-          horizontalComponents.netCode(), horizontalComponents.staCode(),
-          horizontalComponents.locCode(), s->code())};
-
-      // create pseudo detection
-      auto sensorLocationDetectionInfoCopy{sensorLocationDetectionInfo};
-      sensorLocationDetectionInfoCopy.pickMap.clear();
-      try {
-        const auto &detectionInfo{detectionInfoIdx.at(waveformStreamId)};
-        sensorLocationDetectionInfoCopy.pickMap.emplace(detectionInfo->first,
-                                                        detectionInfo->second);
-      } catch (const std::out_of_range &e) {
-        continue;
-      }
-
-      Core::TimeWindow tw;
-      try {
-        const auto &detectionInfo{detectionInfoIdx.at(waveformStreamId)};
-        const auto &referenceTime{detectionInfo->second.pick->time().value()};
-        const auto &timeInfoConfig{
-            sensorLocationTimeInfo.timeInfos.at(waveformStreamId)};
-        tw.setStartTime(referenceTime - timeInfoConfig.leading);
-        tw.setEndTime(referenceTime + timeInfoConfig.trailing);
-      } catch (std::out_of_range &e) {
-        continue;
-      }
-
+    const auto &referenceTime{pickInfo.pick->time().value()};
+    Core::TimeWindow tw{referenceTime - timeInfo.leading,
+                        referenceTime + timeInfo.trailing};
+    try {
       underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
-          {waveformStreamId},
-          detail::createRMSAmplitude(bindings, sensorLocationDetectionInfoCopy,
-                                     tw, amplitudeProcessorConfig, streamConfig,
-                                     baseId)});
+          {authorativeWaveformStreamId},
+          detail::createRMSAmplitude(
+              bindings, origin, pickInfo, tw, amplitudeProcessorConfig,
+              sensorLocationStreamConfigs.at(authorativeWaveformStreamId),
+              baseId)});
+    } catch (const std::out_of_range &) {
+      continue;
     }
-  } catch (Exception &e) {
-    msg.setText(std::string{e.what()} +
-                " (pick_time=" + earliestPick->time().value().iso() + ")");
-    throw Factory::BaseException{logging::to_string(msg)};
   }
 
   if (underlying.empty()) {
@@ -128,7 +78,12 @@ std::unique_ptr<amplitude::MLx> createMLx(
   auto ret{util::make_unique<amplitude::MLx>(std::move(underlying))};
   ret->computeTimeWindow();
   ret->setId(baseId);
-  ret->setEnvironment(sensorLocationDetectionInfo.origin, nullptr, picks);
+
+  std::vector<DataModel::PickCPtr> picks;
+  std::transform(
+      std::begin(pickInfos), std::end(pickInfos), std::back_inserter(picks),
+      [](const SensorLocationDetectionInfo::Pick &p) { return p.pick; });
+  ret->setEnvironment(origin, nullptr, picks);
 
   return ret;
 }
@@ -150,19 +105,19 @@ const binding::SensorLocationConfig &loadSensorLocationConfig(
 }
 
 std::unique_ptr<RMSAmplitude> createRMSAmplitude(
-    const binding::Bindings &bindings,
-    const factory::SensorLocationDetectionInfo &sensorLocationDetectionInfo,
+    const binding::Bindings &bindings, const DataModel::OriginCPtr &origin,
+    const SensorLocationDetectionInfo::Pick &pickInfo,
     const Core::TimeWindow &timeWindow,
     const AmplitudeProcessorConfig &amplitudeProcessorConfig,
     const processing::StreamConfig &streamConfig,
     const std::string &baseProcessorId) {
-  assert(sensorLocationDetectionInfo.origin);
-  assert((sensorLocationDetectionInfo.pickMap.size() == 1));
+  assert(origin);
 
+  const auto sensorLocationStreamId{util::getSensorLocationStreamId(
+      pickInfo.authorativeWaveformStreamId, true)};
   std::vector<std::string> sensorLocationStreamIdTokens;
-  util::tokenizeWaveformStreamId(
-      sensorLocationDetectionInfo.sensorLocationStreamId,
-      sensorLocationStreamIdTokens);
+  util::tokenizeWaveformStreamId(sensorLocationStreamId,
+                                 sensorLocationStreamIdTokens);
   const auto &sensorLocationBindings{factory::detail::loadSensorLocationConfig(
       bindings, sensorLocationStreamIdTokens[0],
       sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
@@ -170,17 +125,13 @@ std::unique_ptr<RMSAmplitude> createRMSAmplitude(
   const auto &amplitudeProcessingConfig{
       sensorLocationBindings.amplitudeProcessingConfig};
 
-  logging::TaggedMessage msg{
-      sensorLocationDetectionInfo.sensorLocationStreamId};
-
-  const auto &pickPair{*std::begin(sensorLocationDetectionInfo.pickMap)};
-  const auto &pick{pickPair.second};
+  logging::TaggedMessage msg{sensorLocationStreamId};
 
   auto ret{util::make_unique<RMSAmplitude>()};
   ret->setId(baseProcessorId + settings::kProcessorIdSep + util::createUUID());
 
   // XXX(damb): do not provide a sensor location (currently not required)
-  ret->setEnvironment(sensorLocationDetectionInfo.origin, nullptr, {pick.pick});
+  ret->setEnvironment(origin, nullptr, {pickInfo.pick});
 
   ret->setStreamConfig(streamConfig);
   // configure deconvolution configuration
@@ -224,6 +175,7 @@ std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
   }
 
+  // explicitly set the amplitude processor's time window
   ret->setTimeWindow(timeWindow);
   if (amplitudeProcessorConfig.gapInterpolation) {
     ret->setGapInterpolation(amplitudeProcessorConfig.gapInterpolation);
@@ -286,32 +238,86 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
   assert(sensorLocationDetectionInfo.origin);
   assert(!sensorLocationDetectionInfo.pickMap.empty());
 
-  factory::AmplitudeProcessorConfig amplitudeProcessorConfig{
-      detector.id(), detector.gapThreshold(), detector.gapTolerance(),
-      detector.gapInterpolation()};
+  // XXX(damb): pick is randomly chosen; use the earliest one
+  DataModel::PickCPtr earliest;
+  {
+    std::vector<factory::SensorLocationDetectionInfo::Pick> pickInfos;
+    std::transform(
+        std::begin(sensorLocationDetectionInfo.pickMap),
+        std::end(sensorLocationDetectionInfo.pickMap),
+        std::back_inserter(pickInfos),
+        [](const factory::SensorLocationDetectionInfo::PickMap::value_type &p) {
+          return p.second;
+        });
 
-  factory::SensorLocationTimeInfo sensorLocationTimeInfo;
+    std::sort(std::begin(pickInfos), std::end(pickInfos),
+              [](const decltype(pickInfos)::value_type &lhs,
+                 const decltype(pickInfos)::value_type &rhs) {
+                return lhs.pick->time().value() < rhs.pick->time().value();
+              });
+    earliest = pickInfos.front().pick;
+  }
+
+  std::vector<factory::SensorLocationDetectionInfo::Pick> pickInfos;
+
+  factory::SensorLocationStreamConfigs sensorLocationStreamConfigs;
+
+  std::vector<std::string> sensorLocationStreamIdTokens;
+  util::tokenizeWaveformStreamId(
+      sensorLocationDetectionInfo.sensorLocationStreamId,
+      sensorLocationStreamIdTokens);
+  try {
+    const util::HorizontalComponents horizontalComponents{
+        Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
+        sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
+        sensorLocationStreamIdTokens[3], earliest->time().value()};
+    for (const auto &s : horizontalComponents) {
+      processing::StreamConfig streamConfig;
+      streamConfig.init(s);
+
+      auto authorativeWaveformStreamId{util::join(
+          sensorLocationStreamIdTokens[0], sensorLocationStreamIdTokens[1],
+          sensorLocationStreamIdTokens[2], s->code())};
+      sensorLocationStreamConfigs.emplace(authorativeWaveformStreamId,
+                                          streamConfig);
+
+      pickInfos.push_back({authorativeWaveformStreamId, earliest});
+    }
+  } catch (const Exception &e) {
+    logging::TaggedMessage msg{
+        sensorLocationDetectionInfo.sensorLocationStreamId,
+        "failed to load stream configuration"};
+    throw Factory::BaseException{logging::to_string(msg)};
+  }
+
+  factory::TimeInfo timeInfo;
   for (const auto &pickMapPair : sensorLocationDetectionInfo.pickMap) {
+    const auto &pickInfo{pickMapPair.second};
+    if (pickInfo.pick != earliest) {
+      continue;
+    }
+
     const auto &templateWaveformProcessorId{pickMapPair.first};
     const auto &templateWaveformProcessor{
         detector.processor(templateWaveformProcessorId)};
     assert(templateWaveformProcessor);
     const auto &templateWaveform{templateWaveformProcessor->templateWaveform()};
-    const auto &pickInfo{pickMapPair.second};
-    const auto referenceTime{pickInfo.pick->time().value()};
     assert(templateWaveform.referenceTime());
 
-    sensorLocationTimeInfo.timeInfos.emplace(
-        pickInfo.authorativeWaveformStreamId,
-        factory::SensorLocationTimeInfo::TimeInfo{
-            *templateWaveform.referenceTime() -
-                templateWaveform.configuredStartTime(),
-            *templateWaveform.referenceTime() +
-                templateWaveform.configuredEndTime()});
+    timeInfo.leading = *templateWaveform.referenceTime() -
+                       templateWaveform.configuredStartTime();
+    timeInfo.trailing = *templateWaveform.referenceTime() +
+                        templateWaveform.configuredEndTime();
   }
 
-  return factory::createMLx(bindings, sensorLocationDetectionInfo,
-                            sensorLocationTimeInfo, amplitudeProcessorConfig);
+  factory::AmplitudeProcessorConfig amplitudeProcessorConfig{
+      detector.id(), detector.gapThreshold(), detector.gapTolerance(),
+      detector.gapInterpolation()};
+
+  return factory::createMLx(bindings, sensorLocationDetectionInfo.origin,
+                            sensorLocationDetectionInfo.sensorLocationStreamId,
+                            pickInfos, timeInfo, sensorLocationStreamConfigs,
+                            amplitudeProcessorConfig);
 }
 
 void Factory::reset() { resetCallbacks(); }

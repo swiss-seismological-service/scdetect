@@ -19,6 +19,7 @@
 #include "builder.h"
 #include "eventstore.h"
 #include "log.h"
+#include "processing/stream_config.h"
 #include "seiscomp/core/datetime.h"
 #include "settings.h"
 #include "util/horizontal_components.h"
@@ -205,26 +206,24 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         throw builder::NoPick{logging::to_string(msg)};
       }
 
-      const auto arrivalTime{pick->time().value()};
-
-      amplitude::factory::Detection referenceDetection;
-
-      referenceDetection.sensorLocationStreamId = util::join(
+      const auto sensorLocationStreamId{util::join(
           tokens[0], tokens[1], tokens[2],
-          util::getBandAndSourceCode(sensorLocationConfig.channelId));
+          util::getBandAndSourceCode(sensorLocationConfig.channelId))};
 
-      referenceDetection.origin = origin;
-      referenceDetection.pickMap.emplace(
-          "", amplitude::factory::Detection::Pick{"", pick});
+      const auto authorativeWaveformStreamId{util::join(
+          tokens[0], tokens[1], tokens[2], sensorLocationConfig.channelId)};
+      std::vector<amplitude::factory::SensorLocationDetectionInfo::Pick>
+          pickInfo{{authorativeWaveformStreamId, pick}};
 
       amplitude::factory::AmplitudeProcessorConfig amplitudeProcessorConfig;
       amplitudeProcessorConfig.gapInterpolation = false;
       amplitudeProcessorConfig.id = _templateFamilyConfig.id();
-      Core::TimeWindow tw{
-          arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformStart},
-          arrivalTime + Core::TimeSpan{sensorLocationConfig.waveformEnd}};
 
-      amplitude::factory::SensorLocationTimeInfo sensorLocationTimeInfo;
+      const auto arrivalTime{pick->time().value()};
+      amplitude::factory::SensorLocationStreamConfigs
+          sensorLocationStreamConfigs;
+      std::vector<amplitude::factory::SensorLocationDetectionInfo::Pick>
+          pickInfos;
       try {
         util::HorizontalComponents horizontalComponents{
             Client::Inventory::Instance(),  tokens[0],  tokens[1], tokens[2],
@@ -233,22 +232,26 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         for (const auto& s : horizontalComponents) {
           auto waveformStreamId{
               util::join(tokens[0], tokens[1], tokens[3], s->code())};
-          sensorLocationTimeInfo.timeInfos.emplace(
-              waveformStreamId,
-              amplitude::factory::SensorLocationTimeInfo::TimeInfo{
-                  arrivalTime,
-                  Core::TimeSpan{sensorLocationConfig.waveformStart},
-                  Core::TimeSpan{sensorLocationConfig.waveformEnd}});
+
+          // stream config
+          processing::StreamConfig streamConfig;
+          streamConfig.init(s);
+          sensorLocationStreamConfigs.emplace(waveformStreamId, streamConfig);
+
+          // pick info
+          pickInfos.push_back({waveformStreamId, pick});
         }
-      } catch (Exception& e) {
+      } catch (const Exception&) {
         msg.setText("failed to load streams from inventory for time: " +
                     arrivalTime.iso());
         throw builder::NoStream{logging::to_string(msg)};
       }
 
-      auto proc{amplitude::factory::createMLx(bindings, referenceDetection,
-                                              sensorLocationTimeInfo,
-                                              amplitudeProcessorConfig)};
+      auto proc{amplitude::factory::createMLx(
+          bindings, origin, sensorLocationStreamId, pickInfo,
+          {Core::TimeSpan{sensorLocationConfig.waveformStart},
+           Core::TimeSpan{sensorLocationConfig.waveformEnd}},
+          sensorLocationStreamConfigs, amplitudeProcessorConfig)};
 
       proc->setResultCallback(
           [this](const AmplitudeProcessor* proc, const Record* rec,
@@ -266,9 +269,10 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
         processingConfig.demean = false;
         // load waveforms for the horizontal components and feed the data to
         // the processor
-        for (auto timeInfoPair : sensorLocationTimeInfo.timeInfos) {
+        for (const auto& pickInfo : pickInfos) {
           std::vector<std::string> tokens;
-          util::tokenizeWaveformStreamId(timeInfoPair.first, tokens);
+          util::tokenizeWaveformStreamId(pickInfo.authorativeWaveformStreamId,
+                                         tokens);
 
           auto record{waveformHandler->get(tokens[0], tokens[1], tokens[2],
                                            tokens[3], proc->safetyTimeWindow(),
