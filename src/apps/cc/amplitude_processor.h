@@ -39,15 +39,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
     BaseException();
   };
 
-  struct Config {
-    // Defines the beginning of the time window used for amplitude analysis
-    // with regard to the beginning of the overall time window
-    boost::optional<Core::TimeSpan> signalBegin;
-    // Defines the end of the time window used for amplitude analysis with
-    // regard to the end of the overall time window
-    boost::optional<Core::TimeSpan> signalEnd;
-  };
-
   struct DeconvolutionConfig {
     DeconvolutionConfig() = default;
     explicit DeconvolutionConfig(
@@ -110,17 +101,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
 
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishAmplitudeCallback &callback);
-
-  // Configures the beginning of the time window used for amplitude calculation
-  // (with regard to the beginning of the overall time window)
-  void setSignalBegin(const boost::optional<Core::TimeSpan> &signalBegin);
-  // Returns the beginning of the time window used for amplitude calculation
-  Core::Time signalBegin() const;
-  // Configures the end of the time window used for amplitude calculation
-  // (with regard to the end of the overall time window)
-  void setSignalEnd(const boost::optional<Core::TimeSpan> &signalEnd);
-  // Returns the end of the time window used for amplitude calculation
-  Core::Time signalEnd() const;
 
   // Returns the amplitude type
   const std::string &type() const;
@@ -197,9 +177,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
                           DoubleArray &data);
 
   void emitAmplitude(const Record *record, const AmplitudeCPtr &amplitude);
-
-  // Amplitude processor configuration
-  Config _config;
 
  private:
   // Amplitude processor *environment*
