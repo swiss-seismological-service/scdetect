@@ -77,7 +77,7 @@ const binding::SensorLocationConfig& loadSensorLocationConfig(
     const std::string& staCode, const std::string& locCode,
     const std::string& chaCode);
 
-static std::unique_ptr<RMSAmplitude> createRMSAmplitude(
+std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     const binding::Bindings& bindings,
     const SensorLocationDetectionInfo& sensorLocationDetectionInfo,
     const Core::TimeWindow& timeWindow,
