@@ -162,7 +162,7 @@ std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     if (!filter.value().empty()) {
       auto initTime = amplitudeProcessingConfig.mlx.initTime;
       msg.setText("Configured amplitude processor filter: filter=\"" + *filter +
-                  "init_time=" + std::to_string(initTime));
+                  "\", init_time=" + std::to_string(initTime));
       SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s",
                                 logging::to_string(msg).c_str());
 
