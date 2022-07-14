@@ -217,7 +217,9 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
 
       amplitude::factory::AmplitudeProcessorConfig amplitudeProcessorConfig;
       amplitudeProcessorConfig.gapInterpolation = false;
-      amplitudeProcessorConfig.id = _templateFamilyConfig.id();
+      amplitudeProcessorConfig.id = _templateFamilyConfig.id() +
+                                    settings::kProcessorIdSep +
+                                    util::createUUID();
 
       const auto arrivalTime{pick->time().value()};
       amplitude::factory::SensorLocationStreamConfigs
@@ -258,9 +260,6 @@ TemplateFamily::Builder& TemplateFamily::Builder::setAmplitudes(
                  AmplitudeProcessor::AmplitudeCPtr amplitude) {
             storeAmplitude(proc, rec, amplitude);
           });
-
-      proc->setId(_templateFamilyConfig.id() + settings::kProcessorIdSep +
-                  util::createUUID());
 
       proc->setEnvironment(origin, sensorLocation, {pick});
       try {
