@@ -1,6 +1,5 @@
 set(UNIT_TESTS
   filter_crosscorrelation.cpp
-  reducing_amplitude_processor.cpp
   util_math_cma.cpp
 )
 
@@ -79,24 +78,6 @@ set(SOURCES_integration
   fixture.cpp
   integration_utils.cpp
 )
-
-set(SOURCES_reducing_amplitude_processor
-  ../amplitude_processor.cpp
-  ../reducing_amplitude_processor.cpp
-  ../exception.cpp
-  ../processing/detail/gap_interpolate.cpp
-  ../processing/processor.cpp
-  ../processing/stream.cpp
-  ../processing/timewindow_processor.cpp
-  ../processing/waveform_operator.cpp
-  ../processing/waveform_processor.cpp
-  ../resamplerstore.cpp
-  ../util/util.cpp
-  ../util/waveform_stream_id.cpp
-  ../waveform.cpp
-  fixture.cpp
-)
-
 
 add_definitions("-DTEST_BUILD_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
 
