@@ -24,9 +24,20 @@ class RMSAmplitude : public AmplitudeProcessor {
     kMeterPerSecondsSquared,
   };
 
+  struct SignalTimeInfo {
+    Core::TimeSpan leading;
+    Core::TimeSpan trailing;
+  };
+
+  explicit RMSAmplitude(const SignalTimeInfo &timeInfo);
+
   static SignalUnit signalUnitFromString(const std::string &signalUnit);
 
   void reset() override;
+
+  // Computes the processor's time window based on the environment's pick time
+  // and the signal time information
+  void computeTimeWindow() override;
   // Sets the filter including the filter initialization time
   //
   // - implicitly resets the waveform processor
@@ -64,6 +75,8 @@ class RMSAmplitude : public AmplitudeProcessor {
   Buffer _buffer;
 
   Core::TimeWindow _bufferedTimeWindow;
+
+  SignalTimeInfo _signalTimeInfo;
 };
 
 }  // namespace amplitude

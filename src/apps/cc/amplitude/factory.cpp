@@ -54,15 +54,11 @@ std::unique_ptr<amplitude::MLx> createMLx(
     // dispatch and create rms amplitude processors
     auto baseId{amplitudeProcessorConfig.id + settings::kProcessorIdSep +
                 util::createUUID()};
-
-    const auto &referenceTime{pickInfo.pick->time().value()};
-    Core::TimeWindow tw{referenceTime - timeInfo.leading,
-                        referenceTime + timeInfo.trailing};
     try {
       underlying.emplace_back(CombiningAmplitudeProcessor::AmplitudeProcessor{
           {authorativeWaveformStreamId},
           detail::createRMSAmplitude(
-              bindings, origin, pickInfo, tw, amplitudeProcessorConfig,
+              bindings, origin, pickInfo, timeInfo, amplitudeProcessorConfig,
               sensorLocationStreamConfigs.at(authorativeWaveformStreamId),
               baseId)});
     } catch (const std::out_of_range &) {
@@ -106,8 +102,7 @@ const binding::SensorLocationConfig &loadSensorLocationConfig(
 
 std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     const binding::Bindings &bindings, const DataModel::OriginCPtr &origin,
-    const SensorLocationDetectionInfo::Pick &pickInfo,
-    const Core::TimeWindow &timeWindow,
+    const SensorLocationDetectionInfo::Pick &pickInfo, const TimeInfo &timeInfo,
     const AmplitudeProcessorConfig &amplitudeProcessorConfig,
     const processing::StreamConfig &streamConfig,
     const std::string &baseProcessorId) {
@@ -127,7 +122,8 @@ std::unique_ptr<RMSAmplitude> createRMSAmplitude(
 
   logging::TaggedMessage msg{sensorLocationStreamId};
 
-  auto ret{util::make_unique<RMSAmplitude>()};
+  auto ret{util::make_unique<RMSAmplitude>(
+      RMSAmplitude::SignalTimeInfo{timeInfo.leading, timeInfo.trailing})};
   ret->setId(baseProcessorId + settings::kProcessorIdSep + util::createUUID());
 
   // XXX(damb): do not provide a sensor location (currently not required)
@@ -175,8 +171,6 @@ std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     SCDETECT_LOG_DEBUG_TAGGED(ret->id(), "%s", logging::to_string(msg).c_str());
   }
 
-  // explicitly set the amplitude processor's time window
-  ret->setTimeWindow(timeWindow);
   if (amplitudeProcessorConfig.gapInterpolation) {
     ret->setGapInterpolation(amplitudeProcessorConfig.gapInterpolation);
     ret->setGapThreshold(amplitudeProcessorConfig.gapThreshold);

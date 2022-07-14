@@ -33,9 +33,19 @@ RMSAmplitude::SignalUnit RMSAmplitude::signalUnitFromString(
   return lookUpTable.at(signalUnit);
 }
 
+RMSAmplitude::RMSAmplitude(const SignalTimeInfo &timeInfo)
+    : _signalTimeInfo{timeInfo} {}
+
 void RMSAmplitude::reset() {
   AmplitudeProcessor::reset();
   _buffer.clear();
+}
+
+void RMSAmplitude::computeTimeWindow() {
+  assert((environment().picks.size() == 1 && environment().picks.front()));
+  auto referenceTime{environment().picks.front()->time().value()};
+  setTimeWindow(Core::TimeWindow{referenceTime - _signalTimeInfo.leading,
+                                 referenceTime + _signalTimeInfo.trailing});
 }
 
 void RMSAmplitude::setFilter(std::unique_ptr<DoubleFilter> filter,

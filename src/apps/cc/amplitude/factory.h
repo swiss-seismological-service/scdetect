@@ -80,8 +80,7 @@ const binding::SensorLocationConfig& loadSensorLocationConfig(
 
 std::unique_ptr<RMSAmplitude> createRMSAmplitude(
     const binding::Bindings& bindings, const DataModel::OriginCPtr& origin,
-    const SensorLocationDetectionInfo::Pick& pickInfo,
-    const Core::TimeWindow& timeWindow,
+    const SensorLocationDetectionInfo::Pick& pickInfo, const TimeInfo& timeInfo,
     const AmplitudeProcessorConfig& amplitudeProcessorConfig,
     const processing::StreamConfig& streamConfig,
     const std::string& baseProcessorId = "");
