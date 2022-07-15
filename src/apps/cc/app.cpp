@@ -2060,8 +2060,8 @@ void Application::registerDetection(
 
   for (const auto &waveformStreamId : waveformStreamIds) {
     _detections.emplace(waveformStreamId, detection);
-    SCDETECT_LOG_DEBUG("[%s] Added detection: id= %s", waveformStreamId.c_str(),
-                       detection->id().c_str());
+    SCDETECT_LOG_DEBUG("[%s] Added detection: id=\"%s\"",
+                       waveformStreamId.c_str(), detection->id().c_str());
     SCDETECT_LOG_DEBUG("Current detection count: %lu", _detections.size());
   }
 }
@@ -2080,7 +2080,7 @@ void Application::removeDetection(
     auto it{range.first};
     while (it != range.second) {
       if (it->second == detection) {
-        SCDETECT_LOG_DEBUG("[%s] Removed detection: id=%s",
+        SCDETECT_LOG_DEBUG("[%s] Removed detection: id=\"%s\"",
                            waveformStreamId.c_str(), detection->id().c_str());
         it = _detections.erase(it);
         SCDETECT_LOG_DEBUG("Current detection count: %lu", _detections.size());
