@@ -19,6 +19,7 @@ class MRelative : public CombiningAmplitudeProcessor {
   void finalize(DataModel::Amplitude *amplitude) const override;
 
  private:
+  // TODO(damb): implement common function (used at MLxMM, too)
   static bool validateUniqueSensorLocation(
       const std::vector<std::string> &waveformStreamIDs);
 };

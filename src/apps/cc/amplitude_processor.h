@@ -12,13 +12,13 @@
 #include <seiscomp/datamodel/pick.h>
 #include <seiscomp/datamodel/sensorlocation.h>
 #include <seiscomp/processing/response.h>
-#include <seiscomp/processing/stream.h>
 
 #include <boost/optional/optional.hpp>
 #include <memory>
 #include <vector>
 
 #include "amplitude/factory.h"
+#include "processing/stream_config.h"
 #include "processing/timewindow_processor.h"
 
 namespace Seiscomp {
@@ -37,15 +37,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
    public:
     using Processor::BaseException::BaseException;
     BaseException();
-  };
-
-  struct Config {
-    // Defines the beginning of the time window used for amplitude analysis
-    // with regard to the beginning of the overall time window
-    boost::optional<Core::TimeSpan> signalBegin;
-    // Defines the end of the time window used for amplitude analysis with
-    // regard to the end of the overall time window
-    boost::optional<Core::TimeSpan> signalEnd;
   };
 
   struct DeconvolutionConfig {
@@ -78,9 +69,9 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   struct AmplitudeTime {
     // The amplitude reference time
     Core::Time reference;
-    // Duration in seconds before `reference`. Must be positive.
+    // Duration in seconds before `reference`.
     double begin{0};
-    // Duration in seconds after `reference`. Must be positive.
+    // Duration in seconds after `reference`.
     double end{0};
   };
 
@@ -111,17 +102,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // Sets the `callback` in order to publish detections
   void setResultCallback(const PublishAmplitudeCallback &callback);
 
-  // Configures the beginning of the time window used for amplitude calculation
-  // (with regard to the beginning of the overall time window)
-  void setSignalBegin(const boost::optional<Core::TimeSpan> &signalBegin);
-  // Returns the beginning of the time window used for amplitude calculation
-  Core::Time signalBegin() const;
-  // Configures the end of the time window used for amplitude calculation
-  // (with regard to the end of the overall time window)
-  void setSignalEnd(const boost::optional<Core::TimeSpan> &signalEnd);
-  // Returns the end of the time window used for amplitude calculation
-  Core::Time signalEnd() const;
-
   // Returns the amplitude type
   const std::string &type() const;
   // Returns the amplitude unit
@@ -151,11 +131,12 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   };
 
   struct IndexRange {
-    size_t begin;
-    size_t end;
+    std::size_t begin;
+    std::size_t end;
   };
 
   using Buffer = DoubleArray;
+  using Response = Processing::Response;
 
   // Sets the type of amplitudes the amplitude processor is producing
   void setType(std::string type);
@@ -177,7 +158,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   // - called just before the noise and amplitude calculation is performed
   // - the default implementation does nothing
   virtual void preprocessData(StreamState &streamState,
-                              const Processing::Stream &streamConfig,
+                              const processing::StreamConfig &streamConfig,
                               const DeconvolutionConfig &deconvolutionConfig,
                               DoubleArray &data);
 
@@ -187,8 +168,7 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
   //
   // - `numberOfIntegrations` is an integer where a `data` is integrated if
   // greater than zero and derived if less than zero
-  virtual bool deconvolveData(StreamState &streamState,
-                              Processing::Response *resp,
+  virtual bool deconvolveData(StreamState &streamState, Response *resp,
                               const DeconvolutionConfig &config,
                               int numberOfIntegrations, DoubleArray &data);
 
@@ -197,9 +177,6 @@ class AmplitudeProcessor : public processing::TimeWindowProcessor {
                           DoubleArray &data);
 
   void emitAmplitude(const Record *record, const AmplitudeCPtr &amplitude);
-
-  // Amplitude processor configuration
-  Config _config;
 
  private:
   // Amplitude processor *environment*

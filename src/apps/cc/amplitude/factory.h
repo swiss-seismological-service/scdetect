@@ -13,6 +13,7 @@
 #include "../binding.h"
 #include "../detector/detector.h"
 #include "../factory.h"
+#include "../processing/stream_config.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -20,18 +21,15 @@ namespace detect {
 class AmplitudeProcessor;
 
 namespace amplitude {
+
+class RMSAmplitude;
+class MLx;
+
 namespace factory {
-namespace detail {
 
-const binding::SensorLocationConfig& loadSensorLocationConfig(
-    const binding::Bindings& bindings, const std::string& netCode,
-    const std::string& staCode, const std::string& locCode,
-    const std::string& chaCode);
+using WaveformStreamId = std::string;
 
-}
-
-struct Detection {
-  using WaveformStreamId = std::string;
+struct SensorLocationDetectionInfo {
   struct Pick {
     WaveformStreamId authorativeWaveformStreamId;
     DataModel::PickCPtr pick;
@@ -48,28 +46,53 @@ struct Detection {
   DataModel::OriginCPtr origin;
 };
 
-struct DetectorConfig {
+struct AmplitudeProcessorConfig {
   std::string id;
 
   Core::TimeSpan gapThreshold;
   Core::TimeSpan gapTolerance;
-  bool gapInterpolation{false};
+  bool gapInterpolation;
 };
 
-// Creates an instance of an `MLx` amplitude processor preconfigured based on
-// the parameters passed
-//
-// - if `timeWindow` is a valid value the time window is configured explicitly
-std::unique_ptr<AmplitudeProcessor> createMLx(
-    const binding::Bindings& bindings, const factory::Detection& detection,
-    const DetectorConfig& detectorConfig,
-    const boost::optional<Core::TimeWindow>& timeWindow = boost::none);
+struct TimeInfo {
+  Core::TimeSpan leading;
+  Core::TimeSpan trailing;
+};
 
+using SensorLocationStreamConfigs =
+    std::unordered_map<WaveformStreamId, processing::StreamConfig>;
+
+// Creates an `MLx` amplitude processor
+std::unique_ptr<amplitude::MLx> createMLx(
+    const binding::Bindings& bindings, const DataModel::OriginCPtr& origin,
+    const std::string& sensorLocationStreamId,
+    const std::vector<SensorLocationDetectionInfo::Pick>& pickInfos,
+    const TimeInfo& timeInfo,
+    const SensorLocationStreamConfigs& sensorLocationStreamConfigs,
+    const AmplitudeProcessorConfig& amplitudeProcessorConfig);
+
+namespace detail {
+
+const binding::SensorLocationConfig& loadSensorLocationConfig(
+    const binding::Bindings& bindings, const std::string& netCode,
+    const std::string& staCode, const std::string& locCode,
+    const std::string& chaCode);
+
+std::unique_ptr<RMSAmplitude> createRMSAmplitude(
+    const binding::Bindings& bindings, const DataModel::OriginCPtr& origin,
+    const SensorLocationDetectionInfo::Pick& pickInfo, const TimeInfo& timeInfo,
+    const AmplitudeProcessorConfig& amplitudeProcessorConfig,
+    const processing::StreamConfig& streamConfig,
+    const std::string& baseProcessorId = "");
+
+}  // namespace detail
 }  // namespace factory
 
-class Factory : public detect::Factory<
-                    AmplitudeProcessor, std::string, const binding::Bindings&,
-                    const factory::Detection&, const detector::Detector&> {
+class Factory
+    : public detect::Factory<AmplitudeProcessor, std::string,
+                             const binding::Bindings&,
+                             const factory::SensorLocationDetectionInfo&,
+                             const detector::Detector&> {
  public:
   class BaseException : public Exception {
    public:
@@ -78,11 +101,13 @@ class Factory : public detect::Factory<
   };
 
   static std::unique_ptr<detect::AmplitudeProcessor> createMRelative(
-      const binding::Bindings& bindings, const factory::Detection& detection,
+      const binding::Bindings& bindings,
+      const factory::SensorLocationDetectionInfo& sensorLocationDetectionInfo,
       const detector::Detector& detector);
 
   static std::unique_ptr<AmplitudeProcessor> createMLx(
-      const binding::Bindings& bindings, const factory::Detection& detection,
+      const binding::Bindings& bindings,
+      const factory::SensorLocationDetectionInfo& sensorLocationDetectionInfo,
       const detector::Detector& detector);
 
   // Resets the factory
@@ -90,7 +115,8 @@ class Factory : public detect::Factory<
 
  private:
   static std::unique_ptr<AmplitudeProcessor> createRatioAmplitude(
-      const binding::Bindings& bindings, const factory::Detection& detection,
+      const binding::Bindings& bindings,
+      const factory::SensorLocationDetectionInfo& sensorLocationDetectionInfo,
       const detector::Detector& detector,
       const std::string& baseProcessorId = "");
 };

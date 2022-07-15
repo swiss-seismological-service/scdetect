@@ -27,42 +27,6 @@ void AmplitudeProcessor::setResultCallback(
   _resultCallback = callback;
 }
 
-void AmplitudeProcessor::setSignalBegin(
-    const boost::optional<Core::TimeSpan> &signalBegin) {
-  if (!signalBegin) {
-    _config.signalBegin = signalBegin;
-    return;
-  }
-
-  if (*signalBegin > Core::TimeSpan{0.0} &&
-      safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0) >
-          safetyTimeWindow().startTime() + *signalBegin) {
-    _config.signalBegin = signalBegin;
-  }
-}
-
-Core::Time AmplitudeProcessor::signalBegin() const {
-  return safetyTimeWindow().startTime() + _config.signalBegin.value_or(0.0);
-}
-
-void AmplitudeProcessor::setSignalEnd(
-    const boost::optional<Core::TimeSpan> &signalEnd) {
-  if (!signalEnd) {
-    _config.signalEnd = signalEnd;
-    return;
-  }
-
-  if (*signalEnd > Core::TimeSpan{0.0} &&
-      safetyTimeWindow().endTime() - *signalEnd >
-          safetyTimeWindow().startTime() + _config.signalBegin.value_or(0.0)) {
-    _config.signalEnd = signalEnd;
-  }
-}
-
-Core::Time AmplitudeProcessor::signalEnd() const {
-  return safetyTimeWindow().endTime() - _config.signalEnd.value_or(0.0);
-}
-
 const std::string &AmplitudeProcessor::type() const { return _type; }
 
 const std::string &AmplitudeProcessor::unit() const { return _unit; }
@@ -132,7 +96,7 @@ bool AmplitudeProcessor::computeNoise(const DoubleArray &data,
 }
 
 void AmplitudeProcessor::preprocessData(
-    StreamState &streamState, const Processing::Stream &streamConfig,
+    StreamState &streamState, const processing::StreamConfig &streamConfig,
     const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {}
 
 bool AmplitudeProcessor::deconvolveData(StreamState &streamState,

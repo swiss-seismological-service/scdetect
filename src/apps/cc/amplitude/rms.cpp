@@ -1,28 +1,17 @@
 #include "rms.h"
 
-#include <seiscomp/client/inventory.h>
 #include <seiscomp/core/datetime.h>
-#include <seiscomp/core/strings.h>
 #include <seiscomp/core/timewindow.h>
-#include <seiscomp/datamodel/comment.h>
-#include <seiscomp/processing/stream.h>
 
 #include <algorithm>
-#include <boost/algorithm/string/join.hpp>
-#include <boost/optional/optional.hpp>
 #include <cassert>
 #include <cmath>
-#include <exception>
-#include <sstream>
-#include <stdexcept>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "../log.h"
 #include "../settings.h"
-#include "../util/horizontal_components.h"
-#include "../util/math.h"
 #include "../util/memory.h"
 #include "../util/util.h"
 #include "../util/waveform_stream_id.h"
@@ -32,99 +21,107 @@ namespace Seiscomp {
 namespace detect {
 namespace amplitude {
 
-namespace {
-struct TimeInfo {
-  Core::Time startTime;
-  Core::Time endTime;
-  Core::Time referenceTime;
+RMSAmplitude::SignalUnit RMSAmplitude::signalUnitFromString(
+    const std::string &signalUnit) {
+  using SignalUnit = RMSAmplitude::SignalUnit;
+  // SEED names: see SEEDManual, ch.5 / 34, p.47
+  static const std::unordered_map<std::string, SignalUnit> lookUpTable{
+      {"M", SignalUnit::kMeter},
+      {"M/S", SignalUnit::kMeterPerSeconds},
+      {"M/S**2", SignalUnit::kMeterPerSecondsSquared}};
 
-  friend std::istream &operator>>(std::istream &is, TimeInfo &timeInfo) {
-    std::string tmp;
-    is >> tmp;
+  return lookUpTable.at(signalUnit);
+}
 
-    std::vector<std::string> tokens;
-    Core::split(tokens, tmp,
-                settings::kTemplateWaveformTimeInfoPickCommentIdSep.c_str());
-    if (tokens.size() != 3) {
-      is.setstate(std::ios::failbit);
-      return is;
-    }
+RMSAmplitude::RMSAmplitude(const SignalTimeInfo &timeInfo)
+    : _signalTimeInfo{timeInfo} {}
 
-    auto createTime = [](const std::string &str) {
-      auto ret{Core::Time::FromString(str.c_str(), "%FT%T.%fZ")};
-      if (!ret) {
-        throw ValueException{"invalid time string format: " + str};
-      }
-      return ret;
-    };
-
-    try {
-      timeInfo.startTime = createTime(tokens[0]);
-      timeInfo.endTime = createTime(tokens[1]);
-      timeInfo.referenceTime = createTime(tokens[2]);
-    } catch (ValueException &) {
-      is.setstate(std::ios::failbit);
-    }
-
-    return is;
-  }
-};
-}  // namespace
-
-RMSAmplitude::RMSAmplitude() {
-  setType("Mrms");
-  setUnit("M/S");
+void RMSAmplitude::reset() {
+  AmplitudeProcessor::reset();
+  _buffer.clear();
 }
 
 void RMSAmplitude::computeTimeWindow() {
-  const auto &env{environment()};
-  assert(!env.picks.empty());
+  assert((environment().picks.size() == 1 && environment().picks.front()));
+  auto referenceTime{environment().picks.front()->time().value()};
+  setTimeWindow(Core::TimeWindow{referenceTime + _signalTimeInfo.leading,
+                                 referenceTime + _signalTimeInfo.trailing});
+}
 
-  std::vector<Core::Time> pickTimes;
-  Core::TimeSpan maxTemplateWaveformStartTimeOffset;
-  Core::TimeSpan maxTemplateWaveformEndTimeOffset;
-  for (const auto &pick : env.picks) {
-    pickTimes.push_back(pick->time().value());
-    for (size_t i = 0; i < pick->commentCount(); ++i) {
-      const auto *comment{pick->comment(i)};
-      if (static_cast<bool>(comment) &&
-          comment->id() == settings::kTemplateWaveformTimeInfoPickCommentId) {
-        TimeInfo timeInfo;
-        std::stringstream ss{comment->text()};
-        if (!(ss >> timeInfo)) {
-          continue;
-        }
+void RMSAmplitude::setFilter(std::unique_ptr<DoubleFilter> filter,
+                             Core::TimeSpan initTime) {
+  _streamState.filter = std::move(filter);
+  _initTime = initTime;
 
-        if (!static_cast<bool>(maxTemplateWaveformStartTimeOffset) ||
-            timeInfo.referenceTime - timeInfo.startTime >
-                maxTemplateWaveformStartTimeOffset) {
-          maxTemplateWaveformStartTimeOffset =
-              timeInfo.referenceTime - timeInfo.startTime;
-        }
-        if (!static_cast<bool>(maxTemplateWaveformEndTimeOffset) ||
-            timeInfo.endTime - timeInfo.referenceTime >
-                maxTemplateWaveformEndTimeOffset) {
-          maxTemplateWaveformEndTimeOffset =
-              timeInfo.endTime - timeInfo.referenceTime;
-        }
-      }
-    }
-  }
+  reset();
+}
 
-  if (!(static_cast<bool>(maxTemplateWaveformEndTimeOffset) &&
-        static_cast<bool>(maxTemplateWaveformEndTimeOffset))) {
-    throw Processor::BaseException{"failed to determine required time window"};
-  }
+void RMSAmplitude::setDeconvolutionConfig(const DeconvolutionConfig &config) {
+  _deconvolutionConfig = config;
+}
 
-  auto bounds{std::minmax_element(std::begin(pickTimes), std::end(pickTimes))};
-  setTimeWindow(
-      Core::TimeWindow{*bounds.first - maxTemplateWaveformStartTimeOffset,
-                       *bounds.second + maxTemplateWaveformEndTimeOffset});
+const AmplitudeProcessor::DeconvolutionConfig &
+RMSAmplitude::deconvolutionConfig() const {
+  return _deconvolutionConfig;
+}
+
+void RMSAmplitude::setStreamConfig(
+    const processing::StreamConfig &streamConfig) {
+  _streamConfig = streamConfig;
+}
+
+const processing::StreamConfig &RMSAmplitude::streamConfig() const {
+  return _streamConfig;
+}
+
+processing::WaveformProcessor::StreamState *RMSAmplitude::streamState(
+    const Record *record)  // NOLINT(misc-unused-parameters)
+{
+  return &_streamState;
+}
+
+void RMSAmplitude::process(StreamState &streamState, const Record *record,
+                           const DoubleArray &filteredData) {
+  // TODO(damb): compute SNR
+  setStatus(Status::kInProgress, 1);
+
+  _bufferedTimeWindow = streamState.dataTimeWindow;
+  preprocessData(_streamState, _streamConfig, _deconvolutionConfig, _buffer);
+
+  auto amplitude{util::make_smart<Amplitude>()};
+  amplitude->value.value = _buffer.rms();
+
+  auto referenceTime{environment().picks.front()->time().value()};
+  // time window based amplitude time
+  amplitude->time.reference = referenceTime;
+  amplitude->time.begin =
+      static_cast<double>(referenceTime - _bufferedTimeWindow.startTime());
+  amplitude->time.end =
+      static_cast<double>(_bufferedTimeWindow.endTime() - referenceTime);
+
+  setStatus(Status::kFinished, 100.0);
+  emitAmplitude(record, amplitude);
+}
+
+bool RMSAmplitude::fill(processing::StreamState &streamState,
+                        const Record *record, DoubleArrayPtr &data) {
+  AmplitudeProcessor::fill(streamState, record, data);
+
+  _buffer.append(data->size(), data->typedData());
+  return true;
 }
 
 void RMSAmplitude::preprocessData(
-    StreamState &streamState, const Processing::Stream &streamConfig,
+    StreamState &streamState, const processing::StreamConfig &streamConfig,
     const DeconvolutionConfig &deconvolutionConfig, DoubleArray &data) {
+  // trim buffered data to actual time window
+  const auto range{computeIndexRange(timeWindow())};
+  assert(range.begin < range.end);
+  _buffer.setData(range.end - range.begin, _buffer.typedData() + range.begin);
+
+  _bufferedTimeWindow = timeWindow();
+
+  // remove response and apply gain
   auto sensor{streamConfig.sensor()};
   if (!sensor || !sensor->response()) {
     setStatus(Status::kMissingResponse, 0);
@@ -165,106 +162,16 @@ void RMSAmplitude::preprocessData(
   const_cast<Processing::Stream &>(streamConfig).applyGain(data);
 }
 
-DoubleArrayCPtr RMSAmplitude::reduceAmplitudeData(
-    const std::vector<DoubleArray const *> &data,
-    const std::vector<NoiseInfo> &noiseInfos, const IndexRange &idxRange) {
-  if (data.size() != noiseInfos.size()) {
-    return nullptr;
-  }
-
-  const auto numberOfStreams{data.size()};
-
-  std::vector<double> samples;
-  for (size_t i = idxRange.begin; i < idxRange.end; ++i) {
-    double rms{0};
-    for (size_t j = 0; j < numberOfStreams; ++j) {
-      rms += util::square(data[j]->get(i) - noiseInfos[j].offset);
-    }
-    samples.push_back(sqrt(rms));
-  }
-
-  return util::make_smart<DoubleArray>(static_cast<int>(samples.size()),
-                                       samples.data());
-}
-
-boost::optional<double> RMSAmplitude::reduceNoiseData(
-    const std::vector<DoubleArray const *> &data,
-    const std::vector<IndexRange> &idxRanges,
-    const std::vector<NoiseInfo> &noiseInfos) {
-  // TODO(damb): to be implemented
-  return boost::none;
-}
-
-void RMSAmplitude::computeAmplitude(const DoubleArray &data,
-                                    const IndexRange &idxRange,
-                                    AmplitudeProcessor::Amplitude &amplitude) {
-  auto rangeBegin{data.begin() + idxRange.begin};
-  auto rangeEnd{data.begin() + idxRange.end};
-
-  // XXX(damb): currently, the amplitude is computed as the max element-wise
-  // RMS
-  auto it{std::max_element(rangeBegin, rangeEnd)};
-  if (it == data.end()) {
-    setStatus(Status::kError, 0);
-    return;
-  }
-  amplitude.value.value = *it;
-
-  // TODO(damb): compute SNR
-}
-
-void RMSAmplitude::finalize(DataModel::Amplitude *amplitude) const {
-  const auto &env{environment()};
-  assert(!env.picks.empty());
-
-  std::vector<std::string> publicIds;
-  for (const auto &pick : env.picks) {
-    publicIds.push_back(pick->publicID());
-  }
-
-  // pick public identifiers
-  {
-    auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId(settings::kAmplitudePicksCommentId);
-    comment->setText(boost::algorithm::join(publicIds, settings::kPublicIdSep));
-    amplitude->add(comment.get());
-  }
-
-  // waveform stream identifiers
-  {
-    auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId(settings::kAmplitudeStreamsCommentId);
-    comment->setText(boost::algorithm::join(util::map_keys(_streams),
-                                            settings::kWaveformStreamIdSep));
-    amplitude->add(comment.get());
-  }
-
-  // forward reference of the detector which declared the origin
-  {
-    const auto &origin{env.hypocenter};
-    assert(origin);
-    for (std::size_t i = 0; i < origin->commentCount(); ++i) {
-      if (origin->comment(i)->id() == settings::kDetectorIdCommentId) {
-        auto comment{util::make_smart<DataModel::Comment>()};
-        comment->setId(settings::kDetectorIdCommentId);
-        comment->setText(origin->comment(i)->text());
-        amplitude->add(comment.get());
-        break;
-      }
-    }
-  }
-}
-
-/* ------------------------------------------------------------------------- */
-RMSAmplitude::SignalUnit signalUnitFromString(const std::string &signalUnit) {
-  using SignalUnit = RMSAmplitude::SignalUnit;
-  // SEED names: see SEEDManual, ch.5 / 34, p.47
-  static const std::unordered_map<std::string, SignalUnit> lookUpTable{
-      {"M", SignalUnit::kMeter},
-      {"M/S", SignalUnit::kMeterPerSeconds},
-      {"M/S**2", SignalUnit::kMeterPerSecondsSquared}};
-
-  return lookUpTable.at(signalUnit);
+AmplitudeProcessor::IndexRange RMSAmplitude::computeIndexRange(
+    const Core::TimeWindow &tw) const {
+  assert((_streamState.samplingFrequency));
+  return IndexRange{
+      static_cast<std::size_t>(
+          (tw.startTime() - _bufferedTimeWindow.startTime()) *
+          _streamState.samplingFrequency),
+      static_cast<std::size_t>(
+          static_cast<double>(tw.endTime() - _bufferedTimeWindow.startTime()) *
+          _streamState.samplingFrequency)};
 }
 
 }  // namespace amplitude
