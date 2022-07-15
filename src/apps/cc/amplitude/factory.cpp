@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -232,28 +233,6 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
   assert(sensorLocationDetectionInfo.origin);
   assert(!sensorLocationDetectionInfo.pickMap.empty());
 
-  // XXX(damb): pick is randomly chosen; use the earliest one
-  DataModel::PickCPtr earliest;
-  {
-    std::vector<factory::SensorLocationDetectionInfo::Pick> pickInfos;
-    std::transform(
-        std::begin(sensorLocationDetectionInfo.pickMap),
-        std::end(sensorLocationDetectionInfo.pickMap),
-        std::back_inserter(pickInfos),
-        [](const factory::SensorLocationDetectionInfo::PickMap::value_type &p) {
-          return p.second;
-        });
-
-    std::sort(std::begin(pickInfos), std::end(pickInfos),
-              [](const decltype(pickInfos)::value_type &lhs,
-                 const decltype(pickInfos)::value_type &rhs) {
-                return lhs.pick->time().value() < rhs.pick->time().value();
-              });
-    earliest = pickInfos.front().pick;
-  }
-
-  std::vector<factory::SensorLocationDetectionInfo::Pick> pickInfos;
-
   factory::SensorLocationStreamConfigs sensorLocationStreamConfigs;
 
   std::vector<std::string> sensorLocationStreamIdTokens;
@@ -261,10 +240,16 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
       sensorLocationDetectionInfo.sensorLocationStreamId,
       sensorLocationStreamIdTokens);
   try {
+    // XXX(damb): use random time
     const util::HorizontalComponents horizontalComponents{
-        Client::Inventory::Instance(),   sensorLocationStreamIdTokens[0],
-        sensorLocationStreamIdTokens[1], sensorLocationStreamIdTokens[2],
-        sensorLocationStreamIdTokens[3], earliest->time().value()};
+        Client::Inventory::Instance(),
+        sensorLocationStreamIdTokens[0],
+        sensorLocationStreamIdTokens[1],
+        sensorLocationStreamIdTokens[2],
+        sensorLocationStreamIdTokens[3],
+        sensorLocationDetectionInfo.pickMap.begin()
+            ->second.pick->time()
+            .value()};
     for (const auto &s : horizontalComponents) {
       processing::StreamConfig streamConfig;
       streamConfig.init(s);
@@ -274,8 +259,6 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
           sensorLocationStreamIdTokens[2], s->code())};
       sensorLocationStreamConfigs.emplace(authorativeWaveformStreamId,
                                           streamConfig);
-
-      pickInfos.push_back({authorativeWaveformStreamId, earliest});
     }
   } catch (const Exception &e) {
     logging::TaggedMessage msg{
@@ -284,25 +267,60 @@ std::unique_ptr<AmplitudeProcessor> Factory::createMLx(
     throw Factory::BaseException{logging::to_string(msg)};
   }
 
-  factory::TimeInfo timeInfo;
-  for (const auto &pickMapPair : sensorLocationDetectionInfo.pickMap) {
-    const auto &pickInfo{pickMapPair.second};
-    if (pickInfo.pick != earliest) {
-      continue;
+  // XXX(damb): try to use the earliest pick from any horizontal component;
+  // else use the earliest pick from any component
+  boost::optional<decltype(sensorLocationDetectionInfo.pickMap)::const_iterator>
+      referencePick;
+  for (auto cit{std::begin(sensorLocationDetectionInfo.pickMap)};
+       cit != std::end(sensorLocationDetectionInfo.pickMap); ++cit) {
+    if (1 == sensorLocationStreamConfigs.count(
+                 cit->second.authorativeWaveformStreamId)) {
+      if (!referencePick ||
+          cit->second.pick->time().value() <
+              referencePick.value()->second.pick->time().value()) {
+        referencePick = cit;
+      }
     }
-
-    const auto &templateWaveformProcessorId{pickMapPair.first};
-    const auto &templateWaveformProcessor{
-        detector.processor(templateWaveformProcessorId)};
-    assert(templateWaveformProcessor);
-    const auto &templateWaveform{templateWaveformProcessor->templateWaveform()};
-    assert(templateWaveform.referenceTime());
-
-    timeInfo.leading = templateWaveform.configuredStartTime() -
-                       *templateWaveform.referenceTime();
-    timeInfo.trailing = templateWaveform.configuredEndTime() -
-                        *templateWaveform.referenceTime();
   }
+
+  if (!referencePick) {
+    auto it{std::min_element(
+        std::begin(sensorLocationDetectionInfo.pickMap),
+        std::end(sensorLocationDetectionInfo.pickMap),
+        [](const factory::SensorLocationDetectionInfo::PickMap::value_type &lhs,
+           const factory::SensorLocationDetectionInfo::PickMap::value_type
+               &rhs) {
+          return lhs.second.pick->time().value() <
+                 rhs.second.pick->time().value();
+        })};
+
+    referencePick = it;
+  }
+
+  // pick infos
+  std::vector<factory::SensorLocationDetectionInfo::Pick> pickInfos;
+  std::transform(
+      std::begin(sensorLocationStreamConfigs),
+      std::end(sensorLocationStreamConfigs), std::back_inserter(pickInfos),
+      [referencePick](
+          const factory::SensorLocationStreamConfigs::value_type &p) {
+        return factory::SensorLocationDetectionInfo::Pick{
+            p.first, referencePick.value()->second.pick};
+      });
+
+  // time info
+  factory::TimeInfo timeInfo;
+  const auto &templateWaveformProcessorId{referencePick.value()->first};
+  const auto &templateWaveformProcessor{
+      detector.processor(templateWaveformProcessorId)};
+  assert(templateWaveformProcessor);
+  const auto &templateWaveform{templateWaveformProcessor->templateWaveform()};
+  assert(templateWaveform.referenceTime());
+
+  timeInfo.leading = templateWaveform.configuredStartTime() -
+                     *templateWaveform.referenceTime();
+  timeInfo.trailing =
+      templateWaveform.configuredEndTime() - *templateWaveform.referenceTime();
 
   factory::AmplitudeProcessorConfig amplitudeProcessorConfig{
       detector.id(), detector.gapThreshold(), detector.gapTolerance(),
