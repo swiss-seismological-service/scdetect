@@ -29,7 +29,7 @@ const MLx::CombiningStrategy MLx::max =
 MLx::MLx(
     std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying)
     : CombiningAmplitudeProcessor{std::move(underlying), MLx::max} {
-  assert((validateUniqueSensorLocation(associatedWaveformStreamIds())));
+  assert((util::isUniqueSensorLocation(associatedWaveformStreamIds())));
   setType("MLx");
   setUnit("M/S");
 }
@@ -93,20 +93,6 @@ void MLx::finalize(DataModel::Amplitude *amplitude) const {
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());
   }
-}
-
-bool MLx::validateUniqueSensorLocation(
-    const std::vector<std::string> &waveformStreamIds) {
-  std::unordered_set<std::string> sensorLocationStreamIds;
-  for (const auto &waveformStreamId : waveformStreamIds) {
-    try {
-      sensorLocationStreamIds.emplace(util::getSensorLocationStreamId(
-          util::WaveformStreamID(waveformStreamId)));
-    } catch (const ValueException &) {
-      return false;
-    }
-  }
-  return sensorLocationStreamIds.size() == 1;
 }
 
 }  // namespace amplitude

@@ -20,12 +20,6 @@ class MLx : public CombiningAmplitudeProcessor {
       std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying);
 
   void finalize(DataModel::Amplitude *amplitude) const override;
-
- private:
-  // TODO(damb): implement common function in order to use it at MRelative,
-  // too
-  static bool validateUniqueSensorLocation(
-      const std::vector<std::string> &waveformStreamIDs);
 };
 
 }  // namespace amplitude

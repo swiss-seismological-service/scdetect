@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <memory>
-#include <unordered_set>
 #include <vector>
 
 #include "../settings.h"
@@ -37,7 +36,7 @@ const MRelative::CombiningStrategy MRelative::median =
 MRelative::MRelative(
     std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying)
     : CombiningAmplitudeProcessor{std::move(underlying), MRelative::median} {
-  assert((validateUniqueSensorLocation(associatedWaveformStreamIds())));
+  assert((util::isUniqueSensorLocation(associatedWaveformStreamIds())));
   setType("MRelative");
   setUnit("");
 }
@@ -98,20 +97,6 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
                                             settings::kWaveformStreamIdSep));
     amplitude->add(comment.get());
   }
-}
-
-bool MRelative::validateUniqueSensorLocation(
-    const std::vector<std::string> &waveformStreamIds) {
-  std::unordered_set<std::string> sensorLocationStreamIds;
-  for (const auto &waveformStreamId : waveformStreamIds) {
-    try {
-      sensorLocationStreamIds.emplace(util::getSensorLocationStreamId(
-          util::WaveformStreamID(waveformStreamId)));
-    } catch (const ValueException &) {
-      return false;
-    }
-  }
-  return sensorLocationStreamIds.size() == 1;
 }
 
 }  // namespace amplitude

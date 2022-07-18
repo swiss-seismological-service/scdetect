@@ -39,6 +39,9 @@ std::string getBandAndSourceCode(const WaveformStreamID &waveformStreamId);
 
 std::string getBandAndSourceCode(const std::string &chaCode);
 
+bool isUniqueSensorLocation(const std::vector<std::string> &waveformStreamIds,
+                            bool includeBandAndSourceCode = false);
+
 class WaveformStreamID {
  public:
   explicit WaveformStreamID(const std::string &netStaLocCha);
