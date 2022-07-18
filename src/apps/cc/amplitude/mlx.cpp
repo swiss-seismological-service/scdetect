@@ -24,7 +24,7 @@ const MLx::CombiningStrategy MLx::max =
             return lhs->value.value < rhs->value.value;
           })};
 
-      combined = *(result->get());
+      combined = *(*result);
     };
 
 MLx::MLx(
