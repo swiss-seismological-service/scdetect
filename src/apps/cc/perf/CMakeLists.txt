@@ -12,6 +12,7 @@ set(SOURCES_app
   ../amplitude/mlx.cpp
   ../amplitude/mrelative.cpp
   ../amplitude/rms.cpp
+  ../amplitude/util.cpp
   ../amplitude_processor.cpp
   ../combining_amplitude_processor.cpp
   ../app.cpp
