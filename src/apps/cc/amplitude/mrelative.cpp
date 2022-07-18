@@ -1,15 +1,15 @@
 #include "mrelative.h"
 
+#include <seiscomp/datamodel/waveformstreamid.h>
+
 #include <cassert>
 #include <memory>
-#include <unordered_set>
 #include <vector>
 
 #include "../settings.h"
 #include "../util/memory.h"
 #include "../util/waveform_stream_id.h"
-#include "factory.h"
-#include "seiscomp/datamodel/waveformstreamid.h"
+#include "util.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -36,7 +36,7 @@ const MRelative::CombiningStrategy MRelative::median =
 MRelative::MRelative(
     std::vector<CombiningAmplitudeProcessor::AmplitudeProcessor> underlying)
     : CombiningAmplitudeProcessor{std::move(underlying), MRelative::median} {
-  assert((validateUniqueSensorLocation(associatedWaveformStreamIds())));
+  assert((detect::util::isUniqueSensorLocation(associatedWaveformStreamIds())));
   setType("MRelative");
   setUnit("");
 }
@@ -47,29 +47,13 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
   amplitude->setType(type());
   amplitude->setUnit(unit());
 
-  // waveform stream identifier
-  std::vector<std::string> tokens;
-  auto waveformStreamIds{associatedWaveformStreamIds()};
-  assert(!waveformStreamIds.empty());
-  util::tokenizeWaveformStreamId(waveformStreamIds.front(), tokens);
-  assert((tokens.size() >= 3));
-  amplitude->setWaveformID(
-      DataModel::WaveformStreamID{tokens[0], tokens[1], tokens[2], "", ""});
+  util::setWaveformStreamId(this, *amplitude);
 
-  const auto &env{environment()};
   // forward reference of the detector which declared the origin
-  {
-    const auto &origin{env.hypocenter};
-    assert(origin);
-    for (std::size_t i = 0; i < origin->commentCount(); ++i) {
-      if (origin->comment(i)->id() == settings::kDetectorIdCommentId) {
-        auto comment{util::make_smart<DataModel::Comment>()};
-        comment->setId(settings::kDetectorIdCommentId);
-        comment->setText(origin->comment(i)->text());
-        amplitude->add(comment.get());
-        break;
-      }
-    }
+  try {
+    auto comment{util::createDetectorIdComment(this)};
+    amplitude->add(comment.release());
+  } catch (const Exception &) {
   }
 
   std::vector<std::string> pickPublicIds;
@@ -81,35 +65,17 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
   }
   // pick public identifiers
   {
-    auto comment{util::make_smart<DataModel::Comment>()};
+    auto comment{detect::util::make_smart<DataModel::Comment>()};
     comment->setId(settings::kAmplitudePicksCommentId);
     comment->setText(
         boost::algorithm::join(pickPublicIds, settings::kPublicIdSep));
     amplitude->add(comment.get());
   }
 
-  // used underlying waveform stream identifiers
   {
-    auto comment{util::make_smart<DataModel::Comment>()};
-    comment->setId(settings::kAmplitudeStreamsCommentId);
-    comment->setText(boost::algorithm::join(associatedWaveformStreamIds(),
-                                            settings::kWaveformStreamIdSep));
-    amplitude->add(comment.get());
+    auto comment{util::createAssociatedWaveformStreamIdComment(this)};
+    amplitude->add(comment.release());
   }
-}
-
-bool MRelative::validateUniqueSensorLocation(
-    const std::vector<std::string> &waveformStreamIds) {
-  std::unordered_set<std::string> sensorLocationStreamIds;
-  for (const auto &waveformStreamId : waveformStreamIds) {
-    try {
-      sensorLocationStreamIds.emplace(util::getSensorLocationStreamId(
-          util::WaveformStreamID(waveformStreamId)));
-    } catch (const ValueException &) {
-      return false;
-    }
-  }
-  return sensorLocationStreamIds.size() == 1;
 }
 
 }  // namespace amplitude

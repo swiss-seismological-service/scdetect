@@ -172,6 +172,14 @@ FlagTemplatesJSON::FlagTemplatesJSON(const fs::path &fpath)
     : FlagTemplatesJSON{fpath.string()} {}
 std::string FlagTemplatesJSON::flag() const { return "--templates-json"; }
 
+FlagTemplatesFamilyJSON::FlagTemplatesFamilyJSON(const std::string &fpath)
+    : ArgFlag{fpath} {}
+FlagTemplatesFamilyJSON::FlagTemplatesFamilyJSON(const fs::path &fpath)
+    : FlagTemplatesFamilyJSON{fpath.string()} {}
+std::string FlagTemplatesFamilyJSON::flag() const {
+  return "--templates-family-json";
+}
+
 }  // namespace cli
 
 /* ------------------------------------------------------------------------- */

@@ -3,6 +3,7 @@
 #include <seiscomp/core/strings.h>
 
 #include <cassert>
+#include <unordered_set>
 
 #include "../exception.h"
 
@@ -58,6 +59,20 @@ std::string getSensorLocationStreamId(const std::string &waveformStreamId,
          (includeBandAndSourceCode
               ? (WaveformStreamID::delimiter + tokens[3].substr(0, 2))
               : "");
+}
+
+bool isUniqueSensorLocation(const std::vector<std::string> &waveformStreamIds,
+                            bool includeBandAndSourceCode) {
+  std::unordered_set<std::string> sensorLocationStreamIds;
+  for (const auto &waveformStreamId : waveformStreamIds) {
+    try {
+      sensorLocationStreamIds.emplace(getSensorLocationStreamId(
+          WaveformStreamID(waveformStreamId), includeBandAndSourceCode));
+    } catch (const ValueException &) {
+      return false;
+    }
+  }
+  return sensorLocationStreamIds.size() == 1;
 }
 
 const std::string WaveformStreamID::delimiter{"."};

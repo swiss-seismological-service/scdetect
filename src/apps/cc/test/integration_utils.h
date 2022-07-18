@@ -190,6 +190,13 @@ class FlagTemplatesJSON : public ArgFlag {
   std::string flag() const override;
 };
 
+class FlagTemplatesFamilyJSON : public ArgFlag {
+ public:
+  explicit FlagTemplatesFamilyJSON(const std::string &fpath);
+  explicit FlagTemplatesFamilyJSON(const fs::path &fpath);
+  std::string flag() const override;
+};
+
 }  // namespace cli
 
 /* -------------------------------------------------------------------------- */

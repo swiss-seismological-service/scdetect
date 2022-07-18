@@ -1,0 +1,30 @@
+[
+    {
+        "id": "template-family-01",
+        "references": [
+            {
+                "detectorId": "detector-01",
+                "streams": [
+                    {
+                        "templateWaveformId": "8D.RAW2..HHN",
+                        "upperLimit": 10
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "template-family-02",
+        "references": [
+            {
+                "detectorId": "detector-01",
+                "streams": [
+                    {
+                        "templateWaveformId": "CH.LAVEY.BT.EH2",
+                        "upperLimit": 10
+                    }
+                ]
+            }
+        ]
+    }
+]

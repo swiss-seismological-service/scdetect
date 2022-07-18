@@ -1,0 +1,16 @@
+[
+  {
+    "id": "template-family-01",
+    "references": [
+      {
+        "detectorId": "detector-01",
+        "streams": [
+          {
+            "templateWaveformId": "8D.RAW2..HHZ",
+            "upperLimit": 10
+          }
+        ]
+      }
+    ]
+  }
+]

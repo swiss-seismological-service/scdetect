@@ -69,13 +69,6 @@ class TemplateFamilyConfig {
 
    private:
     using TemplateConfigs = std::vector<TemplateConfig>;
-    using TemplateConfigsIdx =
-        std::unordered_map<std::string, TemplateConfigs::const_iterator>;
-    static void createIndex(const TemplateConfigs &templateConfigs);
-    // Returns whether a index has been created for `TemplateConfigs`
-    bool indexed() const;
-
-    static TemplateConfigsIdx _templateConfigsIdx;
   };
 
   TemplateFamilyConfig(
