@@ -47,15 +47,7 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
   amplitude->setType(type());
   amplitude->setUnit(unit());
 
-  // waveform stream identifier
-  std::vector<std::string> tokens;
-  auto waveformStreamIds{associatedWaveformStreamIds()};
-  assert(!waveformStreamIds.empty());
-  detect::util::tokenizeWaveformStreamId(waveformStreamIds.front(), tokens);
-  assert((tokens.size() == 4));
-  amplitude->setWaveformID(DataModel::WaveformStreamID{
-      tokens[0], tokens[1], tokens[2],
-      detect::util::getBandAndSourceCode(tokens[3]), ""});
+  util::setWaveformStreamId(this, *amplitude);
 
   // forward reference of the detector which declared the origin
   try {
@@ -80,7 +72,6 @@ void MRelative::finalize(DataModel::Amplitude *amplitude) const {
     amplitude->add(comment.get());
   }
 
-  // used underlying waveform stream identifiers
   {
     auto comment{util::createAssociatedWaveformStreamIdComment(this)};
     amplitude->add(comment.release());

@@ -1,14 +1,20 @@
 #include "util.h"
 
+#include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/datamodel/comment.h>
 #include <seiscomp/datamodel/origin.h>
+#include <seiscomp/datamodel/waveformstreamid.h>
 
 #include <boost/algorithm/string/join.hpp>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "../amplitude_processor.h"
 #include "../exception.h"
 #include "../settings.h"
 #include "../util/memory.h"
+#include "../util/waveform_stream_id.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -38,6 +44,18 @@ std::unique_ptr<DataModel::Comment> createDetectorIdComment(
     }
   }
   throw Exception{"no detector associated"};
+}
+
+void setWaveformStreamId(const AmplitudeProcessor* amplitudeProcessor,
+                         DataModel::Amplitude& amplitude) {
+  auto waveformStreamIds{amplitudeProcessor->associatedWaveformStreamIds()};
+  assert(!waveformStreamIds.empty());
+  std::vector<std::string> tokens;
+  detect::util::tokenizeWaveformStreamId(waveformStreamIds.front(), tokens);
+  assert((tokens.size() == 4));
+  amplitude.setWaveformID(DataModel::WaveformStreamID{
+      tokens[0], tokens[1], tokens[2],
+      detect::util::getBandAndSourceCode(tokens[3]), ""});
 }
 
 }  // namespace util
