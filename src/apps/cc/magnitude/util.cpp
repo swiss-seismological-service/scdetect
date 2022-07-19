@@ -1,6 +1,8 @@
 #include "util.h"
 
-#include <seiscomp/core/strings.h>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/constants.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include "../settings.h"
 #include "../util/waveform_stream_id.h"
@@ -38,8 +40,9 @@ boost::optional<std::string> extractSensorLocationId(
   }
 
   std::vector<std::string> tokens;
-  Core::split(tokens, waveformStreamIds, settings::kWaveformStreamIdSep.c_str(),
-              true);
+  boost::algorithm::split(tokens, waveformStreamIds,
+                          boost::is_any_of(settings::kWaveformStreamIdSep),
+                          boost::algorithm::token_compress_on);
   if (tokens.empty()) {
     return boost::none;
   }
