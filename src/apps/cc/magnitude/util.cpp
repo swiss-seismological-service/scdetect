@@ -25,7 +25,7 @@ boost::optional<std::string> extractDetectorId(
 }
 
 boost::optional<std::string> extractSensorLocationId(
-    const DataModel::Amplitude* amplitude) {
+    const DataModel::Amplitude* amplitude, bool includeBandAndSourceCode) {
   std::string waveformStreamIds;
   for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
     auto comment{amplitude->comment(i)};
@@ -49,7 +49,7 @@ boost::optional<std::string> extractSensorLocationId(
 
   std::string sensorLocationId;
   for (const auto& token : tokens) {
-    auto tmp{util::getSensorLocationStreamId(util::WaveformStreamID{token})};
+    auto tmp{util::getSensorLocationStreamId(token, includeBandAndSourceCode)};
     if (sensorLocationId.empty()) {
       sensorLocationId = tmp;
     } else if (sensorLocationId != tmp) {
