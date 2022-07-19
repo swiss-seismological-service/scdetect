@@ -14,7 +14,7 @@ namespace magnitude {
 boost::optional<std::string> extractDetectorId(
     const DataModel::Amplitude* amplitude) {
   for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
-    auto comment{amplitude->comment(i)};
+    auto* comment{amplitude->comment(i)};
     if (comment->id() == settings::kDetectorIdCommentId &&
         !comment->text().empty()) {
       return comment->text();
@@ -28,7 +28,7 @@ boost::optional<std::string> extractSensorLocationId(
     const DataModel::Amplitude* amplitude, bool includeBandAndSourceCode) {
   std::string waveformStreamIds;
   for (std::size_t i = 0; i < amplitude->commentCount(); ++i) {
-    auto comment{amplitude->comment(i)};
+    auto* comment{amplitude->comment(i)};
     if (comment->id() == settings::kAmplitudeStreamsCommentId &&
         !comment->text().empty()) {
       waveformStreamIds = comment->text();
