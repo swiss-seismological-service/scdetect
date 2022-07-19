@@ -591,6 +591,20 @@
                 Enables/disables magnitude calculation.
               </description>
             </parameter>
+
+            <group name="MRelative">
+              <description>
+                Defines configuration parameters regarding the relative
+                magnitude estimation.
+              </description>
+              <parameter name="useNetworkMagnitude" type="boolean" default="true">
+                <description>
+                  Defines whether to use the NetworkMagnitude (i.e. the event's
+                  preferred magnitude) or the StationMagnitude for relative
+                  magnitude estimation.
+                </description>
+              </parameter>
+            </group>
           </group>
         </struct>
       </group>

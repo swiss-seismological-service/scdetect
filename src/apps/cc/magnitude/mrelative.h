@@ -12,19 +12,23 @@ namespace magnitude {
 
 class MRelative : public MagnitudeProcessor {
  public:
-  explicit MRelative(
-      DataModel::StationMagnitudeCPtr templateMagnitude = nullptr);
+  struct TemplateMagnitude {
+    double value;
+  };
+
+  explicit MRelative(TemplateMagnitude templateMagnitude);
 
   void finalize(DataModel::StationMagnitude* magnitude) const override;
 
-  void setTemplateMagnitude(DataModel::StationMagnitudeCPtr templateMagnitude);
+  void setTemplateMagnitude(TemplateMagnitude templateMagnitude);
+  const TemplateMagnitude& templateMagnitude() const;
 
  protected:
   double computeMagnitude(const DataModel::Amplitude* amplitude) override;
 
  private:
   // The reference template magnitude
-  DataModel::StationMagnitudeCPtr _templateMagnitude;
+  TemplateMagnitude _templateMagnitude;
 };
 
 }  // namespace magnitude

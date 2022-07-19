@@ -49,7 +49,8 @@ boost::optional<std::string> extractSensorLocationId(
 
   std::string sensorLocationId;
   for (const auto& token : tokens) {
-    auto tmp{util::getSensorLocationStreamId(token, includeBandAndSourceCode)};
+    auto tmp{util::getSensorLocationStreamId(util::WaveformStreamID{token},
+                                             includeBandAndSourceCode)};
     if (sensorLocationId.empty()) {
       sensorLocationId = tmp;
     } else if (sensorLocationId != tmp) {
