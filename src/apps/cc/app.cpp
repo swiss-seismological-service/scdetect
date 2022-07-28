@@ -256,7 +256,7 @@ bool Application::validateParameters() {
       !util::isGeZero(*_config.forcedWaveformBufferSize)) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'waveformBufferSize': %f. Must be >= 0.",
-        _config.streamConfig.initTime);
+        static_cast<double>(*_config.forcedWaveformBufferSize));
     return false;
   }
 
