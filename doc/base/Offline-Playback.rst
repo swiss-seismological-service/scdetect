@@ -562,7 +562,7 @@ Waveform data
 
   .. code-block:: bash
 
-     echo "http://eida.ethz.ch/fdsnws/dataselect/query"\
+     echo "http://eida.ethz.ch/fdsnws/dataselect/1/query"\
      "?net=CH&sta=SENIN,SAYF2&cha=HH?,HG?"\
      "&start=2019-11-05T04:00:00&end=2019-11-05T05:00:00" | \
      wget -i - -O - | \
@@ -1068,7 +1068,7 @@ Waveform data
 
   .. code-block:: bash
 
-     echo "http://eida.ethz.ch/fdsnws/dataselect/query"\
+     echo "http://eida.ethz.ch/fdsnws/dataselect/1/query"\
      "?net=CH&sta=SENIN,SAYF2,STSW2&cha=HH?,HG?"\
      "&start=2019-11-05T04:00:00&end=2019-11-05T05:00:00" | \
      wget -i - -O - | \
