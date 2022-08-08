@@ -562,7 +562,7 @@ Waveform data
 
   .. code-block:: bash
 
-     echo "http://eida.ethz.ch/fdsnws/dataselect/query"\
+     echo "http://eida.ethz.ch/fdsnws/dataselect/1/query"\
      "?net=CH&sta=SENIN,SAYF2&cha=HH?,HG?"\
      "&start=2019-11-05T04:00:00&end=2019-11-05T05:00:00" | \
      wget -i - -O - | \
@@ -640,7 +640,7 @@ launch :external:ref:`scolv`:
      --debug \
      --db-disable \
      --inventory-db stations.scml \
-     --record-url "fdsnws://eida-federator.ethz.ch/fdsnws/dataselect/1/query"  &
+     --record-url "fdsnws://eida.ethz.ch/fdsnws/dataselect/1/query"  &
 
 Here, we run :external:ref:`scolv` without
 using a database. Besides, waveform data is fetched from FDSN web services.
@@ -1068,7 +1068,7 @@ Waveform data
 
   .. code-block:: bash
 
-     echo "http://eida.ethz.ch/fdsnws/dataselect/query"\
+     echo "http://eida.ethz.ch/fdsnws/dataselect/1/query"\
      "?net=CH&sta=SENIN,SAYF2,STSW2&cha=HH?,HG?"\
      "&start=2019-11-05T04:00:00&end=2019-11-05T05:00:00" | \
      wget -i - -O - | \
@@ -1135,7 +1135,7 @@ To screen visualize the results launch :external:ref:`scolv` with
      --db-disable \
      --debug \
      --inventory-db stations.scml \
-     --record-url "fdsnws://eida-federator.ethz.ch/fdsnws/dataselect/1/query" &
+     --record-url "fdsnws://eida.ethz.ch/fdsnws/dataselect/1/query" &
 
 Once :external:ref:`scolv` is up and running
 import the ``event.catalog.scml`` file which was previously generated
