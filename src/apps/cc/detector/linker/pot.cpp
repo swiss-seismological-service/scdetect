@@ -146,19 +146,18 @@ bool POT::validateEnabledOffsets(const std::string &processorId,
     return false;
   }
 
+  std::vector<bool> commonMask(size());
   // create mask with common enabled processors
-  std::vector<bool> common_mask(size(), false);
   size_type i{0};
-  for (const auto &p : _processorIdxMap) {
-    if (p.second.enabled && otherMask[i]) {
-      common_mask[i++] = true;
-    }
+  for (const auto &idxPair : _processorIdxMap) {
+    commonMask[i] = idxPair.second.enabled && otherMask[i];
+    ++i;
   }
 
   const auto &offsets{_offsets[std::distance(_processorIdxMap.begin(), it)]};
 
   for (size_type i{0}; i < size(); ++i) {
-    if (common_mask[i] && validEntry(otherOffsets[i]) &&
+    if (commonMask[i] && validEntry(otherOffsets[i]) &&
         validEntry(offsets[i]) &&
         util::greaterThan(std::abs(offsets[i] - otherOffsets[i]),
                           static_cast<double>(thres), tolerance)) {
