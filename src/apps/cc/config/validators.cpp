@@ -22,7 +22,7 @@ bool validateMinArrivals(int n, int numStreamConfigs) {
     return true;
   }
 
-  return numStreamConfigs > 0 ? n >= 1 : n >= 1 && n <= numStreamConfigs;
+  return numStreamConfigs > 0 ? n >= 1 && n <= numStreamConfigs : n >= 1;
 }
 
 bool validateSamplingFrequency(double samplingFrequency) {

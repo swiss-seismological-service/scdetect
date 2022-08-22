@@ -189,12 +189,12 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
       wfStreamId = streamConfig.wfStreamId;
     } catch (boost::property_tree::ptree_error &e) {
       throw config::ParserException{
-          std::string{"Exception while parsing stream config: "} + e.what()};
+          std::string{"exception while parsing stream config: "} + e.what()};
     }
 
     if (!_streamConfigs[wfStreamId].isValid()) {
       throw config::ParserException{
-          std::string{"Exception while parsing streamConfig: Invalid "
+          std::string{"exception while parsing streamConfig: invalid "
                       "stream configuration for stream: "} +
           wfStreamId};
     }
@@ -212,7 +212,7 @@ TemplateConfig::TemplateConfig(const boost::property_tree::ptree &pt,
 
   if (!_detectorConfig.isValid(maxArrivals)) {
     throw config::ParserException{
-        "Invalid template specific detector configuration"};
+        "invalid template specific detector configuration"};
   }
 }
 
