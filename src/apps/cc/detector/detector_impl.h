@@ -199,8 +199,6 @@ class DetectorImpl : public detect::processing::Processor {
 
   void disableProcessorsNotContributing(const linker::Association &result);
 
-  std::string triggerProcessorId(const linker::Association &result);
-
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;
@@ -223,12 +221,12 @@ class DetectorImpl : public detect::processing::Processor {
   // Callback storing results from the linker
   void storeLinkerResult(const linker::Association &linkerResult);
 
-  struct TemplateResult {
-    linker::Association::TemplateResult result;
-    detail::ProcessorIdType processorId;
-  };
-  static std::vector<TemplateResult> sortByArrivalTime(
+  static std::vector<linker::Association::TemplateResult> sortByArrivalTime(
       const linker::Association &linkerResult);
+
+  static Core::Time computeOriginTime(
+      const linker::Association &linkerResult,
+      const linker::Association::TemplateResult &referenceResult);
 
   // Safety margin for linker on hold duration
   static const Core::TimeSpan _linkerSafetyMargin;
@@ -251,8 +249,6 @@ class DetectorImpl : public detect::processing::Processor {
   boost::optional<double> _thresTriggerOff;
   boost::optional<Core::TimeSpan> _triggerDuration;
   boost::optional<Core::Time> _triggerEnd;
-  // The processor used for triggering (i.e. the current reference processor)
-  boost::optional<std::string> _triggerProcId;
 
   // The linker required for associating arrivals
   Linker _linker;

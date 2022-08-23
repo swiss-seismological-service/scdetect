@@ -17,6 +17,8 @@
 #include "../util/math.h"
 #include "../util/util.h"
 #include "arrival.h"
+#include "linker.h"
+#include "linker/association.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -309,8 +311,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
   const auto triggerOffThreshold{_thresTriggerOff.value_or(1)};
 
   const auto sorted{sortByArrivalTime(result)};
-  const auto &earliestArrivalTemplateResult{sorted.at(0)};
-  const auto &pickTime{earliestArrivalTemplateResult.result.arrival.pick.time};
+  const auto originTime{computeOriginTime(result, sorted.at(0))};
 
   bool newTrigger{false};
   bool updatedResult{false};
@@ -323,8 +324,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
         SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result (triggering) %s",
                                      result.debugString().c_str());
 
-        _triggerProcId = earliestArrivalTemplateResult.processorId;
-        _triggerEnd = pickTime + *_triggerDuration;
+        _triggerEnd = originTime + *_triggerDuration;
         // XXX(damb): A side-note on trigger facilities when it comes to the
         // linker:
         // - The linker processes only those template results which are fed to
@@ -340,7 +340,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
         SCDETECT_LOG_DEBUG_PROCESSOR(this, "Detector result %s",
                                      result.debugString().c_str());
       }
-    } else if (triggered() && (pickTime <= *_triggerEnd) &&
+    } else if (triggered() && (originTime <= *_triggerEnd) &&
                result.score > _currentResult.value().score &&
                result.processorCount() >=
                    _currentResult.value().processorCount()) {
@@ -348,20 +348,16 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
                                    "Detector result (triggered, updating) %s",
                                    result.debugString().c_str());
       _currentResult = result;
+      _triggerEnd = originTime + *_triggerDuration;
+      disableProcessorsNotContributing(result);
 
       updatedResult = true;
-
-      if (_triggerProcId != earliestArrivalTemplateResult.processorId) {
-        _triggerProcId = earliestArrivalTemplateResult.processorId;
-        _triggerEnd = pickTime + *_triggerDuration;
-        disableProcessorsNotContributing(result);
-      }
     }
   }
 
   bool expired{false};
   if (triggered()) {
-    expired = pickTime > *_triggerEnd;
+    expired = originTime > *_triggerEnd;
 
     if (!expired && !newTrigger && !updatedResult &&
         result.score <= _currentResult.value().score &&
@@ -392,8 +388,7 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
 
     _currentResult = result;
 
-    _triggerProcId = earliestArrivalTemplateResult.processorId;
-    _triggerEnd = pickTime + *_triggerDuration;
+    _triggerEnd = originTime + *_triggerDuration;
   }
 
   if (!triggered()) {
@@ -420,67 +415,33 @@ void DetectorImpl::disableProcessorsNotContributing(
                 });
 }
 
-std::string DetectorImpl::triggerProcessorId(
-    const linker::Association &result) {
-  // determine the processor with the earliest arrival
-  return sortByArrivalTime(result).at(0).processorId;
-}
-
 void DetectorImpl::prepareResult(const linker::Association &linkerResult,
                                  DetectorImpl::Result &result) const {
-  auto sorted{sortByArrivalTime(linkerResult)};
-
-  const auto &referenceResult{sorted.at(0)};
-  const auto &referenceArrival{referenceResult.result.arrival};
-  const auto referenceMatchResult{referenceResult.result.matchResult};
-  const auto &referenceStartTime{referenceMatchResult->timeWindow.startTime()};
-  const auto referenceLag{
-      static_cast<double>(referenceArrival.pick.time - referenceStartTime)};
-
   std::unordered_set<std::string> usedChas;
   std::unordered_set<std::string> usedStas;
-  std::vector<double> alignedArrivalOffsets;
-
   DetectorImpl::Result::TemplateResults templateResults;
-  for (const auto &result : sorted) {
-    const auto &procId{result.processorId};
-    const auto &templateResult{result.result};
+  for (const auto &templateResultPair : linkerResult.results) {
+    const auto &procId{templateResultPair.first};
     const auto &proc{_processors.at(procId)};
-    if (templateResult.matchResult) {
-      const auto matchResult{templateResult.matchResult};
-      const auto &startTime{matchResult->timeWindow.startTime()};
+    const auto &templateResult{templateResultPair.second};
+    assert(templateResult.matchResult);
 
-      auto arrivalOffset{templateResult.arrival.pick.time -
-                         referenceArrival.pick.time};
-      // compute alignment correction using the POT offset (required, since
-      // traces to be cross-correlated cannot be guaranteed to be aligned to
-      // sub-sampling interval accuracy)
-      const auto &alignmentCorrection{referenceStartTime + arrivalOffset -
-                                      startTime};
+    const auto matchResult{templateResult.matchResult};
 
-      alignedArrivalOffsets.push_back(
-          static_cast<double>(templateResult.arrival.pick.time - startTime) -
-          alignmentCorrection - referenceLag);
-
-      templateResults.emplace(
-          templateResult.arrival.pick.waveformStreamId,
-          DetectorImpl::Result::TemplateResult{
-              templateResult.arrival, proc.sensorLocation,
-              proc.processor->templateWaveform().startTime(),
-              proc.processor->templateWaveform().endTime(),
-              proc.templateWaveformReferenceTime, procId});
-      usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
-      usedStas.emplace(proc.sensorLocation.stationId);
-    }
+    templateResults.emplace(templateResult.arrival.pick.waveformStreamId,
+                            DetectorImpl::Result::TemplateResult{
+                                templateResult.arrival, proc.sensorLocation,
+                                proc.processor->templateWaveform().startTime(),
+                                proc.processor->templateWaveform().endTime(),
+                                proc.templateWaveformReferenceTime, procId});
+    usedChas.emplace(templateResult.arrival.pick.waveformStreamId);
+    usedStas.emplace(proc.sensorLocation.stationId);
   }
 
-  // compute origin time
-  const auto &arrivalOffsetCorrection{
-      util::cma(alignedArrivalOffsets.data(), alignedArrivalOffsets.size())};
-  const auto &referenceOriginArrivalOffset{referenceArrival.pick.offset};
-  result.originTime = referenceStartTime + Core::TimeSpan{referenceLag} -
-                      referenceOriginArrivalOffset +
-                      Core::TimeSpan{arrivalOffsetCorrection};
+  auto sorted{sortByArrivalTime(linkerResult)};
+  const auto &referenceResult{sorted.at(0)};
+  result.originTime = computeOriginTime(linkerResult, referenceResult);
+
   result.score = linkerResult.score;
   // template results i.e. theoretical arrivals including some meta data
   result.templateResults = templateResults;
@@ -513,10 +474,7 @@ void DetectorImpl::resetProcessing() {
   resetTrigger();
 }
 
-void DetectorImpl::resetTrigger() {
-  _triggerProcId = boost::none;
-  _triggerEnd = boost::none;
-}
+void DetectorImpl::resetTrigger() { _triggerEnd = boost::none; }
 
 void DetectorImpl::resetProcessors() {
   std::for_each(std::begin(_processors), std::end(_processors),
@@ -548,18 +506,57 @@ void DetectorImpl::storeLinkerResult(const linker::Association &linkerResult) {
   _resultQueue.emplace_back(linkerResult);
 }
 
-std::vector<DetectorImpl::TemplateResult> DetectorImpl::sortByArrivalTime(
-    const linker::Association &linkerResult) {
-  std::vector<TemplateResult> ret;
+std::vector<linker::Association::TemplateResult>
+DetectorImpl::sortByArrivalTime(const linker::Association &linkerResult) {
+  std::vector<linker::Association::TemplateResult> ret;
   for (const auto &resultPair : linkerResult.results) {
-    ret.push_back({resultPair.second, resultPair.first});
+    ret.push_back({resultPair.second});
   }
   std::sort(std::begin(ret), std::end(ret),
-            [](const TemplateResult &lhs, const TemplateResult &rhs) {
-              return lhs.result.arrival.pick.time <
-                     rhs.result.arrival.pick.time;
+            [](const linker::Association::TemplateResult &lhs,
+               const linker::Association::TemplateResult &rhs) {
+              return lhs.arrival.pick.time < rhs.arrival.pick.time;
             });
   return ret;
+}
+
+Core::Time DetectorImpl::computeOriginTime(
+    const linker::Association &linkerResult,
+    const linker::Association::TemplateResult &referenceResult) {
+  const auto &referenceArrival{referenceResult.arrival};
+  const auto referenceMatchResult{referenceResult.matchResult};
+  const auto &referenceStartTime{referenceMatchResult->timeWindow.startTime()};
+  const auto referenceLag{
+      static_cast<double>(referenceArrival.pick.time - referenceStartTime)};
+
+  std::vector<double> alignedArrivalOffsets;
+  for (const auto &templateResultPair : linkerResult.results) {
+    const auto &templateResult{templateResultPair.second};
+    assert(templateResult.matchResult);
+    const auto matchResult{templateResult.matchResult};
+    const auto &startTime{matchResult->timeWindow.startTime()};
+
+    auto arrivalOffset{templateResult.arrival.pick.time -
+                       referenceArrival.pick.time};
+    // compute alignment correction using the POT offset (required, since
+    // traces to be cross-correlated cannot be guaranteed to be aligned to
+    // sub-sampling interval accuracy)
+    const auto alignmentCorrection{referenceStartTime + arrivalOffset -
+                                   startTime};
+
+    alignedArrivalOffsets.push_back(
+        static_cast<double>(templateResult.arrival.pick.time - startTime) -
+        alignmentCorrection - referenceLag);
+  }
+
+  const auto &arrivalOffsetCorrection{
+      util::cma(alignedArrivalOffsets.data(), alignedArrivalOffsets.size())};
+  const auto &referenceOriginArrivalOffset{referenceArrival.pick.offset};
+
+  const auto originTime{referenceStartTime + Core::TimeSpan{referenceLag} -
+                        referenceOriginArrivalOffset +
+                        Core::TimeSpan{arrivalOffsetCorrection}};
+  return originTime;
 }
 
 }  // namespace detector
