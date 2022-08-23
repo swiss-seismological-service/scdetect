@@ -360,7 +360,6 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
     expired = originTime > *_triggerEnd;
 
     if (!expired && !newTrigger && !updatedResult &&
-        result.score <= _currentResult.value().score &&
         result.score >= triggerOffThreshold) {
       SCDETECT_LOG_DEBUG_PROCESSOR(this,
                                    "Detector result (triggered, dropped) %s",
