@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <cstddef>
 #include <iterator>
 #include <memory>
 #include <sstream>
@@ -15,10 +17,12 @@
 #include "../log.h"
 #include "../util/floating_point_comparison.h"
 #include "../util/math.h"
+#include "../util/memory.h"
 #include "../util/util.h"
 #include "arrival.h"
 #include "linker.h"
 #include "linker/association.h"
+#include "template_waveform_processor.h"
 
 namespace Seiscomp {
 namespace detect {
@@ -325,15 +329,6 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
                                      result.debugString().c_str());
 
         _triggerEnd = originTime + *_triggerDuration;
-        // XXX(damb): A side-note on trigger facilities when it comes to the
-        // linker:
-        // - The linker processes only those template results which are fed to
-        // the linker i.e. the linker is not aware of the the fact whether a
-        // template waveform processor is enabled or disabled, respectively.
-        // - Thus, the detector processor can force the linker into a *triggered
-        // state* by only feeding data to those processors which are part of the
-        // triggering event.
-        disableProcessorsNotContributing(result);
 
         newTrigger = true;
       } else {
@@ -349,7 +344,6 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
                                    result.debugString().c_str());
       _currentResult = result;
       _triggerEnd = originTime + *_triggerDuration;
-      disableProcessorsNotContributing(result);
 
       updatedResult = true;
     }
@@ -393,25 +387,6 @@ void DetectorImpl::processLinkerResult(const linker::Association &result) {
   if (!triggered()) {
     _currentResult = boost::none;
   }
-}
-
-void DetectorImpl::disableProcessorsNotContributing(
-    const linker::Association &result) {
-  // disable those processors not contributing to the triggering event
-  std::vector<std::string> contributing;
-  std::transform(std::begin(result.results), std::end(result.results),
-                 std::back_inserter(contributing),
-                 [](const linker::Association::TemplateResults::value_type &p) {
-                   return p.first;
-                 });
-  std::for_each(std::begin(_processors), std::end(_processors),
-                [](detail::ProcessorStatesType::value_type &p) {
-                  p.second.processor->disable();
-                });
-  std::for_each(std::begin(contributing), std::end(contributing),
-                [this](const std::string &proc_id) {
-                  _processors.at(proc_id).processor->enable();
-                });
 }
 
 void DetectorImpl::prepareResult(const linker::Association &linkerResult,
@@ -465,11 +440,6 @@ void DetectorImpl::emitResult(const DetectorImpl::Result &result) {
 
 void DetectorImpl::resetProcessing() {
   _currentResult = boost::none;
-  // enable processors
-  for (auto &procPair : _processors) {
-    procPair.second.processor->enable();
-  }
-
   resetTrigger();
 }
 
@@ -496,6 +466,41 @@ void DetectorImpl::storeTemplateResult(
              "). Reason: status=" + std::to_string(util::asInteger(status)) +
              ", statusValue=" + std::to_string(statusValue)};
     throw TemplateMatchingError{msg};
+  }
+
+  if (triggered()) {
+    bool contributing{_currentResult.value().results.count(processor->id()) ==
+                      1};
+    if (!contributing) {
+      const auto originArrivalOffset{
+          _linker.originArrivalOffset(processor->id())};
+
+      const auto matchResultArrivalEndTime{result->timeWindow.endTime() +
+                                           originArrivalOffset};
+      if (_triggerEnd.value_or(matchResultArrivalEndTime) >
+          matchResultArrivalEndTime) {
+        // XXX(damb): drop match result
+        return;
+      }
+
+      const auto matchResultArrivalStartTime{result->timeWindow.startTime() +
+                                             originArrivalOffset};
+      if (_triggerEnd.value_or(matchResultArrivalStartTime) >
+          matchResultArrivalStartTime) {
+        // XXX(damb): partly use the match result
+        auto overlapping{*_triggerEnd - matchResultArrivalStartTime};
+        auto samplingFrequency{
+            processor->templateWaveform().samplingFrequency()};
+        auto sampleOffset{
+            std::floor(static_cast<double>(overlapping) * samplingFrequency)};
+        auto slicedMatchResult{
+            util::make_unique<TemplateWaveformProcessor::MatchResult>(*result)};
+        slicedMatchResult->localMaxima.erase(
+            slicedMatchResult->localMaxima.begin(),
+            slicedMatchResult->localMaxima.begin() +
+                static_cast<int>(sampleOffset) + 1);
+      }
+    }
   }
 
   _linker.feed(processor, std::move(result));

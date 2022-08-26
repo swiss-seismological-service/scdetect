@@ -197,8 +197,6 @@ class DetectorImpl : public detect::processing::Processor {
 
   void processLinkerResult(const linker::Association &result);
 
-  void disableProcessorsNotContributing(const linker::Association &result);
-
   // Prepare detection
   void prepareResult(const linker::Association &linkerResult,
                      Result &result) const;
