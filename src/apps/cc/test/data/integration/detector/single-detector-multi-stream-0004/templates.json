@@ -11,24 +11,24 @@
         "filter": "",
         "templateFilter": "",
         "streams": [
-              {
-                  "templateId": "template-01",
-                  "initTime": 8,
-                  "templateWaveformStart": -4,
-                  "templateWaveformEnd": 5,
-                  "waveformId": "CH.GRIMS..HHZ",
-                  "templateWaveformId": "CH.GRIMS..HHZ",
-                  "templatePhase": "Pg"
-              },
-              {
-                  "templateId": "template-02",
-                  "initTime": 12,
-                  "templateWaveformStart": -3,
-                  "templateWaveformEnd": 3,
-                  "waveformId": "CH.HASLI..HHZ",
-                  "templateWaveformId": "CH.HASLI..HHZ",
-                  "templatePhase": "Pg"
-              }
+            {
+                "templateId": "template-01",
+                "initTime": 8,
+                "templateWaveformStart": -4,
+                "templateWaveformEnd": 5,
+                "waveformId": "CH.GRIMS..HHZ",
+                "templateWaveformId": "CH.GRIMS..HHZ",
+                "templatePhase": "Pg"
+            },
+            {
+                "templateId": "template-02",
+                "initTime": 12,
+                "templateWaveformStart": -3,
+                "templateWaveformEnd": 3,
+                "waveformId": "CH.HASLI..HHZ",
+                "templateWaveformId": "CH.HASLI..HHZ",
+                "templatePhase": "Pg"
+            }
         ]
     }
 ]
