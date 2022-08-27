@@ -10,7 +10,6 @@
   "triggerOffThreshold": 0.3,
   "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
   "filter": "BW_BP(2,1.5,15)",
-  "templateFilter": "BW_BP(2,1.5,15)",
   "streams": [
     {
       "templateId": "template-HHZ",
@@ -18,7 +17,6 @@
       "templateWaveformStart": -0.5,
       "templateWaveformEnd": 2,
       "waveformId": "8D.RAW2..HHZ",
-      "templateWaveformId": "8D.RAW2..HHZ",
       "templatePhase": "Pg"
    }
  ]
