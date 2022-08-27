@@ -12,20 +12,20 @@
         "filter": "",
         "templatePhase": "Pg",
         "streams": [
-              {
-                  "templateId": "template-01",
-                  "waveformId": "CH.GRIMS..HHZ",
-                  "initTime": 15,
-                  "templateWaveformStart": -2,
-                  "templateWaveformEnd": 2
-              },
-              {
-                  "templateId": "template-02",
-                  "waveformId": "CH.HASLI..HHZ",
-                  "initTime": 10,
-                  "templateWaveformStart": -1,
-                  "templateWaveformEnd": 4
-              }
+            {
+                "templateId": "template-01",
+                "waveformId": "CH.GRIMS..HHZ",
+                "initTime": 15,
+                "templateWaveformStart": -2,
+                "templateWaveformEnd": 2
+            },
+            {
+                "templateId": "template-02",
+                "waveformId": "CH.HASLI..HHZ",
+                "initTime": 10,
+                "templateWaveformStart": -1,
+                "templateWaveformEnd": 4
+            }
         ]
     }
 ]

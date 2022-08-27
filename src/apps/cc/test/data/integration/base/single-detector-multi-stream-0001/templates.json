@@ -1,46 +1,48 @@
-[{
-  "detectorId": "detector-00",
-  "createArrivals": true,
-  "createTemplateArrivals": false,
-  "gapInterpolation": false,
-  "triggerDuration": -1,
-  "triggerOnThreshold": 0.98,
-  "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
-  "filter": "",
-  "templateFilter": "",
-  "initTime": 10,
-  "templateWaveformStart": -0.5,
-  "templateWaveformEnd": 2,
-  "streams": [
+[
     {
-      "templateId": "template-00",
-      "waveformId": "8D.RAW2..HHZ",
-      "templatePhase": "Pg"
-   },
-    {
-      "templateId": "template-01",
-      "waveformId": "8D.RAW2..HHN",
-      "templatePhase": "Sg"
-   },
-   {
-      "templateId": "template-02",
-      "waveformId": "8D.RAW2..HHE",
-      "templatePhase": "Sg"
-   },
-   {
-      "templateId": "template-03",
-      "waveformId": "CH.SENIN..HHZ",
-      "templatePhase": "Pg"
-   },
-    {
-      "templateId": "template-04",
-      "waveformId": "CH.SENIN..HHN",
-      "templatePhase": "Sg"
-   },
-   {
-      "templateId": "template-05",
-      "waveformId": "CH.SENIN..HHE",
-      "templatePhase": "Sg"
-   }
-  ]
-}]
+        "detectorId": "detector-00",
+        "createArrivals": true,
+        "createTemplateArrivals": false,
+        "gapInterpolation": false,
+        "triggerDuration": -1,
+        "triggerOnThreshold": 0.98,
+        "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
+        "filter": "",
+        "templateFilter": "",
+        "initTime": 10,
+        "templateWaveformStart": -0.5,
+        "templateWaveformEnd": 2,
+        "streams": [
+            {
+                "templateId": "template-00",
+                "waveformId": "8D.RAW2..HHZ",
+                "templatePhase": "Pg"
+            },
+            {
+                "templateId": "template-01",
+                "waveformId": "8D.RAW2..HHN",
+                "templatePhase": "Sg"
+            },
+            {
+                "templateId": "template-02",
+                "waveformId": "8D.RAW2..HHE",
+                "templatePhase": "Sg"
+            },
+            {
+                "templateId": "template-03",
+                "waveformId": "CH.SENIN..HHZ",
+                "templatePhase": "Pg"
+            },
+            {
+                "templateId": "template-04",
+                "waveformId": "CH.SENIN..HHN",
+                "templatePhase": "Sg"
+            },
+            {
+                "templateId": "template-05",
+                "waveformId": "CH.SENIN..HHE",
+                "templatePhase": "Sg"
+            }
+        ]
+    }
+]
