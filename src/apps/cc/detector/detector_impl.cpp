@@ -491,14 +491,22 @@ void DetectorImpl::storeTemplateResult(
         auto overlapping{*_triggerEnd - matchResultArrivalStartTime};
         auto samplingFrequency{
             processor->templateWaveform().samplingFrequency()};
-        auto sampleOffset{
-            std::floor(static_cast<double>(overlapping) * samplingFrequency)};
+        auto sampleOffset{std::max(
+            static_cast<int>(std::floor(static_cast<double>(overlapping) *
+                                        samplingFrequency)),
+            0)};
         auto slicedMatchResult{
-            util::make_unique<TemplateWaveformProcessor::MatchResult>(*result)};
-        slicedMatchResult->localMaxima.erase(
-            slicedMatchResult->localMaxima.begin(),
-            slicedMatchResult->localMaxima.begin() +
-                static_cast<int>(sampleOffset) + 1);
+            util::make_unique<TemplateWaveformProcessor::MatchResult>()};
+        slicedMatchResult->localMaxima =
+            TemplateWaveformProcessor::MatchResult::LocalMaxima{
+                result->localMaxima.begin() + sampleOffset,
+                result->localMaxima.end()};
+
+        slicedMatchResult->timeWindow = result->timeWindow;
+
+        if (slicedMatchResult->localMaxima.empty()) {
+          return;
+        }
       }
     }
   }
