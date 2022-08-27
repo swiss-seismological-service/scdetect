@@ -3,6 +3,7 @@
   "createArrivals": true,
   "createTemplateArrivals": false,
   "gapInterpolation": false,
+  "triggerDuration": -1,
   "triggerOnThreshold": 0.98,
   "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
   "filter": "",

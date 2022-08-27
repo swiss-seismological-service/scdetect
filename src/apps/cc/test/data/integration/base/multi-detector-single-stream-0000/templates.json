@@ -7,7 +7,6 @@
         "gapTolerance": 1.5,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0.9,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
               {
@@ -16,9 +15,7 @@
                   "templateWaveformStart": -2,
                   "templateWaveformEnd": 2,
                   "waveformId": "CH.GRIMS..HHZ",
-                  "templateWaveformId": "CH.GRIMS..HHZ",
                   "filter": "",
-                  "templateFilter": "",
                   "templatePhase": "Pg"
               }
         ]
@@ -31,7 +28,6 @@
         "gapTolerance": 1.5,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0.9,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
               {
@@ -40,9 +36,7 @@
                   "templateWaveformStart": -2,
                   "templateWaveformEnd": 2,
                   "waveformId": "CH.HASLI..HHZ",
-                  "templateWaveformId": "CH.HASLI..HHZ",
                   "filter": "",
-                  "templateFilter": "",
                   "templatePhase": "Pg"
               }
         ]
