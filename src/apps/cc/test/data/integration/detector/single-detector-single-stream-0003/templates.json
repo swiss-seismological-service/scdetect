@@ -7,7 +7,7 @@
         "gapThreshold": 0.1,
         "gapTolerance": 1.5,
         "triggerDuration": -1,
-        "triggerOnThreshold": 0.6,
+        "triggerOnThreshold": 0.45,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20191105125505.255283.1897990",
         "filter": "BW_BP(2,1.5,15)",
         "streams": [

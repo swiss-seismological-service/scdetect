@@ -4,8 +4,8 @@ Detect multiple events with short interevent time
 
   + Test detection to detect two events that occur within 5 seconds.
   + Trigger facilities enabled; though the configured `"triggerDuration"` is
-  less than the interevent time, i.e. both detection candidates should qualify
-  for a detection.
+  greater than the interevent time, i.e. one detection candidate should be
+  dropped due to an update of the triggering detection candidate
 
 - Data and streams:
 
