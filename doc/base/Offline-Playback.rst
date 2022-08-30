@@ -523,8 +523,9 @@ from the database with :external:ref:`scxmldump`:
 
 For the purpose of this tutorial you can download the template EventParameter
 data from
-`here <https://github.com/swiss-seismological-service/scdetect/tree/master/doc/data/ex-02/template.scml>`__, since
-you don't have access to the database.
+`here
+<https://github.com/swiss-seismological-service/scdetect/tree/master/doc/data/Offline-Playback/ex-02/template.scml>`__,
+since you don't have access to the database.
 
 Waveform data
 ~~~~~~~~~~~~~
