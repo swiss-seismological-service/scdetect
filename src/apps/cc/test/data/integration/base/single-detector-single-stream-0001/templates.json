@@ -5,20 +5,17 @@
         "createTemplateArrivals": true,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
-              {
-                  "templateId": "template-01",
-                  "initTime": 10,
-                  "templateWaveformStart": -2,
-                  "templateWaveformEnd": 2,
-                  "waveformId": "CH.GRIMS..HHZ",
-                  "templateWaveformId": "CH.GRIMS..HHZ",
-                  "templatePhase": "Pg",
-                  "filter": "",
-                  "templateFilter": ""
-              }
+            {
+                "templateId": "template-01",
+                "initTime": 10,
+                "templateWaveformStart": -2,
+                "templateWaveformEnd": 2,
+                "waveformId": "CH.GRIMS..HHZ",
+                "templatePhase": "Pg",
+                "filter": ""
+            }
         ]
     }
 ]

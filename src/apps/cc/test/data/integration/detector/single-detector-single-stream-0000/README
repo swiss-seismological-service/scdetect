@@ -3,6 +3,7 @@ Detect multiple events with short interevent time
 - Configuration:
 
   + Test detection to detect two events that occur within 5 seconds.
+  + Trigger facilities disabled.
 
 - Data and streams:
 

@@ -1,0 +1,858 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <Inventory>
+    <sensor publicID="Sensor/20220518130553.471266.7" name="CH.SENIN.HHZ.2002.037.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ#20020206000000.000000.12.1">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.471676.11" name="CH.SENIN.HHN.2002.037.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ#20020206000000.000000.12.1">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.471958.15" name="CH.SENIN.HHE.2002.037.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ#20020206000000.000000.12.1">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.472183.19" name="CH.SENIN.HGE.2002.044.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.472637.27" name="CH.SENIN.HGN.2002.044.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.473019.35" name="CH.SENIN.HGZ.2002.044.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.473398.43" name="CH.SENIN.HHE.2002.044.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.714925.28">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.473713.51" name="CH.SENIN.HHN.2002.044.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.714925.28">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.474056.59" name="CH.SENIN.HHZ.2002.044.00.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.714925.28">
+      <description>Streckeisen STS2_gen3</description>
+      <model>STS2_gen3</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.474417.67" name="CH.SENIN.HHE.2016.309.19.00.00" response="smi:ch.ethz.sed/ResponsePAZ/sts2.5.20161111121727.47471">
+      <description>Streckeisen STS2.5</description>
+      <model>STS2.5</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.474684.73" name="CH.SENIN.HHN.2016.309.19.00.00" response="smi:ch.ethz.sed/ResponsePAZ/sts2.5.20161111121727.47471">
+      <description>Streckeisen STS2.5</description>
+      <model>STS2.5</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.474999.79" name="CH.SENIN.HHZ.2016.309.19.00.00" response="smi:ch.ethz.sed/ResponsePAZ/sts2.5.20161111121727.47471">
+      <description>Streckeisen STS2.5</description>
+      <model>STS2.5</model>
+      <manufacturer>Streckeisen</manufacturer>
+      <unit>M/S</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.475319.85" name="CH.SENIN.HGE.2016.309.19.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.475622.91" name="CH.SENIN.HGN.2016.309.19.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.475935.97" name="CH.SENIN.HGZ.2016.309.19.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.476404.105" name="CH.SAYF2.HGE.2015.119.09.01.26" response="smi:ch.ethz.sed/ResponsePAZ#20150511091341.360389.12">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.47675.113" name="CH.SAYF2.HGN.2015.119.09.01.26" response="smi:ch.ethz.sed/ResponsePAZ#20150511091341.360389.12">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.477172.121" name="CH.SAYF2.HGZ.2015.119.09.01.26" response="smi:ch.ethz.sed/ResponsePAZ#20150511091341.360389.12">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.477725.131" name="CH.STSW2.HGE.2016.229.16.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.47809.139" name="CH.STSW2.HGN.2016.229.16.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <sensor publicID="Sensor/20220518130553.478449.147" name="CH.STSW2.HGZ.2016.229.16.00.00" response="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49">
+      <description>Kinemetrics EpiSensor ES-T</description>
+      <model>EpiSensor ES-T</model>
+      <manufacturer>Kinemetrics</manufacturer>
+      <unit>M/S**2</unit>
+    </sensor>
+    <datalogger publicID="Datalogger/20220518130553.471131.6" name="CH.SENIN.HHZ.2002.037.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1"/>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.471631.10" name="CH.SENIN.HHN.2002.037.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1"/>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.471927.14" name="CH.SENIN.HHE.2002.037.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1"/>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.472155.18" name="CH.SENIN.HGE.2002.044.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32 smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.472605.26" name="CH.SENIN.HGN.2002.044.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32 smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.47299.34" name="CH.SENIN.HGZ.2002.044.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32 smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.473369.42" name="CH.SENIN.HHE.2002.044.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32 smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.473685.50" name="CH.SENIN.HHN.2002.044.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32 smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.474024.58" name="CH.SENIN.HHZ.2002.044.00.00.00">
+      <digitizerModel>HRD24</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>418410</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="120" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30 smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32 smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.474388.66" name="CH.SENIN.HHE.2016.309.19.00.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="200" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3 smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.474655.72" name="CH.SENIN.HHN.2016.309.19.00.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="200" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3 smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.474971.78" name="CH.SENIN.HHZ.2016.309.19.00.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="200" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3 smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.47529.84" name="CH.SENIN.HGE.2016.309.19.00.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>0.25</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="200" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3 smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.475593.90" name="CH.SENIN.HGN.2016.309.19.00.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>0.25</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="200" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3 smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.475904.96" name="CH.SENIN.HGZ.2016.309.19.00.00">
+      <digitizerModel>Q330HRS</digitizerModel>
+      <digitizerManufacturer>Quanterra</digitizerManufacturer>
+      <gain>0.25</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="200" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3 smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.476375.104" name="CH.SAYF2.HGE.2015.119.09.01.26">
+      <digitizerModel>Centaur</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="250" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6 smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7 smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8 smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.476718.112" name="CH.SAYF2.HGN.2015.119.09.01.26">
+      <digitizerModel>Centaur</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="250" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6 smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7 smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8 smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.477143.120" name="CH.SAYF2.HGZ.2015.119.09.01.26">
+      <digitizerModel>Centaur</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="250" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6 smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7 smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8 smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.477696.130" name="CH.STSW2.HGE.2016.229.16.00.00">
+      <digitizerModel>Centaur</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="250" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6 smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7 smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8 smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.478056.138" name="CH.STSW2.HGN.2016.229.16.00.00">
+      <digitizerModel>Centaur</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="250" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6 smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7 smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8 smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <datalogger publicID="Datalogger/20220518130553.478421.146" name="CH.STSW2.HGZ.2016.229.16.00.00">
+      <digitizerModel>Centaur</digitizerModel>
+      <digitizerManufacturer>Nanometrics</digitizerManufacturer>
+      <gain>1</gain>
+      <maxClockDrift>0</maxClockDrift>
+      <decimation sampleRateNumerator="250" sampleRateDenominator="1">
+        <digitalFilterChain>smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6 smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7 smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8 smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9</digitalFilterChain>
+      </decimation>
+    </datalogger>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ#20020206000000.000000.12.1" name="SENIN.2002.37.HH.STS2.N000.1">
+      <type>A</type>
+      <gain>1499.997923</gain>
+      <gainFrequency>5</gainFrequency>
+      <normalizationFactor>1</normalizationFactor>
+      <normalizationFrequency>5</normalizationFrequency>
+      <numberOfZeros>1</numberOfZeros>
+      <numberOfPoles>1</numberOfPoles>
+      <zeros>(0,0)</zeros>
+      <poles>(-0.052,0)</poles>
+    </responsePAZ>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ/20150105111101.720641.49" name="SENIN.2002.044.GZ">
+      <type>A</type>
+      <gain>1.0197</gain>
+      <gainFrequency>0.2</gainFrequency>
+      <normalizationFactor>2.46e+13</normalizationFactor>
+      <normalizationFrequency>0.2</normalizationFrequency>
+      <numberOfZeros>0</numberOfZeros>
+      <numberOfPoles>4</numberOfPoles>
+      <zeros/>
+      <poles>(-981,-1009) (-981,1009) (-3290,-1263) (-3290,1263)</poles>
+    </responsePAZ>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ/20150105111101.714925.28" name="SENIN.2002.044.HZ">
+      <type>A</type>
+      <gain>1500</gain>
+      <gainFrequency>1</gainFrequency>
+      <normalizationFactor>3.4684e+17</normalizationFactor>
+      <normalizationFrequency>1</normalizationFrequency>
+      <numberOfZeros>6</numberOfZeros>
+      <numberOfPoles>11</numberOfPoles>
+      <zeros>(0,0) (0,0) (-15.15,0) (-176.6,0) (-463.1,-430.5) (-463.1,430.5)</zeros>
+      <poles>(-0.037,-0.037) (-0.037,0.037) (-15.64,0) (-97.34,-400.7) (-97.34,400.7) (-374.8,0) (-520.3,0) (-10530,-10050) (-10530,10050) (-13300,0) (-255.097,0)</poles>
+    </responsePAZ>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ/sts2.5.20161111121727.47471" name="PAZ.STS2.5.120.1500.47471">
+      <type>A</type>
+      <gain>1500</gain>
+      <gainFrequency>0.05</gainFrequency>
+      <normalizationFactor>0.000157286</normalizationFactor>
+      <normalizationFrequency>0.05</normalizationFrequency>
+      <numberOfZeros>8</numberOfZeros>
+      <numberOfPoles>7</numberOfPoles>
+      <zeros>(0,0) (0,0) (-15.708,0) (-15.708,0) (-630.203,0) (-556.062,-936.195) (-556.062,936.195) (-973.894,0)</zeros>
+      <poles>(-0.03702,0.03702) (-0.03702,-0.03702) (-16.041,0) (-16.041,0) (-327.354,-74.1416) (-327.354,74.1416) (-973.894,0)</poles>
+    </responsePAZ>
+    <responsePAZ publicID="smi:ch.ethz.sed/ResponsePAZ#20150511091341.360389.12" name="SAYF2.2015.119.GE">
+      <type>A</type>
+      <gain>1.0197</gain>
+      <gainFrequency>1</gainFrequency>
+      <normalizationFactor>2.45957e+13</normalizationFactor>
+      <normalizationFrequency>1</normalizationFrequency>
+      <numberOfZeros>0</numberOfZeros>
+      <numberOfPoles>4</numberOfPoles>
+      <zeros/>
+      <poles>(-981,1009) (-981,-1009) (-3290,1263) (-3290,-1263)</poles>
+    </responsePAZ>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111101.715451.30" name="SENIN..HGE.2002.044.stage_3">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>5</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>17</numberOfCoefficients>
+      <symmetry>C</symmetry>
+      <coefficients>3.78878e-05 0.000199727 0.000591277 0.00119834 0.0016772 0.00123444 -0.00115877 -0.00607173 -0.0126102 -0.0176668 -0.0161537 -0.00263181 0.0260166 0.0680539 0.115986 0.158234 0.18305</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111101.715873.32" name="SENIN..HGE.2002.044.stage_5">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>5</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>28</numberOfCoefficients>
+      <symmetry>C</symmetry>
+      <coefficients>1.27829e-05 4.86436e-05 0.000114412 0.000191012 0.000219187 0.000104308 -0.00024263 -0.000828811 -0.00149734 -0.00189428 -0.00154402 -5.73342e-05 0.00257422 0.00572408 0.00808691 0.00798133 0.00400912 -0.00410132 -0.0148003 -0.0245514 -0.0284513 -0.0216121 -0.000939619 0.0333076 0.0768324 0.121895 0.159156 0.180251</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/20150105111101.71619.33" name="SENIN..HGE.2002.044.stage_6">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>2</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>59</numberOfCoefficients>
+      <symmetry>C</symmetry>
+      <coefficients>-1.0469e-05 -2.37758e-05 -5.71898e-06 3.42359e-05 3.05109e-05 -4.39314e-05 -7.44501e-05 3.35697e-05 0.000136269 1.27756e-05 -0.000202509 -0.000112215 0.000248813 0.000273009 -0.000237879 -0.000488299 0.000125725 0.000727343 0.000129368 -0.000931762 -0.000552402 0.00101653 0.00113568 -0.000879633 -0.00182378 0.000420099 0.00250427 0.000436356 -0.00300832 -0.00170771 0.00312431 0.00332718 -0.00262574 -0.00512246 0.00131145 0.00680853 0.000946345 -0.00799837 -0.00415349 0.00823239 0.00815258 -0.00702311 -0.0125959 0.003906 0.0169353 0.00151894 -0.0204222 -0.00957991 0.0220943 0.0206082 -0.0206774 -0.0352195 0.0141705 0.0552558 0.00190459 -0.087902 -0.0450415 0.182297 0.410586</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.3563.6054.3" name="FIR.q330hrs.1.200.6054.stage_3">
+      <gain>1677720</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>1</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>1</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR/q330hrs.1.200.20161111121727.34563.6054.4" name="FIR.q330hrs.1.200.6054.stage_4">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>18</delay>
+      <correction>18</correction>
+      <numberOfCoefficients>35</numberOfCoefficients>
+      <symmetry>A</symmetry>
+      <coefficients>1.75091e-09 0.000192664 0.00182911 -0.00019043 -0.00520612 0.0034918 -0.00400027 -0.00126164 0.00762364 -0.0162003 0.021477 -0.0203537 0.008034 0.0169339 -0.0540392 0.0993621 -0.148949 0.209459 0.835881 0.113934 -0.119634 0.095821 -0.0623287 0.0289866 -0.00281723 -0.0132018 0.0184771 -0.0164801 0.00964629 -0.0036507 -0.00226389 0.00261454 -0.0052992 0.000480609 0.00163137</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR#20150511091341.35547.6" name="SAYF2..HGE.2015.119.stage_3">
+      <gain>400000</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>1</decimationFactor>
+      <delay>0</delay>
+      <correction>0</correction>
+      <numberOfCoefficients>1</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>1</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR#20150511091341.355919.7" name="SAYF2..HGE.2015.119.stage_4">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>15</decimationFactor>
+      <delay>93</delay>
+      <correction>93</correction>
+      <numberOfCoefficients>94</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>8.02103e-10 3.11646e-09 8.90012e-09 2.13615e-08 4.57078e-08 8.98745e-08 1.65351e-07 2.88014e-07 4.7885e-07 7.64393e-07 1.17668e-06 1.75246e-06 2.53137e-06 3.55281e-06 4.8513e-06 6.45004e-06 8.35279e-06 1.0534e-05 1.29278e-05 1.5416e-05 1.7817e-05 1.98754e-05 2.12557e-05 2.15397e-05 2.02322e-05 1.67738e-05 1.05659e-05 1.00638e-06 -1.2462e-05 -3.02902e-05 -5.27512e-05 -7.986e-05 -0.000111289 -0.000146286 -0.000183598 -0.000221419 -0.000257352 -0.000288419 -0.000311108 -0.00032147 -0.000315282 -0.00028826 -0.000236336 -0.000155987 -4.46005e-05 9.91275e-05 0.0002748 0.000479944 0.000709694 0.000956557 0.0012103 0.00145799 0.00168419 0.0018714 0.00200063 0.00205226 0.00200702 0.0018472 0.00155794 0.00112859 0.000554082 -0.000163793 -0.00101525 -0.00198166 -0.00303498 -0.00413766 -0.00524295 -0.00629572 -0.00723383 -0.00799001 -0.00849415 -0.00867606 -0.00846848 -0.0078103 -0.0066498 -0.00494776 -0.00268029 0.000158748 0.00355598 0.00747742 0.0118682 0.0166533 0.021739 0.0270151 0.0323585 0.0376371 0.0427138 0.0474521 0.0517204 0.0553974 0.0583764 0.0605701 0.0619131 0.0623653</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR#20150511091341.357244.8" name="SAYF2..HGE.2015.119.stage_5">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>4</decimationFactor>
+      <delay>36</delay>
+      <correction>36</correction>
+      <numberOfCoefficients>37</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>2.01396e-08 7.82991e-08 3.55683e-08 -6.57895e-07 -2.83818e-06 -6.3396e-06 -7.57955e-06 1.52542e-06 2.86747e-05 6.80361e-05 8.62136e-05 2.66332e-05 -0.000148875 -0.000389408 -0.00050965 -0.000250902 0.000514877 0.00152834 0.00205876 0.00122008 -0.0013174 -0.00461615 -0.00642371 -0.0042589 0.00263346 0.0116303 0.0169162 0.0123015 -0.00424353 -0.0269388 -0.0423739 -0.0347559 0.00561384 0.0750812 0.155254 0.219359 0.243844</coefficients>
+    </responseFIR>
+    <responseFIR publicID="smi:ch.ethz.sed/ResponseFIR#20150511091341.357866.9" name="SAYF2..HGE.2015.119.stage_6">
+      <gain>1</gain>
+      <gainFrequency>0</gainFrequency>
+      <decimationFactor>2</decimationFactor>
+      <delay>111</delay>
+      <correction>111</correction>
+      <numberOfCoefficients>112</numberOfCoefficients>
+      <symmetry>B</symmetry>
+      <coefficients>-2.4877e-10 4.73744e-09 1.24032e-08 2.18423e-09 -2.9735e-08 -2.7741e-08 4.8235e-08 9.04852e-08 -4.3772e-08 -2.02925e-07 -2.93251e-08 3.57677e-07 2.38076e-07 -5.05054e-07 -6.56661e-07 5.29514e-07 1.33303e-06 -2.35391e-07 -2.23456e-06 -6.43189e-07 3.17885e-06 2.39189e-06 -3.76643e-06 -5.21313e-06 3.34388e-06 9.06984e-06 -1.0342e-06 -1.34948e-05 -4.1282e-06 1.74081e-05 1.29325e-05 -1.90112e-05 -2.55982e-05 1.58385e-05 4.12985e-05 -5.05136e-06 -5.76943e-05 -1.59734e-05 7.06232e-05 4.87621e-05 -7.41182e-05 -9.2656e-05 6.09281e-05 0.000143704 -2.36571e-05 -0.000193818 -4.34607e-05 0.000230529 0.0001423 -0.000237697 -0.00026842 0.00019742 0.000408986 -9.32264e-05 -0.000541667 -8.56506e-05 0.000635146 0.000339424 -0.000651794 -0.000653162 0.000552734 0.000993533 -0.000305133 -0.00130802 -0.000108987 0.00152764 0.000683646 -0.00157381 -0.00138119 0.00136932 0.00212784 -0.000852739 -0.00281433 -5.43598e-06 0.00330293 0.00118724 -0.00344149 -0.00261502 0.00308386 0.00414554 -0.00211493 -0.00557267 0.000477543 0.00664017 0.00180254 -0.00706464 -0.00459738 0.00656694 0.0076669 -0.00490895 -0.0106603 0.00193106 0.0131289 0.00241487 -0.0145476 -0.00804248 0.0143373 0.0147221 -0.0118736 -0.022089 0.00645106 0.0296694 0.00287172 -0.0369222 -0.0177764 0.0432915 0.0424836 -0.0482648 -0.0928087 0.0514286 0.313777 0.447486</coefficients>
+    </responseFIR>
+    <network publicID="NET/CH/20220518130553.469988.4108" code="CH">
+      <start>1980-01-01T00:00:00.0000Z</start>
+      <description>National Seismic Networks of Switzerland</description>
+      <restricted>false</restricted>
+      <shared>true</shared>
+      <station publicID="STA/CH/SENIN/20220518130553.470626.4109" code="SENIN">
+        <start>2002-02-06T00:00:00.0000Z</start>
+        <description>Lac de Senin, Sanetsch, VS</description>
+        <latitude>46.36335</latitude>
+        <longitude>7.29938</longitude>
+        <elevation>2019.6</elevation>
+        <country>Switzerland</country>
+        <restricted>false</restricted>
+        <shared>true</shared>
+        <sensorLocation publicID="LOC/CH/SENIN//20220518130553.470831.4110" code="">
+          <start>2002-02-06T00:00:00.0000Z</start>
+          <latitude>46.36335</latitude>
+          <longitude>7.29938</longitude>
+          <elevation>2019.6</elevation>
+          <stream publicID="Stream/20220518130553.470981.5" code="HHZ" datalogger="Datalogger/20220518130553.471131.6" sensor="Sensor/20220518130553.471266.7">
+            <start>2002-02-06T00:00:00.0000Z</start>
+            <end>2002-02-13T00:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>627614130.9</gain>
+            <gainFrequency>5</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.471545.9" code="HHN" datalogger="Datalogger/20220518130553.471631.10" sensor="Sensor/20220518130553.471676.11">
+            <start>2002-02-06T00:00:00.0000Z</start>
+            <end>2002-02-13T00:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>627614130.9</gain>
+            <gainFrequency>5</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.471843.13" code="HHE" datalogger="Datalogger/20220518130553.471927.14" sensor="Sensor/20220518130553.471958.15">
+            <start>2002-02-06T00:00:00.0000Z</start>
+            <end>2002-02-13T00:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>627614130.9</gain>
+            <gainFrequency>5</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.47207.17" code="HGE" datalogger="Datalogger/20220518130553.472155.18" sensor="Sensor/20220518130553.472183.19">
+            <start>2002-02-13T00:00:00.0000Z</start>
+            <end>2016-11-04T19:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>426724</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.472518.25" code="HGN" datalogger="Datalogger/20220518130553.472605.26" sensor="Sensor/20220518130553.472637.27">
+            <start>2002-02-13T00:00:00.0000Z</start>
+            <end>2016-11-04T19:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>426724</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.472907.33" code="HGZ" datalogger="Datalogger/20220518130553.47299.34" sensor="Sensor/20220518130553.473019.35">
+            <start>2002-02-13T00:00:00.0000Z</start>
+            <end>2016-11-04T19:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>426724</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.473285.41" code="HHE" datalogger="Datalogger/20220518130553.473369.42" sensor="Sensor/20220518130553.473398.43">
+            <start>2002-02-13T00:00:00.0000Z</start>
+            <end>2016-11-04T19:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>627615000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.473601.49" code="HHN" datalogger="Datalogger/20220518130553.473685.50" sensor="Sensor/20220518130553.473713.51">
+            <start>2002-02-13T00:00:00.0000Z</start>
+            <end>2016-11-04T19:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>627615000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.47394.57" code="HHZ" datalogger="Datalogger/20220518130553.474024.58" sensor="Sensor/20220518130553.474056.59">
+            <start>2002-02-13T00:00:00.0000Z</start>
+            <end>2016-11-04T19:00:00.0000Z</end>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>120</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>-0.2</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>627615000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.474301.65" code="HHE" datalogger="Datalogger/20220518130553.474388.66" sensor="Sensor/20220518130553.474417.67">
+            <start>2016-11-04T19:00:00.0000Z</start>
+            <dataloggerSerialNumber>5660</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>131006</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>200</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>2517870000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.47457.71" code="HHN" datalogger="Datalogger/20220518130553.474655.72" sensor="Sensor/20220518130553.474684.73">
+            <start>2016-11-04T19:00:00.0000Z</start>
+            <dataloggerSerialNumber>5660</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>131006</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>200</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>2517870000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.474888.77" code="HHZ" datalogger="Datalogger/20220518130553.474971.78" sensor="Sensor/20220518130553.474999.79">
+            <start>2016-11-04T19:00:00.0000Z</start>
+            <dataloggerSerialNumber>5660</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>131006</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>200</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>2517870000</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.475207.83" code="HGE" datalogger="Datalogger/20220518130553.47529.84" sensor="Sensor/20220518130553.475319.85">
+            <start>2016-11-04T19:00:00.0000Z</start>
+            <dataloggerSerialNumber>5660</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>6666</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>200</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>427702</gain>
+            <gainFrequency>0.2</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.475509.89" code="HGN" datalogger="Datalogger/20220518130553.475593.90" sensor="Sensor/20220518130553.475622.91">
+            <start>2016-11-04T19:00:00.0000Z</start>
+            <dataloggerSerialNumber>5660</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>6666</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>200</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>427702</gain>
+            <gainFrequency>0.2</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.475811.95" code="HGZ" datalogger="Datalogger/20220518130553.475904.96" sensor="Sensor/20220518130553.475935.97">
+            <start>2016-11-04T19:00:00.0000Z</start>
+            <dataloggerSerialNumber>5660</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>6666</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>200</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>427702</gain>
+            <gainFrequency>0.2</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+        </sensorLocation>
+      </station>
+      <station publicID="STA/CH/SAYF2/20220518130553.476142.4205" code="SAYF2">
+        <start>2015-04-29T09:01:26.0000Z</start>
+        <description>Ayent-Fortunoz, Trafohaus, VS</description>
+        <latitude>46.288025</latitude>
+        <longitude>7.416981</longitude>
+        <elevation>1025.3</elevation>
+        <country>Switzerland</country>
+        <restricted>false</restricted>
+        <shared>true</shared>
+        <sensorLocation publicID="LOC/CH/SAYF2//20220518130553.476239.4206" code="">
+          <start>2015-04-29T09:01:26.0000Z</start>
+          <latitude>46.288025</latitude>
+          <longitude>7.416981</longitude>
+          <elevation>1025.3</elevation>
+          <stream publicID="Stream/20220518130553.476291.103" code="HGE" datalogger="Datalogger/20220518130553.476375.104" sensor="Sensor/20220518130553.476404.105">
+            <start>2015-04-29T09:01:26.0000Z</start>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>250</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>407880</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.476631.111" code="HGN" datalogger="Datalogger/20220518130553.476718.112" sensor="Sensor/20220518130553.47675.113">
+            <start>2015-04-29T09:01:26.0000Z</start>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>250</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>407880</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.477052.119" code="HGZ" datalogger="Datalogger/20220518130553.477143.120" sensor="Sensor/20220518130553.477172.121">
+            <start>2015-04-29T09:01:26.0000Z</start>
+            <dataloggerSerialNumber>xxxx</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>yyyy</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>250</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>0</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>407880</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+        </sensorLocation>
+      </station>
+      <station publicID="STA/CH/STSW2/20220518130553.477469.4233" code="STSW2">
+        <start>2016-08-16T16:00:00.0000Z</start>
+        <description>Tseuzier, Stausee, VS</description>
+        <latitude>46.34522</latitude>
+        <longitude>7.43375</longitude>
+        <elevation>1774</elevation>
+        <country>Switzerland</country>
+        <restricted>false</restricted>
+        <shared>true</shared>
+        <sensorLocation publicID="LOC/CH/STSW2//20220518130553.477561.4234" code="">
+          <start>2016-08-16T16:00:00.0000Z</start>
+          <latitude>46.34522</latitude>
+          <longitude>7.43375</longitude>
+          <elevation>1774</elevation>
+          <stream publicID="Stream/20220518130553.477612.129" code="HGE" datalogger="Datalogger/20220518130553.477696.130" sensor="Sensor/20220518130553.477725.131">
+            <start>2016-08-16T16:00:00.0000Z</start>
+            <dataloggerSerialNumber>1400</dataloggerSerialNumber>
+            <dataloggerChannel>2</dataloggerChannel>
+            <sensorSerialNumber>7212</sensorSerialNumber>
+            <sensorChannel>2</sensorChannel>
+            <sampleRateNumerator>250</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>1</depth>
+            <azimuth>90</azimuth>
+            <dip>0</dip>
+            <gain>407880</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.477969.137" code="HGN" datalogger="Datalogger/20220518130553.478056.138" sensor="Sensor/20220518130553.47809.139">
+            <start>2016-08-16T16:00:00.0000Z</start>
+            <dataloggerSerialNumber>1400</dataloggerSerialNumber>
+            <dataloggerChannel>1</dataloggerChannel>
+            <sensorSerialNumber>7212</sensorSerialNumber>
+            <sensorChannel>1</sensorChannel>
+            <sampleRateNumerator>250</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>1</depth>
+            <azimuth>0</azimuth>
+            <dip>0</dip>
+            <gain>407880</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+          <stream publicID="Stream/20220518130553.478332.145" code="HGZ" datalogger="Datalogger/20220518130553.478421.146" sensor="Sensor/20220518130553.478449.147">
+            <start>2016-08-16T16:00:00.0000Z</start>
+            <dataloggerSerialNumber>1400</dataloggerSerialNumber>
+            <dataloggerChannel>0</dataloggerChannel>
+            <sensorSerialNumber>7212</sensorSerialNumber>
+            <sensorChannel>0</sensorChannel>
+            <sampleRateNumerator>250</sampleRateNumerator>
+            <sampleRateDenominator>1</sampleRateDenominator>
+            <depth>1</depth>
+            <azimuth>0</azimuth>
+            <dip>-90</dip>
+            <gain>407880</gain>
+            <gainFrequency>1</gainFrequency>
+            <gainUnit>M/S**2</gainUnit>
+            <restricted>false</restricted>
+          </stream>
+        </sensorLocation>
+      </station>
+    </network>
+  </Inventory>
+</seiscomp>

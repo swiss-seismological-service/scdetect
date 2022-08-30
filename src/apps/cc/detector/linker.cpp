@@ -18,6 +18,11 @@ Linker::Linker(const Core::TimeSpan &onHold,
                const Core::TimeSpan &arrivalOffsetThres)
     : _thresArrivalOffset{arrivalOffsetThres}, _onHold{onHold} {}
 
+const Core::TimeSpan &Linker::originArrivalOffset(
+    const std::string &processorId) const {
+  return _processors.at(processorId).arrival.pick.offset;
+}
+
 void Linker::setThresArrivalOffset(
     const boost::optional<Core::TimeSpan> &thres) {
   _thresArrivalOffset = thres;

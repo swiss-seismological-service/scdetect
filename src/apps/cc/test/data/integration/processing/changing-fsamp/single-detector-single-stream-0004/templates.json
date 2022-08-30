@@ -7,17 +7,17 @@
         "triggerOffThreshold": 0.9,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
-              {
-                  "templateId": "template-01",
-                  "initTime": 10,
-                  "templateWaveformStart": -1,
-                  "templateWaveformEnd": 1,
-                  "waveformId": "CH.GRIMS..HHZ",
-                  "templateWaveformId": "CH.GRIMS..HHZ",
-                  "templatePhase": "Pg",
-                  "filter": "RMHP(4)>>BW_BP(2,1,20)",
-                  "templateFilter": "RMHP(4)>>BW_BP(2,1,20)"
-              }
+            {
+                "templateId": "template-01",
+                "initTime": 10,
+                "templateWaveformStart": -1,
+                "templateWaveformEnd": 1,
+                "waveformId": "CH.GRIMS..HHZ",
+                "templateWaveformId": "CH.GRIMS..HHZ",
+                "templatePhase": "Pg",
+                "filter": "RMHP(4)>>BW_BP(2,1,20)",
+                "templateFilter": "RMHP(4)>>BW_BP(2,1,20)"
+            }
         ]
     }
 ]

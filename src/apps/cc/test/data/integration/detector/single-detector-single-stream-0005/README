@@ -1,0 +1,15 @@
+Detect multiple events with short interevent time
+
+- Configuration:
+
+  + Test detection to detect two events that occur within 3 seconds.
+  + Trigger facilities are enabled. The configured `"triggerDuration"`
+  is greater than interevent duration. Therefore, one detection candidate is
+  dropped due to a lower score.
+
+- Data and streams:
+
+```
+8D.RAW2..HHZ | 2019-11-05T04:19:58.390000Z - 2019-11-05T04:26:01.615000Z | 200.0 Hz, 72646 samples
+8D.RAW2..HHZ | 2019-11-05T04:45:00.000000Z - 2019-11-05T04:46:00.000000Z | 200.0 Hz, 12001 samples
+```

@@ -26,6 +26,10 @@ class Linker {
                   const Core::TimeSpan &arrivalOffsetThres = Core::TimeSpan{
                       2.0e-6});
 
+  // Returns the origin-arrival offset for the processor identified by
+  // `processorId`
+  const Core::TimeSpan &originArrivalOffset(
+      const std::string &processorId) const;
   // Sets the arrival offset threshold
   void setThresArrivalOffset(const boost::optional<Core::TimeSpan> &thres);
   // Returns the current arrival offset threshold

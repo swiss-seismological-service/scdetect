@@ -4,20 +4,17 @@
         "createArrivals": true,
         "triggerDuration": -1,
         "triggerOnThreshold": 0.98,
-        "triggerOffThreshold": 0.0,
         "originId": "smi:ch.ethz.sed/sc3a/origin/NLL.20201026144442.91156.194937",
         "streams": [
-              {
-                  "templateId": "template-01",
-                  "initTime": 12,
-                  "templateWaveformStart": -2,
-                  "templateWaveformEnd": 2,
-                  "waveformId": "CH.HASLI..HHZ",
-                  "templateWaveformId": "CH.HASLI..HHZ",
-                  "templatePhase": "Pg",
-                  "filter": "",
-                  "templateFilter": ""
-              }
+            {
+                "templateId": "template-01",
+                "initTime": 12,
+                "templateWaveformStart": -2,
+                "templateWaveformEnd": 2,
+                "waveformId": "CH.HASLI..HHZ",
+                "templatePhase": "Pg",
+                "filter": ""
+            }
         ]
     }
 ]

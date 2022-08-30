@@ -3,7 +3,8 @@ Detect and attach detected arrivals
 - Configuration:
 
   + Attach detected arrivals
-  + Distinct template waveform starttime and endtime
+  + Distinct template waveform starttime and endtime; template waveform
+  chunks have the same length
 
 - Data and streams:
 

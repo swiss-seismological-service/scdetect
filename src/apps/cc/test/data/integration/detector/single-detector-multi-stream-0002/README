@@ -5,6 +5,7 @@ Detect with less arrivals
   + The detector is configured to emit a detection, although there are less
   arrivals than streams configured (i.e. `minimumArrivals` < number of
   configured streams).
+  + Trigger facilities are disabled.
 
 - Data and streams:
 
