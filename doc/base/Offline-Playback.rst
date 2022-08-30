@@ -606,9 +606,8 @@ Post-processing
 ``scdetect-cc`` generates origins, picks, arrivals, amplitudes, and both station
 magnitudes and network magnitudes. When using multiple detectors, the
 resulting ``results.scml`` file will, in theory at least, contain earthquakes
-detected from different templates (i.e. detectors). An easy way merge these
-detections into events is to
-use :external:ref:`scevent`.
+detected from different templates (i.e. detectors). An easy way to merge these
+detections into events is to use :external:ref:`scevent`.
 Before, make sure you've set the desired ``eventAssociation`` related module
 configuration parameters, e.g.
 
