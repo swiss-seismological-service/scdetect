@@ -804,7 +804,7 @@ void Application::processDetection(
       processor->gapTolerance()};
 
   const auto createPick = [&ci](const detector::Arrival &arrival,
-                             bool asTemplateArrivalPick) {
+                                bool asTemplateArrivalPick) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
     if (!ret) {
       throw DuplicatePublicObjectId{"duplicate pick identifier"};
