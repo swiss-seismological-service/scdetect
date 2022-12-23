@@ -803,13 +803,13 @@ void Application::processDetection(
       processor->gapInterpolation(), processor->gapThreshold(),
       processor->gapTolerance()};
 
-  const auto createPick = [](const detector::Arrival &arrival,
+  const auto createPick = [&ci](const detector::Arrival &arrival,
                              bool asTemplateArrivalPick) {
     DataModel::PickPtr ret{DataModel::Pick::Create()};
     if (!ret) {
       throw DuplicatePublicObjectId{"duplicate pick identifier"};
     }
-
+    ret->setCreationInfo(ci);
     ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
                                          arrival.pick.lowerUncertainty,
                                          arrival.pick.upperUncertainty});
