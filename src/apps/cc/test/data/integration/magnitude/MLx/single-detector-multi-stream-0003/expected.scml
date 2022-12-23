@@ -2,6 +2,11 @@
 <seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
   <EventParameters>
     <pick publicID="Pick/20220715185221.75819.377">
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect@seiscomp-fedora32</author>
+        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
+      </creationInfo>
       <time>
         <value>2019-11-05T05:00:50.978442Z</value>
       </time>
