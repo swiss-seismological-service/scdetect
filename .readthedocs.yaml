@@ -8,6 +8,9 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "3.9"
+  apt_packages:
+    - dvipng
+    - dvisvgm
   jobs:
     pre_build:
       - cd doc && python build-doc.py --skip-category --skip-build .
