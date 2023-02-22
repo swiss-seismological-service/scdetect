@@ -234,24 +234,29 @@ In a multi-stream detector setup, ``scdetect-cc`` uses the *mean* correlation
 coefficient of all streams within the stream set. In future, further methods may
 be provided in order to compute this *score*.
 
-Besides, ``scdetect-cc`` implements trigger facilities, i.e. a detection may not
-be published, immediately, but put *on-hold* for the duration defined by the
-value of the ``"triggerDuration"`` configuration parameter. If a *better*
-detection arrives within this period, the previous one is not used, anymore.
+Normally we are interested in the detection with the highest score within a time
+window and not so much in receiving multiple detections, one every time the score
+is above the ``"triggerOnThreshold"``. For this reason ``scdetect-cc`` implements
+trigger facilities, i.e. a detection may not be published, immediately, but put
+*on-hold* for the duration defined by the value of the ``"triggerDuration"``
+configuration parameter. If a *better* detection arrives within this period,
+the previous one is not used, anymore.
 
 
 * 
-  ``"triggerDuration"``\ : Defines the trigger duration in seconds. A negative value
-  disables triggering facilities.
+  ``"triggerDuration"``\ : A positive value enables triggering facilities and 
+  defines the trigger duration in seconds. A negative value disables triggering
+  facilities.
 
 * 
   ``"triggerOnThreshold"``\ : Defines the threshold (\ ``[-1, 1]``\ ) to trigger the
-  detector.
+  detector. This works both in case the triggering facilities are enabled or not.
 
 * 
-  ``"triggerOffThreshold"``\ : Defines the lower threshold (\ ``[-1, 1]``\ ) to emit a
-  detection once the detector is triggered. Note that the configured value is
-  only taken into account if trigger facilities are enabled.
+  ``"triggerOffThreshold"``\ : Defines the lower threshold (\ ``[-1, 1]``\ ) to emit
+  a detection once the detector is triggered. If trigger facilities are enabled, this
+  allows to emit detections before the expiration of the ``"triggerDuration"``.
+  If trigger facilities are disabled this is not used.
 
 .. note::
 
