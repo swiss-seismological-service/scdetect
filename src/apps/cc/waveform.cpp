@@ -46,32 +46,43 @@ bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
     return true;
   }
 
-  auto beginOffset{static_cast<int>(
-      std::floor(static_cast<double>(tw.startTime() - trace.startTime()) *
-                 trace.samplingFrequency()))};
-  auto endOffset{static_cast<int>(
-      std::ceil(static_cast<double>(tw.endTime() - trace.startTime()) *
-                trace.samplingFrequency()))};
+  if (!trace.timeWindow().contains(tw)) {
+    SCDETECT_LOG_DEBUG(
+        "Failed to trim trace: requested window (%s len %f) is not contained "
+        "in the trace data window (%s len %f)",
+        tw.startTime().iso().c_str(), tw.length(),
+        trace.timeWindow().startTime().iso().c_str(),
+        trace.timeWindow().length());
+    return false;
+  }
 
-  // one sample tolerance
-  if (beginOffset == -1) {
-    ++beginOffset;
-  }
-  if (endOffset == trace.data()->size() + 1) {
-    --endOffset;
-  }
+  auto index = [&trace](const Core::Time &time) -> double {
+    return (time - trace.startTime()).length() * trace.samplingFrequency();
+  };
+
+  double beginOffset = std::floor(index(tw.startTime()));
+  double endOffset = std::ceil(index(tw.endTime()) - 1);
 
   // not enough data at start of time window
   if (beginOffset < 0) {
+    SCDETECT_LOG_DEBUG(
+        "Failed to trim trace: number of available samples is %d. Required "
+        "data slice indices %f - %f",
+        trace.data()->size(), beginOffset, endOffset);
     return false;
   }
   // not enough data at end of time window
-  if (endOffset > trace.data()->size()) {
+  if (endOffset >= trace.data()->size()) {
+    SCDETECT_LOG_DEBUG(
+        "Failed to trim trace: number of available samples is %d. Required "
+        "data slice indices %f - %f",
+        trace.data()->size(), beginOffset, endOffset);
     return false;
   }
 
-  ArrayPtr sliced{trace.data()->slice(beginOffset, endOffset)};
+  ArrayPtr sliced{trace.data()->slice(beginOffset, endOffset + 1)};
   if (!sliced) {
+    SCDETECT_LOG_DEBUG("Failed to trim trace");
     return false;
   }
   trace.setData(sliced.get());
