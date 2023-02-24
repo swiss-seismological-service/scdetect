@@ -188,20 +188,7 @@ void detrend(DoubleArray &data) {
 
 bool write(const GenericRecord &trace, std::ostream &out) {
   IO::MSeedRecord rec{trace};
-  int recLength = rec.data()->size() * rec.data()->elementSize() + 64;
-  recLength = nextPowerOfTwo<int>(recLength, 128,
-                                  1048576);  // MINRECLEN 128, MAXRECLEN 1048576
-  if (recLength <= 0) {
-    // XXX(damb): from http://www.fdsn.org/pdf/SEEDManual_V2.4.pdf:
-    //
-    // Volume logical record length expressed as a power of 2. A 4096 byte
-    // record would be 12. Logical record lengths. can be from 256 bytes to
-    // 32768 bytes. 4096 bytes is preferred.
-    recLength = 4096;
-  }
-
   try {
-    rec.setOutputRecordLength(recLength);
     rec.write(out);
   } catch (std::exception &e) {
     SCDETECT_LOG_WARNING("Failed writing waveform: %s", e.what());
@@ -210,18 +197,39 @@ bool write(const GenericRecord &trace, std::ostream &out) {
   return true;
 }
 
-bool read(GenericRecord &trace, std::istream &in) {
-  IO::MSeedRecord rec(Array::DOUBLE, Record::Hint::DATA_ONLY);
-  try {
-    rec.read(in);
-
-    trace = GenericRecord(rec);
-    trace.setData(rec.data()->clone());
-  } catch (std::exception &e) {
-    SCDETECT_LOG_WARNING("Failed reading waveform: %s", e.what());
-    return false;
+GenericRecordPtr read(std::istream &in) {
+  std::vector<RecordPtr> records;
+  for (;;) {
+    RecordPtr rec{new IO::MSeedRecord{Array::DOUBLE, Record::DATA_ONLY}};
+    try {
+      rec->read(in);
+      records.push_back(rec);
+    } catch (Core::EndOfStreamException &) {
+      break;
+    } catch (std::exception &e) {
+      SCDETECT_LOG_WARNING("Failed reading file: %s", e.what());
+      return nullptr;
+    }
   }
-  return true;
+
+  int numRecords = records.size();
+  RingBuffer seq{numRecords};
+  for (RecordPtr rec : records) {
+    seq.feed(rec.get());
+  }
+
+  if (seq.empty()) {
+    SCDETECT_LOG_WARNING("No data in file");
+    return nullptr;
+  }
+
+  GenericRecordPtr trace{seq.contiguousRecord<double>()};
+  if (!trace) {
+    SCDETECT_LOG_WARNING("Failed to merge records into single trace");
+    return nullptr;
+  }
+
+  return trace;
 }
 
 }  // namespace waveform
@@ -327,22 +335,21 @@ GenericRecordCPtr WaveformHandler::get(const std::string &netCode,
   rs->addStream(netCode, staCode, locCode, chaCode);
 
   IO::RecordInput inp{rs.get(), Array::DOUBLE, Record::DATA_ONLY};
-  std::unique_ptr<RecordSequence> seq{
-      util::make_unique<TimeWindowBuffer>(twWithMargin)};
+  TimeWindowBuffer seq{twWithMargin};
   RecordPtr rec;
   while ((rec = inp.next())) {
-    seq->feed(rec.get());
+    seq.feed(rec.get());
   }
   rs->close();
 
-  if (seq->empty()) {
+  if (seq.empty()) {
     throw NoData{Core::stringify(
         "%s.%s.%s.%s: No data: start=%s, end=%s", netCode.c_str(),
         staCode.c_str(), locCode.c_str(), chaCode.c_str(),
         tw.startTime().iso().c_str(), tw.endTime().iso().c_str())};
   }
 
-  GenericRecordPtr trace{seq->contiguousRecord<double>()};
+  GenericRecordPtr trace{seq.contiguousRecord<double>()};
   if (!trace) {
     throw BaseException{Core::stringify(
         "%s.%s.%s.%s: Failed to merge records into single trace: start=%s, "
@@ -495,8 +502,8 @@ GenericRecordCPtr FileSystemCache::get(const std::string &key) {
   if (!Util::fileExists(fpath)) return nullptr;
 
   std::ifstream ifs{fpath};
-  auto trace{util::make_smart<GenericRecord>()};
-  if (!waveform::read(*trace, ifs)) return nullptr;
+  auto trace = waveform::read(ifs);
+  if (!trace) return nullptr;
 
   return trace;
 }
