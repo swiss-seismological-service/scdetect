@@ -93,53 +93,53 @@ class Application : public Client::StreamApplication {
     // processors could not be initialized due to missing waveform data.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipTemplateIfNoWaveformData{true};
+    bool skipTemplateIfNoWaveformData{false};
     // Defines if a detector should be initialized although template processors
     // could not be initialized due to missing stream information in the
     // inventory.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipTemplateIfNoStreamData{true};
+    bool skipTemplateIfNoStreamData{false};
     // Defines if a detector should be initialized although template processors
     // could not be initialized due to missing sensor location information in
     // the inventory.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipTemplateIfNoSensorLocationData{true};
+    bool skipTemplateIfNoSensorLocationData{false};
     // Defines if a detector should be initialized although template processors
     // could not be initialized due to a missing pick in the event parameters.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipTemplateIfNoPick{true};
+    bool skipTemplateIfNoPick{false};
     // Defines if a template family should be initialized despite reference
     // configurations could not be initialized due to missing waveform data.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipReferenceConfigIfNoWaveformData{true};
+    bool skipReferenceConfigIfNoWaveformData{false};
     // Defines if a template family should be initialized although reference
     // configurations could not be initialized due to missing stream
     // information in the inventory.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipReferenceConfigIfNoStreamData{true};
+    bool skipReferenceConfigIfNoStreamData{false};
     // Defines if a template family should be initialized although reference
     // configurations could not be initialized due to missing sensor location
     // information in the inventory.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipReferenceConfigIfNoSensorLocationData{true};
+    bool skipReferenceConfigIfNoSensorLocationData{false};
     // Defines if a template family should be initialized although reference
     // configurations could not be initialized due to a missing pick in the
     // event parameters.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipReferenceConfigIfNoPick{true};
+    bool skipReferenceConfigIfNoPick{false};
     // Defines if a template family should be initialized although reference
     // configurations could not be initialized due to missing bindings
     // configuration.
     // XXX(damb): For the time being, this configuration parameter is not
     // provided to module users.
-    bool skipReferenceConfigIfNoBindings{true};
+    bool skipReferenceConfigIfNoBindings{false};
 
     // Input
     std::string pathTemplateJson;
