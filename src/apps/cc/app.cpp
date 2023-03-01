@@ -2128,6 +2128,9 @@ void Application::Config::init(const Client::Application *app) {
   try {
     pathTemplateJson = app->configGetPath("templatesJSON");
   } catch (...) {
+    Environment *env{Environment::Instance()};
+    pathTemplateJson =
+        env->absolutePath("@ROOTDIR@/etc/scdetect-cc/templates.json");
   }
   try {
     const auto messagingGroup{
