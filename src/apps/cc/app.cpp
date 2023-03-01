@@ -2132,6 +2132,18 @@ void Application::Config::init(const Client::Application *app) {
     pathTemplateJson =
         env->absolutePath("@ROOTDIR@/etc/scdetect-cc/templates.json");
   }
+
+  try {
+    // use configuration value only if the user didn't override that
+    // with a command line option
+    if (urlEventDb.empty()) {
+      std::string eventDb = app->configGetPath("eventDB");
+      Environment *env{Environment::Instance()};
+      urlEventDb = env->absolutePath(eventDb);
+    }
+  } catch (...) {
+  }
+
   try {
     const auto messagingGroup{
         app->configGetString("amplitudes.messagingGroup")};

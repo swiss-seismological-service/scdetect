@@ -11,6 +11,12 @@
           file.
         </description>
       </parameter>
+      <parameter name="eventDB" type="path">
+        <description>
+          Allows to load template events data from a SCML file.
+          if not set, the event data is loaded from the database.
+        </description>
+      </parameter> 
       <group name="template">
         <parameter name="phase" type="string" default="Pg">
           <description>
