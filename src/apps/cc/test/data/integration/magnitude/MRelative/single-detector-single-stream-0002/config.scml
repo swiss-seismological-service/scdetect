@@ -11,6 +11,10 @@
         <name>sensorLocation._HH.magnitudes.magnitudes</name>
         <value>MRelative</value>
       </parameter>
+      <parameter publicID="Parameter/20220107143211.678462.6">
+        <name>sensorLocation._HH.magnitudes.MRelative.useNetworkMagnitude</name>
+        <value>false</value>
+      </parameter>
       <parameter publicID="Parameter/20220107143211.678482.7">
         <name>sensorLocation._HH.channelCode</name>
         <value>HH</value>

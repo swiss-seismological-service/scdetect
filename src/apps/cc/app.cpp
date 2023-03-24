@@ -1151,7 +1151,8 @@ bool Application::initMagnitudeProcessorFactory(
       "MRelative", MagnitudeProcessor::Factory::createMRelative);
 
   if (requiresMagnitude(bindings, "MRelative") &&
-      !initStationMagnitudes(templateConfigs)) {
+      (!initStationMagnitudes(templateConfigs) ||
+       !initNetworkMagnitudes(templateConfigs))) {
     return false;
   }
 
@@ -1194,7 +1195,7 @@ bool Application::initStationMagnitudes(
     // collect unique sensor locations
     for (const auto &streamConfigPair : templateConfig) {
       sensorLocationMagnitudeMap[util::getSensorLocationStreamId(
-          util::WaveformStreamID{streamConfigPair.first})];
+          util::WaveformStreamID{streamConfigPair.first}, true)];
     }
 
     const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
@@ -1213,7 +1214,7 @@ bool Application::initStationMagnitudes(
 
       try {
         auto &mag{sensorLocationMagnitudeMap.at(util::getSensorLocationStreamId(
-            util::WaveformStreamID{stationMagnitude->waveformID()}))};
+            util::WaveformStreamID{stationMagnitude->waveformID()}, true))};
 
         if (mag) {
           // check if magnitude type with higher priority
@@ -1248,6 +1249,35 @@ bool Application::initStationMagnitudes(
 
       MagnitudeProcessor::Factory::add(templateConfig.detectorId(),
                                        sensorLocationId, mag);
+    }
+  }
+
+  return true;
+}
+
+bool Application::initNetworkMagnitudes(
+    const TemplateConfigs &templateConfigs) {
+  for (const auto &templateConfig : templateConfigs) {
+    const auto origin{EventStore::Instance().getWithChildren<DataModel::Origin>(
+        templateConfig.originId())};
+
+    auto event{EventStore::Instance().getEvent(origin->publicID())};
+    if (!event) {
+      continue;
+    }
+
+    const auto &preferredMagnitudePublicId{event->preferredMagnitudeID()};
+    if (preferredMagnitudePublicId.empty()) {
+      continue;
+    }
+
+    auto preferredMagnitude{
+        EventStore::Instance().get<const DataModel::Magnitude>(
+            preferredMagnitudePublicId)};
+
+    if (preferredMagnitude) {
+      MagnitudeProcessor::Factory::add(templateConfig.detectorId(),
+                                       preferredMagnitude);
     }
   }
 
@@ -1740,77 +1770,76 @@ bool Application::initAmplitudeProcessors(
 
         ++detectionItem->numberOfRequiredAmplitudes;
 
-        amplitudeProcessor->setResultCallback([this, detectionItem,
-                                               magnitudeType,
-                                               magnitudeCalculationEnabled,
-                                               magnitudeProcessorId](
-                                                  const AmplitudeProcessor
-                                                      *processor,
-                                                  const Record *record,
-                                                  AmplitudeProcessor::
-                                                      AmplitudeCPtr result) {
-          assert(processor);
-          DataModel::AmplitudePtr amplitude;
-          // create amplitude
-          try {
-            amplitude = createAmplitude(processor, record, result, boost::none,
-                                        magnitudeType);
-          } catch (const Exception &e) {
-            --detectionItem->numberOfRequiredAmplitudes;
-            SCDETECT_LOG_WARNING_PROCESSOR(
-                processor, "Failed to create amplitude: %s", e.what());
-          }
+        amplitudeProcessor->setResultCallback(
+            [this, detectionItem, magnitudeType, magnitudeCalculationEnabled,
+             magnitudeProcessorId](const AmplitudeProcessor *processor,
+                                   const Record *record,
+                                   AmplitudeProcessor::AmplitudeCPtr result) {
+              assert(processor);
+              DataModel::AmplitudePtr amplitude;
+              // create amplitude
+              try {
+                amplitude = createAmplitude(processor, record, result,
+                                            boost::none, magnitudeType);
+              } catch (const Exception &e) {
+                --detectionItem->numberOfRequiredAmplitudes;
+                SCDETECT_LOG_WARNING_PROCESSOR(
+                    processor, "Failed to create amplitude: %s", e.what());
+              }
 
-          if (!amplitude) {
-            --detectionItem->numberOfRequiredAmplitudes;
-            return;
-          }
-
-          detectionItem->amplitudes.at(processor->id()) = amplitude;
-
-          if (magnitudeCalculationEnabled) {
-            ++detectionItem->numberOfRequiredMagnitudes;
-            // create station magnitude
-            try {
-              auto mag{createMagnitude(*amplitude, "", magnitudeProcessorId)};
-              if (!mag) {
-                --detectionItem->numberOfRequiredMagnitudes;
+              if (!amplitude) {
+                --detectionItem->numberOfRequiredAmplitudes;
                 return;
               }
 
-              detectionItem->magnitudes.emplace_back(mag);
+              detectionItem->amplitudes.at(processor->id()) = amplitude;
 
-              SCDETECT_LOG_DEBUG_TAGGED(
-                  magnitudeProcessorId,
-                  "Created station magnitude for origin (%s): public_id=%s, "
-                  "type=%s",
-                  detectionItem->origin->publicID().c_str(),
-                  mag->publicID().c_str(), mag->type().c_str());
+              if (magnitudeCalculationEnabled) {
+                ++detectionItem->numberOfRequiredMagnitudes;
+                // create station magnitude
+                try {
+                  auto mag{
+                      createMagnitude(*amplitude, "", magnitudeProcessorId)};
+                  if (!mag) {
+                    --detectionItem->numberOfRequiredMagnitudes;
+                    return;
+                  }
 
-            } catch (const Exception &e) {
-              --detectionItem->numberOfRequiredMagnitudes;
-              SCDETECT_LOG_WARNING_TAGGED(
-                  magnitudeProcessorId,
-                  "Failed to create station magnitude: %s", e.what());
-            }
+                  detectionItem->magnitudes.emplace_back(mag);
 
-            if (detectionItem->magnitudesReady()) {
-              std::vector<DataModel::StationMagnitudeCPtr> stationMagnitudes{
-                  std::begin(detectionItem->magnitudes),
-                  std::end(detectionItem->magnitudes)};
-              try {
-                detectionItem->networkMagnitudes = createNetworkMagnitudes(
-                    stationMagnitudes,
-                    medianNetworkMagnitudeComputationStrategy, "",
-                    detectionItem->detectorId);
-              } catch (const Exception &e) {
-                SCDETECT_LOG_WARNING_TAGGED(
-                    detectionItem->detectorId,
-                    "Failed to create network magnitudes: %s", e.what());
+                  SCDETECT_LOG_DEBUG_TAGGED(
+                      magnitudeProcessorId,
+                      "Created station magnitude for origin (%s): "
+                      "public_id=\"%s\", "
+                      "type=%s, value=%f",
+                      detectionItem->origin->publicID().c_str(),
+                      mag->publicID().c_str(), mag->type().c_str(),
+                      mag->magnitude().value());
+
+                } catch (const Exception &e) {
+                  --detectionItem->numberOfRequiredMagnitudes;
+                  SCDETECT_LOG_WARNING_TAGGED(
+                      magnitudeProcessorId,
+                      "Failed to create station magnitude: %s", e.what());
+                }
+
+                if (detectionItem->magnitudesReady()) {
+                  std::vector<DataModel::StationMagnitudeCPtr>
+                      stationMagnitudes{std::begin(detectionItem->magnitudes),
+                                        std::end(detectionItem->magnitudes)};
+                  try {
+                    detectionItem->networkMagnitudes = createNetworkMagnitudes(
+                        stationMagnitudes,
+                        medianNetworkMagnitudeComputationStrategy, "",
+                        detectionItem->detectorId);
+                  } catch (const Exception &e) {
+                    SCDETECT_LOG_WARNING_TAGGED(
+                        detectionItem->detectorId,
+                        "Failed to create network magnitudes: %s", e.what());
+                  }
+                }
               }
-            }
-          }
-        });
+            });
 
         registerAmplitudeProcessor(std::move(amplitudeProcessor),
                                    *detectionItem);
@@ -1845,7 +1874,7 @@ DataModel::StationMagnitudePtr Application::createMagnitude(
     const std::string &processorId) {
   try {
     auto proc{MagnitudeProcessor::Factory::create(amplitude.type(), amplitude,
-                                                  processorId)};
+                                                  _bindings, processorId)};
     auto magnitudeValue{proc->compute(&amplitude)};
 
     DataModel::StationMagnitudePtr mag{DataModel::StationMagnitude::Create()};
