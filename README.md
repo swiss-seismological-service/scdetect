@@ -32,10 +32,11 @@ Get a copy of
 [SeisComP](https://github.com/SeisComP):
 
 ```bash
+TAG='5.3.0'
 # get a copy of SeisComP (follow the official documentation)
-git clone https://github.com/SeisComP/seiscomp.git && cd seiscomp/src/base
-git clone https://github.com/SeisComP/common.git
-git clone https://github.com/SeisComP/main.git
+git clone --branch $TAG https://github.com/SeisComP/seiscomp.git 
+git clone --branch $TAG https://github.com/SeisComP/common.git seiscomp/src/base/common
+git clone --branch $TAG https://github.com/SeisComP/main.git seiscomp/src/base/main
 
 # [... etc ...]
 
@@ -44,7 +45,7 @@ git clone https://github.com/SeisComP/main.git
 Next, clone SCDetect:
 
 ```bash
-cd seiscomp/src/extras && git clone https://github.com/swiss-seismological-service/scdetect.git
+git clone https://github.com/swiss-seismological-service/scdetect.git seiscomp/src/extras/scdetect
 ```
 
 ### Dependencies
