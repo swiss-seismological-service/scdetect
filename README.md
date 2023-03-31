@@ -32,8 +32,10 @@ Get a copy of
 [SeisComP](https://github.com/SeisComP):
 
 ```bash
-TAG='5.3.0'
-# get a copy of SeisComP (follow the official documentation)
+# Select a tag for an apropriate SeisComP release (https://github.com/SeisComP/seiscomp/releases)
+TAG='X.Y.Z'
+
+# Get a copy of SeisComP (follow the official documentation https://www.seiscomp.de/doc/base/build.html?highlight=compile)
 git clone --branch $TAG https://github.com/SeisComP/seiscomp.git 
 git clone --branch $TAG https://github.com/SeisComP/common.git seiscomp/src/base/common
 git clone --branch $TAG https://github.com/SeisComP/main.git seiscomp/src/base/main
