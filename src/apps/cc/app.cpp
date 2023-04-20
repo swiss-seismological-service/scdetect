@@ -832,8 +832,8 @@ void Application::processDetection(
     return ret;
   };
 
-  const auto createArrival = [&ci](const detector::Arrival &arrival,
-                                   const DataModel::PickCPtr &pick) {
+  const auto createArrival = [&ci, &origin](const detector::Arrival &arrival,
+                                            const DataModel::PickCPtr &pick) {
     auto ret{util::make_smart<DataModel::Arrival>()};
     if (!ret) {
       throw DuplicatePublicObjectId{"duplicate arrival identifier"};
@@ -844,6 +844,21 @@ void Application::processDetection(
     if (arrival.weight) {
       ret->setWeight(arrival.weight);
     }
+    // compute distance and azimuth
+    auto pickWaveformId = pick->waveformID();
+    auto pickWfSensorLocation{Client::Inventory::Instance()->getSensorLocation(
+        pickWaveformId.networkCode(), pickWaveformId.stationCode(),
+        pickWaveformId.locationCode(), pick->time().value())};
+    if (!pickWfSensorLocation) {
+      throw NoSensorLocation{"Cannot find Sensor Location information"};
+    }
+    double distance, azimuth, backazimuth;
+    Math::Geo::delazi(origin->latitude().value(), origin->longitude().value(),
+                      pickWfSensorLocation->latitude(),
+                      pickWfSensorLocation->longitude(), &distance, &azimuth,
+                      &backazimuth);
+    ret->setAzimuth(azimuth);
+    ret->setDistance(distance);
     return ret;
   };
 
