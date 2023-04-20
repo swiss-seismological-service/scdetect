@@ -832,8 +832,9 @@ void Application::processDetection(
     return ret;
   };
 
-  const auto createArrival = [&ci, &origin](const detector::Arrival &arrival,
-                                            const DataModel::PickCPtr &pick) {
+  const auto createArrival = [&ci, &origin, &processor](
+                                 const detector::Arrival &arrival,
+                                 const DataModel::PickCPtr &pick) {
     auto ret{util::make_smart<DataModel::Arrival>()};
     if (!ret) {
       throw DuplicatePublicObjectId{"duplicate arrival identifier"};
@@ -850,15 +851,22 @@ void Application::processDetection(
         pickWaveformId.networkCode(), pickWaveformId.stationCode(),
         pickWaveformId.locationCode(), pick->time().value())};
     if (!pickWfSensorLocation) {
-      throw NoSensorLocation{"Cannot find Sensor Location information"};
+      SCDETECT_LOG_WARNING_PROCESSOR(
+          processor,
+          "Cannot find Sensor Location information for %s.%s.%s: skipping "
+          "arrival distace and azimuth",
+          pickWaveformId.networkCode().c_str(),
+          pickWaveformId.stationCode().c_str(),
+          pickWaveformId.locationCode().c_str());
+    } else {
+      double distance, azimuth, backazimuth;
+      Math::Geo::delazi(origin->latitude().value(), origin->longitude().value(),
+                        pickWfSensorLocation->latitude(),
+                        pickWfSensorLocation->longitude(), &distance, &azimuth,
+                        &backazimuth);
+      ret->setAzimuth(azimuth);
+      ret->setDistance(distance);
     }
-    double distance, azimuth, backazimuth;
-    Math::Geo::delazi(origin->latitude().value(), origin->longitude().value(),
-                      pickWfSensorLocation->latitude(),
-                      pickWfSensorLocation->longitude(), &distance, &azimuth,
-                      &backazimuth);
-    ret->setAzimuth(azimuth);
-    ret->setDistance(distance);
     return ret;
   };
 

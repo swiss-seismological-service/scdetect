@@ -65,12 +65,6 @@ class Application : public Client::StreamApplication {
     DuplicatePublicObjectId();
   };
 
-  class NoSensorLocation : public BaseException {
-   public:
-    using BaseException::BaseException;
-    NoSensorLocation();
-  };
-
   struct Config {
     Config();
 
