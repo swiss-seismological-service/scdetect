@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
   <EventParameters>
-    <origin publicID="Origin/20210105104407.725748.1979">
+    <origin publicID="Origin/20230420150112.829217.2153">
       <time>
-        <value>2020-10-25T19:35:43.383892Z</value>
+        <value>2020-10-25T19:35:43.383894Z</value>
       </time>
       <latitude>
         <value>46.90474746</value>
@@ -21,16 +21,16 @@
         <usedPhaseCount>1</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.0</standardError>
-        <maximumDistance>0.6415833155</maximumDistance>
-        <minimumDistance>0.6415833155</minimumDistance>
-        <medianDistance>0.6415833155</medianDistance>
+        <standardError>-2.220446049250313e-16</standardError>
+        <maximumDistance>0.6415833155438919</maximumDistance>
+        <minimumDistance>0.6415833155438919</minimumDistance>
+        <medianDistance>0.6415833155438919</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-05T10:44:07.725627Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:12.829187Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>

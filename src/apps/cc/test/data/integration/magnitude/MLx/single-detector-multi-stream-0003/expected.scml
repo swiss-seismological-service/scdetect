@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
   <EventParameters>
-    <pick publicID="Pick/20220715185221.75819.377">
-      <creationInfo>
-        <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
-      </creationInfo>
+    <pick publicID="Pick/20230420150122.764418.66151">
       <time>
         <value>2019-11-05T05:00:50.978442Z</value>
       </time>
       <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Sg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:22.764404Z</creationTime>
+      </creationInfo>
       <comment>
         <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
         <id>scdetectTemplateWaveformTimeInfo</id>
       </comment>
     </pick>
-    <amplitude publicID="Amplitude/20220715185221.761824.379">
+    <amplitude publicID="Amplitude/20230420150122.764573.66153">
       <type>MLx</type>
       <amplitude>
-        <value>1.357817319e-07</value>
+        <value>1.3578173187885862e-07</value>
       </amplitude>
       <timeWindow>
         <reference>2019-11-05T05:00:50.973442Z</reference>
@@ -32,15 +32,15 @@
       <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect-cc@seiscomp-fedora34</author>
-        <creationTime>2022-07-15T18:52:21.761807Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:22.764572Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
       <comment>
-        <text>Pick/20220715185221.758344.378||Pick/20220715185221.758344.378</text>
+        <text>Pick/20230420150122.764429.66152||Pick/20230420150122.764429.66152</text>
         <id>scdetectAmplitudePicks</id>
       </comment>
       <comment>
@@ -48,7 +48,7 @@
         <id>scdetectAmplitudeStreams</id>
       </comment>
     </amplitude>
-    <origin publicID="Origin/20220715185221.75794.376">
+    <origin publicID="Origin/20230420150122.764408.66150">
       <time>
         <value>2019-11-05T05:00:48.530489Z</value>
       </time>
@@ -68,16 +68,16 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.2540215025</standardError>
-        <maximumDistance>0.03223286148</maximumDistance>
-        <minimumDistance>0.03223286148</minimumDistance>
-        <medianDistance>0.03223286148</medianDistance>
+        <standardError>0.25402150247127886</standardError>
+        <maximumDistance>0.03223286148198979</maximumDistance>
+        <minimumDistance>0.03223286148198979</minimumDistance>
+        <medianDistance>0.03223286148198979</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect-cc@seiscomp-fedora34</author>
-        <creationTime>2022-07-15T18:52:21.757898Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:22.764404Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
@@ -88,31 +88,33 @@
         <id>scdetectResultCCC</id>
       </comment>
       <arrival>
-        <pickID>Pick/20220715185221.75819.377</pickID>
+        <pickID>Pick/20230420150122.764418.66151</pickID>
         <phase>Sg</phase>
+        <azimuth>251.92795642647147</azimuth>
+        <distance>0.03223286148198979</distance>
         <weight>1.007777254</weight>
         <creationInfo>
           <agencyID>TEST</agencyID>
-          <author>scdetect-cc@seiscomp-fedora34</author>
-          <creationTime>2022-07-15T18:52:21.757898Z</creationTime>
+          <author>scdetect-cc@lscarabellows</author>
+          <creationTime>2023-04-20T15:01:22.764404Z</creationTime>
         </creationInfo>
       </arrival>
-      <stationMagnitude publicID="StationMagnitude/20220715185221.762353.380">
+      <stationMagnitude publicID="StationMagnitude/20230420150122.764586.66154">
         <magnitude>
-          <value>0.5772060003</value>
+          <value>0.5772060003264725</value>
         </magnitude>
         <type>MLx</type>
-        <amplitudeID>Amplitude/20220715185221.761824.379</amplitudeID>
+        <amplitudeID>Amplitude/20230420150122.764573.66153</amplitudeID>
         <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       </stationMagnitude>
-      <magnitude publicID="Magnitude/20220715185221.762531.381">
+      <magnitude publicID="Magnitude/20230420150122.764592.66155">
         <magnitude>
-          <value>0.5772060003</value>
+          <value>0.5772060003264725</value>
         </magnitude>
         <type>MLx</type>
         <stationCount>1</stationCount>
         <stationMagnitudeContribution>
-          <stationMagnitudeID>StationMagnitude/20220715185221.762353.380</stationMagnitudeID>
+          <stationMagnitudeID>StationMagnitude/20230420150122.764586.66154</stationMagnitudeID>
           <weight>1</weight>
         </stationMagnitudeContribution>
       </magnitude>

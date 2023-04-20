@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.11" version="0.11">
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
   <EventParameters>
-    <pick publicID="Pick/20210310161156.863506.1988">
-      <creationInfo>
-        <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
-      </creationInfo>
+    <pick publicID="Pick/20230420150113.781148.14665">
       <time>
-        <value>2020-10-25T19:35:56.458294Z</value>
+        <value>2020-10-25T19:35:56.458295Z</value>
       </time>
       <waveformID networkCode="CH" stationCode="HASLI" channelCode="BH"/>
       <phaseHint>Pg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:13.781118Z</creationTime>
+      </creationInfo>
+      <comment>
+        <text>2020-10-25T19:35:54.4509Z|2020-10-25T19:35:58.4759Z|2020-10-25T19:35:56.458294Z</text>
+        <id>scdetectTemplateWaveformTimeInfo</id>
+      </comment>
     </pick>
-    <origin publicID="Origin/20210310161156.863417.1987">
+    <origin publicID="Origin/20230420150113.781121.14664">
       <time>
-        <value>2020-10-25T19:35:43.383892Z</value>
+        <value>2020-10-25T19:35:43.383894Z</value>
       </time>
       <latitude>
         <value>46.90474746</value>
@@ -34,26 +38,17 @@
         <usedPhaseCount>1</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.0</standardError>
-        <maximumDistance>0.6822777327</maximumDistance>
-        <minimumDistance>0.6822777327</minimumDistance>
-        <medianDistance>0.6822777327</medianDistance>
+        <standardError>-1.5543122344752192e-15</standardError>
+        <maximumDistance>0.682277732724239</maximumDistance>
+        <minimumDistance>0.682277732724239</minimumDistance>
+        <medianDistance>0.682277732724239</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-03-10T16:11:56.863332Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:13.781118Z</creationTime>
       </creationInfo>
-      <arrival>
-        <pickID>Pick/20210310161156.863506.1988</pickID>
-        <phase>Pg</phase>
-        <creationInfo>
-          <agencyID>TEST</agencyID>
-          <author>scdetect@seiscomp-fedora32</author>
-          <creationTime>2021-03-10T16:11:56.863332Z</creationTime>
-        </creationInfo>
-      </arrival>
       <comment>
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
@@ -62,6 +57,17 @@
         <text>1.000000</text>
         <id>scdetectResultCCC</id>
       </comment>
+      <arrival>
+        <pickID>Pick/20230420150113.781148.14665</pickID>
+        <phase>Pg</phase>
+        <azimuth>257.8325691727559</azimuth>
+        <distance>0.682277732724239</distance>
+        <creationInfo>
+          <agencyID>TEST</agencyID>
+          <author>scdetect-cc@lscarabellows</author>
+          <creationTime>2023-04-20T15:01:13.781118Z</creationTime>
+        </creationInfo>
+      </arrival>
     </origin>
   </EventParameters>
 </seiscomp>

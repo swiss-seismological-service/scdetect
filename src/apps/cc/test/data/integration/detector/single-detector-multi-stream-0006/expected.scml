@@ -1,75 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
   <EventParameters>
-    <pick publicID="Pick/20220226151801.435849.163">
-      <creationInfo>
-        <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
-      </creationInfo>
+    <pick publicID="Pick/20230420150116.270551.34588">
       <time>
         <value>2019-11-05T05:01:14.323442Z</value>
       </time>
       <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Sg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.270537Z</creationTime>
+      </creationInfo>
       <comment>
         <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
         <id>scdetectTemplateWaveformTimeInfo</id>
       </comment>
     </pick>
-    <pick publicID="Pick/20220226151801.468877.166">
-      <creationInfo>
-        <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
-      </creationInfo>
+    <pick publicID="Pick/20230420150116.272249.34591">
       <time>
-        <value>2019-11-05T05:01:31.708442Z</value>
+        <value>2019-11-05T05:01:31.703442Z</value>
       </time>
       <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Sg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.272243Z</creationTime>
+      </creationInfo>
       <comment>
         <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
         <id>scdetectTemplateWaveformTimeInfo</id>
       </comment>
     </pick>
-    <pick publicID="Pick/20220226151801.48473.169">
-      <creationInfo>
-        <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
-      </creationInfo>
+    <pick publicID="Pick/20230420150116.273354.34594">
       <time>
-        <value>2019-11-05T05:01:42.583442Z</value>
+        <value>2019-11-05T05:01:42.568442Z</value>
       </time>
       <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Sg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.273348Z</creationTime>
+      </creationInfo>
       <comment>
         <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
         <id>scdetectTemplateWaveformTimeInfo</id>
       </comment>
     </pick>
-    <pick publicID="Pick/20220226151801.513572.172">
-      <creationInfo>
-        <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora32</author>
-        <creationTime>2021-01-12T16:30:56.225889Z</creationTime>
-      </creationInfo>
+    <pick publicID="Pick/20230420150116.273773.34597">
       <time>
-        <value>2019-11-05T05:01:47.353442Z</value>
+        <value>2019-11-05T05:01:47.348442Z</value>
       </time>
       <waveformID networkCode="8D" stationCode="RAW2" channelCode="HH"/>
       <phaseHint>Sg</phaseHint>
       <evaluationMode>automatic</evaluationMode>
+      <creationInfo>
+        <agencyID>TEST</agencyID>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.273768Z</creationTime>
+      </creationInfo>
       <comment>
         <text>2019-11-05T04:23:49.58Z|2019-11-05T04:23:52.085Z|2019-11-05T04:23:50.083441Z</text>
         <id>scdetectTemplateWaveformTimeInfo</id>
       </comment>
     </pick>
-    <origin publicID="Origin/20220226151801.435663.162">
+    <origin publicID="Origin/20230420150116.27054.34587">
       <time>
         <value>2019-11-05T05:01:11.880489Z</value>
       </time>
@@ -89,16 +89,16 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.151073</standardError>
-        <maximumDistance>0.03223286148</maximumDistance>
-        <minimumDistance>0.03223286148</minimumDistance>
-        <medianDistance>0.03223286148</medianDistance>
+        <standardError>0.15107306439126456</standardError>
+        <maximumDistance>0.03223286148198979</maximumDistance>
+        <minimumDistance>0.03223286148198979</minimumDistance>
+        <medianDistance>0.03223286148198979</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect-cc@seiscomp-fedora34</author>
-        <creationTime>2022-02-26T15:18:01.435626Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.270537Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
@@ -109,17 +109,19 @@
         <id>scdetectResultCCC</id>
       </comment>
       <arrival>
-        <pickID>Pick/20220226151801.435849.163</pickID>
+        <pickID>Pick/20230420150116.270551.34588</pickID>
         <phase>Sg</phase>
+        <azimuth>251.92795642647147</azimuth>
+        <distance>0.03223286148198979</distance>
         <weight>1.007777254</weight>
         <creationInfo>
           <agencyID>TEST</agencyID>
-          <author>scdetect-cc@seiscomp-fedora34</author>
-          <creationTime>2022-02-26T15:18:01.435626Z</creationTime>
+          <author>scdetect-cc@lscarabellows</author>
+          <creationTime>2023-04-20T15:01:16.270537Z</creationTime>
         </creationInfo>
       </arrival>
     </origin>
-    <origin publicID="Origin/20220226151801.46866.165">
+    <origin publicID="Origin/20230420150116.272244.34590">
       <time>
         <value>2019-11-05T05:01:29.260489Z</value>
       </time>
@@ -139,16 +141,16 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.465018</standardError>
-        <maximumDistance>0.03223286148</maximumDistance>
-        <minimumDistance>0.03223286148</minimumDistance>
-        <medianDistance>0.03223286148</medianDistance>
+        <standardError>0.4650188319996771</standardError>
+        <maximumDistance>0.03223286148198979</maximumDistance>
+        <minimumDistance>0.03223286148198979</minimumDistance>
+        <medianDistance>0.03223286148198979</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect-cc@seiscomp-fedora34</author>
-        <creationTime>2022-02-26T15:18:01.468469Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.272243Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
@@ -159,17 +161,19 @@
         <id>scdetectResultCCC</id>
       </comment>
       <arrival>
-        <pickID>Pick/20220226151801.468877.166</pickID>
+        <pickID>Pick/20230420150116.272249.34591</pickID>
         <phase>Sg</phase>
+        <azimuth>251.92795642647147</azimuth>
+        <distance>0.03223286148198979</distance>
         <weight>1.007777254</weight>
         <creationInfo>
           <agencyID>TEST</agencyID>
-          <author>scdetect-cc@seiscomp-fedora34</author>
-          <creationTime>2022-02-26T15:18:01.468469Z</creationTime>
+          <author>scdetect-cc@lscarabellows</author>
+          <creationTime>2023-04-20T15:01:16.272243Z</creationTime>
         </creationInfo>
       </arrival>
     </origin>
-    <origin publicID="Origin/20220226151801.484494.168">
+    <origin publicID="Origin/20230420150116.273349.34593">
       <time>
         <value>2019-11-05T05:01:40.125489Z</value>
       </time>
@@ -189,16 +193,16 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.334895</standardError>
-        <maximumDistance>0.03223286148</maximumDistance>
-        <minimumDistance>0.03223286148</minimumDistance>
-        <medianDistance>0.03223286148</medianDistance>
+        <standardError>0.33489522578305353</standardError>
+        <maximumDistance>0.03223286148198979</maximumDistance>
+        <minimumDistance>0.03223286148198979</minimumDistance>
+        <medianDistance>0.03223286148198979</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect-cc@seiscomp-fedora34</author>
-        <creationTime>2022-02-26T15:18:01.484452Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.273348Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
@@ -209,17 +213,19 @@
         <id>scdetectResultCCC</id>
       </comment>
       <arrival>
-        <pickID>Pick/20220226151801.48473.169</pickID>
+        <pickID>Pick/20230420150116.273354.34594</pickID>
         <phase>Sg</phase>
+        <azimuth>251.92795642647147</azimuth>
+        <distance>0.03223286148198979</distance>
         <weight>1.007777254</weight>
         <creationInfo>
           <agencyID>TEST</agencyID>
-          <author>scdetect-cc@seiscomp-fedora34</author>
-          <creationTime>2022-02-26T15:18:01.484452Z</creationTime>
+          <author>scdetect-cc@lscarabellows</author>
+          <creationTime>2023-04-20T15:01:16.273348Z</creationTime>
         </creationInfo>
       </arrival>
     </origin>
-    <origin publicID="Origin/20220226151801.513429.171">
+    <origin publicID="Origin/20230420150116.273769.34596">
       <time>
         <value>2019-11-05T05:01:44.905489Z</value>
       </time>
@@ -239,16 +245,16 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>1</associatedStationCount>
         <usedStationCount>1</usedStationCount>
-        <standardError>0.437013</standardError>
-        <maximumDistance>0.03223286148</maximumDistance>
-        <minimumDistance>0.03223286148</minimumDistance>
-        <medianDistance>0.03223286148</medianDistance>
+        <standardError>0.4370139683920179</standardError>
+        <maximumDistance>0.03223286148198979</maximumDistance>
+        <minimumDistance>0.03223286148198979</minimumDistance>
+        <medianDistance>0.03223286148198979</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect-cc@seiscomp-fedora34</author>
-        <creationTime>2022-02-26T15:18:01.513407Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:16.273768Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
@@ -259,13 +265,15 @@
         <id>scdetectResultCCC</id>
       </comment>
       <arrival>
-        <pickID>Pick/20220226151801.513572.172</pickID>
+        <pickID>Pick/20230420150116.273773.34597</pickID>
         <phase>Sg</phase>
+        <azimuth>251.92795642647147</azimuth>
+        <distance>0.03223286148198979</distance>
         <weight>1.007777254</weight>
         <creationInfo>
           <agencyID>TEST</agencyID>
-          <author>scdetect-cc@seiscomp-fedora34</author>
-          <creationTime>2022-02-26T15:18:01.513407Z</creationTime>
+          <author>scdetect-cc@lscarabellows</author>
+          <creationTime>2023-04-20T15:01:16.273768Z</creationTime>
         </creationInfo>
       </arrival>
     </origin>

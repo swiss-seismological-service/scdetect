@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
   <EventParameters>
-    <amplitude publicID="Amplitude/20220111084130.676863.1896">
+    <amplitude publicID="Amplitude/20230420150122.437134.62989">
       <type>MRelative</type>
       <amplitude>
         <value>1</value>
@@ -14,15 +14,15 @@
       <waveformID networkCode="CH" stationCode="GRIMS" channelCode="HH"/>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora34</author>
-        <creationTime>2022-01-11T08:41:30.676848Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:22.437133Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
       <comment>
-        <text>Pick/20220111084130.67451.1895</text>
+        <text>Pick/20230420150122.437007.62988</text>
         <id>scdetectAmplitudePicks</id>
       </comment>
       <comment>
@@ -30,10 +30,10 @@
         <id>scdetectAmplitudeStreams</id>
       </comment>
     </amplitude>
-    <amplitude publicID="Amplitude/20220111084130.680957.1898">
+    <amplitude publicID="Amplitude/20230420150122.437362.62992">
       <type>MRelative</type>
       <amplitude>
-        <value>1</value>
+        <value>0.9999242457626853</value>
       </amplitude>
       <timeWindow>
         <reference>2020-10-25T20:35:55.455Z</reference>
@@ -43,15 +43,15 @@
       <waveformID networkCode="CH" stationCode="HASLI" channelCode="HH"/>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora34</author>
-        <creationTime>2022-01-11T08:41:30.680949Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:22.437361Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
         <id>scdetectDetectorId</id>
       </comment>
       <comment>
-        <text>Pick/20220111084130.674426.1894</text>
+        <text>Pick/20230420150122.436999.62987</text>
         <id>scdetectAmplitudePicks</id>
       </comment>
       <comment>
@@ -59,9 +59,9 @@
         <id>scdetectAmplitudeStreams</id>
       </comment>
     </amplitude>
-    <origin publicID="Origin/20220111084130.674184.1893">
+    <origin publicID="Origin/20230420150122.436975.62986">
       <time>
-        <value>2020-10-25T20:35:43.383892Z</value>
+        <value>2020-10-25T20:35:43.383894Z</value>
       </time>
       <latitude>
         <value>46.90474746</value>
@@ -79,16 +79,16 @@
         <usedPhaseCount>2</usedPhaseCount>
         <associatedStationCount>2</associatedStationCount>
         <usedStationCount>2</usedStationCount>
-        <standardError>0.0</standardError>
-        <maximumDistance>0.6823556731</maximumDistance>
-        <minimumDistance>0.6415833155</minimumDistance>
-        <medianDistance>0.6823556731</medianDistance>
+        <standardError>-4.440892098500626e-16</standardError>
+        <maximumDistance>0.6823556730749719</maximumDistance>
+        <minimumDistance>0.6415833155438919</minimumDistance>
+        <medianDistance>0.6823556730749719</medianDistance>
       </quality>
       <evaluationMode>automatic</evaluationMode>
       <creationInfo>
         <agencyID>TEST</agencyID>
-        <author>scdetect@seiscomp-fedora34</author>
-        <creationTime>2022-01-11T08:41:30.674077Z</creationTime>
+        <author>scdetect-cc@lscarabellows</author>
+        <creationTime>2023-04-20T15:01:22.436971Z</creationTime>
       </creationInfo>
       <comment>
         <text>detector-01</text>
@@ -98,34 +98,34 @@
         <text>1.000000</text>
         <id>scdetectResultCCC</id>
       </comment>
-      <stationMagnitude publicID="StationMagnitude/20220111084130.677056.1897">
+      <stationMagnitude publicID="StationMagnitude/20230420150122.437143.62990">
         <magnitude>
           <value>4.333577804</value>
         </magnitude>
         <type>MRelative</type>
-        <amplitudeID>Amplitude/20220111084130.676863.1896</amplitudeID>
+        <amplitudeID>Amplitude/20230420150122.437134.62989</amplitudeID>
         <waveformID networkCode="CH" stationCode="GRIMS" channelCode="HH"/>
       </stationMagnitude>
-      <stationMagnitude publicID="StationMagnitude/20220111084130.681136.1899">
+      <stationMagnitude publicID="StationMagnitude/20230420150122.437367.62993">
         <magnitude>
-          <value>4.404358299</value>
+          <value>4.404325398106547</value>
         </magnitude>
         <type>MRelative</type>
-        <amplitudeID>Amplitude/20220111084130.680957.1898</amplitudeID>
+        <amplitudeID>Amplitude/20230420150122.437362.62992</amplitudeID>
         <waveformID networkCode="CH" stationCode="HASLI" channelCode="HH"/>
       </stationMagnitude>
-      <magnitude publicID="Magnitude/20220511171804.353054.1901">
+      <magnitude publicID="Magnitude/20230420150122.437371.62994">
         <magnitude>
           <value>4.333577804</value>
         </magnitude>
         <type>MRelative</type>
         <stationCount>2</stationCount>
         <stationMagnitudeContribution>
-          <stationMagnitudeID>StationMagnitude/20220111084130.677056.1897</stationMagnitudeID>
+          <stationMagnitudeID>StationMagnitude/20230420150122.437143.62990</stationMagnitudeID>
           <weight>0.5</weight>
         </stationMagnitudeContribution>
         <stationMagnitudeContribution>
-          <stationMagnitudeID>StationMagnitude/20220111084130.681136.1899</stationMagnitudeID>
+          <stationMagnitudeID>StationMagnitude/20230420150122.437367.62993</stationMagnitudeID>
           <weight>0.5</weight>
         </stationMagnitudeContribution>
       </magnitude>
