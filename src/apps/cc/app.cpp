@@ -967,6 +967,21 @@ void Application::publishDetection(
 void Application::publishDetection(const DetectionItem &detectionItem) {
   logObject(_outputOrigins, Core::Time::GMT());
 
+  // finalize origin by adding Arrivals and Magnitudes
+
+  // Arrivals
+  for (auto &arrivalPick : detectionItem.arrivalPicks) {
+    detectionItem.origin->add(arrivalPick.arrival.get());
+  }
+  // station magnitudes
+  for (auto &mag : detectionItem.magnitudes) {
+    detectionItem.origin->add(mag.get());
+  }
+  // network magnitudes
+  for (auto &mag : detectionItem.networkMagnitudes) {
+    detectionItem.origin->add(mag.get());
+  }
+
   if (connection() && !_config.noPublish) {
     SCDETECT_LOG_DEBUG_TAGGED(detectionItem.detectorId,
                               "Sending event parameters (detection) ...");
@@ -978,55 +993,11 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
         "EventParameters", DataModel::OP_ADD, detectionItem.origin.get())};
     notifierMsg->attach(notifier.get());
 
-    // comments
-    for (std::size_t i{0}; i < detectionItem.origin->commentCount(); ++i) {
-      auto notifier{util::make_smart<DataModel::Notifier>(
-          detectionItem.origin->publicID(), DataModel::OP_ADD,
-          detectionItem.origin->comment(i))};
-
-      notifierMsg->attach(notifier.get());
-    }
-
+    // pick
     for (auto &arrivalPick : detectionItem.arrivalPicks) {
-      // pick
-      {
-        auto notifier{util::make_smart<DataModel::Notifier>(
-            "EventParameters", DataModel::OP_ADD, arrivalPick.pick.get())};
-
-        notifierMsg->attach(notifier.get());
-      }
-      // arrival
-      {
-        auto notifier{util::make_smart<DataModel::Notifier>(
-            detectionItem.origin->publicID(), DataModel::OP_ADD,
-            arrivalPick.arrival.get())};
-
-        notifierMsg->attach(notifier.get());
-      }
-    }
-
-    // station magnitudes
-    for (auto &mag : detectionItem.magnitudes) {
       auto notifier{util::make_smart<DataModel::Notifier>(
-          detectionItem.origin->publicID(), DataModel::OP_ADD, mag.get())};
-
+          "EventParameters", DataModel::OP_ADD, arrivalPick.pick.get())};
       notifierMsg->attach(notifier.get());
-    }
-
-    // network magnitudes
-    for (auto &mag : detectionItem.networkMagnitudes) {
-      auto notifier{util::make_smart<DataModel::Notifier>(
-          detectionItem.origin->publicID(), DataModel::OP_ADD, mag.get())};
-
-      notifierMsg->attach(notifier.get());
-      // station magnitude contributions
-      for (std::size_t i{0}; i < mag->stationMagnitudeContributionCount();
-           ++i) {
-        auto notifier{util::make_smart<DataModel::Notifier>(
-            mag->publicID(), DataModel::OP_ADD,
-            mag->stationMagnitudeContribution(i))};
-        notifierMsg->attach(notifier.get());
-      }
     }
 
     if (!connection()->send(notifierMsg.get())) {
@@ -1040,19 +1011,7 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
     _ep->add(detectionItem.origin.get());
 
     for (auto &arrivalPick : detectionItem.arrivalPicks) {
-      detectionItem.origin->add(arrivalPick.arrival.get());
-
       _ep->add(arrivalPick.pick.get());
-    }
-
-    // station magnitudes
-    for (auto &mag : detectionItem.magnitudes) {
-      detectionItem.origin->add(mag.get());
-    }
-
-    // network magnitudes
-    for (auto &mag : detectionItem.networkMagnitudes) {
-      detectionItem.origin->add(mag.get());
     }
   }
 
