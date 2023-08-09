@@ -383,6 +383,67 @@ is the template and is detected with a score of 1.000000.
 
 .. _ex-02-label:
 
+Post-processing
+~~~~~~~~~~~~~~~
+
+Run :external:ref:`scevent` with the
+following command in order to associate the origins from the ``results.scml`` file
+to events.
+
+.. code-block:: bash
+
+   $SEISCOMP_ROOT/bin/seiscomp exec scevent \
+     --debug \
+     --disable-db \
+     --ep results.scml > event.catalog.scml
+
+This will create a catalog which is stored in the ``event.catalog.scml`` file.
+
+Screen results
+~~~~~~~~~~~~~~
+
+To screen visualize the results launch :external:ref:`scolv` with
+
+.. code-block:: bash
+
+   $SEISCOMP_ROOT/bin/seiscomp exec scolv \
+     --offline \
+     --db-disable \
+     --debug \
+     --inventory-db stations.scml \
+     --record-url "fdsnws://eida.ethz.ch/fdsnws/dataselect/1/query" &
+
+Once :external:ref:`scolv` is up and running
+import the ``event.catalog.scml`` file which was previously generated
+with :external:ref:`scevent`.
+
+Sort detections by CrossCorrelationCoefficient (CCC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`SeisComP <https://www.seiscomp.de/>`_ allows the user to add a custom column,
+for example in :external:ref:`scolv`, to show origin or event comments. 
+In the case of :external:ref:`scdetect-cc` in the comments the user can find 
+the **scdetectDetectorID**, the earthquake template that detect
+the new earthquake, and the **scdetectResultCCC**,  
+the cross correlation coefficient between the template and the new detection. 
+
+To add one custom column please go `here
+<https://www.seiscomp.de/doc/apps/global_gui.html#confval-eventlist.visibleColumns>`_
+and then edit either the **scolv.cfg** file or
+the :external:ref:`scconfig` GUI. 
+
+For more columns, and thus more comments, please choose the 
+`External Scripts
+<https://www.seiscomp.de/doc/apps/scolv.html#external-scripts>`_
+and the `Custom Information
+<https://www.seiscomp.de/doc/apps/scolv.html#sec-scolv-parameters-location>`_. 
+
+One example is `here
+<https://www.seiscomp.de/doc/apps/scolv.html#custom-information-in-tabs>`_,
+and continues `here
+<https://www.seiscomp.de/doc/apps/scolv.html#sec-scolv-parameters-events>`_.
+
+
 Example: Single detector - Multi-station - Multi-channel detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -727,6 +788,32 @@ import the ``event.catalog.scml`` file which was previously generated
 with :external:ref:`scevent`.
 
 .. _ex-03-label:
+
+Sort detections by CrossCorrelationCoefficient (CCC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`SeisComP <https://www.seiscomp.de/>`_ allows the user to add a custom column,
+for example in :external:ref:`scolv`, to show origin or event comments. 
+In the case of :external:ref:`scdetect-cc` in the comments the user can find 
+the **scdetectDetectorID**, the earthquake template that detect
+the new earthquake, and the **scdetectResultCCC**,  
+the cross correlation coefficient between the template and the new detection. 
+
+To add one custom column please go `here
+<https://www.seiscomp.de/doc/apps/global_gui.html#confval-eventlist.visibleColumns>`_
+and then edit either the **scolv.cfg** file or
+the :external:ref:`scconfig` GUI. 
+
+For more columns, and thus more comments, please choose the 
+`External Scripts
+<https://www.seiscomp.de/doc/apps/scolv.html#external-scripts>`_
+and the `Custom Information
+<https://www.seiscomp.de/doc/apps/scolv.html#sec-scolv-parameters-location>`_. 
+
+One example is `here
+<https://www.seiscomp.de/doc/apps/scolv.html#custom-information-in-tabs>`_,
+and continues `here
+<https://www.seiscomp.de/doc/apps/scolv.html#sec-scolv-parameters-events>`_.
 
 Example: Multi-detector - Multi-station - Multi-channel detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1252,3 +1339,30 @@ To screen visualize the results launch :external:ref:`scolv` with
 Once :external:ref:`scolv` is up and running
 import the ``event.catalog.scml`` file which was previously generated
 with :external:ref:`scevent`.
+
+
+Sort detections by CrossCorrelationCoefficient (CCC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`SeisComP <https://www.seiscomp.de/>`_ allows the user to add a custom column,
+for example in :external:ref:`scolv`, to show origin or event comments. 
+In the case of :external:ref:`scdetect-cc` in the comments the user can find 
+the **scdetectDetectorID**, the earthquake template that detect
+the new earthquake, and the **scdetectResultCCC**,  
+the cross correlation coefficient between the template and the new detection. 
+
+To add one custom column please go `here
+<https://www.seiscomp.de/doc/apps/global_gui.html#confval-eventlist.visibleColumns>`_
+and then edit either the **scolv.cfg** file or
+the :external:ref:`scconfig` GUI. 
+
+For more columns, and thus more comments, please choose the 
+`External Scripts
+<https://www.seiscomp.de/doc/apps/scolv.html#external-scripts>`_
+and the `Custom Information
+<https://www.seiscomp.de/doc/apps/scolv.html#sec-scolv-parameters-location>`_. 
+
+One example is `here
+<https://www.seiscomp.de/doc/apps/scolv.html#custom-information-in-tabs>`_,
+and continues `here
+<https://www.seiscomp.de/doc/apps/scolv.html#sec-scolv-parameters-events>`_.
