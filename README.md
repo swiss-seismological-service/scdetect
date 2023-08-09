@@ -1,4 +1,4 @@
-# SCDetect - Computationally efficient earthquake detection
+# SCDetect - A SeisComP Module for cross-correlation based earthquake detectioni
 
 [![continuous-integration](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/swiss-seismological-service/scdetect/actions/workflows/continuous-integration.yml) [![Documentation Status](https://readthedocs.org/projects/scdetect/badge/?version=latest)](https://scdetect.readthedocs.io/) [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
