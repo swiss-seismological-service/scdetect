@@ -69,3 +69,53 @@ and invoke
      --debug
 
 to run ``scdetect-cc``. Alternatively, start ``scdetect-cc`` in daemon mode.
+
+Update Templates in Real Time
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we briefly describe how to manage ``templates`` traffic in real time. 
+
+* 1.  Download earthquakes around the Mainshock / Earthquake of interest
+
+   We assume that an earthquake occurred in the are and we are interested in 
+   finding past [or new] earthquakes to use as ``detectors``. Then using
+   `FDSN services <https://www.fdsn.org/webservices/>`_ and `obspy <https://docs.obspy.org/>`_ 
+   we get the event catalog that contains arrival times: 
+               
+    .. code-block:: python 
+                      
+       cat = client.get_events(latitude=latitude, longitude=longitude, 
+                               minradius=0.001, maxradius=0.2,
+                               eventtype='earthquake', limit='30',
+                               contributor="SED", minmagnitude=1.0,
+                               includearrivals=True)
+          
+
+* 2. Create ``JSON`` file with ``detectors`` and ``templates``
+   
+   A python script is included in `scdetect-cc <https://github.com/swiss-seismological-service/scdetect/blob/master/src/apps/scripts/catalog2templates.py>`_. 
+   This script allows the user to convert the event file into ``JSON``. 
+
+   Redirect the output to the path define in :external:ref:`scconfig` . 
+
+* 3. Cache ``templates`` waveforms      
+   
+   Folow the instructions from `here <https://scdetect.readthedocs.io/en/stable/base/SCDetect-for-Dummies.html#waveform-data>`_ 
+   to cache the template waveforms. 
+
+* 4. Run ``scdetect-cc``
+        
+   The last step is to restart ``scdetect-cc`` 
+
+   .. code-block:: bash
+
+      $SEISCOMP_ROOT/bin/seiscomp restart scdetect-cc 
+
+
+All the above steps can be combined into a single script (e.g. ``bash``), and setup a cronjob
+that will update the ``templates.json`` file every few minutes or hours.  
+
+``date`` commnad in ``bash`` can be useful to set up a time period.
+
+:external:ref:`scevent` takes care of event association.
+
