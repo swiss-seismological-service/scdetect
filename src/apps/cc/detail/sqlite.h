@@ -66,7 +66,11 @@ class SQLiteDatabase : public Seiscomp::IO::DatabaseInterface {
   const char *getRowFieldName(int index) override;
   const void *getRowField(int index) override;
   size_t getRowFieldSize(int index) override;
+#if (SC_API_VERSION >= SC_API_VERSION_CHECK(17, 0, 0))
+  bool escape(std::string &out, const std::string &in) const override;
+#else
   bool escape(std::string &out, const std::string &in) override;
+#endif
 
   // ------------------------------------------------------------------
   //  Protected interface
