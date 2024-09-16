@@ -572,6 +572,12 @@ void load(const Processing::Settings &settings,
                          parameterPrefix + ".enable")) {
     storageLocation.enabled = defaults.enabled;
   }
+
+  if (!settings.getValue(storageLocation.mrelative.useNetworkMagnitude,
+                         parameterPrefix + ".MRelative.useNetworkMagnitude")) {
+    storageLocation.mrelative.useNetworkMagnitude =
+        defaults.mrelative.useNetworkMagnitude;
+  }
 }
 
 void validate(SensorLocationConfig &config) {

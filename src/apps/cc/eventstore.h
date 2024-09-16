@@ -80,20 +80,21 @@ class EventStore {
   void reset();
 
   // Returns the requested object specified by `publicId` (excluding
-  // descendants)
+  // descendants) or `nullptr` if no object was found
   template <typename T>
   SmartPointer<T> get(const std::string &publicId) const {
     return T::Cast(get(T::TypeInfo(), publicId));
   }
 
   // Returns the requested object specified by `publicId` (including
-  // descendants)
+  // descendants) or `nullptr` if no object was found
   template <typename T>
   SmartPointer<T> getWithChildren(const std::string &publicId) const {
     return T::Cast(get(T::TypeInfo(), publicId, true));
   }
 
-  // Returns the event for a given `originId` if any
+  // Returns the event for a given `originId` if any or `nullptr` if no event
+  // was found
   DataModel::EventPtr getEvent(const std::string &originId) const;
 
  protected:
