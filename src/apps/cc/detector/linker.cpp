@@ -201,7 +201,7 @@ void Linker::process(const TemplateWaveformProcessor *proc,
     }
   }
 
-  const auto now{Core::Time::GMT()};
+  const auto now{Core::Time::UTC()};
   // create new candidate association
   Candidate newCandidate{now + _onHold};
   newCandidate.feed(procId, result);

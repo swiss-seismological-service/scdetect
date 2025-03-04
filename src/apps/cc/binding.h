@@ -48,7 +48,7 @@ struct SensorLocationConfig {
       // The filter string identifier used for amplitude calculation
       boost::optional<std::string> filter{"BW_BP(4,10,30)"};
       // The filter's initialization time in seconds
-      Core::TimeSpan initTime{60};
+      Core::TimeSpan initTime{60, 0};
       // Defines the saturation threshold for the saturation check. If unset, no
       // saturation check is performed.
       boost::optional<double> saturationThreshold;
@@ -58,7 +58,7 @@ struct SensorLocationConfig {
       // The filter string identifier used for amplitude calculation
       boost::optional<std::string> filter;
       // The filter's initialization time in seconds
-      Core::TimeSpan initTime{60};
+      Core::TimeSpan initTime{60, 0};
       // Defines the saturation threshold for the saturation check. If unset, no
       // saturation check is performed.
       boost::optional<double> saturationThreshold;

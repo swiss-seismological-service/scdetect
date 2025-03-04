@@ -398,8 +398,8 @@ void setFilter(const boost::optional<std::string> &filter,
 }
 
 void setInitTime(const Core::TimeSpan &t, Core::TimeSpan &storageLocation) {
-  if (!util::isGeZero(t)) {
-    throw ValueException{"invalid init time: " + std::to_string(t) +
+  if (!util::isGeZero(t.length())) {
+    throw ValueException{"invalid init time: " + std::to_string(t.length()) +
                          " (Must be >= 0.)"};
   }
   storageLocation = t;
@@ -414,7 +414,7 @@ void setFilter(const Processing::Settings &settings,
                Core::TimeSpan &storageLocationInitTime) {
   double t;
   if (!settings.getValue(t, parameterInitTime)) {
-    t = defaultInitTime;
+    t = defaultInitTime.length();
   }
 
   std::string parsed;

@@ -224,7 +224,7 @@ void DetectorImpl::feed(const Record *record) {
   for (const auto &procPair : _processors) {
     const auto procProcessed{procPair.second.processor->processed()};
     if (!procProcessed) {
-      processed.setLength(0);
+      processed.setLength(Core::TimeSpan(0, 0));
       break;
     }
 
@@ -296,7 +296,7 @@ bool DetectorImpl::process(const Record *record) {
 
 bool DetectorImpl::hasAcceptableLatency(const Record *record) {
   if (_maxLatency) {
-    return record->endTime() > Core::Time::GMT() - *_maxLatency;
+    return record->endTime() > Core::Time::UTC() - *_maxLatency;
   }
 
   return true;
@@ -557,8 +557,8 @@ Core::Time DetectorImpl::computeOriginTime(
                                    startTime};
 
     alignedArrivalOffsets.push_back(
-        static_cast<double>(templateResult.arrival.pick.time - startTime) -
-        alignmentCorrection - referenceLag);
+        (templateResult.arrival.pick.time - startTime).length() -
+        (alignmentCorrection).length() - referenceLag);
   }
 
   const auto &arrivalOffsetCorrection{

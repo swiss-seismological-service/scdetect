@@ -167,10 +167,10 @@ AmplitudeProcessor::IndexRange RMSAmplitude::computeIndexRange(
   assert((_streamState.samplingFrequency));
   return IndexRange{
       static_cast<std::size_t>(
-          (tw.startTime() - _bufferedTimeWindow.startTime()) *
+          (tw.startTime() - _bufferedTimeWindow.startTime()).length() *
           _streamState.samplingFrequency),
       static_cast<std::size_t>(
-          static_cast<double>(tw.endTime() - _bufferedTimeWindow.startTime()) *
+          (tw.endTime() - _bufferedTimeWindow.startTime()).length() *
           _streamState.samplingFrequency)};
 }
 

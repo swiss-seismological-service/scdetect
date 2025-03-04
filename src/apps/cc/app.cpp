@@ -253,7 +253,7 @@ bool Application::validateParameters() {
   }
 
   if (_config.forcedWaveformBufferSize &&
-      !util::isGeZero(*_config.forcedWaveformBufferSize)) {
+      !util::isGeZero(_config.forcedWaveformBufferSize->length())) {
     SCDETECT_LOG_ERROR(
         "Invalid configuration: 'waveformBufferSize': %f. Must be >= 0.",
         static_cast<double>(*_config.forcedWaveformBufferSize));
@@ -532,12 +532,12 @@ void Application::done() {
 bool Application::dispatch(Core::BaseObject *obj) {
   // XXX(damb): except of the status messages all objects should be records and
   // thus the actual record throughput is monitored
-  _averageObjectThroughputMonitor.push(Core::Time::GMT(), 1);
+  _averageObjectThroughputMonitor.push(Core::Time::UTC(), 1);
   return Client::StreamApplication::dispatch(obj);
 }
 
 void Application::handleTimeout() {
-  auto runningMean{_averageObjectThroughputMonitor.value(Core::Time::GMT())};
+  auto runningMean{_averageObjectThroughputMonitor.value(Core::Time::UTC())};
   std::string msg{"Current object throughput per second (averaged): " +
                   std::to_string(runningMean)};
 
@@ -718,7 +718,7 @@ void Application::processDetection(
       "Start processing detection (time=%s, associated_results=%d) ...",
       detection->time.iso().c_str(), detection->templateResults.size());
 
-  Core::Time now{Core::Time::GMT()};
+  Core::Time now{Core::Time::UTC()};
 
   DataModel::CreationInfo ci;
   ci.setAgencyID(agencyID());
@@ -973,7 +973,7 @@ void Application::publishDetection(
 }
 
 void Application::publishDetection(const DetectionItem &detectionItem) {
-  logObject(_outputOrigins, Core::Time::GMT());
+  logObject(_outputOrigins, Core::Time::UTC());
 
   if (connection() && !_config.noPublish) {
     SCDETECT_LOG_DEBUG_TAGGED(detectionItem.detectorId,
@@ -1070,7 +1070,7 @@ void Application::publishDetection(const DetectionItem &detectionItem) {
       continue;
     }
 
-    logObject(_outputAmplitudes, Core::Time::GMT());
+    logObject(_outputAmplitudes, Core::Time::UTC());
     if (connection() && !_config.noPublish) {
       SCDETECT_LOG_DEBUG_TAGGED(detectionItem.detectorId,
                                 "Sending event parameters (amplitude) ...");
@@ -1109,7 +1109,7 @@ DataModel::AmplitudePtr Application::createAmplitude(
       amplitude->value.value, tw.startTime().iso().c_str(),
       tw.endTime().iso().c_str());
 
-  Core::Time now{Core::Time::GMT()};
+  Core::Time now{Core::Time::UTC()};
 
   DataModel::AmplitudePtr amp{DataModel::Amplitude::Create()};
   if (!amp) {
@@ -1501,7 +1501,7 @@ std::set<util::WaveformStreamID> Application::collectStreams() const {
 
   Core::Time amplitudeMLxStreamSubscriptionTime{
       _config.playbackConfig.startTimeStr.empty()
-          ? Core::Time::GMT()
+          ? Core::Time::UTC()
           : _config.playbackConfig.startTime};
 
   for (const auto &detectorIdxPair : _detectorIdx) {

@@ -99,7 +99,7 @@ BOOST_TEST_DECORATOR(*utf::tolerance(testUnitTolerance))
 BOOST_DATA_TEST_CASE(crosscorrelation, utf_data::make(dataset)) {
   // create dummy record
   auto templateTrace{util::make_smart<GenericRecord>("NET", "STA", "LOC", "CHA",
-                                                     Core::Time::GMT(), 1.0)};
+                                                     Core::Time::UTC(), 1.0)};
   templateTrace->setData(static_cast<int>(sample.templateData.size()),
                          sample.templateData.data(), Array::DOUBLE);
 

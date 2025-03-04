@@ -225,7 +225,7 @@ void WaveformProcessor::setupStream(StreamState &streamState,
     setMinimumGapThreshold(streamState, record, id());
   }
 
-  streamState.neededSamples = std::lround(_initTime * f);
+  streamState.neededSamples = std::lround(_initTime.length() * f);
   if (streamState.filter) {
     streamState.filter->setSamplingFrequency(f);
   }

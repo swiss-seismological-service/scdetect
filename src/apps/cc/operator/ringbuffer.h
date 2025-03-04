@@ -70,7 +70,7 @@ class RingBufferOperator : public processing::WaveformOperator,
   using StreamConfigs = std::unordered_map<std::string, StreamConfig>;
   StreamConfigs _streamConfigs;
 
-  Core::TimeSpan _bufferSize{60};
+  Core::TimeSpan _bufferSize{60, 0};
 
   // Reference to the processor using the operator
   processing::WaveformProcessor *_processor;

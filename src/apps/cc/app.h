@@ -217,7 +217,7 @@ class Application : public Client::StreamApplication {
       assert(origin);
     }
 
-    Core::Time expired{Core::Time::GMT() +
+    Core::Time expired{Core::Time::UTC() +
                        Core::TimeSpan{10 * 60.0 /*seconds*/}};
 
     struct ProcessorConfig {
@@ -281,7 +281,7 @@ class Application : public Client::StreamApplication {
     }
     bool ready() const {
       return (amplitudesReady() && magnitudesReady()) ||
-             (Core::Time::GMT() >= expired);
+             (Core::Time::UTC() >= expired);
     }
 
     friend bool operator==(const DetectionItem &lhs, const DetectionItem &rhs) {

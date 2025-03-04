@@ -50,9 +50,15 @@ bool trim(GenericRecord &trace, const Core::TimeWindow &tw) {
     SCDETECT_LOG_DEBUG(
         "Failed to trim trace: requested window (%s len %f) is not contained "
         "in the trace data window (%s len %f)",
+#if (SC_API_VERSION >= SC_API_VERSION_CHECK(17, 0, 0))
+        tw.startTime().iso().c_str(), tw.length().length(),
+        trace.timeWindow().startTime().iso().c_str(),
+        trace.timeWindow().length().length());
+#else
         tw.startTime().iso().c_str(), tw.length(),
         trace.timeWindow().startTime().iso().c_str(),
         trace.timeWindow().length());
+#endif
     return false;
   }
 
