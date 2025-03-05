@@ -20,36 +20,36 @@ env:
 
 jobs:
   clang-format:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout scdetect
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Install dependencies
       run: >
         sudo apt-get -y install
-        clang-format-12
+        clang-format-14
     - name: Run clang-format
       run: >
         find ${{github.workspace}}
         -type f \( -name '*.cpp' -o -name '*.ipp' -o -name '*.h' \) |
-        xargs clang-format-12 --dry-run --Werror
+        xargs clang-format-14 --dry-run --Werror
 
   build:
     needs: clang-format
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout SeisComP/seiscomp
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: SeisComP/seiscomp
         path: seiscomp
     - name: Checkout SeisComP/common
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: SeisComP/common
         path: seiscomp/src/base/common
     - name: Checkout scdetect
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: seiscomp/src/extras/scdetect
 
@@ -57,6 +57,7 @@ jobs:
       run: >
         sudo apt-get -y install
         libxml2-dev
+        libboost-container-dev
         libboost-filesystem-dev
         libboost-iostreams-dev
         libboost-thread-dev
@@ -65,6 +66,7 @@ jobs:
         libboost-system-dev
         libboost-test-dev
         libboost-timer-dev
+        libbson-dev
         libssl-dev
         libsqlite3-dev
         ccache
@@ -72,11 +74,11 @@ jobs:
     - name: Prepare ccache timestamp
       id: get-ccache-timestamp
       run: |
-        echo "::set-output name=timestamp::$(/bin/date -Iseconds -u)"
+        echo "timestamp=$(/bin/date -Iseconds -u)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Cache ccache files
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ${{github.workspace}}/.ccache
         key: ${{runner.os}}-ccache-${{steps.get-ccache-timestamp.outputs.timestamp}}
