@@ -64,7 +64,11 @@ class EventStore {
   };
 
   template <typename T>
+#if SC_API_VERSION < SC_API_VERSION_CHECK(17, 0, 0)
   using SmartPointer = typename Core::SmartPointer<T>::Impl;
+#else
+  using SmartPointer = Core::SmartPointer<T>;
+#endif
 
   static EventStore &Instance();
 
