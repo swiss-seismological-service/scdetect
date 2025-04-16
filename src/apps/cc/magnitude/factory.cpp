@@ -1,15 +1,19 @@
 #include "factory.h"
 
+#include <seiscomp/datamodel/amplitude.h>
+#include <seiscomp/datamodel/magnitude.h>
+
 #include <cassert>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 #include "../log.h"
 #include "../util/memory.h"
+#include "../util/waveform_stream_id.h"
 #include "decorator/range.h"
 #include "mlx.h"
 #include "mrelative.h"
-#include "seiscomp/datamodel/amplitude.h"
 #include "util.h"
 
 namespace Seiscomp {
@@ -19,7 +23,8 @@ namespace magnitude {
 Factory::BaseException::BaseException() : Exception{"base factory exception"} {}
 
 std::unique_ptr<MagnitudeProcessor> Factory::createMLx(
-    const DataModel::Amplitude& amplitude, const std::string& processorId) {
+    const DataModel::Amplitude& amplitude, const binding::Bindings& bindings,
+    const std::string& processorId) {
   assert((amplitude.type() == "MLx"));
 
   const auto detectorId{magnitude::extractDetectorId(&amplitude)};
@@ -51,23 +56,57 @@ std::unique_ptr<MagnitudeProcessor> Factory::createMLx(
 }
 
 std::unique_ptr<MagnitudeProcessor> Factory::createMRelative(
-    const DataModel::Amplitude& amplitude, const std::string& processorId) {
+    const DataModel::Amplitude& amplitude, const binding::Bindings& bindings,
+    const std::string& processorId) {
   assert((amplitude.type() == "MRelative"));
 
   const auto detectorId{magnitude::extractDetectorId(&amplitude)};
-  assert(detectorId);
-
-  const auto sensorLocationId{magnitude::extractSensorLocationId(&amplitude)};
-  assert(sensorLocationId);
-
-  auto ret{util::make_unique<MRelative>()};
-  try {
-    ret->setTemplateMagnitude(
-        stationMagnitudes().at(*detectorId).at(*sensorLocationId));
-  } catch (std::out_of_range& e) {
-    throw BaseException{"failed to configure station magnitude"};
+  if (!detectorId) {
+    throw BaseException{"failed to extract detector identifier"};
+  }
+  const auto sensorLocationStreamId{
+      magnitude::extractSensorLocationId(&amplitude, true)};
+  if (!sensorLocationStreamId) {
+    throw BaseException{"failed to extract sensor location stream identifier"};
   }
 
+  std::vector<std::string> tokens;
+  detect::util::tokenizeWaveformStreamId(*sensorLocationStreamId, tokens);
+  assert((tokens.size() == 4));
+
+  bool useNetworkMagnitude{true};
+  try {
+    auto sensorLocationConfig{
+        bindings.at(tokens[0], tokens[1], tokens[2], tokens[3])};
+    useNetworkMagnitude = sensorLocationConfig.magnitudeProcessingConfig
+                              .mrelative.useNetworkMagnitude;
+  } catch (const std::out_of_range& e) {
+    throw BaseException{"failed to load bindings configuration"};
+  }
+
+  // configure template magnitude
+  MRelative::TemplateMagnitude templateMagnitude{};
+  try {
+    if (useNetworkMagnitude) {
+      auto mag{networkMagnitudes().at(*detectorId)};
+      templateMagnitude.value = mag->magnitude().value();
+      SCDETECT_LOG_DEBUG_TAGGED(
+          processorId,
+          "Configured processor with NetworkMagnitude: public_id=\"%s\"",
+          mag->publicID().c_str());
+    } else {
+      auto mag{stationMagnitudes().at(*detectorId).at(*sensorLocationStreamId)};
+      templateMagnitude.value = mag->magnitude().value();
+      SCDETECT_LOG_DEBUG_TAGGED(
+          processorId,
+          "Configured processor with StationMagnitude: public_id=\"%s\"",
+          mag->publicID().c_str());
+    }
+  } catch (const std::out_of_range& e) {
+    throw BaseException{"failed to configure template magnitude"};
+  }
+
+  auto ret{util::make_unique<MRelative>(templateMagnitude)};
   ret->setId(processorId);
   return ret;
 }
@@ -105,11 +144,22 @@ void Factory::removeStationMagnitude(const std::string& detectorId,
   }
 }
 
+void Factory::add(const std::string& detectorId,
+                  DataModel::MagnitudeCPtr magnitude) {
+  assert(magnitude);
+  networkMagnitudes()[detectorId] = std::move(magnitude);
+}
+
+void Factory::removeNetworkMagnitude(const std::string& detectorId) {
+  networkMagnitudes().erase(detectorId);
+}
+
 void Factory::reset() {
   resetCallbacks();
 
   templateFamilies().clear();
   stationMagnitudes().clear();
+  networkMagnitudes().clear();
 }
 
 bool Factory::configureTemplateFamily(
@@ -167,6 +217,11 @@ Factory::TemplateFamilies& Factory::templateFamilies() {
 
 Factory::StationMagnitudes& Factory::stationMagnitudes() {
   static StationMagnitudes* ret{new StationMagnitudes{}};
+  return *ret;
+}
+
+Factory::NetworkMagnitudes& Factory::networkMagnitudes() {
+  static NetworkMagnitudes* ret{new NetworkMagnitudes{}};
   return *ret;
 }
 
