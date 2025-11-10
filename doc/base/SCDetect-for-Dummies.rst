@@ -16,10 +16,6 @@ This tutorial is intended to guide you, while getting started with ``scdetect-cc
 * :ref:`real-time-application-label` which allows processing data
   in real-time.
 
-**Questions?**
-
-Send an email to maria.mesimeri [at] sed.ethz.ch |beer|
-
 .. include:: Offline-Playback.rst
 .. include:: Real-Time-Playback.rst
 .. include:: Real-Time-Application.rst
