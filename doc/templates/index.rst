@@ -33,30 +33,12 @@ Cite
 
 If you intend to use SCDetect please cite as:
 
-:raw-html-m2r:`<em>Armbruster, D., Mesimeri, M., Kästli, P., Diehl, T., Massin, F., and Wiemer,
-S.</em>` (2022)\ :raw-html-m2r:`<br>`
-SCDetect: Near real-time computationally efficient waveform cross-correlation
-based earthquake detection during intense earthquake sequences\ :raw-html-m2r:`<br>`
-:raw-html-m2r:`<em>EGU General Assembly 2022, Vienna, Austria, 23–27 May 2022</em>`\ ,
-EGU22-12443\ :raw-html-m2r:`<br>`
-DOI: https://doi.org/10.5194/egusphere-egu22-12443
-
-.. note::
-
-   A manuscript is currently in preparation.
-
-
-Help & Feedback
-===============
-
-**Contact us**:
-
-*Daniel Armbruster*\ : daniel.armbruster [at]
-sed.ethz.ch `GitHub <https://github.com/damb>`__
-
-*Maria Mesimeri*\ : maria.mesimeri [at]
-sed.ethz.ch `Github <https://github.com/mmesim>`__ `Twitter <https://twitter.com/QuakeMary>`__ `Gscholar <https://scholar.google.gr/citations?user=Za5cbYUAAAAJ&hl=en>`__
-
+:raw-html-m2r:`<em>Mesimeri, M., Armbruster, D., Kästli, P., Scarabello, L., Diehl, T., 
+Clinton, J., Wiemer, S.</em>` (2024)\ :raw-html-m2r:`<br>`
+SCDetect: A SeisComP Module for Real‐Time Waveform Cross‐Correlation‐Based Earthquake 
+Detection\ :raw-html-m2r:`<br>`
+:raw-html-m2r:`<em>Seismological Research Letters, 95 (3): 1961–1975</em>`\ ,
+DOI: https://doi.org/10.1785/0220230164
 
 .. toctree::
    :hidden:

@@ -106,15 +106,12 @@ Contributions are very welcome. Made with :two_hearts::rainbow:.
 
 ## Cite
 
-*Armbruster, D., Mesimeri, M., Kästli, P., Diehl, T., Massin, F., and Wiemer,
-S.* (2022)<br>
-SCDetect: Near real-time computationally efficient waveform cross-correlation
-based earthquake detection during intense earthquake sequences<br>
-*EGU General Assembly 2022, Vienna, Austria, 23–27 May 2022*
-EGU22-12443<br>
-DOI: https://doi.org/10.5194/egusphere-egu22-12443
-
-> **NOTE**: A manuscript is currently in preparation.
+*Mesimeri M., Armbruster D., Kästli P., Scarabello L., Diehl T., 
+Clinton J., Wiemer S.* (2024)<br>
+SCDetect: A SeisComP Module for Real‐Time Waveform Cross‐Correlation‐Based Earthquake 
+Detection.<br>
+*Seismological Research Letters, 95 (3): 1961–1975*
+DOI: https://doi.org/10.1785/0220230164
 
 
 
