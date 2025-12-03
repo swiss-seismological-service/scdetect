@@ -810,7 +810,7 @@ void Application::processDetection(
       throw DuplicatePublicObjectId{"duplicate pick identifier"};
     }
     ret->setCreationInfo(ci);
-    ret->setTime(DataModel::TimeQuantity{arrival.pick.time, boost::none,
+    ret->setTime(DataModel::TimeQuantity{arrival.pick.time, Seiscomp::Core::None,
                                          arrival.pick.lowerUncertainty,
                                          arrival.pick.upperUncertainty});
     util::WaveformStreamID waveformStreamId{arrival.pick.waveformStreamId};
