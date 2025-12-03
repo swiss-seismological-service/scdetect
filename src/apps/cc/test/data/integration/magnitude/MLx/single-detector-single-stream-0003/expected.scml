@@ -41,8 +41,8 @@
         <value>1.2671705870281996e-07</value>
       </amplitude>
       <timeWindow>
-        <reference>2019-11-05T05:00:40.068442Z</reference>
-        <begin>0.499999</begin>
+        <reference>2019-11-05T05:00:40.068441Z</reference>
+        <begin>0.5</begin>
         <end>2</end>
       </timeWindow>
       <unit>M/S</unit>
@@ -71,8 +71,8 @@
         <value>1.3578173187885862e-07</value>
       </amplitude>
       <timeWindow>
-        <reference>2019-11-05T05:00:50.973442Z</reference>
-        <begin>0.499999</begin>
+        <reference>2019-11-05T05:00:50.973441Z</reference>
+        <begin>0.5</begin>
         <end>2</end>
       </timeWindow>
       <unit>M/S</unit>

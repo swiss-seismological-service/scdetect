@@ -24,8 +24,8 @@
         <value>1.8005964846234268e-06</value>
       </amplitude>
       <timeWindow>
-        <reference>2019-11-05T05:23:49.09993Z</reference>
-        <begin>0.499999</begin>
+        <reference>2019-11-05T05:23:49.099929Z</reference>
+        <begin>0.5</begin>
         <end>1</end>
       </timeWindow>
       <unit>M/S</unit>
