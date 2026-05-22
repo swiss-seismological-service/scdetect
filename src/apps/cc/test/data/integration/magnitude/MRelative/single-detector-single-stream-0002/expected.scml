@@ -100,7 +100,7 @@
       </arrival>
       <stationMagnitude publicID="StationMagnitude/20230420150121.860817.60565">
         <magnitude>
-          <value>2.757863364</value>
+          <value>2.757860052</value>
         </magnitude>
         <type>MRelative</type>
         <amplitudeID>Amplitude/20230420150121.860809.60564</amplitudeID>
@@ -108,7 +108,7 @@
       </stationMagnitude>
       <magnitude publicID="Magnitude/20230420150121.860823.60566">
         <magnitude>
-          <value>2.757863364</value>
+          <value>2.757860052</value>
         </magnitude>
         <type>MRelative</type>
         <stationCount>1</stationCount>

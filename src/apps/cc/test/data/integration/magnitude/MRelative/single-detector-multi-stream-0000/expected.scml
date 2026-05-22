@@ -108,7 +108,7 @@
       </stationMagnitude>
       <magnitude publicID="Magnitude/20230420150121.996549.60821">
         <magnitude>
-          <value>2.757863364</value>
+          <value>2.757860052</value>
         </magnitude>
         <type>MRelative</type>
         <stationCount>1</stationCount>
