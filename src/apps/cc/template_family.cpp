@@ -410,7 +410,11 @@ void TemplateFamily::Builder::storeAmplitude(
   amp->setTimeWindow(DataModel::TimeWindow{
       amplitude->time.reference, amplitude->time.begin, amplitude->time.end});
 
-  amp->setSnr(amplitude->snr.get());
+  if (amplitude->snr) {
+    amp->setSnr(amplitude->snr.get());
+  } else {
+    amp->setSnr(Core::None);
+  }
   if (amplitude->dominantPeriod) {
     amp->setPeriod(DataModel::RealQuantity{*amplitude->dominantPeriod});
   }

@@ -1144,7 +1144,11 @@ DataModel::AmplitudePtr Application::createAmplitude(
       amplitude->time.reference, amplitude->time.begin, amplitude->time.end});
   amp->setMethodID(methodId.value_or(""));
 
-  amp->setSnr(amplitude->snr.get());
+  if (amplitude->snr) {
+    amp->setSnr(amplitude->snr.get());
+  } else {
+    amp->setSnr(Core::None);
+  }
   if (amplitude->dominantPeriod) {
     amp->setPeriod(DataModel::RealQuantity{*amplitude->dominantPeriod});
   }
