@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../binding.h"
 #include "../exception.h"
 #include "../factory.h"
 #include "template_family.h"
@@ -22,7 +23,8 @@ namespace magnitude {
 
 class Factory
     : public detect::Factory<MagnitudeProcessor, std::string,
-                             const DataModel::Amplitude&, const std::string&> {
+                             const DataModel::Amplitude&,
+                             const binding::Bindings&, const std::string&> {
  public:
   class BaseException : public Exception {
    public:
@@ -31,10 +33,12 @@ class Factory
   };
 
   static std::unique_ptr<MagnitudeProcessor> createMLx(
-      const DataModel::Amplitude& amplitude, const std::string& processorId);
+      const DataModel::Amplitude& amplitude, const binding::Bindings& bindings,
+      const std::string& processorId);
 
   static std::unique_ptr<MagnitudeProcessor> createMRelative(
-      const DataModel::Amplitude& amplitude, const std::string& processorId);
+      const DataModel::Amplitude& amplitude, const binding::Bindings& bindings,
+      const std::string& processorId);
 
   // Register a template family
   static void add(std::unique_ptr<TemplateFamily>&& templateFamily);
@@ -50,6 +54,13 @@ class Factory
   // and `sensorLocationId`
   static void removeStationMagnitude(const std::string& detectorId,
                                      const std::string& sensorLocationId);
+
+  // Register the network `magnitude`
+  static void add(const std::string& detectorId,
+                  DataModel::MagnitudeCPtr magnitude);
+  // Unregister the network magnitude previously registered under `detectorId`
+  static void removeNetworkMagnitude(const std::string& detectorId);
+
   // Resets the factory
   static void reset();
 
@@ -75,6 +86,10 @@ class Factory
       DetectorId,
       std::unordered_map<SensorLocationId, DataModel::StationMagnitudeCPtr>>;
   static StationMagnitudes& stationMagnitudes();
+
+  using NetworkMagnitudes =
+      std::unordered_map<DetectorId, DataModel::MagnitudeCPtr>;
+  static NetworkMagnitudes& networkMagnitudes();
 };
 
 }  // namespace magnitude
