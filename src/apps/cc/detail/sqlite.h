@@ -43,6 +43,8 @@ class SQLiteDatabase : public Seiscomp::IO::DatabaseInterface {
   //  Public interface
   // ------------------------------------------------------------------
  public:
+  Backend backend() const override;
+
   bool connect(const char *con) override;
   void disconnect() override;
 

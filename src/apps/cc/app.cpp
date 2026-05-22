@@ -810,9 +810,10 @@ void Application::processDetection(
       throw DuplicatePublicObjectId{"duplicate pick identifier"};
     }
     ret->setCreationInfo(ci);
-    ret->setTime(DataModel::TimeQuantity{
-        arrival.pick.time, Seiscomp::Core::None, arrival.pick.lowerUncertainty,
-        arrival.pick.upperUncertainty});
+    ret->setTime(DataModel::TimeQuantity(arrival.pick.time,
+                                         Seiscomp::Core::None,
+                                         arrival.pick.lowerUncertainty.get(),
+                                         arrival.pick.upperUncertainty.get()));
     util::WaveformStreamID waveformStreamId{arrival.pick.waveformStreamId};
     if (asTemplateArrivalPick) {
       ret->setWaveformID(DataModel::WaveformStreamID{
@@ -1135,14 +1136,15 @@ DataModel::AmplitudePtr Application::createAmplitude(
     }
   }
 
-  amp->setAmplitude(DataModel::RealQuantity{
-      amplitude->value.value, boost::none, amplitude->value.lowerUncertainty,
-      amplitude->value.upperUncertainty, boost::none});
+  amp->setAmplitude(DataModel::RealQuantity(
+      amplitude->value.value, Core::None,
+      amplitude->value.lowerUncertainty.get(),
+      amplitude->value.upperUncertainty.get(), Core::None));
   amp->setTimeWindow(DataModel::TimeWindow{
       amplitude->time.reference, amplitude->time.begin, amplitude->time.end});
   amp->setMethodID(methodId.value_or(""));
 
-  amp->setSnr(amplitude->snr);
+  amp->setSnr(amplitude->snr.get());
   if (amplitude->dominantPeriod) {
     amp->setPeriod(DataModel::RealQuantity{*amplitude->dominantPeriod});
   }

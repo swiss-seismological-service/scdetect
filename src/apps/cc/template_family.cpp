@@ -403,13 +403,14 @@ void TemplateFamily::Builder::storeAmplitude(
     }
   }
 
-  amp->setAmplitude(DataModel::RealQuantity{
-      amplitude->value.value, boost::none, amplitude->value.lowerUncertainty,
-      amplitude->value.upperUncertainty, boost::none});
+  amp->setAmplitude(DataModel::RealQuantity(
+      amplitude->value.value, Core::None,
+      amplitude->value.lowerUncertainty.get(),
+      amplitude->value.upperUncertainty.get(), Core::None));
   amp->setTimeWindow(DataModel::TimeWindow{
       amplitude->time.reference, amplitude->time.begin, amplitude->time.end});
 
-  amp->setSnr(amplitude->snr);
+  amp->setSnr(amplitude->snr.get());
   if (amplitude->dominantPeriod) {
     amp->setPeriod(DataModel::RealQuantity{*amplitude->dominantPeriod});
   }

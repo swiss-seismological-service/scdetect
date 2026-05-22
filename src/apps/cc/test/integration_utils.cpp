@@ -27,11 +27,11 @@ namespace test {
 namespace {
 
 template <typename T, typename TFunc>
-auto getOptional(T obj, TFunc f) -> boost::optional<decltype(f(obj))> {
+auto getOptional(T obj, TFunc f) -> Seiscomp::Core::Optional<decltype(f(obj))> {
   try {
     return f(obj);
   } catch (Core::ValueException &e) {
-    return boost::none;
+    return Seiscomp::Core::None;
   }
 }
 
@@ -548,9 +548,9 @@ void stationMagnitudeCmp(const DataModel::StationMagnitudeCPtr &lhs,
   BOOST_TEST_CHECK(equalOptional(
       lhs, rhs,
       [](const DataModel::StationMagnitudeCPtr m) { return m->waveformID(); },
-      [](const boost::optional<DataModel::WaveformStreamID> &lhs,
-         const boost::optional<DataModel::WaveformStreamID> &rhs) {
-        return (lhs == boost::none && rhs == boost::none) ||
+      [](const Core::Optional<DataModel::WaveformStreamID> &lhs,
+         const Core::Optional<DataModel::WaveformStreamID> &rhs) {
+        return (lhs == Core::None && rhs == Core::None) ||
                (lhs && rhs && *lhs == *rhs);
       }));
 
