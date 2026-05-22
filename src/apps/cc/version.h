@@ -3,7 +3,7 @@
 
 namespace Seiscomp {
 namespace detect {
-constexpr char kVersion[] = "1.1.8";
+constexpr char kVersion[] = "1.1.9";
 }
 }  // namespace Seiscomp
 
