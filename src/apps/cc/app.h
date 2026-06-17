@@ -303,6 +303,8 @@ class Application : public Client::StreamApplication {
 
   // Initialize station magnitudes
   static bool initStationMagnitudes(const TemplateConfigs &templateConfigs);
+  // Initialize network magnitudes
+  static bool initNetworkMagnitudes(const TemplateConfigs &templateConfigs);
   // Initialize template families
   //
   // - `ifs` references a template family configuration input file stream

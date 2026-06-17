@@ -77,6 +77,13 @@ struct SensorLocationConfig {
 
   // Magnitude processing configuration
   struct MagnitudeProcessingConfig {
+    struct MRelative {
+      // Defines whether to use the network magnitude (`true`) or the station
+      // magnitude (`false`) for magnitude estimation
+      bool useNetworkMagnitude{true};
+    };
+
+    MRelative mrelative;
     // Defines the magnitude types to be computed with regard to the sensor
     // location
     std::vector<std::string> magnitudeTypes{"MRelative"};

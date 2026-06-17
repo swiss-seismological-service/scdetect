@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.12" version="0.12">
+  <Config>
+    <parameterSet publicID="ParameterSet/trunk/Station/8D/RAW2/scdetect-cc" created="2022-01-07T14:32:11.67833Z">
+      <moduleID>Config/trunk</moduleID>
+      <parameter publicID="Parameter/20220107143211.678366.5">
+        <name>sensorLocation._HH.amplitudes.amplitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220107143211.678461.6">
+        <name>sensorLocation._HH.magnitudes.magnitudes</name>
+        <value>MRelative</value>
+      </parameter>
+      <parameter publicID="Parameter/20220107143211.678462.6">
+        <name>sensorLocation._HH.magnitudes.MRelative.useNetworkMagnitude</name>
+        <value>true</value>
+      </parameter>
+      <parameter publicID="Parameter/20220107143211.678482.7">
+        <name>sensorLocation._HH.channelCode</name>
+        <value>HH</value>
+      </parameter>
+      <parameter publicID="Parameter/20220107143211.678495.8">
+        <name>sensorLocationProfiles</name>
+        <value>_HH</value>
+      </parameter>
+    </parameterSet>
+    <module publicID="Config/trunk" name="trunk" enabled="true">
+      <station publicID="Config/trunk/8D/RAW2" networkCode="8D" stationCode="RAW2" enabled="true">
+        <creationInfo>
+          <agencyID>FOO_AGENCY</agencyID>
+          <author>bindings2cfg</author>
+          <creationTime>2022-01-07T14:32:11.678105Z</creationTime>
+        </creationInfo>
+        <setup name="scdetect-cc" enabled="true">
+          <parameterSetID>ParameterSet/trunk/Station/8D/RAW2/scdetect-cc</parameterSetID>
+        </setup>
+      </station>
+    </module>
+  </Config>
+</seiscomp>

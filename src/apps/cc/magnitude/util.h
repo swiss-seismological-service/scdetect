@@ -16,7 +16,8 @@ boost::optional<std::string> extractDetectorId(
 
 // Extract the sensor location identifier from `amplitude`
 boost::optional<std::string> extractSensorLocationId(
-    const DataModel::Amplitude* amplitude);
+    const DataModel::Amplitude* amplitude,
+    bool includeBandAndSourceCode = false);
 
 }  // namespace magnitude
 }  // namespace detect
